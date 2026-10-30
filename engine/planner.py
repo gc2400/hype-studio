@@ -658,7 +658,28 @@ def init_pads(c):
                 c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, j, p_, None, None))
         c.commit()
 
+def sync_folder_banks(c):
+    """A pad bank named like a jingles folder (IDS, SWEEPERS, NEW MUSIC …) follows that folder: new files are added at
+    the end, deleted ones leave. Your order and colours stay. (Other banks are yours alone.)"""
+    folders = {r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section='jingles' AND problem IS NULL")}
+    tops = folders | {f.split("/")[0] for f in folders}
+    changed = False
+    for bid, name in c.execute("SELECT id, name FROM pad_banks").fetchall():
+        if name not in tops: continue
+        have = [r[0] for r in c.execute("SELECT path FROM pad_items WHERE bank_id=? ORDER BY pos", (bid,))]
+        files = [r[0] for r in c.execute("""SELECT path FROM items WHERE section='jingles' AND problem IS NULL AND (folder=? OR folder LIKE ?)
+                                            ORDER BY folder, title COLLATE NOCASE""", (name, name + "/%"))]
+        gone = [p_ for p_ in have if p_ not in set(files)]; new = [p_ for p_ in files if p_ not in set(have)]
+        if gone:
+            c.executemany("DELETE FROM pad_items WHERE bank_id=? AND path=?", [(bid, p_) for p_ in gone]); changed = True
+        n = len(have) - len(gone)
+        for p_ in new[:max(0, 64 - n)]:
+            c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, n, p_, None, None)); n += 1; changed = True
+    if changed: c.commit()
+
 def api_padbanks(c):
+    try: sync_folder_banks(c)
+    except Exception: pass
     out = []
     for bid, name in c.execute("SELECT id, name FROM pad_banks ORDER BY pos, id").fetchall():
         items = []
@@ -676,7 +697,7 @@ def api_save_padbanks(c, d):
         if b.get("id"): bid = int(b["id"]); c.execute("UPDATE pad_banks SET name=?, pos=? WHERE id=?", (name, i, bid))
         else: bid = c.execute("INSERT INTO pad_banks(name, pos) VALUES(?,?)", (name, i)).lastrowid
         keep.append(bid); c.execute("DELETE FROM pad_items WHERE bank_id=?", (bid,))
-        for j, it in enumerate(b.get("items", [])[:48]):
+        for j, it in enumerate(b.get("items", [])[:64]):
             c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, j, it["path"], it.get("label") or None, it.get("color") or None))
     if keep:
         q = ",".join("?" * len(keep))
