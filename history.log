@@ -9,3 +9,4 @@
 2026-10-30T16:41:55 ok ba6bd444 AGC: gated broadcast-style AGC (15 s intro hold, freeze on quiet parts, slow up 20 s, fast catch, max +6 dB)
 2026-10-30T16:50:53 ok 2b30a939 AGC intro lift: per-song loudness map (indexer, backfilled slowly) + 4.5 s look-ahead lift that glides away before the drop
 2026-10-30T17:08:00 ok a9f12e5a Voice messages from Hype Live -> 🎙 VOICE pad bank (download, clean mp3, ack, remove/14 days, always ducked, NEW/played)
+2026-10-30T17:17:59 ok b7bd87b9 One mixtape per hour: the clock never goes round for a 2nd mix (also after a restart/replan); Up next times in Inter bold
