@@ -89,7 +89,11 @@ def playlist_songs(c, pid, seen=None):
     if pid in seen: return []          # no endless nesting
     seen.add(pid); out = []
     for kind, ref in c.execute("SELECT kind, ref FROM playlist_sources WHERE playlist_id=? ORDER BY pos", (pid,)).fetchall():
-        if kind == "folder":
+        if kind == "folder" and ref.startswith("jingles/"):     # a jingles folder (e.g. the New Music / Throwback sweepers): every file in it
+            jf = ref[len("jingles/"):]
+            out += [r[0] for r in c.execute("""SELECT path FROM items WHERE section='jingles' AND problem IS NULL AND (folder=? OR folder LIKE ?)
+                                             ORDER BY filename COLLATE NOCASE""", (jf, jf + "/%")).fetchall()]
+        elif kind == "folder":
             w, a = folder_where(ref)
             rows = c.execute(f"""SELECT path, folder FROM items WHERE section='music' AND problem IS NULL AND mode IS NOT NULL
                        AND {w} ORDER BY artist COLLATE NOCASE, title COLLATE NOCASE""", a).fetchall()
@@ -404,6 +408,9 @@ def in_playlist(c, pid, path):
 def rule_matches(c, rule, it):
     kind, ref = rule["match_kind"], rule["match_ref"] or ""
     f = it.get("folder") or ""
+    if kind == "folder" and "*" in ref:                # wildcard: *CLASSICS* = every folder with CLASSICS in its name
+        import fnmatch
+        return fnmatch.fnmatch(f.upper(), ref.upper())
     if kind == "folder":
         base = ref.split("/")[-1]
         return f == ref or f.startswith(ref + "/") or ("/" in ref and (f == base or f.endswith("/" + base)))
