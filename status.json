@@ -1,17 +1,18 @@
 {
- "time": "2026-10-30T21:24:02",
+ "time": "2026-10-30T21:29:56",
  "result": "ok",
- "commit": "c3eeb4104e4edc517c53c81d3abdd54b40fe5781",
- "subject": "Library: separate \u26a0 Problems button next to Sort",
+ "commit": "7cefdb24e80b217aa75d54f0851b481a7ea5a8d4",
+ "subject": "TV: no Now Playing box for a mix without artist",
  "log": [
-  "21:24:02 update 26b20b4f \u2192 c3eeb410 \u00b7 1 file(s): web/panel/library.html",
-  "21:24:02 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "21:29:11 update c3eeb410 \u2192 7cefdb24 \u00b7 1 file(s): engine/engine.py",
+  "21:29:11 restart hype-engine",
+  "21:29:56 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": " \u2013 Hype SWP Club Hype",
+  "song": " \u2013 ZAZA CLUB | DANCEHALL | FUNK CARIOCA | HIP HOP | WORLD MUSIC DJ SET BY HADER",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
