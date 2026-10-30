@@ -1,17 +1,18 @@
 {
- "time": "2026-10-30T10:42:30",
+ "time": "2026-10-30T14:42:02",
  "result": "ok",
- "commit": "bb806d6afbecac01b99d99921fbc520873fa0365",
- "subject": "Test update: status page note",
+ "commit": "16152155f6b3bebeb47846dfcf14cd9c9561fa25",
+ "subject": "Artists split also on X/vs/featuring; preview controls only on hover; Panel + DJ names; hover on header buttons; REC shape",
  "log": [
-  "10:42:29 update 69cc9a74 \u2192 bb806d6a \u00b7 1 file(s): web/status/index.html",
-  "10:42:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:41:16 update 8d33461f \u2192 16152155 \u00b7 4 file(s): engine/engine.py, engine/planner.py, web/panel/header.js, web/panel/index.html",
+  "14:41:17 restart hype-engine",
+  "14:42:02 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "BAD BUNNY \u2013 MONACO",
+  "song": "Victony \u2013 SLICK",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 2.4,
   "problems": [],
   "ok": true
  },
