@@ -1,18 +1,17 @@
 {
- "time": "2026-10-30T14:48:56",
+ "time": "2026-10-30T14:51:01",
  "result": "ok",
- "commit": "d3f5805fbf25d989c19d5fd136d9b83cb5d2fce9",
- "subject": "Ad breaks: sponsor spots X per day (clock slot + fixed time), Planning ADS tab, proof of play + now playing to Hype Live (switches, off until go-live)",
+ "commit": "ab20ecf3738e499b1573357aeb58c374ce462781",
+ "subject": "ADS tab: dark date fields",
  "log": [
-  "14:48:11 update 16152155 \u2192 d3f5805f \u00b7 4 file(s): engine/engine.py, engine/planner.py, web/panel/plan.html, web/panel/settings.html",
-  "14:48:11 restart hype-engine",
-  "14:48:56 installed OK \u00b7 restarted: hype-engine"
+  "14:51:01 update d3f5805f \u2192 ab20ecf3 \u00b7 1 file(s): web/panel/plan.html",
+  "14:51:01 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Zion x Chencho Corleone \u2013 Caducaste",
+  "song": "Blaqbonez x Asake \u2013 Ikebe 3000",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
