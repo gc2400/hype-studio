@@ -82,6 +82,7 @@ table{border-collapse:collapse;width:100%}
     <button class="tab" data-tab="fx" role="tab">FIXED TIMES</button>
     <button class="tab" data-tab="ov" role="tab">INTRO SWEEPERS</button>
     <button class="tab" data-tab="os" role="tab">ON SCREEN</button>
+    <button class="tab" data-tab="ad" role="tab">ADS</button>
   </div>
 
   <!-- PLAYLISTS -->
@@ -179,6 +180,23 @@ table{border-collapse:collapse;width:100%}
     <div class="order" id="pvList" style="max-height:480px"></div>
   </section>
   <!-- FIXED TIMES -->
+  <section id="tab-ad" hidden>
+    <div class="card">
+      <div class="row between"><span class="lab">Ads · sponsor spots (audio or video) · X plays per day</span><button class="btn yellow" id="adSave">Save ads</button></div>
+      <p class="muted" style="margin:0">Put spot files in the <b>ads</b> folder (one subfolder per brand, e.g. <code>ads/Brand</code>). Here you set how often each spot plays.
+        They play in <b>ad breaks</b>: put an <b>Ad break</b> slot in a clock (the number = spots in that break) and/or add a fixed time <b>Ad break</b> (e.g. every hour at *:20, after the song).
+        A break gets the spots that are most behind on their plays for today, max. 1 per brand. Video spots show full screen on TV; audio spots play over the Hype Screen.</p>
+      <div class="row" style="gap:14px;flex-wrap:wrap"><label class="row" style="gap:6px">Max. break length <input type="number" id="adMaxLen" min="15" max="600" style="width:80px"> s</label>
+        <label class="row" style="gap:6px">Max. spots in a fixed-time break <input type="number" id="adMaxSp" min="1" max="10" style="width:64px"></label></div>
+      <div style="overflow-x:auto">
+      <table class="slots">
+        <thead><tr><th>On</th><th>Brand</th><th>Spot</th><th>From</th><th>Until</th><th>Per day</th><th>Days</th><th>Hours</th><th>Today</th><th></th></tr></thead>
+        <tbody id="adRows"></tbody>
+      </table>
+      </div>
+      <div class="row"><button class="btn sm" id="adAdd">+ Add spot</button><span class="muted" id="adInfo"></span></div>
+    </div>
+  </section>
   <section id="tab-fx" hidden>
     <div class="card">
       <div class="row between"><span class="lab">Fixed times · something plays at a set time</span><button class="btn yellow" id="fxSave">Save fixed times</button></div>
@@ -216,7 +234,8 @@ const authed = r => { if (r.status === 401) { location.href = '/login?next=' + e
 const get = p => fetch('../api/' + p).then(authed).then(r => r.json());
 const post = (p, d) => fetch('../api/' + p, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d || {})}).then(authed).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); return j; });
 function toast(t, err) { const e = $('#toast'); e.textContent = t; e.className = 'toast show' + (err ? ' err' : ''); clearTimeout(e._t); e._t = setTimeout(() => e.className = 'toast', 2400); }
-$$('.tab').forEach(b => b.onclick = () => { $$('.tab').forEach(x => x.classList.toggle('on', x === b)); ['pl', 'ck', 'sc', 'fx', 'ov', 'os'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab); if (b.dataset.tab === 'sc') loadSchedule(); if (b.dataset.tab === 'ov') loadOv(); if (b.dataset.tab === 'fx') loadFx(); if (b.dataset.tab === 'os') loadOs(); });
+$$('.tab').forEach(b => b.onclick = () => { $$('.tab').forEach(x => x.classList.toggle('on', x === b)); ['pl', 'ck', 'sc', 'fx', 'ov', 'os', 'ad'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab); if (b.dataset.tab === 'sc') loadSchedule(); if (b.dataset.tab === 'ov') loadOv(); if (b.dataset.tab === 'fx') loadFx(); if (b.dataset.tab === 'os') loadOs(); });
+$$('.tab').forEach(b => b.addEventListener('click', () => { if (b.dataset.tab === 'ad') loadAds(); }));
 
 let PL = [], CK = [], FOLD = {music: [], counts: {}, jingles: []};
 const loadAll = () => Promise.all([get('playlists'), get('clocks'), get('folders')]).then(([p, c, f]) => { PL = p; CK = c; FOLD = f; renderPL(); renderCK(); });
@@ -364,19 +383,19 @@ $('#scSave').onclick = () => post('plan/set_schedule', {cells: Object.entries(SC
 let FX = [], FXJ = [];
 function loadFx() { Promise.all([get('events'), get('pads')]).then(([e, j]) => { FX = e; FXJ = j; renderFx(); }); }
 function renderFx() {
-  const whichOpts = e => e.kind === 'playlist' ? PL.map(p => [String(p.id), p.name]) : e.kind === 'folder' ? FOLD.music.map(f => [f, f]) : e.kind === 'jingle' ? [...FOLD.jingles.map(f => [f, 'Any from ' + f]), ...FXJ.map(j => [j.path, j.folder + ' · ' + j.title])] : null;
-  $('#fxRows').innerHTML = FX.map((e, i) => { const opts = whichOpts(e), multi = e.kind === 'playlist' || e.kind === 'folder';
+  const whichOpts = e => e.kind === 'adbreak' ? [['ADS', 'Spots that are due']] : e.kind === 'playlist' ? PL.map(p => [String(p.id), p.name]) : e.kind === 'folder' ? FOLD.music.map(f => [f, f]) : e.kind === 'jingle' ? [...FOLD.jingles.map(f => [f, 'Any from ' + f]), ...FXJ.map(j => [j.path, j.folder + ' · ' + j.title])] : null;
+  $('#fxRows').innerHTML = FX.map((e, i) => { const opts = whichOpts(e), multi = e.kind === 'playlist' || e.kind === 'folder' || e.kind === 'adbreak';
     return `<tr>
     <td><input type="checkbox" data-i="${i}" data-f="enabled" ${e.enabled ? 'checked' : ''} style="width:20px;height:20px;accent-color:var(--y)"></td>
     <td><input type="text" data-i="${i}" data-f="name" value="${esc(e.name)}" placeholder="e.g. Top 10"></td>
     <td><div class="row" style="flex-wrap:nowrap;gap:2px">${DAYS.map((d, di) => `<button class="btn sm ${e.days.includes(String(di)) ? 'on' : ''}" data-day="${i}-${di}" style="padding:0 6px;min-width:34px">${d.slice(0, 2)}</button>`).join('')}</div></td>
     <td><input type="text" data-i="${i}" data-f="at" value="${esc(e.at)}" placeholder="20:00" title="20:00, or *:00 = every hour" style="width:76px">${e.at && e.at[0] === '*' ? '<div class="muted" style="font-size:11px">every hour</div>' : ''}</td>
-    <td><select data-i="${i}" data-f="kind">${[['playlist', 'Playlist'], ['folder', 'Folder'], ['jingle', 'Jingle'], ['song', 'Song']].map(([v, l]) => `<option value="${v}" ${e.kind === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+    <td><select data-i="${i}" data-f="kind">${[['playlist', 'Playlist'], ['folder', 'Folder'], ['jingle', 'Jingle'], ['song', 'Song'], ['adbreak', 'Ad break']].map(([v, l]) => `<option value="${v}" ${e.kind === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
     <td>${opts ? `<select data-i="${i}" data-f="ref"><option value="">– choose –</option>${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(e.ref) === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>` : `<button class="btn sm" data-fsong="${i}" style="width:100%;justify-content:flex-start">${e.ref ? esc(e.ref.split('/').pop()) : 'Choose a song…'}</button>`}</td>
     <td>${multi ? `<div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="1" data-i="${i}" data-f="amount" value="${e.amount || 1}" ${!e.amount ? 'disabled' : ''} style="width:64px"><label class="tg" style="font-size:12px"><input type="checkbox" data-fall="${i}" ${!e.amount ? 'checked' : ''}>all</label></div>` : '<span class="muted">1</span>'}</td>
     <td><select data-i="${i}" data-f="hard"><option value="0" ${!e.hard ? 'selected' : ''}>After the song</option><option value="1" ${e.hard ? 'selected' : ''}>Exactly on time</option></select></td>
     <td><button class="btn sm red" data-fdel="${i}" aria-label="Remove">×</button></td></tr>`; }).join('') || '<tr><td colspan="9" class="muted">No fixed times yet. Example: Mon + Thu 20:00 · Playlist "Top 10" · all · after the song.</td></tr>';
-  $$('#fxRows [data-f]').forEach(el => el.onchange = () => { const e = FX[+el.dataset.i], f = el.dataset.f; e[f] = el.type === 'checkbox' ? el.checked : f === 'amount' ? +el.value : f === 'hard' ? el.value === '1' : el.value; if (f === 'kind') { e.ref = ''; e.amount = 1; renderFx(); } });
+  $$('#fxRows [data-f]').forEach(el => el.onchange = () => { const e = FX[+el.dataset.i], f = el.dataset.f; e[f] = el.type === 'checkbox' ? el.checked : f === 'amount' ? +el.value : f === 'hard' ? el.value === '1' : el.value; if (f === 'kind') { e.ref = e.kind === 'adbreak' ? 'ADS' : ''; e.amount = e.kind === 'adbreak' ? 3 : 1; renderFx(); } });
   $$('#fxRows [data-day]').forEach(b => b.onclick = () => { const [i, di] = b.dataset.day.split('-'); const e = FX[+i]; e.days = e.days.includes(di) ? e.days.replace(di, '') : [...e.days + di].sort().join(''); renderFx(); });
   $$('#fxRows [data-fall]').forEach(el => el.onchange = () => { FX[+el.dataset.fall].amount = el.checked ? 0 : 1; renderFx(); });
   $$('#fxRows [data-fdel]').forEach(b => b.onclick = () => { FX.splice(+b.dataset.fdel, 1); renderFx(); });
@@ -385,6 +404,35 @@ function renderFx() {
 $('#fxAdd').onclick = () => { FX.push({name: '', enabled: true, days: '0123456', at: '20:00', kind: 'playlist', ref: '', amount: 0, hard: false}); renderFx(); };
 $('#fxSave').onclick = () => { if (FX.some(e => !e.ref || !/^(\d{1,2}|\*):\d{2}$/.test(e.at) || !e.days)) return toast('Fill in days, time and what to play in every row', 1);
   post('plan/save_events', {events: FX}).then(() => { toast('Fixed times saved'); loadFx(); }).catch(e => toast(e.message, 1)); };
+
+/* ---------------- ads ---------------- */
+let AD = {spots: [], files: []};
+function loadAds() { get('ads').then(d => { AD = d; $('#adMaxLen').value = d.max_len; $('#adMaxSp').value = d.max_spots; renderAds(); }); }
+function renderAds() {
+  const fl = AD.files, fm = Object.fromEntries(fl.map(f => [f.path, f]));
+  const mmss = s => Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0');
+  $('#adRows').innerHTML = AD.spots.map((s, i) => `<tr>
+    <td><input type="checkbox" data-i="${i}" data-f="enabled" ${s.enabled ? 'checked' : ''} style="width:20px;height:20px;accent-color:var(--y)"></td>
+    <td><input type="text" data-i="${i}" data-f="brand" value="${esc(s.brand || '')}" placeholder="Brand" style="width:130px"></td>
+    <td><select data-i="${i}" data-f="path" style="max-width:260px"><option value="">– choose a spot –</option>${fl.map(f => `<option value="${esc(f.path)}" ${s.path === f.path ? 'selected' : ''}>${esc(f.folder.replace(/^ads\/?/i, ''))} · ${esc(f.title)} (${mmss(f.len)}${f.video ? ' · video' : ' · audio'})</option>`).join('')}</select></td>
+    <td><input type="date" data-i="${i}" data-f="start_day" value="${esc(s.start_day || '')}"></td>
+    <td><input type="date" data-i="${i}" data-f="end_day" value="${esc(s.end_day || '')}"></td>
+    <td><input class="num" type="number" min="0" max="96" data-i="${i}" data-f="per_day" value="${s.per_day ?? 4}" style="width:64px"></td>
+    <td><div class="row" style="flex-wrap:nowrap;gap:2px">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, d) => `<button class="btn sm ${(s.days ?? '0123456').includes(String(d)) ? 'on' : ''}" data-aday="${i}" data-d="${d}" style="min-width:24px;padding:0 4px">${l}</button>`).join('')}</div></td>
+    <td><input type="text" data-i="${i}" data-f="hours" value="${esc(s.hours || '')}" placeholder="07-24" title="e.g. 16-19 (empty = 07–24)" style="width:64px"></td>
+    <td class="mono">${s.played_today ?? 0}/${s.per_day ?? 0}</td>
+    <td><button class="btn sm red" data-adel="${i}" aria-label="Remove">×</button></td></tr>`).join('') || `<tr><td colspan="10" class="muted">${fl.length ? 'No spots planned yet – click + Add spot.' : 'No spot files yet – upload them to the ads folder (ads/Brand/spot.mp4).'}</td></tr>`;
+  $$('#adRows [data-f]').forEach(el => el.onchange = () => { const s = AD.spots[+el.dataset.i], f = el.dataset.f;
+    s[f] = el.type === 'checkbox' ? el.checked : f === 'per_day' ? +el.value : el.value;
+    if (f === 'path' && !s.brand && fm[el.value]) { s.brand = (fm[el.value].folder.split('/').pop() || '').replace(/^ads$/i, ''); renderAds(); } });
+  $$('#adRows [data-aday]').forEach(b => b.onclick = () => { const s = AD.spots[+b.dataset.aday], d = b.dataset.d; let x = s.days ?? '0123456'; x = x.includes(d) ? x.replace(d, '') : x + d; s.days = [...'0123456'].filter(c => x.includes(c)).join(''); renderAds(); });
+  $$('#adRows [data-adel]').forEach(b => b.onclick = () => { AD.spots.splice(+b.dataset.adel, 1); renderAds(); });
+  const tot = AD.spots.filter(s => s.enabled).reduce((a, s) => a + (+s.per_day || 0), 0);
+  $('#adInfo').textContent = AD.spots.length ? `${tot} spot plays planned per day in total` : '';
+}
+$('#adAdd').onclick = () => { AD.spots.push({brand: '', path: '', start_day: '', end_day: '', per_day: 4, days: '0123456', hours: '', enabled: true}); renderAds(); };
+$('#adSave').onclick = () => { if (AD.spots.some(s => !s.path)) return toast('Choose a spot file in every row', 1);
+  post('plan/save_ads', {spots: AD.spots, ad_max_len: +$('#adMaxLen').value, ad_max_spots: +$('#adMaxSp').value}).then(() => { toast('Ads saved – Up next is planned again'); loadAds(); }).catch(e => toast(e.message, 1)); };
 
 /* ---------------- intro sweepers ---------------- */
 let OV = [], JIN = [];

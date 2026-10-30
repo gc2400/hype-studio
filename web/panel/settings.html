@@ -166,6 +166,8 @@ table{border-collapse:collapse;width:100%}
       <label class="opt" data-find="repair restart automatic"><input type="checkbox" id="g_repair"><div><b>Repair by itself</b><span>Silence, a stalled TV stream or a part that stops answering: Hype Studio restarts that part (max. 3× per 30 min, then it only alarms).</span></div></label>
       <label class="opt" data-find="hype live heartbeat alarm push"><input type="checkbox" id="g_heartbeat"><div><b>Report to Hype Live every minute</b><span>Hype Live shows it in Health and pushes problems to your phone (Hype Live app). No report for 3 minutes = an alarm too.</span></div></label>
       <div class="row" style="gap:8px;flex-wrap:wrap" data-find="hype live key link"><input type="password" id="g_key" placeholder="Hype Live key (⚙️ Settings → 🔗 Links)" autocomplete="off" style="flex:1;min-width:220px"><input type="url" id="g_url" style="width:220px" aria-label="Website"><button class="btn sm yellow" id="g_save">Save</button></div>
+      <label class="opt" data-find="now playing song hype live sponsor spot proof"><input type="checkbox" id="g_np_spots"><div><b>Sponsor spots → Hype Live (proof of play)</b><span>Every sponsor spot that plays is logged in Hype Live's sponsor report (like "SPOT: Brand" in CLOSE). Switch on when Hype Studio is the station on air.</span></div></label>
+      <label class="opt" data-find="now playing song hype live go live"><input type="checkbox" id="g_np"><div><b>Now playing → Hype Live (go-live)</b><span>Every song / jingle / spot with its exact length goes to Hype Live (Hype Screen, song cards, 🔥, reports). Only switch on at go-live – until then the public radio is still CLOSE.</span></div></label>
       <span class="lab" style="margin-top:6px">Last events</span>
       <div id="gEv" style="display:flex;flex-direction:column;gap:4px;font-size:13px"></div>
     </section>
@@ -273,7 +275,7 @@ let SEC = 'sound'; try { SEC = localStorage.getItem('hypeSetSec') || 'sound'; } 
 // ---------- alarm & Hype Live ----------
 function gRender(g) {
   const c = g.conf || {}, hb = g.heartbeat || {}, pr = g.problems || [];
-  $('#g_repair').checked = c.repair !== false; $('#g_heartbeat').checked = c.heartbeat !== false;
+  $('#g_repair').checked = c.repair !== false; $('#g_heartbeat').checked = c.heartbeat !== false; $('#g_np').checked = !!c.np; $('#g_np_spots').checked = !!c.np_spots;
   $('#g_url').value = c.hl_url || 'https://hyperadio.nl/'; $('#g_key').placeholder = c.has_key ? '•••••••• (key saved – type to replace)' : 'Hype Live key (⚙️ Settings → 🔗 Links)';
   const ago = t => t ? Math.round((Date.now() / 1000 - t)) + ' s ago' : 'never';
   $('#gNow').innerHTML = `<div class="row between"><b>${!g.fresh ? '<span style="color:var(--r)">● the guard is not running</span>' : pr.length ? '<span style="color:var(--r)">● ' + pr.map(p => esc(p.text)).join(' · ') + '</span>' : '<span style="color:var(--g)">● all OK</span>'}</b>
@@ -284,6 +286,8 @@ function gLoad() { get('guard').then(gRender).catch(() => {}); }
 const gPost = d => post('guard', d).then(g => { gRender(g); toast('Saved'); });
 $('#g_repair').onchange = () => gPost({repair: $('#g_repair').checked});
 $('#g_heartbeat').onchange = () => gPost({heartbeat: $('#g_heartbeat').checked});
+$('#g_np').onchange = () => gPost({np: $('#g_np').checked});
+$('#g_np_spots').onchange = () => gPost({np_spots: $('#g_np_spots').checked});
 $('#g_save').onclick = () => { const d = {hl_url: $('#g_url').value.trim()}; if ($('#g_key').value.trim()) d.hl_key = $('#g_key').value.trim(); $('#g_key').value = ''; gPost(d); };
 gLoad(); setInterval(() => { if (SEC === 'guard' && !document.hidden) gLoad(); }, 5000);
 function showSec(n) { SEC = n; try { localStorage.setItem('hypeSetSec', n); } catch (e) {} $$('.sec').forEach(x => x.hidden = x.dataset.sec !== n); $$('.sbtn').forEach(b => b.classList.toggle('on', b.dataset.sec === n)); }

@@ -279,8 +279,15 @@ class ClockRunner:
                 path = resolve_file(c, ref)
             elif kind in ("jingle", "id"):
                 path = pick_jingle(c, ref)
-            elif kind == "adbreak":
-                path = pick_jingle(c, "ADS")
+            elif kind == "adbreak":          # one sponsor spot per call; the slot's number = spots in this break
+                brands = self.ad_brands if getattr(self, "ad_slot", None) == (cid, st[0]) else set()
+                self.ad_slot = (cid, st[0]); self.ad_brands = brands
+                pl = CTX.get("ad_planned") if CTX.get("ad_planned") is not None else {}
+                got = pick_ads(c, at, 1, pl, brands)
+                path = got[0] if got else None
+                if path:
+                    r_b = c.execute("SELECT brand FROM ad_spots WHERE path=?", (path,)).fetchone()
+                    if r_b and r_b[0]: brands.add(r_b[0].strip().lower())
             st[2] = False
             if not path: self.skipped = (self.skipped + [(kind, ref)])[-60:]
             if path and not c.execute("SELECT 1 FROM items WHERE path=? AND section='music'", (path,)).fetchone():
@@ -288,7 +295,7 @@ class ClockRunner:
             if path:
                 self.jrun = 0 if c.execute("SELECT 1 FROM items WHERE path=? AND section='music'", (path,)).fetchone() else self.jrun + 1
                 st[1] -= 1
-                if st[1] <= 0 or kind in ("song", "file", "jingle", "id", "adbreak", "showjingle"): st[0] += 1; st[1] = 0
+                if st[1] <= 0 or kind in ("song", "file", "jingle", "id", "showjingle"): st[0] += 1; st[1] = 0
                 self.snap = (cid, st[0], st[1], st[2]) if resume else None
                 c.commit(); return path
             st[0] += 1; st[1] = 0                                # slot empty / playlist finished: next slot
@@ -627,6 +634,71 @@ def api_save_padbanks(c, d):
 
 # ---------------- on-screen items (New Music, Throwback … images on TV when a song from a folder plays) ----------------
 SCREEN_DIR = "/srv/hype/branding/screen"
+# ---------------- sponsor spots / ad breaks ----------------
+def init_ads(c):
+    c.execute("""CREATE TABLE IF NOT EXISTS ad_spots(id INTEGER PRIMARY KEY, brand TEXT, path TEXT, start_day TEXT, end_day TEXT,
+                 per_day INT DEFAULT 4, days TEXT DEFAULT '0123456', hours TEXT DEFAULT '', enabled INT DEFAULT 1, pos INT DEFAULT 0)"""); c.commit()
+
+def ad_window(sp, t):
+    """(start, end) of the hours this spot may play on the day of t ('' = 07:00–24:00; '16-18'; '22-2' over midnight)."""
+    lt = time.localtime(t); day0 = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 0, 0, 0, 0, 0, -1))
+    m = re.match(r"^\s*(\d{1,2})\s*-\s*(\d{1,2})\s*$", sp.get("hours") or "")
+    a, b = (int(m.group(1)), int(m.group(2))) if m else (7, 24)
+    if b <= a: b += 24
+    return day0 + a * 3600, day0 + b * 3600
+
+def ad_spots(c):
+    init_ads(c)
+    k = ["id", "brand", "path", "start_day", "end_day", "per_day", "days", "hours", "enabled"]
+    return [dict(zip(k, r)) for r in c.execute(f"SELECT {','.join(k)} FROM ad_spots ORDER BY pos, id")]
+
+def ad_played_today(c, t=None):
+    """Plays per spot file today (from the as-run log)."""
+    lt = time.localtime(t or time.time()); day0 = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 0, 0, 0, 0, 0, -1))
+    return dict(c.execute("SELECT path, COUNT(*) FROM asrun WHERE started >= ? AND kind != 'music' GROUP BY path", (day0,)).fetchall())
+
+def pick_ads(c, t, n, planned=None, avoid_brands=None):
+    """The n spots that are most 'behind schedule' at time t (X per day spread over their hours), max. 1 per brand,
+    never longer than the max. break length together. planned = {path: count} already in Up next (counted as played)."""
+    planned = planned if planned is not None else {}; avoid_brands = set(avoid_brands or ())
+    lt = time.localtime(t); today = time.strftime("%Y-%m-%d", lt)
+    played = ad_played_today(c, t); max_len = float(get_setting(c, "ad_max_len", 150)); out = []; total = 0.0
+    cand = []
+    for sp in ad_spots(c):
+        if not sp["enabled"] or not sp["path"]: continue
+        if sp["start_day"] and today < sp["start_day"]: continue
+        if sp["end_day"] and today > sp["end_day"]: continue
+        if str(lt.tm_wday) not in (sp["days"] or "0123456"): continue
+        a, b = ad_window(sp, t)
+        if not (a <= t < b): continue
+        r = c.execute("SELECT COALESCE(cue_end, duration, 30) - COALESCE(cue_start, 0) FROM items WHERE path=? AND problem IS NULL", (sp["path"],)).fetchone()
+        if not r: continue
+        done = played.get(sp["path"], 0) + planned.get(sp["path"], 0)
+        if done >= (sp["per_day"] or 0): continue
+        target = (sp["per_day"] or 0) * min(1.0, (t - a) / max(1.0, b - a))
+        cand.append((target - done + 0.5, sp, float(r[0] or 30)))
+    for score, sp, ln in sorted(cand, key=lambda x: -x[0]):
+        if len(out) >= n: break
+        br = (sp["brand"] or "").strip().lower()
+        if br and br in avoid_brands: continue
+        if out and total + ln > max_len: continue
+        out.append(sp["path"]); total += ln; avoid_brands.add(br); planned[sp["path"]] = planned.get(sp["path"], 0) + 1
+    return out
+
+def api_save_ads(c, d):
+    init_ads(c); c.execute("DELETE FROM ad_spots")
+    for i, s in enumerate(d.get("spots", [])):
+        hrs = str(s.get("hours") or "").strip()
+        if hrs and not re.match(r"^\d{1,2}\s*-\s*\d{1,2}$", hrs): raise ValueError("hours must be like 16-18 (or empty = 07–24)")
+        for k in ("start_day", "end_day"):
+            if s.get(k) and not re.match(r"^\d{4}-\d{2}-\d{2}$", str(s[k])): raise ValueError("dates must be like 2026-11-01")
+        c.execute("INSERT INTO ad_spots(brand, path, start_day, end_day, per_day, days, hours, enabled, pos) VALUES(?,?,?,?,?,?,?,?,?)",
+                  ((s.get("brand") or "").strip()[:60], s.get("path") or "", s.get("start_day") or "", s.get("end_day") or "", max(0, min(96, int(s.get("per_day") or 0))),
+                   "".join(ch for ch in "0123456" if ch in str(s.get("days") if s.get("days") is not None else "0123456")), hrs, int(bool(s.get("enabled", True))), i))
+    for k, lo, hi in (("ad_max_len", 15, 600), ("ad_max_spots", 1, 10)):
+        if k in d: set_setting(c, k, max(lo, min(hi, float(d[k]))))
+    c.commit()
+
 def init_screen(c):
     c.executescript("""
     CREATE TABLE IF NOT EXISTS screen_rules(id INTEGER PRIMARY KEY, name TEXT, enabled INT DEFAULT 1, trigger TEXT, ref TEXT,

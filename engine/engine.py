@@ -555,6 +555,9 @@ class Engine:
         self.plan = [p_ for p_ in self.plan if p_.get("src") not in ("aux", "dj")]
         if back: self.aux_save_file()
     def refill(self, c):
+        planner.CTX["ad_planned"] = {}        # spots already in Up next count as played (X per day stays right)
+        for p_ in ([self.liq_next] if self.liq_next else []) + self.plan:
+            if p_.get("section") == "ads": planner.CTX["ad_planned"][p_["path"]] = planner.CTX["ad_planned"].get(p_["path"], 0) + 1
         if not self.auto:
             if not self.plan:
                 it = self.dj_take() if self.dj else self.aux_take()
@@ -764,6 +767,12 @@ class Engine:
     def event_items(self, c, e):
         avoid = self.avoid(); paths = []
         if e["kind"] == "song": paths = [e["ref"]]
+        elif e["kind"] == "adbreak":         # a fixed-time ad break: the spots that are due now (max. "how many")
+            pl = {}
+            for p_ in ([self.liq_next] if self.liq_next else []) + self.plan:
+                if p_.get("section") == "ads": pl[p_["path"]] = pl.get(p_["path"], 0) + 1
+            paths = planner.pick_ads(c, max(time.time(), e["t"]), int(e["amount"] or planner.get_setting(c, "ad_max_spots", 3)), pl)
+            if not paths: log.info("ad break %s: no spots due", e["at"])
         elif e["kind"] == "jingle": paths = [planner.resolve_jingle(c, e["ref"], list(avoid["paths"]))]
         elif e["kind"] in ("playlist", "folder"):
             pid = int(e["ref"]) if e["kind"] == "playlist" else planner.folder_playlist_id(c, e["ref"])
@@ -861,6 +870,7 @@ class Engine:
             try: self.screen.on_song(c, it)
             except Exception as e: log.warning("screen: %s", e)
             log.info("ON AIR %s – %s [%s/%s] scene=%s", it["artist"], it["title"], it["folder"], mode, scene)
+            hl_send_np(c, it)
             if it["section"] != "music": self.last_kind = "jingle"
             self.push_next(c)
     def intro_sweeper(self, c, it):
@@ -1433,6 +1443,12 @@ class H(BaseHTTPRequestHandler):
             if p == "/overlays": return self.send(200, planner.api_overlays(dbc()))
             if p == "/shows": return self.send(200, planner.api_shows(dbc()))
             if p == "/events": return self.send(200, planner.api_events(dbc()))
+            if p == "/ads":
+                c_ = dbc(); pl_ = planner.ad_played_today(c_)
+                files = [{"path": r[0], "title": r[1], "folder": r[2], "len": r[3], "video": bool(r[4])} for r in c_.execute(
+                    "SELECT path, title, folder, COALESCE(cue_end, duration, 0) - COALESCE(cue_start, 0), has_video FROM items WHERE section='ads' AND problem IS NULL ORDER BY folder, title")]
+                return self.send(200, {"spots": [dict(s_, played_today=pl_.get(s_["path"], 0)) for s_ in planner.ad_spots(c_)], "files": files,
+                                       "max_len": planner.get_setting(c_, "ad_max_len", 150), "max_spots": planner.get_setting(c_, "ad_max_spots", 3)})
             if p == "/lower": return self.send(200, dict(LOWER, scene=E.tv.scene))
             if p == "/settings": return self.send(200, get_settings())
             if p == "/padbanks": return self.send(200, planner.api_padbanks(dbc()))
@@ -1487,6 +1503,7 @@ class H(BaseHTTPRequestHandler):
                     elif a == "save_events": planner.api_save_events(c, d)
                     elif a == "save_padbanks": planner.api_save_padbanks(c, d)
                     elif a == "save_screen": planner.api_save_screen_rules(c, d)
+                    elif a == "save_ads": planner.api_save_ads(c, d); E.replan()
                     elif a != "replan": return self.send(404, {"error": "unknown"})
                     if a in ("save_clock", "delete_clock", "set_schedule", "replan", "delete_playlist", "save_playlist", "reset_playlist", "save_show_clocks"): E.replan()
                 return self.send(200, res)
@@ -1801,6 +1818,29 @@ def nowplaying_api():
             "hype": {"listeners": L, "source": "hype-studio"}}
 
 GUARD_CONF = "/var/lib/hype/guard_conf.json"
+def hl_send_np(c, it):
+    """Song info + sponsor proof of play to Hype Live (?hype_np=KEY, JSON). Only when switched on (Settings → 🛡 Alarm & Hype Live),
+    because until go-live the public radio is still CLOSE."""
+    try: g = json.load(open(GUARD_CONF))
+    except Exception: return
+    if not g.get("hl_key") or not (g.get("np") or (g.get("np_spots") and it.get("section") == "ads")): return
+    if not g.get("np") and it.get("section") != "ads": return
+    sec = it.get("section"); typ = "song" if sec == "music" else "spot" if sec == "ads" else "jingle"
+    body = {"artist": it.get("artist") or "", "title": it.get("title") or "", "type": typ, "length": round(E.length(it), 1), "start": round(time.time(), 1), "path": it.get("path")}
+    if typ == "spot":
+        r = c.execute("SELECT brand FROM ad_spots WHERE path=?", (it.get("path"),)).fetchone()
+        body["brand"] = (r[0] if r and r[0] else (it.get("folder") or "").split("/")[-1]) or it.get("title")
+    if typ == "song":
+        body["next"] = [{"artist": p_.get("artist") or "", "title": p_.get("title") or "", "type": "song" if p_.get("section") == "music" else "jingle"} for p_ in (([E.liq_next] if E.liq_next else []) + E.plan)[:3]]
+    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_np=" + urllib.parse.quote(g["hl_key"])
+    def go():
+        try:
+            r = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "User-Agent": "HypeStudio/1"})
+            a = urllib.request.urlopen(r, timeout=10).read(100).decode("utf-8", "replace")
+            log.info("Hype Live np (%s %s): %s", typ, body.get("brand") or body["title"], a[:40])
+        except Exception as e: log.warning("Hype Live np: %s", e)
+    threading.Thread(target=go, daemon=True).start()
+
 def guard_status(full=False):
     try: g = json.load(open("/var/lib/hype/guard.json"))
     except Exception: g = {"t": 0}
@@ -1808,7 +1848,8 @@ def guard_status(full=False):
     if full:
         try: c = json.load(open(GUARD_CONF))
         except Exception: c = {}
-        g["conf"] = {"hl_url": c.get("hl_url", "https://hyperadio.nl/"), "has_key": bool(c.get("hl_key")), "heartbeat": c.get("heartbeat", True), "repair": c.get("repair", True)}
+        g["conf"] = {"hl_url": c.get("hl_url", "https://hyperadio.nl/"), "has_key": bool(c.get("hl_key")), "heartbeat": c.get("heartbeat", True), "repair": c.get("repair", True),
+                     "np": bool(c.get("np")), "np_spots": bool(c.get("np_spots"))}
     else:
         g = {k: g.get(k) for k in ("fresh", "ok", "problems", "heartbeat", "events")}; g["events"] = (g.get("events") or [])[:5]
     return g
@@ -1818,7 +1859,7 @@ def guard_save(d):
     if "hl_key" in d and str(d["hl_key"]).strip() and "•" not in str(d["hl_key"]): c["hl_key"] = str(d["hl_key"]).strip()[:80]
     if d.get("hl_key_clear"): c["hl_key"] = ""
     if "hl_url" in d and str(d["hl_url"]).startswith("https://"): c["hl_url"] = str(d["hl_url"]).strip()[:200]
-    for k in ("heartbeat", "repair"):
+    for k in ("heartbeat", "repair", "np", "np_spots"):
         if k in d: c[k] = bool(d[k])
     json.dump(c, open(GUARD_CONF, "w")); os.chmod(GUARD_CONF, 0o600)
     return guard_status(full=True)
