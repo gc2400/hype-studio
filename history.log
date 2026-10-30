@@ -42,3 +42,4 @@
 2026-10-31T00:39:29 ok f51d32a7 Pages show '↻ Hype Studio was updated – click to reload' after an update
 2026-10-31T00:43:20 ok 11ad96fd Panel: no emojis on tabs, banks and pad buttons (DUCK / VIDEO / LOOP), MEDIA bank stands out in yellow, playlists: 'All N' or 'Next N' choice, library rows no longer move on hover (buttons appear over the row)
 2026-10-31T00:47:27 ok bc025775 Panel: Up next without the History link, library sections as the same switch as the Library page, hover buttons on the row colour; Library page: the list ends at the window bottom
+2026-10-31T00:53:37 ok e80eb73e Phone: header buttons evenly sized and identical on every page; Planning tabs wrap cleanly, lists scroll in their box, opening a playlist/clock jumps to its editor

@@ -1,17 +1,17 @@
 {
- "time": "2026-10-31T00:47:27",
+ "time": "2026-10-31T00:53:37",
  "result": "ok",
- "commit": "bc02577516dcd35aaa65c1e028b5f6abb8b29e5b",
- "subject": "Panel: Up next without the History link, library sections as the same switch as the Library page, hover buttons on the row colour; Library page: the list ends at the window bottom",
+ "commit": "e80eb73e6034c71849f66c7c03d3530ca66d0010",
+ "subject": "Phone: header buttons evenly sized and identical on every page; Planning tabs wrap cleanly, lists scroll in their box, opening a playlist/clock jumps to its editor",
  "log": [
-  "00:47:27 update 11ad96fd \u2192 bc025775 \u00b7 2 file(s): web/panel/index.html, web/panel/library.html",
-  "00:47:27 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "00:53:37 update bc025775 \u2192 e80eb73e \u00b7 2 file(s): web/panel/header.js, web/panel/plan.html",
+  "00:53:37 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Tyla x Wizkid \u2013 DYNAMITE",
+  "song": "Rich Kalashh \u2013 Rosea Malu",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
