@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T00:36:39",
+ "time": "2026-10-31T00:39:29",
  "result": "ok",
- "commit": "61c070551bae5bdef001ef3d1c950b66671e1279",
- "subject": "Pads: bank buttons wrap (no scrollbar); Library: sections above the search, genres wrap, compact on phones; Up next songs you added survive a restart",
+ "commit": "f51d32a786803a51a36096b4807256d399e0f3c3",
+ "subject": "Pages show '\u21bb Hype Studio was updated \u2013 click to reload' after an update",
  "log": [
-  "00:35:53 update 099d8051 \u2192 61c07055 \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/library.html",
-  "00:35:54 restart hype-engine",
-  "00:36:39 installed OK \u00b7 restarted: hype-engine"
+  "00:38:44 update 61c07055 \u2192 f51d32a7 \u00b7 2 file(s): engine/engine.py, web/panel/header.js",
+  "00:38:44 restart hype-engine",
+  "00:39:29 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "bees & honey x Omah Lay x BEAM x Gyptian \u2013 As We Get High",
+  "song": "Kybba x Kapo x Busy Signal \u2013 GIMIDI",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },

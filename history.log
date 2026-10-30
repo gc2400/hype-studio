@@ -39,3 +39,4 @@
 2026-10-31T00:30:59 ok 5742d2cc Panel library card: Playlists tab (play next / end / AUX, drag into Up next or AUX; ordered lists go whole, others the next N) and Clocks tab (Run now = rest of this hour)
 2026-10-31T00:33:49 ok 099d8051 Rotation: a source that ended one round never starts the next (no LAT … LAT close together)
 2026-10-31T00:36:39 ok 61c07055 Pads: bank buttons wrap (no scrollbar); Library: sections above the search, genres wrap, compact on phones; Up next songs you added survive a restart
+2026-10-31T00:39:29 ok f51d32a7 Pages show '↻ Hype Studio was updated – click to reload' after an update
