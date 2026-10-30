@@ -1,18 +1,18 @@
 {
- "time": "2026-10-30T21:29:56",
+ "time": "2026-10-30T22:16:40",
  "result": "ok",
- "commit": "7cefdb24e80b217aa75d54f0851b481a7ea5a8d4",
- "subject": "TV: no Now Playing box for a mix without artist",
+ "commit": "eb6a4bb1960a48dc755ac31afd92103a165906de",
+ "subject": "Listeners counted as unique devices (address + player): MP3 via Icecast's list matched to nginx-mirrored starts, HLS + TV from the logs; MP3 + HLS together without double counting",
  "log": [
-  "21:29:11 update c3eeb410 \u2192 7cefdb24 \u00b7 1 file(s): engine/engine.py",
-  "21:29:11 restart hype-engine",
-  "21:29:56 installed OK \u00b7 restarted: hype-engine"
+  "22:15:55 update 7cefdb24 \u2192 eb6a4bb1 \u00b7 2 file(s): engine/engine.py, system/nginx-hype.conf",
+  "22:15:55 restart hype-engine",
+  "22:16:40 installed OK \u00b7 restarted: hype-engine, nginx-reload"
  ],
  "guard": {
-  "song": " \u2013 ZAZA CLUB | DANCEHALL | FUNK CARIOCA | HIP HOP | WORLD MUSIC DJ SET BY HADER",
+  "song": " \u2013 OLD SCHOOL REGGAETON, PERREO & DEMBOW DJ MIX | ROMANA LIVE SET | DON OMAR, BAD BUNNY, BAD GYAL",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },

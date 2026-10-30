@@ -20,3 +20,4 @@
 2026-10-30T21:17:52 ok 26b20b4f Library: sort ⚠ problems first (+ count); mixes need no artist (FRIDAY 21/22 mixes were blocked by 'no artist')
 2026-10-30T21:24:02 ok c3eeb410 Library: separate ⚠ Problems button next to Sort
 2026-10-30T21:29:56 ok 7cefdb24 TV: no Now Playing box for a mix without artist
+2026-10-30T22:16:40 ok eb6a4bb1 Listeners counted as unique devices (address + player): MP3 via Icecast's list matched to nginx-mirrored starts, HLS + TV from the logs; MP3 + HLS together without double counting
