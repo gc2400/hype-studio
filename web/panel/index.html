@@ -82,6 +82,9 @@ body.is-auto .auxbtn{display:none}
 .b-audio{background:var(--card2);color:var(--mut)}.b-clip{background:#062F38;color:var(--b)}.b-pair{background:#2B2500;color:var(--y)}.b-jingle{background:#1E1438;color:#B9A2FF}
 .scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .wrapchips{display:flex;gap:6px;flex-wrap:wrap}#res{overflow-x:hidden}
+.seg{display:inline-flex;gap:2px;background:#071A2B;border:1px solid var(--line2);border-radius:12px;padding:3px;flex-wrap:wrap;align-self:flex-start;max-width:100%}
+.seg button{border:0 !important;box-shadow:none !important;min-height:0;background:transparent;color:var(--soft);font:inherit;font-size:12px;font-weight:800;padding:7px 10px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.seg button:hover{background:var(--card2);color:#fff}.seg button.on{background:var(--y);color:#061423}.seg button span{opacity:.65;font-weight:700;margin-left:3px}
 .tabs{display:flex;background:var(--deep);border-radius:11px;padding:3px;gap:3px}
 .tab{cursor:pointer;flex:1;min-height:36px;border-radius:9px;border:0;background:transparent;color:var(--mut);font-weight:800;font-size:12px;letter-spacing:.06em}
 .tab.on{background:var(--b);color:var(--bg)}
@@ -102,7 +105,7 @@ body.is-auto .auxbtn{display:none}
 /* the buttons appear OVER the right end of the row on hover - the row itself never moves or changes size */
 #res .ri{position:relative}
 .ri .acts{display:flex;gap:4px;flex:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);opacity:0;pointer-events:none;
-  padding-left:28px;background:linear-gradient(90deg,transparent,var(--card) 26px);transition:opacity .12s}
+  padding-left:28px;background:linear-gradient(90deg,transparent,var(--card2) 26px);transition:opacity .12s}
 .ri:hover .acts,.ri.sel .acts,.ri:focus-within .acts{opacity:1;pointer-events:auto}
 @media (hover:none){.ri .acts{position:static;transform:none;opacity:1;pointer-events:auto;background:none;padding-left:0}}
 .ri .acts select{height:34px;background:#071A2B;color:var(--txt);border:1px solid var(--line2);border-radius:9px;padding:0 6px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
@@ -264,7 +267,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         </div>
       </div>
       <div class="card" style="padding:8px" id="cLog">
-        <div class="row between" style="padding:4px 6px"><span class="lab">Up next <a href="history.html" style="color:var(--mut);text-decoration:none;margin-left:6px" title="Everything that went on air">History ↗</a></span><span class="lab" id="logInfo" style="color:var(--b);white-space:nowrap"></span></div>
+        <div class="row between" style="padding:4px 6px"><span class="lab">Up next</span><span class="lab" id="logInfo" style="color:var(--b);white-space:nowrap"></span></div>
         <div class="log" id="log"></div>
       </div>
       <div class="card" style="padding:8px" id="auxCard">
@@ -375,7 +378,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <span style="position:absolute;left:-9999px">Search the library</span>
           <input id="q" type="search" placeholder="Search artist or title…  ( / )" autocomplete="off">
         </label>
-        <div class="wrapchips" id="secs"></div>
+        <div class="seg" id="secs" role="tablist" aria-label="Section"></div>
         <div class="wrapchips" id="folders"></div>
         <div class="wrapchips" id="subfolders" hidden></div>
         <div class="res" id="res"></div>
@@ -756,7 +759,7 @@ let PLC = {pl: [], ck: []};
 function libPlan() {     // the Playlists / Clocks tabs of the library card
   Promise.all([api('playlists'), api('clocks')]).then(([pl, ck]) => {
     PLC = {pl, ck}; const cnt = Object.assign({}, (LIB && LIB.counts) || {}, {playlists: pl.length, clocks: ck.length});
-    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="btn sm ${k === SEC ? 'yellow' : ''}" data-sec="${k}">${n} <span style="opacity:.7">${cnt[k] ?? ''}</span></button>`).join('');
+    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="${k === SEC ? 'on' : ''}" data-sec="${k}" role="tab" aria-selected="${k === SEC}">${n}<span>${cnt[k] ?? ''}</span></button>`).join('');
     $('#secs').querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     $('#folders').innerHTML = ''; $('#subfolders').hidden = true; const q = nfx($('#q').value);
     if (SEC === 'playlists') {
@@ -791,7 +794,7 @@ function lib() {
   $('#libSort').textContent = LSORT === 'new' ? 'Newest' : 'A–Z';
   api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + LSORT).then(d => {
     LIB = d;
-    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="btn sm ${k === SEC ? 'yellow' : ''}" data-sec="${k}">${n} <span style="opacity:.7">${d.counts[k] ?? ''}</span></button>`).join('');
+    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="${k === SEC ? 'on' : ''}" data-sec="${k}" role="tab" aria-selected="${k === SEC}">${n}<span>${d.counts[k] ?? ''}</span></button>`).join('');
     $('#secs').querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     // level 1: genre folders · level 2: the subfolders of the chosen genre
     const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];
