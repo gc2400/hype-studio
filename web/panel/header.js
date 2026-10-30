@@ -39,7 +39,7 @@
 #hhead #stRadio,#hhead #stTv{display:inline-block;width:11px;height:11px;padding:0;border-radius:50%;font-size:0;background:#55697D;border:0;margin:0}
 #hhead #stRadio.ok,#hhead #stTv.ok{background:#3DDC97;box-shadow:0 0 6px rgba(61,220,151,.5)}#hhead #stRadio.bad,#hhead #stTv.bad{background:#FF4D5E}
 #hhead #stClock{display:none}
-#hhead #clock{font:700 20px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#FFE000;margin-left:4px}
+#hhead #clock{font:800 20px Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.2px;color:#FFE000;margin-left:4px}
 #hhead .sp{flex:1}
 #hhead .hnav{display:flex;align-items:center;gap:2px;padding:3px;border-radius:12px;background:rgba(10,24,40,.9);border:1px solid #1E3A56;flex:none}
 #hhead .hnav a{font:700 13px/1 Inter,system-ui,sans-serif;color:#A9BCCD;text-decoration:none;padding:9px 12px;border-radius:9px;white-space:nowrap}
