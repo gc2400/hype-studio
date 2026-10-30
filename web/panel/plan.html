@@ -46,6 +46,16 @@ label.tg input{width:20px;height:20px;accent-color:var(--y)}
 .pick{max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:2px;background:var(--deep);border-radius:10px;padding:6px}
 .pick button{display:flex;justify-content:space-between;gap:10px;border:0;background:none;color:var(--txt);padding:8px;border-radius:8px;cursor:pointer;text-align:left;font-size:13px}
 .pick button:hover{background:var(--card2)}.pick button span{color:var(--mut)}
+.srcs{display:flex;flex-direction:column;gap:4px;max-height:420px;overflow:auto;padding-right:2px}
+.src{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:var(--card2);border:1px solid var(--line2);font-size:13px}
+.src .h{cursor:grab;color:var(--mut);font-size:16px;line-height:1;user-select:none;padding:0 2px}
+.src.drag{opacity:.35}.src.over{border-color:var(--y);box-shadow:0 -2px 0 var(--y)}
+.src .n{width:24px;color:var(--mut);font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right}
+.src .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.src .lbl small{font-weight:500;color:var(--mut);margin-left:6px}
+.src input[type=number]{width:52px;height:28px;padding:0 6px}
+.src .ib{background:transparent;border:1px solid var(--line2);color:var(--soft);border-radius:8px;width:28px;height:28px;cursor:pointer;font-weight:800}
+.src .ib:hover{border-color:var(--b);color:#fff}.src .ib.rm:hover{border-color:#FF4D5E;color:#FF8A97}
 .order{display:flex;flex-direction:column;gap:2px;max-height:360px;overflow:auto}
 .order div{display:flex;gap:10px;font-size:13px;padding:5px 8px;border-radius:8px}
 .order div.nextup{background:#2B2500;color:var(--y);font-weight:700}
@@ -101,11 +111,13 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
         <label class="tg" title="Like CLOSE POWER: one from AFRO, then LAT, then CARIB … Randomize = new order of the sources every round"><input type="checkbox" id="plRotate"> Rotation (take turns: the amount from each source, then the next)</label>
       </div>
       <span class="lab">What's in it</span>
-      <div class="row" id="plSources"></div>
+      <div class="srcs" id="plSources"></div>
       <div class="row">
         <button class="btn sm" id="addFolder">+ Folder</button>
         <button class="btn sm" id="addSong">+ Song</button>
+        <button class="btn sm" id="addJingle">+ Jingles</button>
         <button class="btn sm" id="addList">+ Playlist</button>
+        <span class="muted" style="font-size:12px">Drag ⠿ (or ▲▼) to change the order</span>
       </div>
       <div id="picker" hidden>
         <input type="search" id="pickQ" placeholder="Search…" style="width:100%;margin-bottom:6px">
@@ -253,26 +265,48 @@ function openPL(p) {
   $('#plDel').hidden = !cur.id; $('#plReset').hidden = !cur.id; $('#plInfo').textContent = cur.id ? cur.count + ' songs' : 'new';
   renderSources(); renderPL(); $('#picker').hidden = true;
   if (cur.id) get('playlist?id=' + cur.id).then(d => {
-    $('#plPos').textContent = `· ${d.count} songs, next up = #${Math.min(d.pos + 1, d.count)}${d.rounds ? ' · round ' + (d.rounds + 1) : ''}`;
+    $('#plPos').textContent = d.rotation ? `· the next turns of this round${d.random_next ? ' – then the sources get a new random order' : ' – then the same order again'}`
+      : d.smart ? '· Smart pick: the song that rested longest plays first (with artist separation) – every song gets its turn'
+      : `· ${d.count} songs, next up = #${Math.min(d.pos + 1, d.count)}${d.rounds ? ' · round ' + (d.rounds + 1) : ''}`;
     $('#plOrder').innerHTML = d.songs.map((s, i) => `<div class="${i === d.pos ? 'nextup' : i < d.pos ? 'done' : ''}"><span class="mono" style="width:34px;color:var(--mut)">${i + 1}</span><span style="flex:1">${s.artist ? esc(s.artist) + ' – ' : ''}${esc(s.title)}</span><span class="muted">${esc(s.folder)}</span></div>`).join('');
   }); else { $('#plOrder').innerHTML = ''; $('#plPos').textContent = ''; }
 }
-function srcLabel(s) { if (s.kind === 'folder') return '📁 ' + s.ref; if (s.kind === 'playlist') { const p = PL.find(x => x.id == s.ref); return '≡ ' + (p ? p.name : 'playlist ' + s.ref); } return (s.kind === 'file' ? '🔊 ' : '♪ ') + s.ref.split('/').pop().replace(/\.[^.]+$/, '') + (s.kind === 'file' && s.found === false ? ' (not uploaded yet)' : ''); }
+const nf = t => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();   // search without accents
+function srcLabel(s) { if (s.kind === 'folder' && s.ref.startsWith('jingles/')) return '🔊 ' + s.ref.slice(8) + ' (all jingles in it)';
+  if (s.kind === 'folder') return '📁 ' + s.ref; if (s.kind === 'song' && s.ref.startsWith('jingles/')) return '🔊 ' + s.ref.split('/').pop().replace(/\.[^.]+$/, ''); if (s.kind === 'playlist') { const p = PL.find(x => x.id == s.ref); return '≡ ' + (p ? p.name : 'playlist ' + s.ref); } return (s.kind === 'file' ? '🔊 ' : '♪ ') + s.ref.split('/').pop().replace(/\.[^.]+$/, '') + (s.kind === 'file' && s.found === false ? ' (not uploaded yet)' : ''); }
 function renderSources() {
   const rot = $('#plRotate').checked;
-  $('#plSources').innerHTML = cur.sources.map((s, i) => `<span class="chip" style="${s.found === false ? 'opacity:.55' : ''}">${rot ? `<input type="number" min="1" value="${s.amount || 1}" data-amt="${i}" title="How many from this source per turn" style="width:44px;height:24px;padding:0 4px">×` : ''}${esc(srcLabel(s))}<button aria-label="Remove" data-rm="${i}">×</button></span>`).join('') || '<span class="muted">Nothing yet – add folders, songs or playlists.</span>';
+  $('#plSources').innerHTML = cur.sources.map((s, i) => `<div class="src" draggable="true" data-i="${i}" style="${s.found === false ? 'opacity:.55' : ''}"><span class="h" title="Drag to move">⠿</span><span class="n">${i + 1}</span>${rot ? `<input type="number" min="1" value="${s.amount || 1}" data-amt="${i}" title="How many from this source per turn"><span class="muted">×</span>` : ''}<span class="lbl">${esc(srcLabel(s))}</span><button class="ib" data-up="${i}" title="Move up" aria-label="Move up">▲</button><button class="ib" data-dn="${i}" title="Move down" aria-label="Move down">▼</button><button class="ib rm" data-rm="${i}" title="Remove" aria-label="Remove">×</button></div>`).join('') || '<span class="muted">Nothing yet – add folders, songs, jingles or playlists.</span>';
+  const mv = (a, b) => { if (b < 0 || b >= cur.sources.length || a === b) return; const [x] = cur.sources.splice(a, 1); cur.sources.splice(b, 0, x); renderSources(); };
   $$('#plSources [data-rm]').forEach(b => b.onclick = () => { cur.sources.splice(+b.dataset.rm, 1); renderSources(); });
+  $$('#plSources [data-up]').forEach(b => b.onclick = () => mv(+b.dataset.up, +b.dataset.up - 1));
+  $$('#plSources [data-dn]').forEach(b => b.onclick = () => mv(+b.dataset.dn, +b.dataset.dn + 1));
   $$('#plSources [data-amt]').forEach(e => e.onchange = () => { cur.sources[+e.dataset.amt].amount = Math.max(1, +e.value || 1); });
+  let from = null;
+  $$('#plSources .src').forEach(el => {
+    el.ondragstart = e => { from = +el.dataset.i; el.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'src'); };
+    el.ondragend = () => { el.classList.remove('drag'); $$('#plSources .over').forEach(x => x.classList.remove('over')); };
+    el.ondragover = e => { e.preventDefault(); $$('#plSources .over').forEach(x => x.classList.remove('over')); el.classList.add('over'); };
+    el.ondrop = e => { e.preventDefault(); if (from !== null) mv(from, +el.dataset.i); from = null; };
+  });
 }
 let pickMode = null;
 function openPicker(mode) { pickMode = mode; $('#picker').hidden = false; $('#pickQ').value = ''; $('#pickQ').focus(); fillPicker(); }
 function fillPicker() {
-  const q = $('#pickQ').value.toLowerCase();
+  const q = nf($('#pickQ').value);
+  if (pickMode === 'jingle') {
+    const fl = (FOLD.jingles || []).filter(f => nf(f).includes(q)).map(f => `<button data-v="jingles/${esc(f)}" data-k="folder"><b>🔊 ${esc(f)}</b><span>every jingle in this folder</span></button>`).join('');
+    get('library?section=jingles&q=' + encodeURIComponent($('#pickQ').value)).then(d => {
+      $('#pickRes').innerHTML = (fl + d.items.slice(0, 60).map(s => `<button data-v="${esc(s.path)}" data-k="song"><b>🔊 ${esc(s.title || s.path.split('/').pop())}</b><span>${esc(s.folder)}</span></button>`).join('')) || '<span class="muted">No jingles found.</span>';
+      $$('#pickRes [data-v]').forEach(b => b.onclick = () => { cur.sources.push({kind: b.dataset.k, ref: b.dataset.v, amount: 1}); renderSources(); toast('Added'); });
+    });
+    return;
+  }
   if (pickMode === 'folder') {
-    $('#pickRes').innerHTML = FOLD.music.filter(f => f.toLowerCase().includes(q)).map(f => `<button data-v="${esc(f)}"><b style="padding-left:${(f.split('/').length - 1) * 16}px">📁 ${esc(f.split('/').pop())}</b><span>${f.includes('/') ? esc(f) + ' · ' : ''}${FOLD.counts[f] || 0} songs</span></button>`).join('') || '<span class="muted">No folders found.</span>';
+    $('#pickRes').innerHTML = FOLD.music.filter(f => nf(f).includes(q)).map(f => `<button data-v="${esc(f)}"><b style="padding-left:${(f.split('/').length - 1) * 16}px">📁 ${esc(f.split('/').pop())}</b><span>${f.includes('/') ? esc(f) + ' · ' : ''}${FOLD.counts[f] || 0} songs</span></button>`).join('') || '<span class="muted">No folders found.</span>';
     bindPick('folder');
   } else if (pickMode === 'playlist') {
-    $('#pickRes').innerHTML = PL.filter(p => (!cur.id || p.id !== cur.id) && p.name.toLowerCase().includes(q)).map(p => `<button data-v="${p.id}"><b>≡ ${esc(p.name)}</b><span>${p.count} songs</span></button>`).join('') || '<span class="muted">No other playlists.</span>';
+    $('#pickRes').innerHTML = PL.filter(p => (!cur.id || p.id !== cur.id) && nf(p.name).includes(q)).map(p => `<button data-v="${p.id}"><b>≡ ${esc(p.name)}</b><span>${p.count} songs</span></button>`).join('') || '<span class="muted">No other playlists.</span>';
     bindPick('playlist');
   } else {
     get('library?section=music&q=' + encodeURIComponent(q)).then(d => {
@@ -283,7 +317,7 @@ function fillPicker() {
 }
 function bindPick(kind) { $$('#pickRes [data-v]').forEach(b => b.onclick = () => { cur.sources.push({kind, ref: b.dataset.v, amount: 1}); renderSources(); toast('Added'); }); }
 let pqT; $('#pickQ').oninput = () => { clearTimeout(pqT); pqT = setTimeout(fillPicker, 200); };
-$('#addFolder').onclick = () => openPicker('folder'); $('#addSong').onclick = () => openPicker('song'); $('#addList').onclick = () => openPicker('playlist');
+$('#addFolder').onclick = () => openPicker('folder'); $('#addSong').onclick = () => openPicker('song'); $('#addJingle').onclick = () => openPicker('jingle'); $('#addList').onclick = () => openPicker('playlist');
 $('#plRotate').onchange = () => renderSources();
 $('#plNew').onclick = () => openPL({id: null, name: '', loop: true, shuffle: true, rotate: false, sources: [], count: 0});
 $('#plSave').onclick = () => { cur.name = $('#plName').value; cur.loop = $('#plLoop').checked; cur.shuffle = $('#plShuffle').checked; cur.rotate = $('#plRotate').checked;

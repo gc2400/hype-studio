@@ -128,8 +128,24 @@ def playlist_order(c, pid):
         if shuffle: random.shuffle(ordl)
     return ordl, pos, rounds, bool(loop), bool(shuffle)
 
+def write_state(c, pid, ordj, pos, rounds):
+    """Every playlist position change goes through here. While the engine plans an item, CTX['touched'] collects the
+    old rows, so a planned item that is dropped again (replan, new hour, restart) can give its songs back (restore_states)."""
+    t = CTX.get("touched")
+    if t is not None and pid not in t:
+        r = c.execute("SELECT ord, pos, rounds, updated FROM playlist_state WHERE playlist_id=?", (pid,)).fetchone()
+        t[pid] = list(r) if r else None
+    c.execute("INSERT OR REPLACE INTO playlist_state VALUES(?,?,?,?,?)", (pid, ordj, pos, rounds, time.time()))
+
+def restore_states(c, snap):
+    """Put playlist positions back to before a planned item was taken (snap = {pid: old row or None})."""
+    for pid, row in snap.items():
+        if row is None: c.execute("DELETE FROM playlist_state WHERE playlist_id=?", (int(pid),))
+        else: c.execute("INSERT OR REPLACE INTO playlist_state VALUES(?,?,?,?,?)", (int(pid), *row))
+    c.commit()
+
 def save_state(c, pid, ordl, pos, rounds):
-    c.execute("INSERT OR REPLACE INTO playlist_state VALUES(?,?,?,?,?)", (pid, json.dumps(ordl), pos, rounds, time.time()))
+    write_state(c, pid, json.dumps(ordl), pos, rounds)
 
 def playlist_len(c, pid):
     """Items in one round: a rotation = the sum of its source amounts; otherwise its songs."""
@@ -167,7 +183,7 @@ def take_rotate(c, pid, start, ok, depth):
         if k >= max(1, amt or 1) or not path: pos += 1; k = 0
         if path: break
     if pos >= len(order): pos = 0; k = 0; rounds += 1; order = new_order(order)
-    c.execute("INSERT OR REPLACE INTO playlist_state VALUES(?,?,?,?,?)", (pid, json.dumps({"order": order, "k": k}), pos, rounds, time.time()))
+    write_state(c, pid, json.dumps({"order": order, "k": k}), pos, rounds)
     return path
 
 def take_source(c, kind, ref, ok, depth=0):
@@ -352,9 +368,28 @@ def api_save_playlist(c, d):
     c.commit(); return pid
 
 def api_preview_playlist(c, pid):
+    """What really plays next: a rotation shows its turns (which source), a randomized playlist with Smart pick shows the
+    songs that rested longest first (that is how it picks), an ordered playlist shows its order + position."""
+    rot = c.execute("SELECT rotate, shuffle FROM playlists WHERE id=?", (pid,)).fetchone()
+    if rot and rot[0]:
+        srcs = c.execute("SELECT kind, ref, amount FROM playlist_sources WHERE playlist_id=? ORDER BY pos", (pid,)).fetchall()
+        st = c.execute("SELECT ord, pos, rounds FROM playlist_state WHERE playlist_id=?", (pid,)).fetchone()
+        try: d = json.loads(st[0]) if st else {}
+        except Exception: d = {}
+        order = d.get("order") if isinstance(d, dict) and sorted(d.get("order") or []) == list(range(len(srcs))) else list(range(len(srcs)))
+        pos = st[1] if st else 0; k = d.get("k", 0) if isinstance(d, dict) else 0
+        name = lambda s: (s[1] if s[0] != "playlist" else ((c.execute("SELECT name FROM playlists WHERE id=?", (int(s[1]),)).fetchone() or ["?"])[0]))
+        turns = []
+        for i, o in enumerate(order):
+            if i < pos: continue
+            n = max(1, srcs[o][2] or 1) - (k if i == pos else 0)
+            turns += [dict(path="", artist="", title="next from " + name(srcs[o]), folder="")] * max(0, n)
+        return dict(count=len(turns), pos=0, rounds=st[2] if st else 0, rotation=True, random_next=bool(rot[1]), songs=turns)
     ordl, pos, rounds, loop, shuffle = playlist_order(c, pid)
+    if shuffle and get_setting(c, "smart_pick", True):
+        H = history(c); ordl = sorted(ordl, key=lambda p_: H["last"].get(p_, 0)); pos = 0
     rows = {r[0]: r for r in c.execute(f"SELECT path, artist, title, folder FROM items WHERE path IN ({','.join('?'*len(ordl[:200]))})", ordl[:200])} if ordl else {}
-    return dict(count=len(ordl), pos=pos, rounds=rounds, songs=[dict(path=p, artist=rows[p][1], title=rows[p][2], folder=rows[p][3]) for p in ordl[:200] if p in rows])
+    return dict(count=len(ordl), pos=pos, rounds=rounds, smart=bool(shuffle and get_setting(c, "smart_pick", True)), songs=[dict(path=p, artist=rows[p][1], title=rows[p][2], folder=rows[p][3]) for p in ordl[:200] if p in rows])
 
 def api_clocks(c):
     out = []

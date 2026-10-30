@@ -21,8 +21,13 @@ ARTIST_SEP = 75 * 60; TITLE_SEP = 3 * 3600; TARGET_LUFS = -14.0; PLAN_LEN = 10; 
 COLS = "path, artist, title, folder, mode, clip_path, duration, lufs, cue_start, cue_mix, cue_end, section, has_video, cues_edited"
 LOCK = threading.RLock()
 
+def fold(t):
+    """For searching: lower case, no accents (Álvaro = alvaro, Bésame = besame, Ñejo = nejo)."""
+    import unicodedata
+    return "".join(ch for ch in unicodedata.normalize("NFKD", str(t or "")) if not unicodedata.combining(ch)).lower()
 def dbc():
     c = sqlite3.connect(DB, timeout=30)
+    c.create_function("fold", 1, fold, deterministic=True)
     c.execute("""CREATE TABLE IF NOT EXISTS asrun(id INTEGER PRIMARY KEY, started REAL, path TEXT, artist TEXT,
                  title TEXT, folder TEXT, mode TEXT, clip TEXT, scene TEXT, kind TEXT)""")
     return c
@@ -120,6 +125,7 @@ JINGLE_FADE = 0.0   # Settings → Mixing → Jingles: fade-out (0 = plays out t
 MIX_OUT = 1.5     # Settings → Mixing → fade-out of the old song (= how long both songs play together)
 # ---------------- smart mix (from the loudness map) ----------------
 SMART_MIX = True     # Settings → Mixing → Smart mix
+SNAPS_FILE = "/var/lib/hype/plan_snaps.json"
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
 LM_CACHE = {}
 def lm_info(path):
@@ -601,6 +607,12 @@ class Engine:
         self.ov_last = 0; self.ov_count = {}; self.ov_recent = []
         self.last_kind = None
         self.plan = []; self.liq_next = None; self.now = {}; self.auto = True; self.stop_at_end = False; self.stopped = False
+        self.snaps = []      # (item id, playlist positions before it was planned) for the planned items not on air yet
+        try:   # after a restart: what was planned but never played gives its songs back to the playlists
+            for _id, snap in reversed(json.load(open(SNAPS_FILE))): planner.restore_states(c0, snap)
+            os.remove(SNAPS_FILE); log.info("playlists: positions of the unplayed Up next given back")
+        except FileNotFoundError: pass
+        except Exception as e: log.warning("snaps: %s", e)
         try: self.aux = json.load(open("/var/lib/hype/aux.json"))
         except Exception: self.aux = {"1": [], "2": []}
         self.dj = False; self.deck = None; self.faders = {}; self.parked = None
@@ -649,7 +661,21 @@ class Engine:
         for b in reversed(back): self.aux.setdefault(b.get("deck") or "1", []).insert(0, b)
         self.plan = [p_ for p_ in self.plan if p_.get("src") not in ("aux", "dj")]
         if back: self.aux_save_file()
+    def give_back(self, c):
+        """Planned clock items that were dropped (replan, new hour, DJ/MANUAL…) never played: their playlists go back to
+        where they were, so a rotation or ordered playlist really continues (nothing is skipped)."""
+        present = {p_.get("id") for p_ in ([self.liq_next] if self.liq_next else []) + self.plan}
+        n = 0
+        while self.snaps and self.snaps[-1][0] not in present:
+            planner.restore_states(c, self.snaps.pop()[1]); n += 1
+        self.snaps = [s_ for s_ in self.snaps if s_[0] in present]     # dropped in the middle (later ones kept): just forget
+        if n: log.info("playlists: %d dropped item(s) gave their place back", n)
+    def save_snaps(self):
+        try: json.dump(self.snaps, open(SNAPS_FILE + ".tmp", "w")); os.replace(SNAPS_FILE + ".tmp", SNAPS_FILE)
+        except Exception as e: log.warning("snaps: %s", e)
     def refill(self, c):
+        try: self.give_back(c)
+        except Exception as e: log.warning("give back: %s", e)
         planner.CTX["ad_planned"] = {}        # spots already in Up next count as played (X per day stays right)
         for p_ in ([self.liq_next] if self.liq_next else []) + self.plan:
             if p_.get("section") == "ads": planner.CTX["ad_planned"][p_["path"]] = planner.CTX["ad_planned"].get(p_["path"], 0) + 1
@@ -671,7 +697,10 @@ class Engine:
             ph = self.pending_hour(c, at)
             if ph: at = ph - 1        # the TOH of this hour hasn't played yet: keep planning with the old hour's clock
             if self.runner.mix_key != planner.runner_key(at) and self.mix_in_run(at): self.runner.mix_key = planner.runner_key(at)
-            it = self.picker.next_planned(c, self.avoid(), at, self.runner)
+            planner.CTX["touched"] = {}
+            try: it = self.picker.next_planned(c, self.avoid(), at, self.runner)
+            finally: touched = planner.CTX.pop("touched", None)
+            if it and touched: self.snaps.append((it["id"], {str(k): v for k, v in touched.items()}))
             if it and self.runner.snap: it["snap"] = self.runner.snap
             if not it: it = self.picker.next(c, self.avoid())     # nothing in the clocks: built-in test clock
             if not it: break
@@ -679,6 +708,7 @@ class Engine:
             guard = getattr(self, "_guard", 0) + 1; self._guard = guard
             if guard > 60: self._guard = 0; break          # (jingles skipped many times in a row: stop for this tick)
         self._guard = 0
+        self.save_snaps()
     def pending_hour(self, c, at):
         """Start of the hour `at` falls in, when that hour begins with a hard :00 item (Top of the hour) that hasn't fired yet."""
         H0 = int(at // 3600) * 3600
@@ -860,6 +890,9 @@ class Engine:
             try: planner.save_clock_state(c, *it["snap"])
             except Exception as e: log.warning("clock state: %s", e)
         res = self.liq.cmd("q.push " + annotate(it, nxt=self.plan[0] if self.plan else None)); self.liq_next = it
+        ids = [s_[0] for s_ in self.snaps]
+        if it.get("id") in ids: self.snaps = self.snaps[ids.index(it["id"]) + 1:]     # it goes on air: its songs are really used
+        self.save_snaps()
         log.info("queued %s – %s (%s) -> %s", it["artist"], it["title"], it["folder"], res.splitlines()[0] if res else "")
     def mix_in_run(self, at):
         """Is a mixtape on air / in Up next that starts in the same clock run (hour or show) as `at`? (after a restart or
@@ -1310,7 +1343,7 @@ def library(qs):
     if sec == "music" and kind in KIND_SQL: sql += " AND " + KIND_SQL[kind]
     if qs.get("auto", ["0"])[0] == "1": sql += " AND COALESCE(cues_edited, 0) = 0"
     for w in q.lower().split():
-        sql += " AND lower(artist||' '||title||' '||filename) LIKE ?"; args.append(f"%{w}%")
+        sql += " AND fold(artist||' '||title||' '||filename) LIKE ?"; args.append(f"%{fold(w)}%")
     sql += " ORDER BY " + ("added_at DESC, artist, title" if sort == "new" else "(problem IS NULL), problem, artist, title" if sort == "problems" else "artist, title") + " LIMIT 300"
     last = {r[0]: r[1] for r in c.execute("SELECT path, MAX(started) FROM asrun GROUP BY path")}
     k = ["path", "artist", "title", "folder", "mode", "clip_path", "clip_suggest", "clip_score", "duration", "has_video", "problem", "overlay_mode", "overlay_path", "cue_start", "cue_mix", "cue_end", "cues_edited", "added_at", "mix_set"]
