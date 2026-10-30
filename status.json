@@ -1,18 +1,18 @@
 {
- "time": "2026-10-30T14:42:02",
+ "time": "2026-10-30T14:48:56",
  "result": "ok",
- "commit": "16152155f6b3bebeb47846dfcf14cd9c9561fa25",
- "subject": "Artists split also on X/vs/featuring; preview controls only on hover; Panel + DJ names; hover on header buttons; REC shape",
+ "commit": "d3f5805fbf25d989c19d5fd136d9b83cb5d2fce9",
+ "subject": "Ad breaks: sponsor spots X per day (clock slot + fixed time), Planning ADS tab, proof of play + now playing to Hype Live (switches, off until go-live)",
  "log": [
-  "14:41:16 update 8d33461f \u2192 16152155 \u00b7 4 file(s): engine/engine.py, engine/planner.py, web/panel/header.js, web/panel/index.html",
-  "14:41:17 restart hype-engine",
-  "14:42:02 installed OK \u00b7 restarted: hype-engine"
+  "14:48:11 update 16152155 \u2192 d3f5805f \u00b7 4 file(s): engine/engine.py, engine/planner.py, web/panel/plan.html, web/panel/settings.html",
+  "14:48:11 restart hype-engine",
+  "14:48:56 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Victony \u2013 SLICK",
+  "song": "Zion x Chencho Corleone \u2013 Caducaste",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.4,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
