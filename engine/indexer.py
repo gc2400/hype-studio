@@ -309,6 +309,9 @@ def scan(full=False):
             if old[1]: c.execute("UPDATE items SET cues_edited=1, cue_start=?, cue_intro=?, cue_mix=?, cue_end=? WHERE path=?", (old[2], old[3], old[4], old[5], twin[0]))
             if old[6]: c.execute("UPDATE items SET mode_set_by_user=1, mode=?, clip_path=? WHERE path=?", (old[7], old[8], twin[0]))
             c.execute("UPDATE items SET clip_path=? WHERE clip_path=?", (twin[0], g))
+            c.execute("UPDATE items SET overlay_path=? WHERE overlay_path=?", (twin[0], g))          # a moved jingle: songs keep their intro sweeper
+            ov = c.execute("SELECT overlay_mode, overlay_path FROM items WHERE path=?", (g,)).fetchone()
+            if ov and ov[0]: c.execute("UPDATE items SET overlay_mode=?, overlay_path=? WHERE path=?", (ov[0], ov[1], twin[0]))   # a moved song keeps its own sweeper
             try: c.execute("UPDATE asrun SET path=? WHERE path=?", (twin[0], g))
             except sqlite3.OperationalError: pass
             print("merged:", g, "->", twin[0], flush=True)

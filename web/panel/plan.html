@@ -238,7 +238,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
       </table>
       </div>
       <div class="row"><button class="btn sm" id="ovAdd">+ Add rule</button></div>
-      <span class="lab" style="margin-top:10px">Songs with their own sweeper <span class="muted" style="text-transform:none;letter-spacing:0">· set per song in the Library (Intro sweeper) – these go before the rules</span></span>
+      <span class="lab" style="margin-top:10px">Songs with their own sweeper <b id="ovSongsN" style="color:var(--y)"></b> <span class="muted" style="text-transform:none;letter-spacing:0">· set per song in the Library (Intro sweeper) – these go before the rules</span></span>
       <div class="order" id="ovSongs"></div>
     </div>
   </section>
@@ -480,7 +480,8 @@ $('#adSave').onclick = () => { if (AD.spots.some(s => !s.path)) return toast('Ch
 let OV = [], JIN = [];
 function loadOv() { Promise.all([get('overlays'), get('pads')]).then(([r, j]) => { OV = r; JIN = j; renderOv(); }); loadOvSongs(); }
 function loadOvSongs() { get('overlay_songs').then(L => {
-  $('#ovSongs').innerHTML = L.map(s => `<div><span style="flex:1">${s.artist ? esc(s.artist) + ' – ' : ''}${esc(s.title)} <span class="muted">${esc(s.folder)}</span></span><span style="color:${s.mode === 'none' ? 'var(--mut)' : 'var(--y)'}">${s.mode === 'none' ? 'never a sweeper' : '🔊 ' + esc(s.sweeper_title)}</span><button class="btn sm" data-ovsong="${esc(s.path)}" title="Back to the rules">×</button></div>`).join('') || '<span class="muted">None yet – open a song in the Library and choose its Intro sweeper.</span>';
+  $('#ovSongsN').textContent = L.length ? '(' + L.length + ')' : '';
+  $('#ovSongs').innerHTML = !L.length ? '<span class="muted">None yet – open a song in the Library and choose its Intro sweeper ("Always: …").</span>' : L.map(s => `<div><span style="flex:1">${s.artist ? esc(s.artist) + ' – ' : ''}${esc(s.title)} <span class="muted">${esc(s.folder)}</span></span><span style="color:${s.mode === 'none' ? 'var(--mut)' : 'var(--y)'}">${s.mode === 'none' ? 'never a sweeper' : '🔊 ' + esc(s.sweeper_title)}</span><button class="btn sm" data-ovsong="${esc(s.path)}" title="Back to the rules">×</button></div>`).join('') || '<span class="muted">None yet – open a song in the Library and choose its Intro sweeper.</span>';
   $$('#ovSongs [data-ovsong]').forEach(b => b.onclick = () => post('cmd/set_overlay', {path: b.dataset.ovsong, mode: 'rule'}).then(() => { toast('Follows the rules again'); loadOvSongs(); })); }); }
 function renderOv() {
   const matchOpts = r => r.match_kind === 'folder' ? FOLD.music.map(f => [f, f]) : r.match_kind === 'playlist' ? PL.map(p => [String(p.id), p.name]) : [];
