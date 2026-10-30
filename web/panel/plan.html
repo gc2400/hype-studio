@@ -33,7 +33,7 @@ h1{margin:0;font-size:20px;font-weight:900}
 .list{display:flex;flex-direction:column;gap:4px}
 /* the playlists / clocks list: as tall as the window, scrolls inside its own box (the editor next to it stays put) */
 @media (min-width:760px){
-  .split > .side{position:sticky;top:76px;max-height:calc(100vh - 92px);display:flex;flex-direction:column}
+  .split > .side{position:sticky;top:72px;display:flex;flex-direction:column}
   .split > .side > .list{flex:1;min-height:0;overflow-y:auto;padding-right:4px}
 }
 .li{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid transparent;cursor:pointer;background:none;color:inherit;text-align:left;width:100%}
@@ -330,6 +330,11 @@ let pqT; $('#pickQ').oninput = () => { clearTimeout(pqT); pqT = setTimeout(fillP
 $('#addFolder').onclick = () => openPicker('folder'); $('#addSong').onclick = () => openPicker('song'); $('#addJingle').onclick = () => openPicker('jingle'); $('#addList').onclick = () => openPicker('playlist');
 $('#plRotate').onchange = () => renderSources();
 $('#plQ').oninput = () => renderPL(); $('#ckQ').oninput = () => renderCK();
+// the playlists / clocks box ends at the bottom of the window (so the page itself does not scroll because of it)
+function fitSides() { if (innerWidth < 760) { $$('.split > .side').forEach(el => el.style.maxHeight = ''); return; }
+  $$('.split > .side').forEach(el => { if (el.offsetParent === null) return; el.style.maxHeight = Math.max(240, innerHeight - Math.max(72, el.getBoundingClientRect().top) - 14) + 'px'; }); }
+addEventListener('resize', fitSides); addEventListener('scroll', fitSides, {passive: true}); setTimeout(fitSides, 50); setTimeout(fitSides, 600);
+$$('.tab').forEach(b => b.addEventListener('click', () => setTimeout(fitSides, 30)));
 $('#plNew').onclick = () => openPL({id: null, name: '', loop: true, shuffle: true, rotate: false, sources: [], count: 0});
 $('#plSave').onclick = () => { cur.name = $('#plName').value; cur.loop = $('#plLoop').checked; cur.shuffle = $('#plShuffle').checked; cur.rotate = $('#plRotate').checked;
   post('plan/save_playlist', cur).then(r => { toast('Playlist saved'); return loadAll().then(() => openPL(PL.find(p => p.id === r.id))); }).catch(e => toast(e.message, 1)); };
@@ -390,9 +395,14 @@ let SH = {shows: [], week: []}, SHMAP = {};
 function loadSchedule() { Promise.all([get('schedule'), get('shows')]).then(([d, sh]) => { SC = {}; d.forEach(c => SC[c.day + '-' + c.hour] = c.clock_id); SH = sh; SHMAP = {}; sh.shows.forEach(x => SHMAP[x.title] = x.clock_id); if (!brush && CK.length) brush = CK[0].id; renderShows(); renderGrid(); }); }
 function renderShows() {
   $('#shRows').innerHTML = SH.shows.map((x, i) => `<tr><td><b>${esc(x.title)}</b></td><td class="muted">${esc(x.when.slice(0, 4).join(' · '))}${x.when.length > 4 ? ' · +' + (x.when.length - 4) + ' more' : ''}</td>
-    <td><select data-show="${esc(x.title)}"><option value="">– hour grid –</option>${CK.map(c => `<option value="${c.id}" ${SHMAP[x.title] === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></td></tr>`).join('') || '<tr><td colspan="3" class="muted">Loading the website schedule…</td></tr>';
+    <td><select data-show="${esc(x.title)}"><option value="">${esc(gridLabel(x))}</option>${CK.map(c => `<option value="${c.id}" ${SHMAP[x.title] === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></td></tr>`).join('') || '<tr><td colspan="3" class="muted">Loading the website schedule…</td></tr>';
   $$('#shRows [data-show]').forEach(e => e.onchange = () => { SHMAP[e.dataset.show] = e.value ? +e.value : null; renderGrid(); });
 }
+function gridLabel(x) {   // which clocks the hour grid gives this show's hours (the fallback when no show clock is chosen)
+  const ids = new Set(); SH.week.filter(w => w.title === x.title).forEach(w => { const a = +w.start.split(':')[0], e = +w.end.split(':')[0] || 24;
+    for (let h = a; h < (e <= a ? 24 : e); h++) { const id = SC[w.day + '-' + h]; if (id) ids.add(id); } });
+  const names = [...ids].map(id => (CK.find(c => c.id === id) || {}).name).filter(Boolean);
+  return names.length ? 'Hour grid: ' + names.join(', ') : '– hour grid (empty) –'; }
 function showAt(day, hour) { const m = hour * 60; return SH.week.find(s => { if (s.day !== day) return false; const [a1, a2] = s.start.split(':').map(Number), [b1, b2] = s.end.split(':').map(Number); let a = a1 * 60 + a2, b = b1 * 60 + b2 || 1440; if (b <= a) b = 1440; return a <= m && m < b || (a > m && a < m + 60); }); }
 $('#shSave').onclick = () => post('plan/save_show_clocks', {map: SHMAP}).then(() => toast('Show clocks saved – the log is updated')).catch(e => toast(e.message, 1));
 function renderGrid() {
