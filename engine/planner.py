@@ -169,7 +169,11 @@ def take_rotate(c, pid, start, ok, depth):
         o = list(range(len(srcs)))
         if shuffle:
             random.shuffle(o)
-            if prev and len(o) > 1 and o[0] == prev[-1]: o.append(o.pop(0))   # not the same source twice in a row
+            if prev and len(o) > 1:
+                # the sources that came at the end of the last round go to the second half of the new one, so the
+                # same source never comes back right away (A B C D | B A D C, never ... C D | D ...)
+                h = len(o) // 2; late = set(prev[-h:]) if h else set()
+                o = [x for x in o if x not in late] + [x for x in o if x in late]
         return o
     if not order or sorted(order) != list(range(len(srcs))): order = new_order(); pos = 0; k = 0
     if start == "start": order = new_order(); pos = 0; k = 0
