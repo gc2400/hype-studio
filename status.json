@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T00:33:49",
+ "time": "2026-10-31T00:36:39",
  "result": "ok",
- "commit": "099d80516c87f64e5de665e9ea072c0cf43a104d",
- "subject": "Rotation: a source that ended one round never starts the next (no LAT \u2026 LAT close together)",
+ "commit": "61c070551bae5bdef001ef3d1c950b66671e1279",
+ "subject": "Pads: bank buttons wrap (no scrollbar); Library: sections above the search, genres wrap, compact on phones; Up next songs you added survive a restart",
  "log": [
-  "00:33:04 update 5742d2cc \u2192 099d8051 \u00b7 1 file(s): engine/planner.py",
-  "00:33:04 restart hype-engine",
-  "00:33:49 installed OK \u00b7 restarted: hype-engine"
+  "00:35:53 update 099d8051 \u2192 61c07055 \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/library.html",
+  "00:35:54 restart hype-engine",
+  "00:36:39 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
   "song": "bees & honey x Omah Lay x BEAM x Gyptian \u2013 As We Get High",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
