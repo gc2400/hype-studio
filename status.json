@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T00:30:59",
+ "time": "2026-10-31T00:33:49",
  "result": "ok",
- "commit": "5742d2ccaa6aeb4b59904276d40e85535d5d65bf",
- "subject": "Panel library card: Playlists tab (play next / end / AUX, drag into Up next or AUX; ordered lists go whole, others the next N) and Clocks tab (Run now = rest of this hour)",
+ "commit": "099d80516c87f64e5de665e9ea072c0cf43a104d",
+ "subject": "Rotation: a source that ended one round never starts the next (no LAT \u2026 LAT close together)",
  "log": [
-  "00:30:13 update 892712bd \u2192 5742d2cc \u00b7 3 file(s): engine/engine.py, engine/planner.py, web/panel/index.html",
-  "00:30:14 restart hype-engine",
-  "00:30:59 installed OK \u00b7 restarted: hype-engine"
+  "00:33:04 update 5742d2cc \u2192 099d8051 \u00b7 1 file(s): engine/planner.py",
+  "00:33:04 restart hype-engine",
+  "00:33:49 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Tekno \u2013 Press Button",
+  "song": "bees & honey x Omah Lay x BEAM x Gyptian \u2013 As We Get High",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
