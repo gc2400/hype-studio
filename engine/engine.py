@@ -1598,6 +1598,10 @@ class H(BaseHTTPRequestHandler):
                 lm, L, mset = lm_info(it["path"]); LM_CACHE[it["path"]] = (lm, L, False)
                 sm = smart_mix(it); LM_CACHE[it["path"]] = (lm, L, mset)
                 return self.send(200, {"mix": round(sm[0], 1) if sm else None, "overlap": round(sm[1], 1) if sm else None, "intro": intro_len(it), "smart": SMART_MIX})
+            if p == "/mp3hit":       # nginx mirrors every /radio.mp3 start here (address + player), for unique MP3 listeners
+                MP3_HITS.append((time.time(), self.headers.get("X-Real-IP", ""), self.headers.get("X-UA", "")))
+                del MP3_HITS[:-2000]
+                return self.send(200, {"ok": True})
             if p == "/audience": return self.send(200, {"radio": listeners(), "tv": viewers(), "t": int(time.time())})
             if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))
@@ -1876,24 +1880,51 @@ class Media:
                 if eng.now: eng.tv.set_scene(eng.now.get("scene") or "Hype Screen")
 
 _ST = {"t": 0, "d": None, "pub": None, "pub_t": 0}
+def log_devices(log_, keep, window):
+    """Devices (internet address + app/browser) that fetched pieces in the last `window` s, from an nginx log.
+    Address + user agent: two different phones on the same wifi count as 2; the same player on both links as 1."""
+    out = set(); now = time.time()
+    try:
+        with open(log_, "rb") as f:
+            f.seek(0, 2); n = f.tell(); f.seek(max(0, n - 3_000_000)); lines = f.read().decode("utf-8", "replace").splitlines()
+        for ln in reversed(lines):
+            if not keep(ln): continue
+            m = re.match(r'(\S+) \S+ \S+ \[([^\]]+)\]', ln)
+            if not m: continue
+            try: t = time.mktime(time.strptime(m.group(2).split()[0], "%d/%b/%Y:%H:%M:%S"))
+            except ValueError: continue
+            if now - t > window: break
+            ua = re.findall(r'"([^"]*)"', ln); out.add(m.group(1) + "|" + (ua[-1] if ua else ""))
+    except OSError: pass
+    return out
+ICE_ADMIN = {"t": 0, "auth": None}
+MP3_HITS = []     # (time, address, player) of every /radio.mp3 start (nginx mirrors it to /mp3hit; nothing waits on it)
+def mp3_devices():
+    """MP3 listeners as devices: Icecast's listener list (player + connected seconds) matched to the start nginx reported
+    (address + player + time). An unmatched connection still counts, as its own device."""
+    try:
+        if not ICE_ADMIN["auth"] or time.time() - ICE_ADMIN["t"] > 3600:
+            x = open("/etc/icecast2/icecast.xml").read()
+            ICE_ADMIN.update(t=time.time(), auth=base64.b64encode((re.search(r"<admin-user>([^<]+)", x).group(1) + ":" + re.search(r"<admin-password>([^<]+)", x).group(1)).encode()).decode())
+        r = urllib.request.Request("http://127.0.0.1:8000/admin/listclients?mount=/radio.mp3", headers={"Authorization": "Basic " + ICE_ADMIN["auth"]})
+        x = urllib.request.urlopen(r, timeout=3).read().decode("utf-8", "replace")
+        import html as _h
+        out = set(); now = time.time()
+        for blk in re.findall(r"<listener[^>]*>(.*?)</listener>", x, re.S):
+            g = lambda tag: (re.search(f"<{tag}>([^<]*)</{tag}>", blk) or [None, ""])[1]
+            ip, ua, lid = g("IP"), _h.unescape(g("UserAgent")), g("ID")
+            try: start = now - float(g("Connected") or 0)
+            except ValueError: start = now
+            if ip and ip not in ("127.0.0.1", "::1"): out.add(ip + "|" + ua); continue     # a direct listener (port 8000)
+            hit = min((h for h in MP3_HITS if h[2] == ua and abs(h[0] - start) < 8), key=lambda h: abs(h[0] - start), default=None)
+            out.add((hit[1] + "|" + ua) if hit else ("conn" + lid + "|" + ua))
+        return out
+    except Exception as e:
+        log.warning("mp3 listeners: %s", e); return None
 def tv_viewer_ips(window=40):
-    """Different devices that fetched TV stream pieces in the last `window` seconds (nginx logs: the test link on
-    tv.hyperadio.nl and https://stream.hyperadio.nl/tv/)."""
-    ips = set(); now = time.time()
-    for log_, mark in (("/var/log/nginx/access.log", "/test-dbd4c5f6b0ea/"), ("/var/log/nginx/stream.access.log", " /tv/")):
-        try:
-            with open(log_, "rb") as f:
-                f.seek(0, 2); n = f.tell(); f.seek(max(0, n - 3_000_000)); lines = f.read().decode("utf-8", "replace").splitlines()
-            for ln in reversed(lines):
-                if mark not in ln or ".ts" not in ln: continue
-                m = re.match(r'(\S+) \S+ \S+ \[([^\]]+)\]', ln)
-                if not m: continue
-                try: t = time.mktime(time.strptime(m.group(2).split()[0], "%d/%b/%Y:%H:%M:%S"))
-                except ValueError: continue
-                if now - t > window: break
-                ips.add(m.group(1))
-        except OSError: pass
-    return ips
+    """Different devices (address + player) that fetched TV stream pieces in the last `window` s (test link + stream.hyperadio.nl/tv/)."""
+    return (log_devices("/var/log/nginx/access.log", lambda ln: "/test-dbd4c5f6b0ea/" in ln and ".ts" in ln, window)
+            | log_devices("/var/log/nginx/stream.access.log", lambda ln: " /tv/" in ln and ".ts" in ln, window))
 def hls_viewers(window=40): return len(tv_viewer_ips(window))
 VIEW = {"t": 0, "d": None}; VSTATS_FILE = "/var/lib/hype/viewers.json"
 def viewers():
@@ -1951,44 +1982,35 @@ def streams_status(eng):
 LISTEN = {"t": 0, "d": None}
 LSTATS_FILE = "/var/lib/hype/listeners.json"
 def hls_radio_ips(window=30):
-    """Devices that fetched radio HLS pieces in the last `window` s (nginx log of stream.hyperadio.nl)."""
-    ips = set(); now = time.time()
-    try:
-        with open("/var/log/nginx/stream.access.log", "rb") as f:
-            f.seek(0, 2); n = f.tell(); f.seek(max(0, n - 2_000_000)); lines = f.read().decode("utf-8", "replace").splitlines()
-        for ln in reversed(lines):
-            if " /r" not in ln or ".ts " not in ln: continue
-            m = re.match(r'(\S+) \S+ \S+ \[([^\]]+)\]', ln)
-            if not m: continue
-            try: t = time.mktime(time.strptime(m.group(2).split()[0], "%d/%b/%Y:%H:%M:%S"))
-            except ValueError: continue
-            if now - t > window: break
-            ips.add(m.group(1))
-    except OSError: pass
-    return ips
+    """Devices (address + player) that fetched radio HLS pieces in the last `window` s."""
+    return log_devices("/var/log/nginx/stream.access.log", lambda ln: " /r" in ln and ".ts " in ln, window)
 def listeners():
-    """Radio listeners on Hype Studio's own streams: MP3 (Icecast connections) + HLS (devices) – now, peak today, unique today."""
+    """Radio listeners on Hype Studio's own streams as DEVICES (address + player; MP3 and HLS together, no double count):
+    now, peak today, unique today (only daily codes are stored, no addresses)."""
     if LISTEN["d"] and time.time() - LISTEN["t"] < 10: return LISTEN["d"]
-    mp3 = 0
-    try:
-        ice = json.loads(urllib.request.urlopen("http://127.0.0.1:8000/status-json.xsl", timeout=3).read())["icestats"].get("source") or []
-        ice = ice if isinstance(ice, list) else [ice]
-        mp3 = sum(int(x.get("listeners", 0)) for x in ice if str(x.get("listenurl", "")).endswith("/radio.mp3"))
-    except Exception: pass
-    ips = hls_radio_ips(); now_n = mp3 + len(ips)
+    mp3s = mp3_devices()
+    if mp3s is None:                                   # Icecast's list not readable: fall back to its connection count
+        mp3s = set()
+        try:
+            ice = json.loads(urllib.request.urlopen("http://127.0.0.1:8000/status-json.xsl", timeout=3).read())["icestats"].get("source") or []
+            ice = ice if isinstance(ice, list) else [ice]
+            n = sum(int(x.get("listeners", 0)) for x in ice if str(x.get("listenurl", "")).endswith("/radio.mp3"))
+            mp3s = {f"conn{i}|" for i in range(n)}
+        except Exception: pass
+    hls = hls_radio_ips(); devs = mp3s | hls; now_n = len(devs)
     day = time.strftime("%Y-%m-%d")
     try: st = json.load(open(LSTATS_FILE))
     except Exception: st = {}
-    if st.get("day") != day: st = {"day": day, "peak": 0, "peak_t": 0, "uniq": [], "mp3_peak": 0}
+    if st.get("day") != day: st = {"day": day, "peak": 0, "peak_t": 0, "uniq": []}
     if now_n > st["peak"]: st["peak"], st["peak_t"] = now_n, int(time.time())
-    st["mp3_peak"] = max(st.get("mp3_peak", 0), mp3)
     u = set(st.get("uniq", []))
-    for ip in ips: u.add(hashlib.sha1((day + ip).encode()).hexdigest()[:12])     # no IPs stored, only a daily hash
+    for k in devs:
+        if not k.startswith("conn"): u.add(hashlib.sha1((day + k).encode()).hexdigest()[:12])     # no addresses stored, only a daily code
     st["uniq"] = sorted(u)
     try: json.dump(st, open(LSTATS_FILE, "w"))
     except Exception: pass
-    d = {"current": now_n, "mp3": mp3, "hls": len(ips), "peak_today": st["peak"], "peak_time": st["peak_t"],
-         "unique_today": max(len(u) + st.get("mp3_peak", 0), st["peak"])}
+    d = {"current": now_n, "mp3": len(mp3s), "hls": len(hls), "peak_today": st["peak"], "peak_time": st["peak_t"],
+         "unique_today": max(len(u), st["peak"]), "counts": "devices"}
     LISTEN.update(t=time.time(), d=d); return d
 def nowplaying_api():
     """AzuraCast-style /api/nowplaying/hype_radio, so Hype Live (and others) only need a different link."""
