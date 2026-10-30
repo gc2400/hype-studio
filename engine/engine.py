@@ -125,7 +125,7 @@ JINGLE_FADE = 0.0   # Settings → Mixing → Jingles: fade-out (0 = plays out t
 MIX_OUT = 1.5     # Settings → Mixing → fade-out of the old song (= how long both songs play together)
 # ---------------- smart mix (from the loudness map) ----------------
 SMART_MIX = True     # Settings → Mixing → Smart mix
-SNAPS_FILE = "/var/lib/hype/plan_snaps.json"
+SNAPS_FILE = "/var/lib/hype/plan_snaps.json"; MINE_FILE = "/var/lib/hype/upnext_mine.json"
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
 LM_CACHE = {}
 def lm_info(path):
@@ -613,6 +613,12 @@ class Engine:
             os.remove(SNAPS_FILE); log.info("playlists: positions of the unplayed Up next given back")
         except FileNotFoundError: pass
         except Exception as e: log.warning("snaps: %s", e)
+        try:   # the songs you had put in Up next come back
+            for p_ in json.load(open(MINE_FILE)):
+                if c0.execute("SELECT 1 FROM items WHERE path=? AND problem IS NULL", (p_.get("path"),)).fetchone(): self.plan.append(p_)
+            if self.plan: log.info("Up next: %d song(s) you added are back after the restart", len(self.plan))
+        except FileNotFoundError: pass
+        except Exception as e: log.warning("up next (yours): %s", e)
         try: self.aux = json.load(open("/var/lib/hype/aux.json"))
         except Exception: self.aux = {"1": [], "2": []}
         self.dj = False; self.deck = None; self.faders = {}; self.parked = None
@@ -673,6 +679,10 @@ class Engine:
     def save_snaps(self):
         try: json.dump(self.snaps, open(SNAPS_FILE + ".tmp", "w")); os.replace(SNAPS_FILE + ".tmp", SNAPS_FILE)
         except Exception as e: log.warning("snaps: %s", e)
+        try:   # what YOU put in Up next survives a restart too
+            mine = [{k: v for k, v in p_.items() if k not in ("snap",)} for p_ in self.plan if p_.get("src") == "you"]
+            json.dump(mine, open(MINE_FILE + ".tmp", "w")); os.replace(MINE_FILE + ".tmp", MINE_FILE)
+        except Exception as e: log.warning("up next (yours): %s", e)
     def refill(self, c):
         try: self.give_back(c)
         except Exception as e: log.warning("give back: %s", e)
