@@ -1705,8 +1705,8 @@ class H(BaseHTTPRequestHandler):
                 if not r: return self.send(404, {"error": "not found"})
                 if not r[1] and not r[2] and n <= 0: paths = planner.playlist_songs(c, pid)          # an ordered list (Top 10): all of it, from the top
                 else:
-                    paths = []
-                    for i in range(max(1, n or 5)):
+                    paths = []; n = n if n > 0 else min(100, max(1, planner.playlist_len(c, pid) if r[2] else len(planner.playlist_songs(c, pid))))   # 0 = the whole list (one round)
+                    for i in range(n):
                         p_ = planner.take_from_playlist(c, pid, "start" if (i == 0 and not r[1] and not r[2]) else "continue", lambda x, P=paths: x not in P)
                         if p_ and p_ not in paths: paths.append(p_)
                     c.commit()
@@ -2239,7 +2239,7 @@ def voice_loop():
                 elif not v.get("in_bank"):
                     bid = voice_bank(c)
                     c.execute("UPDATE pad_items SET pos=pos+1 WHERE bank_id=?", (bid,))
-                    c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, 0, v["path"], "🎙 " + v["name"] + (" · " + v["city"] if v["city"] else ""), "#0277b8"))
+                    c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, 0, v["path"], v["name"] + (" · " + v["city"] if v["city"] else ""), "#0277b8"))
                     c.commit(); v["in_bank"] = True
                 try: a = get(base + "&ack=" + urllib.parse.quote(vid), data=b"").read(100).decode("utf-8", "replace")
                 except urllib.error.HTTPError as e: a = f"{e.code}"

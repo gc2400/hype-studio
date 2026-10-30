@@ -99,8 +99,15 @@ body.is-auto .auxbtn{display:none}
 .ib{min-height:40px;min-width:52px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;gap:4px}
 .ib svg{width:20px;height:20px}.ib small{font-size:10px;font-weight:800}
 .banks{display:flex;flex-wrap:wrap;gap:5px}.banks .btn{white-space:nowrap}
-.ri .acts{display:none;gap:4px;flex:none}.ri:hover .acts,.ri.sel .acts,.ri:focus-within .acts{display:flex}
-@media (hover:none){.ri .acts{display:flex}}
+/* the buttons appear OVER the right end of the row on hover - the row itself never moves or changes size */
+#res .ri{position:relative}
+.ri .acts{display:flex;gap:4px;flex:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);opacity:0;pointer-events:none;
+  padding-left:28px;background:linear-gradient(90deg,transparent,var(--card) 26px);transition:opacity .12s}
+.ri:hover .acts,.ri.sel .acts,.ri:focus-within .acts{opacity:1;pointer-events:auto}
+@media (hover:none){.ri .acts{position:static;transform:none;opacity:1;pointer-events:auto;background:none;padding-left:0}}
+.ri .acts select{height:34px;background:#071A2B;color:var(--txt);border:1px solid var(--line2);border-radius:9px;padding:0 6px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+#padBanks [data-bank="-1"]{background:#2B2500;border-color:#FFE000;color:#FFE000}
+#padBanks [data-bank="-1"]:hover{background:#3a3200}#padBanks [data-bank="-1"].on{background:#FFE000;color:#061423}
 .ri .acts button{min-height:34px;min-width:38px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center}
 .ri .acts svg{width:18px;height:18px}
 dialog#cueDlg{background:var(--card);color:var(--txt);border:1px solid var(--line2);border-radius:16px;padding:14px 16px;width:min(900px,96vw);max-height:94vh;overflow:auto}
@@ -341,7 +348,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         </div>
         <div class="grid4 pads" id="pads"></div>
         <label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">Pads vol</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label>
-        <div class="row"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK MUSIC: OFF</button><button class="btn sm" id="bPVid" aria-pressed="false" title="When on, pads with a video (▶) also show their video full screen over what's on air">▶ VIDEO: OFF</button><button class="btn sm" id="bPLoop" aria-pressed="false" title="When on, a pad you start repeats until you click it again (or STOP PADS)">⟳ LOOP: OFF</button><span style="flex:1"></span><button class="btn sm red" id="bPadStop">STOP PADS</button></div>
+        <div class="row"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK: OFF</button><button class="btn sm" id="bPVid" aria-pressed="false" title="When on, pads with a video (▶) also show their video full screen over what's on air">▶ VIDEO: OFF</button><button class="btn sm" id="bPLoop" aria-pressed="false" title="When on, a pad you start repeats until you click it again (or STOP PADS)">⟳ LOOP: OFF</button><span style="flex:1"></span><button class="btn sm red" id="bPadStop">STOP PADS</button></div>
       </div>
       <div class="card" id="cXfade" hidden>
         <div class="xf">
@@ -659,12 +666,12 @@ const PLAYING = {};   // path -> end time (ms)
 function loadPads() { return api('padbanks').then(b => { BANKS = b; if (bank >= BANKS.length) bank = 0; renderPads(); }); }
 setInterval(() => { if (!PEDIT && !document.hidden) api('padbanks').then(b => { if (JSON.stringify(b) !== JSON.stringify(BANKS)) { BANKS = b; if (bank >= BANKS.length) bank = 0; renderPads(); } }); }, 20000);   // new voice messages show up by themselves
 function renderPads() {
-  $('#padBanks').innerHTML = `<button class="btn sm ${bank === -1 ? 'on' : ''}" data-bank="-1" title="Pictures and videos from branding/media">▶ MEDIA</button>` + BANKS.map((b, i) => { const nv = b.items.filter(p => p.voice && !p.played).length; return `<button class="btn sm ${i === bank ? 'on' : ''}" data-bank="${i}">${esc(b.name)}${nv ? ` <b style="background:#FFE000;color:#061423;border-radius:8px;padding:0 5px;font-size:10px">${nv}</b>` : ''}</button>`; }).join('');
+  $('#padBanks').innerHTML = `<button class="btn sm ${bank === -1 ? 'on' : ''}" data-bank="-1" title="Pictures and videos from branding/media">MEDIA</button>` + BANKS.map((b, i) => { const nv = b.items.filter(p => p.voice && !p.played).length; return `<button class="btn sm ${i === bank ? 'on' : ''}" data-bank="${i}">${esc(b.name.replace(/^[^A-Za-z0-9]+\s*/u, ''))}${nv ? ` <b style="background:#FFE000;color:#061423;border-radius:8px;padding:0 5px;font-size:10px">${nv}</b>` : ''}</button>`; }).join('');
   $$('#padBanks [data-bank]').forEach(b => b.onclick = () => { bank = +b.dataset.bank; if (bank === -1) loadMedia(); renderPads(); });
   $('#mediaBar').hidden = bank !== -1;
   if (bank === -1) return renderMediaPads();
   const B = BANKS[bank] || {items: []}; $('#bankName').value = B.name || ''; $('#pads').classList.toggle('edit', PEDIT); $('#padEditBar').hidden = !PEDIT;
-  $('#pads').innerHTML = B.items.map((p, i) => `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE RADIO\s*[-–]\s*/i, ''))}<small>${fmt(p.duration)}${p.voice ? (p.played ? ' · ✓ played' : ' · NEW') : ''}${p.has_video ? ' · video' : ''}${p.missing ? ' · not found' : ''}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmpad="${i}" title="Remove">×</span>` : ''}</button>`).join('')
+  $('#pads').innerHTML = B.items.map((p, i) => `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE RADIO\s*[-–]\s*/i, '').replace(/^[^A-Za-z0-9]+\s*/u, ''))}<small>${fmt(p.duration)}${p.voice ? (p.played ? ' · ✓ played' : ' · NEW') : ''}${p.has_video ? ' · video' : ''}${p.missing ? ' · not found' : ''}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmpad="${i}" title="Remove">×</span>` : ''}</button>`).join('')
     + (PEDIT ? '<button class="padadd" id="padDrop">drop here</button>' : '') || '<span class="muted">This bank is empty. Press ✎ EDIT and drag jingles from the library onto it.</span>';
   $$('#pads [data-pad]').forEach(b => {
     const p = B.items[+b.dataset.pad];
@@ -733,17 +740,17 @@ setInterval(() => { if (!S || !S.faders || Date.now() - padBusy < 1500) return; 
 $('#padVol').oninput = () => { padBusy = Date.now(); const v = +$('#padVol').value; $('#padVolV').textContent = dbTxt(v); clearTimeout(padT); padT = setTimeout(() => api('cmd/fader', {name: 'vol_pads', value: v}), 80); };
 $('#padVol').ondblclick = () => { $('#padVol').value = 1; $('#padVol').oninput(); };
 let PVID = false; try { PVID = localStorage.getItem('hypePVid') === '1'; } catch (e) {}
-function showPVid() { $('#bPVid').textContent = '▶ VIDEO: ' + (PVID ? 'ON' : 'OFF'); $('#bPVid').classList.toggle('on', PVID); $('#bPVid').setAttribute('aria-pressed', PVID); }
+function showPVid() { $('#bPVid').textContent = 'VIDEO: ' + (PVID ? 'ON' : 'OFF'); $('#bPVid').classList.toggle('on', PVID); $('#bPVid').setAttribute('aria-pressed', PVID); }
 $('#bPVid').onclick = () => { PVID = !PVID; try { localStorage.setItem('hypePVid', PVID ? '1' : '0'); } catch (e) {} showPVid(); }; showPVid();
 let PLOOP = false; try { PLOOP = localStorage.getItem('hypePLoop') === '1'; } catch (e) {}
-function showPLoop() { $('#bPLoop').textContent = '⟳ LOOP: ' + (PLOOP ? 'ON' : 'OFF'); $('#bPLoop').classList.toggle('on', PLOOP); $('#bPLoop').setAttribute('aria-pressed', PLOOP); }
+function showPLoop() { $('#bPLoop').textContent = 'LOOP: ' + (PLOOP ? 'ON' : 'OFF'); $('#bPLoop').classList.toggle('on', PLOOP); $('#bPLoop').setAttribute('aria-pressed', PLOOP); }
 $('#bPLoop').onclick = () => { PLOOP = !PLOOP; try { localStorage.setItem('hypePLoop', PLOOP ? '1' : '0'); } catch (e) {} showPLoop(); }; showPLoop();
-function showDuck() { $('#bDuck').textContent = 'DUCK MUSIC: ' + (DUCK ? 'ON' : 'OFF'); $('#bDuck').classList.toggle('on', DUCK); $('#bDuck').setAttribute('aria-pressed', DUCK); }
+function showDuck() { $('#bDuck').textContent = 'DUCK: ' + (DUCK ? 'ON' : 'OFF'); $('#bDuck').classList.toggle('on', DUCK); $('#bDuck').setAttribute('aria-pressed', DUCK); }
 $('#bDuck').onclick = () => { DUCK = !DUCK; try { localStorage.setItem('hypeDuck', DUCK ? '1' : '0'); } catch (e) {} showDuck(); }; showDuck();
 // ---------- library ----------
 let SEC = 'music', GENRE = '', FOLDER = '', SEL = null, LIB = null, LSORT = 'az';
 try { LSORT = localStorage.getItem('hypeLibSort') || 'az'; } catch (e) {}
-const SECS = [['music', 'Music'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['playlists', '≡ Playlists'], ['clocks', '◷ Clocks']];
+const SECS = [['music', 'Music'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['playlists', 'Playlists'], ['clocks', 'Clocks']];
 const nfx = t => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 let PLC = {pl: [], ck: []};
 function libPlan() {     // the Playlists / Clocks tabs of the library card
@@ -755,14 +762,15 @@ function libPlan() {     // the Playlists / Clocks tabs of the library card
     if (SEC === 'playlists') {
       const L = pl.filter(p => !q || nfx(p.name).includes(q));
       $('#res').innerHTML = L.map(p => { const all = !p.shuffle && !p.rotate;
-        return `<div class="ri" draggable="true" data-pl="${p.id}"><span class="chip blue">≡</span><div class="tx"><b>${esc(p.name)}</b><span>${p.rotate ? 'rotation · ' : ''}${p.count} items · ${all ? 'in order – the whole list' : p.shuffle ? 'smart pick' : 'in order'}</span></div>
-          <div class="acts">${all ? '' : `<input type="number" min="1" max="40" value="5" data-n title="How many songs" aria-label="How many songs" style="width:52px;height:30px;padding:0 6px">`}
+        return `<div class="ri" draggable="true" data-pl="${p.id}"><div class="tx"><b>${esc(p.name)}</b><span>${p.rotate ? 'rotation · ' : ''}${p.count} items · ${all ? 'in order – the whole list' : p.shuffle ? 'smart pick' : 'in order'}</span></div>
+          <div class="acts"><select data-n title="The whole playlist, or only the next songs" aria-label="How many">${[0, 1, 2, 3, 5, 10, 15, 20].map(v => `<option value="${v}" ${(all ? 0 : 5) === v ? 'selected' : ''}>${v ? 'Next ' + v : 'All ' + p.count}</option>`).join('')}</select>
           <button class="btn" data-pact="next" aria-label="Play next" title="Play next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
           <button class="btn" data-pact="end" aria-label="Add to the end" title="Add to the end (Up next / AUX)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
           <span class="auxbtn" title="Add to AUX 1 or AUX 2"><span class="lbl">AUX</span><button data-pact="aux" data-aux="1" aria-label="Add to AUX 1">1</button><button data-pact="aux" data-aux="2" aria-label="Add to AUX 2">2</button></span></div></div>`; }).join('') || '<div class="muted" style="padding:10px">No playlists found.</div>';
       $('#res').querySelectorAll('[data-pl]').forEach(el => {
-        const n = () => { const i = el.querySelector('[data-n]'); return i ? Math.max(1, +i.value || 5) : 0; };
-        el.ondragstart = e => { if (e.target.closest('input')) return e.preventDefault(); e.dataTransfer.setData('text/plain', 'pl:' + el.dataset.pl + ':' + n()); };
+        const n = () => +el.querySelector('[data-n]').value;
+        el.querySelector('[data-n]').onclick = e => e.stopPropagation();
+        el.ondragstart = e => { if (e.target.closest('select')) return e.preventDefault(); e.dataTransfer.setData('text/plain', 'pl:' + el.dataset.pl + ':' + n()); };
         el.querySelectorAll('[data-pact]').forEach(b => b.onclick = e => { e.stopPropagation(); const a = b.dataset.pact, man = S && !S.auto && !(S.dj && S.dj.on), id = el.dataset.pl;
           plSongs(id, n()).then(paths => { if (!paths.length) return toast('That playlist has nothing to play right now', 1);
             if (a === 'aux') return auxCmd('aux_add', {aux: b.dataset.aux, paths}).then(() => toast(paths.length + ' songs added to AUX ' + b.dataset.aux));
