@@ -154,8 +154,8 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .pv .tag{position:absolute;top:10px;left:10px}
 .pv .pvsc{position:absolute;bottom:14px;right:10px;background:rgba(6,20,35,.78);color:#F2F6FA;backdrop-filter:blur(4px)}
 .pv .pvc{position:absolute;left:8px;bottom:8px;display:flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;border-radius:12px;background:rgba(6,20,35,.72);backdrop-filter:blur(4px);opacity:.92;transition:opacity .2s}
-.pv .pvc{opacity:0;pointer-events:none}.pv:hover .pvc,.pv:focus-within .pvc,.pv.show .pvc{opacity:.95;pointer-events:auto}
-@media (hover:none){.pv .pvc{opacity:.95;pointer-events:auto}}
+.pv .pvc,.pv .pvsc{opacity:0;pointer-events:none;transition:opacity .2s}.pv:hover .pvc,.pv:focus-within .pvc,.pv.show .pvc{opacity:.95;pointer-events:auto}.pv:hover .pvsc,.pv:focus-within .pvsc,.pv.show .pvsc{opacity:1}
+@media (hover:none){.pv .pvc{opacity:.95;pointer-events:auto}.pv .pvsc{opacity:1}}
 .pvb{width:34px;height:34px;border-radius:9px;border:0;background:transparent;color:#F2F6FA;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
 .pvb:hover{background:rgba(255,255,255,.12)}.pvb svg{width:20px;height:20px}.pvb:focus-visible{outline:2px solid var(--b)}
 #pvVol{width:90px;accent-color:var(--y)}.pvst{font-size:11px;font-weight:700;color:#A9BCCD;white-space:nowrap}
