@@ -46,7 +46,6 @@ system/hype-return.service|/etc/systemd/system/hype-return.service|644|daemon-re
 system/hype-stats.service|/etc/systemd/system/hype-stats.service|644|daemon-reload
 system/hype-studio-in.service|/etc/systemd/system/hype-studio-in.service|644|daemon-reload
 system/hype-sway.service|/etc/systemd/system/hype-sway.service|644|daemon-reload
-system/hype-radio-hls.service|/etc/systemd/system/hype-radio-hls.service|644|daemon-reload
-system/hype-updater.service|/etc/systemd/system/hype-radio-hls.service|/etc/systemd/system/hype-radio-hls.service|644|daemon-reload
-system/hype-updater.service|644|daemon-reload
 deploy/updater.py|/opt/hype/updater.py|755|hype-updater
+system/hype-radio-hls.service|/etc/systemd/system/hype-radio-hls.service|644|daemon-reload
+system/hype-updater.service|/etc/systemd/system/hype-updater.service|644|daemon-reload
