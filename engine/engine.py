@@ -1673,6 +1673,10 @@ class H(BaseHTTPRequestHandler):
             if p == "/schedule": return self.send(200, planner.api_schedule(dbc()))
             if p == "/folders": return self.send(200, planner.api_folders(dbc()))
             if p == "/overlays": return self.send(200, planner.api_overlays(dbc()))
+            if p == "/overlay_songs":   # songs with their own intro sweeper (set per song in the Library) - or "never"
+                c = dbc(); rows = c.execute("""SELECT i.path, i.artist, i.title, i.folder, i.overlay_mode, i.overlay_path, j.title, j.folder FROM items i
+                                              LEFT JOIN items j ON j.path = i.overlay_path WHERE i.overlay_mode IN ('song', 'none') ORDER BY i.artist, i.title""").fetchall()
+                return self.send(200, [dict(path=r[0], artist=r[1], title=r[2], folder=r[3], mode=r[4], sweeper=r[5], sweeper_title=r[6] or (r[5] or "").split("/")[-1], sweeper_folder=r[7]) for r in rows])
             if p == "/shows": return self.send(200, planner.api_shows(dbc()))
             if p == "/events": return self.send(200, planner.api_events(dbc()))
             if p == "/ads":
