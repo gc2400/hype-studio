@@ -1,0 +1,27 @@
+{
+ "time": "2026-10-30T10:42:30",
+ "result": "ok",
+ "commit": "bb806d6afbecac01b99d99921fbc520873fa0365",
+ "subject": "Test update: status page note",
+ "log": [
+  "10:42:29 update 69cc9a74 \u2192 bb806d6a \u00b7 1 file(s): web/status/index.html",
+  "10:42:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+ ],
+ "guard": {
+  "song": "BAD BUNNY \u2013 MONACO",
+  "listeners": 0,
+  "obs": true,
+  "seg_age": 0.4,
+  "problems": [],
+  "ok": true
+ },
+ "services": {
+  "hype-radio": "active",
+  "hype-engine": "active",
+  "hype-obs": "active",
+  "hype-ladder": "active",
+  "hype-guard": "active",
+  "hype-indexer": "active",
+  "nginx": "active"
+ }
+}
