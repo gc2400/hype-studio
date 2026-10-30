@@ -1,17 +1,17 @@
 {
- "time": "2026-10-30T17:26:14",
+ "time": "2026-10-30T17:28:18",
  "result": "ok",
- "commit": "e2daf1a4e444c197989e08de469c0fd7792dac89",
- "subject": "TV clock box: time in Inter bold",
+ "commit": "ddb4038ab2c310a6732fdae6a83085fca4d37967",
+ "subject": "TV clock: normal digits (the tabular 1 looked different from the temperature)",
  "log": [
-  "17:26:14 update 11765c65 \u2192 e2daf1a4 \u00b7 1 file(s): web/overlay/index.html",
-  "17:26:14 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "17:28:18 update e2daf1a4 \u2192 ddb4038a \u00b7 1 file(s): web/overlay/index.html",
+  "17:28:18 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "CLUB HYPE \u2013 339 FYP Freddy Moreira",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 2.8,
   "problems": [],
   "ok": true
  },

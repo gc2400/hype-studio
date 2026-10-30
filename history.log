@@ -12,3 +12,4 @@
 2026-10-30T17:17:59 ok b7bd87b9 One mixtape per hour: the clock never goes round for a 2nd mix (also after a restart/replan); Up next times in Inter bold
 2026-10-30T17:22:07 ok 11765c65 Header clock in Inter bold
 2026-10-30T17:26:14 ok e2daf1a4 TV clock box: time in Inter bold
+2026-10-30T17:28:18 ok ddb4038a TV clock: normal digits (the tabular 1 looked different from the temperature)
