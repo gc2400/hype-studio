@@ -1,19 +1,18 @@
 {
- "time": "2026-10-30T14:52:49",
+ "time": "2026-10-30T14:59:45",
  "result": "ok",
- "commit": "47e30c74f247f6f8991800b68816cc8f0bab175c",
- "subject": "PIP showings logged (frame + seconds) and sent with the heartbeat for Hype Live sponsor reports",
+ "commit": "40e1f89fcb3e40f1f526c441fda7f93aeef58213",
+ "subject": "Artists: ignore Club Hype / Hype Radio as artist; TV stream also on stream.hyperadio.nl/tv/",
  "log": [
-  "14:52:04 update ab20ecf3 \u2192 47e30c74 \u00b7 2 file(s): engine/engine.py, engine/guard.py",
-  "14:52:04 restart hype-guard",
-  "14:52:04 restart hype-engine",
-  "14:52:49 installed OK \u00b7 restarted: hype-engine, hype-guard"
+  "14:59:00 update 47e30c74 \u2192 40e1f89f \u00b7 3 file(s): engine/engine.py, engine/planner.py, system/nginx-hype.conf",
+  "14:59:00 restart hype-engine",
+  "14:59:45 installed OK \u00b7 restarted: hype-engine, nginx-reload"
  ],
  "guard": {
-  "song": "Blaqbonez x Asake \u2013 Ikebe 3000",
+  "song": "Idaly x Ronnie Flex x Frenna \u2013 POPULAIR",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },

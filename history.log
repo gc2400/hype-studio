@@ -3,3 +3,4 @@
 2026-10-30T14:48:56 ok d3f5805f Ad breaks: sponsor spots X per day (clock slot + fixed time), Planning ADS tab, proof of play + now playing to Hype Live (switches, off until go-live)
 2026-10-30T14:51:01 ok ab20ecf3 ADS tab: dark date fields
 2026-10-30T14:52:49 ok 47e30c74 PIP showings logged (frame + seconds) and sent with the heartbeat for Hype Live sponsor reports
+2026-10-30T14:59:45 ok 40e1f89f Artists: ignore Club Hype / Hype Radio as artist; TV stream also on stream.hyperadio.nl/tv/
