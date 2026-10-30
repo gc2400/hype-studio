@@ -535,7 +535,7 @@ def preview_hour(c, day=None, hour=None, clock=None):
     cid = clock or clock_for(mem, start)
     cname = (mem.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() or ["no clock"])[0]
     recent, arts = [], []
-    def akey(a): return [x.strip().lower() for x in re.split(r"\s+(?:x|ft\.?|feat\.?|&|en|,)\s+|,", a or "") if x.strip()]
+    def akey(a): return [x.strip().lower() for x in re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|vs\.?|&|en|,)\s+|,", a or "", flags=re.I) if x.strip()]
     def ok(p_):
         if p_ in recent[-40:]: return False
         a = mem.execute("SELECT artist FROM items WHERE path=?", (p_,)).fetchone()

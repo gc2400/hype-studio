@@ -46,7 +46,8 @@ class Liq:
         return len([x for x in self.cmd("q.queue").split() if x.isdigit()])
 
 def artist_key(a):
-    return [p.strip().lower() for p in re.split(r"\s+(?:x|ft\.?|feat\.?|&|en|,)\s+|,", a or "") if p.strip()]
+    """Each artist on its own: "Pop Smoke X 50 Cent x Roddy Ricch" → pop smoke · 50 cent · roddy ricch (x / X, ft., feat., featuring, vs, &, en, comma)."""
+    return [p.strip().lower() for p in re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|vs\.?|&|en|,)\s+|,", a or "", flags=re.I) if p.strip()]
 
 class Picker:
     def __init__(self):

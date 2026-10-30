@@ -1,7 +1,7 @@
 /* Hype Studio – one header for every page. Computer: logo · AUTO/MANUAL · modes · radio/tv · clock ……… pages (right).
    Phone: logo · radio/tv · clock · ☰ (pages) / second row: the buttons. Keys: Alt+1 … Alt+7 */
 (function () {
-  const P = [['/panel/', 'On Air', 'onair'], ['/panel/library.html', 'Library', 'library'], ['/panel/plan.html', 'Planning', 'plan'],
+  const P = [['/panel/', 'Panel', 'onair'], ['/panel/library.html', 'Library', 'library'], ['/panel/plan.html', 'Planning', 'plan'],
              ['/panel/history.html', 'History', 'history'], ['/panel/studio.html', 'Broadcast', 'studio'], ['/panel/settings.html', 'Settings', 'settings'], ['/', 'Status', 'status']];
   const f = location.pathname.split('/').pop().replace('.html', '') || 'index';
   const cur = !location.pathname.startsWith('/panel') ? 'status' : f === 'index' ? 'onair' : f, home = cur === 'onair';
@@ -13,14 +13,18 @@
 #hhead .show{font-size:17px;font-weight:900;white-space:nowrap}
 #hhead .hctl{display:flex;align-items:center;gap:6px;flex:none}
 #hhead .btn{cursor:pointer;border-radius:10px;border:1px solid #23496B;background:#0F2B44;color:#F2F6FA;font:700 11px Inter,system-ui,sans-serif;min-height:32px;padding:0 10px}
-#hhead .btn.on{background:#05A9C6;border-color:#05A9C6;color:#061423}
+#hhead .btn{transition:background .12s,border-color .12s,color .12s}
+#hhead .btn:hover{border-color:#05A9C6;background:#143049}
+#hhead .btn.on{background:#05A9C6;border-color:#05A9C6;color:#061423}#hhead .btn.on:hover{background:#18BEDA}
 #hhead .modes{display:inline-flex;gap:3px;background:#071A2B;border-radius:10px;padding:3px}
-#hhead .modes .btn{border:0;background:transparent;color:#A9BCCD;min-height:28px;white-space:nowrap}#hhead .modes .btn.on{background:#FFE000;color:#061423}
+#hhead .modes .btn{border:0;background:transparent;color:#A9BCCD;min-height:28px;white-space:nowrap}
+#hhead .modes .btn:hover{background:#143049;color:#fff}#hhead .modes .btn.on:hover{background:#FFE95C;color:#061423}#hhead .modes .btn.on{background:#FFE000;color:#061423}
 #hhead .modes .btn[data-mode=live].on{background:#FF4D5E;color:#fff}
 #hhead .hst{display:flex;align-items:center;gap:8px;flex:none;position:relative}
 #hhead .hdots{display:inline-flex;align-items:center;gap:7px;border:1px solid transparent;background:transparent;border-radius:999px;padding:7px 8px;cursor:pointer}
 #hhead .hdots:hover,#hhead .hdots[aria-expanded=true]{background:#0F2B44;border-color:#23496B}
-#hhead .hrec{display:inline-flex;align-items:center;gap:6px;border:1px solid #23496B;background:#0F2B44;color:#F2F6FA;border-radius:999px;padding:0 11px;height:32px;cursor:pointer;font:800 11px Inter,system-ui,sans-serif;letter-spacing:.06em}
+#hhead .hrec{display:inline-flex;align-items:center;gap:6px;border:1px solid #23496B;background:#0F2B44;color:#F2F6FA;border-radius:10px;padding:0 10px;height:32px;cursor:pointer;font:700 11px Inter,system-ui,sans-serif;letter-spacing:.04em;transition:background .12s,border-color .12s}
+#hhead .hrec:hover{border-color:#FF4D5E;background:#2A1420}#hhead .hrec.on:hover{background:#FF6676}
 #hhead .hrec i{width:9px;height:9px;border-radius:50%;background:#FF4D5E}
 #hhead .hrec.on{background:#FF4D5E;border-color:#FF4D5E;color:#fff}#hhead .hrec.on i{background:#fff;animation:hrecp 1.2s infinite}
 #hhead .hrec.ask{background:#3A0E18;border-color:#FF4D5E}
@@ -61,7 +65,7 @@
   document.body.insertBefore(h, document.body.firstChild);
   h.innerHTML = `<div class="hb"><img src="/panel/logo.png" alt="Hype radio tv"><div class="show" id="show">Hype Studio</div></div>
     <div class="hctl"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button>
-      <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ MODE</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
+      <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
     <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span></button><span class="chip" id="stClock">–</span><span id="clock">--:--:--</span>
       <button class="hrec" id="hRec" title="Record the TV output (to /recordings)"><i></i><b>REC</b><span id="hRecT"></span></button>
       <div class="hpop" id="hPop" role="dialog" aria-label="Streams" hidden></div></div>
