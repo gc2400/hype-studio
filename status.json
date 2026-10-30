@@ -1,17 +1,18 @@
 {
- "time": "2026-10-31T00:14:32",
+ "time": "2026-10-31T00:24:31",
  "result": "ok",
- "commit": "c59ef4b2aec482a01faaa7a01d05796ccef9b5f3",
- "subject": "Planning: playlists/clocks list fills the window height and scrolls inside its box",
+ "commit": "d7fbafa7ffbcfe05f303018d126a4f0f6918905c",
+ "subject": "Pads: banks named like a jingles folder follow that folder (new jingles appear by themselves); up to 64 pads per bank",
  "log": [
-  "00:14:32 update 05425f13 \u2192 c59ef4b2 \u00b7 1 file(s): web/panel/plan.html",
-  "00:14:32 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "00:23:45 update c59ef4b2 \u2192 d7fbafa7 \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
+  "00:23:45 restart hype-engine",
+  "00:24:31 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Devi Dev x B'Jay \u2013 Lock You",
+  "song": "J Balvin x Ryan Castro \u2013 Pal Agua",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.8,
+  "seg_age": 3.3,
   "problems": [],
   "ok": true
  },

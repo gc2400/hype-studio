@@ -33,3 +33,4 @@
 2026-10-31T00:05:32 ok 7bb2005d Intro sweepers page: list of songs with their own sweeper (set in the Library), × = back to the rules
 2026-10-31T00:08:23 ok 05425f13 Per-song intro sweepers survive moved songs/jingles; the list shows its count and a hint when empty
 2026-10-31T00:14:32 ok c59ef4b2 Planning: playlists/clocks list fills the window height and scrolls inside its box
+2026-10-31T00:24:31 ok d7fbafa7 Pads: banks named like a jingles folder follow that folder (new jingles appear by themselves); up to 64 pads per bank
