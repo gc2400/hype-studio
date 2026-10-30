@@ -1,12 +1,12 @@
 {
- "time": "2026-10-30T22:16:40",
+ "time": "2026-10-30T22:23:35",
  "result": "ok",
- "commit": "eb6a4bb1960a48dc755ac31afd92103a165906de",
- "subject": "Listeners counted as unique devices (address + player): MP3 via Icecast's list matched to nginx-mirrored starts, HLS + TV from the logs; MP3 + HLS together without double counting",
+ "commit": "80bd4f1cad576a89de817b51cd4bf5095f6ed075",
+ "subject": "Return feed to the Mixcast: received in stereo (Chrome folded Opus to mono), 300 ms playout buffer against the 'under water' stretching, Opus 256k",
  "log": [
-  "22:15:55 update 7cefdb24 \u2192 eb6a4bb1 \u00b7 2 file(s): engine/engine.py, system/nginx-hype.conf",
-  "22:15:55 restart hype-engine",
-  "22:16:40 installed OK \u00b7 restarted: hype-engine, nginx-reload"
+  "22:22:50 update eb6a4bb1 \u2192 80bd4f1c \u00b7 2 file(s): engine/live/return.sh, web/panel/hype-rtc.js",
+  "22:22:50 restart hype-return",
+  "22:23:35 installed OK \u00b7 restarted: hype-return"
  ],
  "guard": {
   "song": " \u2013 OLD SCHOOL REGGAETON, PERREO & DEMBOW DJ MIX | ROMANA LIVE SET | DON OMAR, BAD BUNNY, BAD GYAL",
