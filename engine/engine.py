@@ -1294,10 +1294,16 @@ def load_rotation():
 LEVEL = {"l": 0.0, "r": 0.0, "asked": 0}
 AGC = {"db": 0.0, "level": None, "strength": 0.7, "t": 0}
 def agc_loop():
-    """AGC on the music (like CLOSE): rides the level slowly towards AGC_TARGET. Measures after the EQ (feedback),
-    up ~8 s, down ~1.5 s, holds when the level is under -40 dB, glides back to 0 dB when switched off."""
+    """Gated AGC on the music (broadcast style): evens out differences BETWEEN songs, leaves the dynamics WITHIN a song alone.
+    - measures after the EQ (feedback), corrects for its own gain;
+    - song-start hold: the first 15 s of a song (intro) never move it, only a real overshoot is caught;
+    - gate: when the music falls 6+ dB under the song's body level (quiet intro, breakdown) it freezes;
+    - slow up (~20 s), quick down (~1.5 s), fast catch (~0.6 s) when 3+ dB over target;
+    - max boost +6 dB; holds under -40 dB; glides back to 0 dB when switched off."""
     TARGET, DT = -14.5, 0.2          # about the average level of a normalised song after the EQ: a normal song gets ~0 dB
+    HOLD_S, GATE_DB = 15.0, 6.0
     avg = None                        # the level without our gain, smoothed over ~3 s (so single beats do not move it)
+    body = None                       # the slow "body" level (~20 s) that the gate compares against
     sock = None; last_set = None; n = 0
     while True:
         time.sleep(DT)
@@ -1317,15 +1323,25 @@ def agc_loop():
             v = ask("radio.level").split()
             if len(v) < 6: continue
             lvl = float(v[5]); AGC["level"] = lvl
-            st = AGC["strength"]; up_max, down_max = 9.0 * st, -6.0 * st
-            g = AGC["db"]
-            if st <= 0.01: g += (0.0 - g) * DT / 1.5                      # off: back to 0 dB
+            st = AGC["strength"]; up_max, down_max = min(6.0, 8.0 * st), -6.0 * st
+            g = AGC["db"]; state = "ride"
+            if st <= 0.01: g += (0.0 - g) * DT / 1.5; state = "off"       # off: back to 0 dB
             elif lvl > -40.0 and E.now and not E.stopped:
                 raw = lvl - g                                             # the level without our own gain
-                avg = raw if avg is None else avg + (raw - avg) * DT / 3.0
-                want = max(down_max, min(up_max, TARGET - avg))
-                tau = 8.0 if want > g else 1.5
-                g += (want - g) * min(1.0, DT / tau)
+                age = time.time() - (E.now.get("started") or 0)
+                if age >= HOLD_S: body = raw if body is None else body + (raw - body) * DT / 20.0   # intros never shape the body
+                if lvl > TARGET + 3.0:                                    # real overshoot: catch it fast, always
+                    want = max(down_max, min(up_max, g - (lvl - TARGET)))
+                    g += (want - g) * min(1.0, DT / 0.6); state = "catch"
+                elif age < HOLD_S: state = "hold"                         # intro: judge the song by its body, not its intro
+                elif body is not None and raw < body - GATE_DB: state = "gate"                 # quiet part: freeze
+                else:
+                    avg = raw if avg is None else avg + (raw - avg) * DT / 3.0
+                    want = max(down_max, min(up_max, TARGET - avg))
+                    tau = 20.0 if want > g else 1.5
+                    g += (want - g) * min(1.0, DT / tau)
+            else: state = "hold"
+            AGC["state"] = state
             AGC["db"] = g; AGC["t"] = time.time()
             if last_set is None or abs(g - last_set) > 0.05:
                 ask(f"var.set agc_g = {10 ** (g / 20):.4f}"); last_set = g
@@ -1447,7 +1463,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners()))
             if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))
-            if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"], 1), "agc_on": AGC["strength"] > 0.01})
+            if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01})
             if p == "/history.csv":
                 h = history(qs, limit=5000); import csv, io; b = io.StringIO(); w = csv.writer(b, delimiter=";")
                 w.writerow(["date", "time", "artist", "title", "folder", "type", "length", "tv", "file"])
