@@ -1251,7 +1251,7 @@ def watch_show():
             except Exception as e: log.warning("weather: %s", e)
         time.sleep(60)
 
-SOUND_VARS = ["snd_drive", "snd_bass", "snd_bass_f", "snd_treble", "snd_mid", "snd_comp", "snd_monob", "snd_ratio", "snd_thresh", "snd_attack", "snd_release", "snd_ceiling", "snd_punch", "mix_out", "mix_in"]
+SOUND_VARS = ["snd_drive", "snd_bass", "snd_bass_f", "snd_treble", "snd_mid", "snd_comp", "snd_monob", "snd_agc", "snd_ratio", "snd_thresh", "snd_attack", "snd_release", "snd_ceiling", "snd_punch", "mix_out", "mix_in"]
 def load_rotation():
     """Artist / song separation and the longest overlap, from Settings."""
     global ARTIST_SEP, TITLE_SEP, MIX_MAX, JINGLE_FADE, JINGLE_DB, ADBOX_ALWAYS
@@ -1261,6 +1261,48 @@ def load_rotation():
     ADBOX_ALWAYS = bool(planner.get_setting(c, "adbox_always", True))
     MIX_MAX = 8.0     # (the longest-overlap slider is gone: the overlap = the fade-out)
 LEVEL = {"l": 0.0, "r": 0.0, "asked": 0}
+AGC = {"db": 0.0, "level": None, "strength": 0.7, "t": 0}
+def agc_loop():
+    """AGC on the music (like CLOSE): rides the level slowly towards AGC_TARGET. Measures after the EQ (feedback),
+    up ~8 s, down ~1.5 s, holds when the level is under -40 dB, glides back to 0 dB when switched off."""
+    TARGET, DT = -14.5, 0.2          # about the average level of a normalised song after the EQ: a normal song gets ~0 dB
+    avg = None                        # the level without our gain, smoothed over ~3 s (so single beats do not move it)
+    sock = None; last_set = None; n = 0
+    while True:
+        time.sleep(DT)
+        try:
+            if sock is None: sock = socket.create_connection(("127.0.0.1", 1234), timeout=2)
+            def ask(cmd):
+                sock.sendall((cmd + "\n").encode()); buf = b""
+                while b"END" not in buf:
+                    b_ = sock.recv(512)
+                    if not b_: raise OSError("closed")
+                    buf += b_
+                return buf.decode("utf-8", "replace").split("\r\n")[0].strip()
+            if n % 25 == 0:
+                try: AGC["strength"] = float(ask("var.get snd_agc").split()[-1])
+                except Exception: pass
+            n += 1
+            v = ask("radio.level").split()
+            if len(v) < 6: continue
+            lvl = float(v[5]); AGC["level"] = lvl
+            st = AGC["strength"]; up_max, down_max = 9.0 * st, -6.0 * st
+            g = AGC["db"]
+            if st <= 0.01: g += (0.0 - g) * DT / 1.5                      # off: back to 0 dB
+            elif lvl > -40.0 and E.now and not E.stopped:
+                raw = lvl - g                                             # the level without our own gain
+                avg = raw if avg is None else avg + (raw - avg) * DT / 3.0
+                want = max(down_max, min(up_max, TARGET - avg))
+                tau = 8.0 if want > g else 1.5
+                g += (want - g) * min(1.0, DT / tau)
+            AGC["db"] = g; AGC["t"] = time.time()
+            if last_set is None or abs(g - last_set) > 0.05:
+                ask(f"var.set agc_g = {10 ** (g / 20):.4f}"); last_set = g
+        except Exception as ex:
+            try: sock.close()
+            except Exception: pass
+            sock = None; time.sleep(2)
+
 def meter_loop():
     """On-air level for the panel meter: one open telnet connection, asked 10× a second, only while a panel is watching."""
     sock = None
@@ -1373,7 +1415,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/media": return self.send(200, {"files": media_files(), "scenes": MEDIA_SCENES})
             if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status()))
             if p == "/guard": return self.send(200, guard_status(full=True))
-            if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs")})
+            if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"], 1), "agc_on": AGC["strength"] > 0.01})
             if p == "/history.csv":
                 h = history(qs, limit=5000); import csv, io; b = io.StringIO(); w = csv.writer(b, delimiter=";")
                 w.writerow(["date", "time", "artist", "title", "folder", "type", "length", "tv", "file"])
@@ -1772,5 +1814,6 @@ if __name__ == "__main__":
     threading.Timer(7, ensure_adbox).start()
     tickers.start()
     threading.Thread(target=meter_loop, daemon=True).start()
+    threading.Thread(target=agc_loop, daemon=True).start()
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()

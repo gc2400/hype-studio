@@ -61,9 +61,11 @@ def mix(a, b) =
   add(normalize=false, [fade.in(duration=fin, b.source), amplify(override=null(), g, sa)])
 end
 s = metadata.deduplicate(cross(duration=3., override_duration="liq_cross_duration", mix, s))   # cross() so OUR mix is used
+agc_g = interactive.float("agc_g", min=0.3, max=3., description="AGC gain on the music (set by the engine 5x/s)", 1.)
+snd_agc = interactive.float("snd_agc", min=0., max=1., description="AGC strength: 0 off, 0.4 light, 0.7 normal, 1 strong", 0.7)
 duck_lvl = interactive.float("duck_lvl", min=0., max=1., description="music level under ducked pads / sweepers (the engine glides it)", 1.)
 s = amplify(override="liq_amplify", 1., s)   # song gain AFTER the mix: the new song gain starts at the mix, so the old tail gets compensated in mix()
-s = amplify(override=null(), {vol_music() * duck_lvl()}, s)   # override=null: do NOT apply the song gain (liq_amplify) a second time
+s = amplify(override=null(), {vol_music() * duck_lvl() * agc_g()}, s)   # override=null: do NOT apply the song gain (liq_amplify) a second time
 
 def notify(m) =
   if m["hype_path"] != "" then
@@ -182,7 +184,7 @@ def meter_level(_) =
   # classic: the compressor's own gain reduction; multiband: estimated from the level before / after (+ its make-up gain)
   comp = if snd_comp() < 0.5 or quiet then 0. elsif snd_punch() > 0.25 then max(0., a - b + 4.5) else max(0., 0. - fcg()) end
   lim = if quiet then 0. else max(0., 0. - flg()) end
-  "#{l} #{r} #{comp} #{lim} #{lu.lufs()}"
+  "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a}"
 end
 server.register(namespace="radio", "level", meter_level)
 # what is really on air (for the Broadcast page): your studio mix or the automation
