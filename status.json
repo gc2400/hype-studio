@@ -1,18 +1,19 @@
 {
- "time": "2026-10-30T22:23:35",
+ "time": "2026-10-30T22:32:10",
  "result": "ok",
- "commit": "80bd4f1cad576a89de817b51cd4bf5095f6ed075",
- "subject": "Return feed to the Mixcast: received in stereo (Chrome folded Opus to mono), 300 ms playout buffer against the 'under water' stretching, Opus 256k",
+ "commit": "830c0d31971b617902d391de5511a3be36355107",
+ "subject": "Return feed to the Mixcast unprocessed (peak safety only): during LIVE the music is processed once, not twice",
  "log": [
-  "22:22:50 update eb6a4bb1 \u2192 80bd4f1c \u00b7 2 file(s): engine/live/return.sh, web/panel/hype-rtc.js",
-  "22:22:50 restart hype-return",
-  "22:23:35 installed OK \u00b7 restarted: hype-return"
+  "22:30:46 update 80bd4f1c \u2192 830c0d31 \u00b7 1 file(s): radio/radio.liq",
+  "22:31:25 lab: PASS (6/6 good readings)",
+  "22:31:25 restart hype-radio",
+  "22:32:10 installed OK \u00b7 restarted: hype-radio"
  ],
  "guard": {
-  "song": " \u2013 OLD SCHOOL REGGAETON, PERREO & DEMBOW DJ MIX | ROMANA LIVE SET | DON OMAR, BAD BUNNY, BAD GYAL",
+  "song": "Tiwa Savage x Wande Coal x MAVO \u2013 Energy",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
