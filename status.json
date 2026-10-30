@@ -1,17 +1,17 @@
 {
- "time": "2026-10-30T15:04:53",
- "result": "ok",
- "commit": "6c8d937c2fc14b38c4b1553c05b290b2c75e46c9",
- "subject": "Panel: preview scene label only on hover",
+ "time": "2026-10-30T15:21:16",
+ "result": "error",
+ "commit": "",
+ "subject": "",
  "log": [
-  "15:04:53 update 40e1f89f \u2192 6c8d937c \u00b7 1 file(s): web/panel/index.html",
-  "15:04:53 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:21:16 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
  ],
+ "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "Kybba x Ryan Castro x Bad Gyal x TopBoy \u2013 SE LE VE",
+  "song": "Ozuna x Jory Boy x \u00d1engo Flow \u2013 Vulnerable",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
