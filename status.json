@@ -1,18 +1,18 @@
 {
- "time": "2026-10-30T23:08:41",
+ "time": "2026-10-30T23:15:36",
  "result": "ok",
- "commit": "8504199bd55fbe72f80fcc727de3007290369c16",
- "subject": "Throwback: jingles/THROWBACK is a Throwback sweeper folder; a throwback song from the clock gets one in front of it (once per clock hour), like New Music",
+ "commit": "509d7a3b27824af1b32acfb3ad4d223f09dca297",
+ "subject": "Throwback jingle only before songs from CLASSICS folders (not GOLD)",
  "log": [
-  "23:07:56 update 830c0d31 \u2192 8504199b \u00b7 1 file(s): engine/engine.py",
-  "23:07:56 restart hype-engine",
-  "23:08:41 installed OK \u00b7 restarted: hype-engine"
+  "23:14:51 update 8504199b \u2192 509d7a3b \u00b7 1 file(s): engine/engine.py",
+  "23:14:51 restart hype-engine",
+  "23:15:36 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Davido x Mayorkun x FOLA \u2013 B4 B4",
+  "song": "Tiakola x Jorja Smith \u2013 Jet Lag",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
