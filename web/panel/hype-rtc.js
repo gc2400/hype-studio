@@ -50,8 +50,16 @@ const HypeRTC = (() => {
   async function play(path, o = {}) {
     const pc = new RTCPeerConnection({iceServers: ICE}), stream = new MediaStream();
     pc.addTransceiver('audio', {direction: 'recvonly'}); if (o.video) pc.addTransceiver('video', {direction: 'recvonly'});
-    pc.ontrack = e => stream.addTrack(e.track);
-    await pc.setLocalDescription(await pc.createOffer());
+    pc.ontrack = e => {
+      stream.addTrack(e.track);
+      // music quality: a bigger playout buffer, so the browser never has to stretch/squeeze the sound to catch up
+      // (that is what sounds "under water"); a few hundred ms extra delay does not matter for the return feed
+      if (e.track.kind === 'audio' && e.receiver) { const ms = o.bufferMs ?? 300;
+        try { if ('jitterBufferTarget' in e.receiver) e.receiver.jitterBufferTarget = ms; else e.receiver.playoutDelayHint = ms / 1000; } catch (_) {} }
+    };
+    const offer = await pc.createOffer();
+    offer.sdp = opusSdp(offer.sdp, 256, true);        // receive in STEREO (without stereo=1 Chrome folds Opus down to mono)
+    await pc.setLocalDescription(offer);
     await exchange(`/live/${path}/whep?key=${encodeURIComponent(o.key || '')}`, pc);
     return {pc, stream};
   }
