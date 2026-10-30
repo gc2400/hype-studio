@@ -588,6 +588,7 @@ class Engine:
         planner.init_pads(c0); planner.init_screen(c0); self.screen = Screen()
         try: c0.execute("ALTER TABLE items ADD COLUMN mix_set INT DEFAULT 0"); c0.commit()    # 1 = MIX set by hand (smart mix leaves it alone)
         except sqlite3.OperationalError: pass
+        c0.execute("UPDATE items SET mtime=0 WHERE folder LIKE 'MIXES%' AND problem LIKE 'no artist%'"); c0.commit()   # mixes need no artist: index again
         self.live = live.Live(self.liq, self.tv, lambda: SHOW.get("title") or "show")
         self.tv.live = self.live.live; self.tv.route_audio(force=True)
         load_rotation()
@@ -1288,7 +1289,7 @@ def library(qs):
     if qs.get("auto", ["0"])[0] == "1": sql += " AND COALESCE(cues_edited, 0) = 0"
     for w in q.lower().split():
         sql += " AND lower(artist||' '||title||' '||filename) LIKE ?"; args.append(f"%{w}%")
-    sql += " ORDER BY " + ("added_at DESC, artist, title" if sort == "new" else "artist, title") + " LIMIT 300"
+    sql += " ORDER BY " + ("added_at DESC, artist, title" if sort == "new" else "(problem IS NULL), problem, artist, title" if sort == "problems" else "artist, title") + " LIMIT 300"
     last = {r[0]: r[1] for r in c.execute("SELECT path, MAX(started) FROM asrun GROUP BY path")}
     k = ["path", "artist", "title", "folder", "mode", "clip_path", "clip_suggest", "clip_score", "duration", "has_video", "problem", "overlay_mode", "overlay_path", "cue_start", "cue_mix", "cue_end", "cues_edited", "added_at", "mix_set"]
     out = []
@@ -1300,7 +1301,8 @@ def library(qs):
     counts = dict(c.execute("SELECT section, COUNT(*) FROM items GROUP BY section").fetchall())
     counts["mixes"] = c.execute("SELECT COUNT(*) FROM items WHERE section='music' AND folder LIKE 'MIXES%'").fetchone()[0]
     counts["music"] = counts.get("music", 0) - counts["mixes"]
-    return {"items": out, "folders": folders, "all_folders": all_folders, "counts": counts}
+    psql = "SELECT COUNT(*) FROM items WHERE section=? AND problem IS NOT NULL" + ((" AND folder " + ("" if mixes else "NOT ") + "LIKE 'MIXES%'") if sec == "music" else "")
+    return {"problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "counts": counts}
 
 def waveform(path):
     os.makedirs(WAVES, exist_ok=True)

@@ -140,12 +140,13 @@ function added(t) { if (!t) return ''; const d = new Date(t * 1000), h = (Date.n
 let KIND = '', AUTOC = 0;
 function visible() { return LIB ? LIB.items : []; }
 function lib(keepSel) {
-  $('#bSort').textContent = 'Sort: ' + (SORT === 'new' ? 'newest first' : 'A–Z'); $('#bRecent').classList.toggle('yellow', !!RECENT);
+  $('#bSort').textContent = 'Sort: ' + (SORT === 'new' ? 'newest first' : SORT === 'problems' ? '⚠ problems first' : 'A–Z'); $('#bRecent').classList.toggle('yellow', !!RECENT);
   return api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + (RECENT ? 'new' : SORT) + '&recent=' + RECENT + (MUS() && KIND ? '&kind=' + KIND : '') + (AUTOC ? '&auto=1' : '')).then(d => {
     $$('#kinds [data-k]').forEach(b => b.classList.toggle('on', b.dataset.k === KIND)); $('#kinds').hidden = !MUS() && !AUTOC && false;
     $$('#kinds [data-k]').forEach(b => b.hidden = !MUS());
     $('#onlyNew').classList.toggle('on', !!AUTOC); $('#onlyNew').textContent = (AUTOC ? '● ' : '○ ') + 'Only automatic cue points';
     LIB = d; remember();
+    if (d.problems) $('#bSort').innerHTML = esc($('#bSort').textContent) + ` <b style="color:#FF8A97">⚠ ${d.problems}</b>`;
     $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="btn sm ${k === SEC ? 'yellow' : ''}" data-sec="${k}">${n} <span style="opacity:.7">${d.counts[k] || 0}</span></button>`).join('');
     $$('#secs [data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];
@@ -218,7 +219,7 @@ $('#ovSel').onchange = () => { const v = $('#ovSel').value; api('cmd/set_overlay
 let qT; $('#q').oninput = () => { clearTimeout(qT); qT = setTimeout(lib, 200); };
 $('#onlyNew').onclick = () => { AUTOC = AUTOC ? 0 : 1; lib(); };
 $$('#kinds [data-k]').forEach(b => b.onclick = () => { KIND = b.dataset.k; lib(); });
-$('#bSort').onclick = () => { SORT = SORT === 'new' ? 'az' : 'new'; RECENT = 0; lib(); };
+$('#bSort').onclick = () => { SORT = SORT === 'az' ? 'new' : SORT === 'new' ? 'problems' : 'az'; RECENT = 0; lib(); };
 $('#bRecent').onclick = () => { RECENT = RECENT ? 0 : 7; if (RECENT) { GENRE = ''; FOLDER = ''; } lib().then(() => { if (RECENT && visible().length && !SEL) pick(visible()[0]); }); };
 document.addEventListener('keydown', e => {
   const typing = ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName) && document.activeElement.type !== 'checkbox';
