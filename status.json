@@ -1,18 +1,17 @@
 {
- "time": "2026-10-30T14:59:45",
+ "time": "2026-10-30T15:04:53",
  "result": "ok",
- "commit": "40e1f89fcb3e40f1f526c441fda7f93aeef58213",
- "subject": "Artists: ignore Club Hype / Hype Radio as artist; TV stream also on stream.hyperadio.nl/tv/",
+ "commit": "6c8d937c2fc14b38c4b1553c05b290b2c75e46c9",
+ "subject": "Panel: preview scene label only on hover",
  "log": [
-  "14:59:00 update 47e30c74 \u2192 40e1f89f \u00b7 3 file(s): engine/engine.py, engine/planner.py, system/nginx-hype.conf",
-  "14:59:00 restart hype-engine",
-  "14:59:45 installed OK \u00b7 restarted: hype-engine, nginx-reload"
+  "15:04:53 update 40e1f89f \u2192 6c8d937c \u00b7 1 file(s): web/panel/index.html",
+  "15:04:53 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Idaly x Ronnie Flex x Frenna \u2013 POPULAIR",
+  "song": "Kybba x Ryan Castro x Bad Gyal x TopBoy \u2013 SE LE VE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },

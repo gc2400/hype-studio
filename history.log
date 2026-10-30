@@ -4,3 +4,4 @@
 2026-10-30T14:51:01 ok ab20ecf3 ADS tab: dark date fields
 2026-10-30T14:52:49 ok 47e30c74 PIP showings logged (frame + seconds) and sent with the heartbeat for Hype Live sponsor reports
 2026-10-30T14:59:45 ok 40e1f89f Artists: ignore Club Hype / Hype Radio as artist; TV stream also on stream.hyperadio.nl/tv/
+2026-10-30T15:04:53 ok 6c8d937c Panel: preview scene label only on hover
