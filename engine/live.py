@@ -9,7 +9,7 @@ STATE = "/var/lib/hype/live_state.json"       # camera slots, recording/restream
 RESTREAM = "/etc/hype/restream.json"          # destinations with stream keys (600)
 REC_DIR = "/srv/hype/recordings"
 PROGRAM = "rtmp://127.0.0.1:1935/live/program"
-RADIO = "http://127.0.0.1:8000/test.mp3"
+RADIO = "http://127.0.0.1:8000/rec.mp3"     # the on-air sound at 256k, for the recordings (internal)
 SOURCES = ["cam1", "cam2", "cam3"] + [f"guest{i}" for i in range(1, 7)]
 CAMS = ("CAM 1", "CAM 2", "CAM 3", "CAM 4")
 

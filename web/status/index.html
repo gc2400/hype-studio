@@ -27,9 +27,11 @@ input{width:100%;font:inherit;font-size:13px;color:var(--txt);background:#071A2B
 <section class="card wide" style="flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between"><div><span class="lab">Server</span><div class="sub">hype-studio · 88.99.105.186 · updates every 5 s</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" id="age">connecting…</span><span class="chip" id="up"></span></div></section>
 <section class="card wide"><div class="row"><span class="lab">What viewers get · TV + radio stream</span><span class="chip" id="lvl">auto quality</span></div>
 <video id="v" controls muted playsinline></video>
-<audio controls preload="none" src="https://tv.hyperadio.nl/radio-test-dbd4c5f6b0ea.mp3" style="width:320px;max-width:100%"></audio>
-<label class="sub">Radio link (VLC)<input readonly value="https://tv.hyperadio.nl/radio-test-dbd4c5f6b0ea.mp3" onclick="this.select()"></label>
-<label class="sub">TV link (VLC, website player)<input readonly value="https://tv.hyperadio.nl/test-dbd4c5f6b0ea/master.m3u8" onclick="this.select()"></label></section>
+<audio controls preload="none" src="https://stream.hyperadio.nl/radio.mp3" style="width:320px;max-width:100%"></audio>
+<label class="sub">Radio · MP3 128k (website, apps, VLC, directories)<input readonly value="https://stream.hyperadio.nl/radio.mp3" onclick="this.select()"></label>
+<label class="sub">Radio · HLS AAC 128k (better sound at the same speed)<input readonly value="https://stream.hyperadio.nl/radio.m3u8" onclick="this.select()"></label>
+<label class="sub">TV · HLS 1080p/720p/480p, picks the quality by itself (website player, apps, VLC)<input readonly value="https://stream.hyperadio.nl/tv/master.m3u8" onclick="this.select()"></label>
+<label class="sub">Now playing + listeners (AzuraCast format)<input readonly value="https://stream.hyperadio.nl/api/nowplaying/hype_radio" onclick="this.select()"></label></section>
 <section class="card"><span class="lab">Running</span><div id="procs"></div><div class="row"><span>Newest stream piece</span><b id="seg" class="mono"></b></div></section>
 <section class="card"><span class="lab">CPU</span><div class="big mono" id="cpu">–</div><div class="bar"><i id="cpub"></i></div>
 <div class="row"><span>Load (1/5/15 min)</span><b class="mono" id="load"></b></div><div class="row"><span>Temperature</span><b class="mono" id="temp"></b></div>
@@ -43,7 +45,7 @@ input{width:100%;font:inherit;font-size:13px;color:var(--txt);background:#071A2B
 </section>
 </div></div>
 <script>
-var v=document.getElementById('v'),src='https://tv.hyperadio.nl/test-dbd4c5f6b0ea/master.m3u8';
+var v=document.getElementById('v'),src='https://stream.hyperadio.nl/tv/master.m3u8';
 if(window.Hls&&Hls.isSupported()){var h=new Hls({liveSyncDurationCount:3});h.loadSource(src);h.attachMedia(v);
 h.on(Hls.Events.LEVEL_SWITCHED,function(e,d){var l=h.levels[d.level];q('lvl').textContent='playing '+l.height+'p';});}
 else{v.src=src;}

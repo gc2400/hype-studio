@@ -1981,8 +1981,7 @@ def mp3_devices():
         log.warning("mp3 listeners: %s", e); return None
 def tv_viewer_ips(window=40):
     """Different devices (address + player) that fetched TV stream pieces in the last `window` s (test link + stream.hyperadio.nl/tv/)."""
-    return (log_devices("/var/log/nginx/access.log", lambda ln: "/test-dbd4c5f6b0ea/" in ln and ".ts" in ln, window)
-            | log_devices("/var/log/nginx/stream.access.log", lambda ln: " /tv/" in ln and ".ts" in ln, window))
+    return log_devices("/var/log/nginx/stream.access.log", lambda ln: " /tv/" in ln and ".ts" in ln, window)
 def hls_viewers(window=40): return len(tv_viewer_ips(window))
 VIEW = {"t": 0, "d": None}; VSTATS_FILE = "/var/lib/hype/viewers.json"
 def viewers():
@@ -2006,7 +2005,7 @@ def streams_status(eng):
     try:
         ice = json.loads(urllib.request.urlopen("http://127.0.0.1:8000/status-json.xsl", timeout=3).read())["icestats"].get("source") or []
         ice = ice if isinstance(ice, list) else [ice]
-        m = next((x for x in ice if str(x.get("listenurl", "")).endswith("/test.mp3")), None)
+        m = next((x for x in ice if str(x.get("listenurl", "")).endswith("/radio.mp3")), None)
         d["radio"] = {"ok": bool(m), "listeners": int(m.get("listeners", 0)) if m else 0, "kbps": int(m.get("bitrate", 0) or 0) if m else 0}
     except Exception as e: d["radio"] = {"ok": False, "error": str(e)[:80]}
     d["radio"]["on_air"] = not eng.stopped and bool(eng.now and eng.now.get("path"))

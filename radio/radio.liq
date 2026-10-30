@@ -206,7 +206,7 @@ server.register(namespace="pads", "stop", fun (_) -> begin padq.set_queue([]) pa
 server.register(namespace="over", "duck", fun (v) -> begin duck := float_of_string(v) "OK" end)
 
 output.icecast(%mp3(bitrate=256, samplerate=44100, stereo=true), host="127.0.0.1", port=8000,
-  password=conf.icecast_source, mount="test.mp3", name="Hype Radio TV - TEST", description="Hype Studio test", s)
+  password=conf.icecast_source, mount="rec.mp3", name="Hype Radio TV - recording", description="internal: 256k for the recordings", public=false, s)
 # the public radio stream (https://stream.hyperadio.nl/radio.mp3 via nginx): MP3 128 kbps, with song titles
 output.icecast(%mp3(bitrate=128, samplerate=44100, stereo=true), host="127.0.0.1", port=8000,
   password=conf.icecast_source, mount="radio.mp3", name="Hype Radio TV", description="Hype your life!", genre="Afro · Latin · Caribbean · Dutch · Hip-hop",
