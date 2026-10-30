@@ -191,6 +191,10 @@ class Guard:
                 "events": [{"t": int(e["t"]), "level": e["level"], "text": e["text"]} for e in d["events"][:10]]}
         try: sev = json.load(open("/var/lib/hype/screen_events.json"))
         except Exception: sev = []
+        try:                                          # own streams: radio listeners + TV viewers (now, peak + unique today)
+            au = http_json("http://127.0.0.1:8090/audience"); body["audience"] = {"radio": au["radio"], "tv": au["tv"]}
+            body["radio"]["listeners"] = au["radio"]["current"]; body["tv"]["viewers"] = au["tv"]["current"]
+        except Exception: pass
         if sev: body["screen_events"] = sev[:200]     # PIP showings etc. (Hype Live logs the ones whose brand is a sponsor)
         url = c["hl_url"].rstrip("/") + "/?hype_studio=" + urllib.request.quote(c["hl_key"])
         try:

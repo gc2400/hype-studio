@@ -1508,7 +1508,8 @@ class H(BaseHTTPRequestHandler):
             if p == "/library": return self.send(200, library(qs))
             if p == "/history": return self.send(200, history(qs))
             if p == "/media": return self.send(200, {"files": media_files(), "scenes": MEDIA_SCENES})
-            if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners()))
+            if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners(), own_tv=viewers()))
+            if p == "/audience": return self.send(200, {"radio": listeners(), "tv": viewers(), "t": int(time.time())})
             if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))
             if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"] + AGC["lift"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01})
@@ -1786,22 +1787,41 @@ class Media:
                 if eng.now: eng.tv.set_scene(eng.now.get("scene") or "Hype Screen")
 
 _ST = {"t": 0, "d": None, "pub": None, "pub_t": 0}
-def hls_viewers(window=40):
-    """Different devices that fetched the TV stream pieces in the last `window` seconds (from nginx's log)."""
+def tv_viewer_ips(window=40):
+    """Different devices that fetched TV stream pieces in the last `window` seconds (nginx logs: the test link on
+    tv.hyperadio.nl and https://stream.hyperadio.nl/tv/)."""
     ips = set(); now = time.time()
-    try:
-        with open("/var/log/nginx/access.log", "rb") as f:
-            f.seek(0, 2); n = f.tell(); f.seek(max(0, n - 3_000_000)); lines = f.read().decode("utf-8", "replace").splitlines()
-        for ln in reversed(lines):
-            if "/test-dbd4c5f6b0ea/" not in ln or ".ts" not in ln: continue
-            m = re.match(r'(\S+) \S+ \S+ \[([^\]]+)\]', ln)
-            if not m: continue
-            try: t = time.mktime(time.strptime(m.group(2).split()[0], "%d/%b/%Y:%H:%M:%S"))
-            except ValueError: continue
-            if now - t > window: break
-            ips.add(m.group(1))
-    except OSError: pass
-    return len(ips)
+    for log_, mark in (("/var/log/nginx/access.log", "/test-dbd4c5f6b0ea/"), ("/var/log/nginx/stream.access.log", " /tv/")):
+        try:
+            with open(log_, "rb") as f:
+                f.seek(0, 2); n = f.tell(); f.seek(max(0, n - 3_000_000)); lines = f.read().decode("utf-8", "replace").splitlines()
+            for ln in reversed(lines):
+                if mark not in ln or ".ts" not in ln: continue
+                m = re.match(r'(\S+) \S+ \S+ \[([^\]]+)\]', ln)
+                if not m: continue
+                try: t = time.mktime(time.strptime(m.group(2).split()[0], "%d/%b/%Y:%H:%M:%S"))
+                except ValueError: continue
+                if now - t > window: break
+                ips.add(m.group(1))
+        except OSError: pass
+    return ips
+def hls_viewers(window=40): return len(tv_viewer_ips(window))
+VIEW = {"t": 0, "d": None}; VSTATS_FILE = "/var/lib/hype/viewers.json"
+def viewers():
+    """TV viewers on Hype Studio's own video stream (all players: website, app, TV apps, VLC …): now, peak today, unique today."""
+    if VIEW["d"] and time.time() - VIEW["t"] < 10: return VIEW["d"]
+    ips = tv_viewer_ips(); now_n = len(ips); day = time.strftime("%Y-%m-%d")
+    try: st = json.load(open(VSTATS_FILE))
+    except Exception: st = {}
+    if st.get("day") != day: st = {"day": day, "peak": 0, "peak_t": 0, "uniq": []}
+    if now_n > st["peak"]: st["peak"], st["peak_t"] = now_n, int(time.time())
+    u = set(st.get("uniq", []))
+    for ip in ips: u.add(hashlib.sha1((day + ip).encode()).hexdigest()[:12])     # no IPs stored, only a daily hash
+    st["uniq"] = sorted(u)
+    try: json.dump(st, open(VSTATS_FILE, "w"))
+    except Exception: pass
+    d = {"current": now_n, "peak_today": st["peak"], "peak_time": st["peak_t"], "unique_today": len(u)}
+    VIEW.update(t=time.time(), d=d); return d
 def streams_status(eng):
     if _ST["d"] and time.time() - _ST["t"] < 5: return _ST["d"]
     d = {"time": time.time()}
@@ -1904,7 +1924,7 @@ def nowplaying_api():
                             "playlist": n.get("folder") or "", "streamer": "", "is_request": False, "song": song(n),
                             "type": "song" if n.get("section") == "music" else "jingle" if n.get("section") == "jingles" else (n.get("section") or "")},
             "playing_next": {"song": song(nxt)} if nxt else None, "song_history": hist, "is_online": not E.stopped,
-            "hype": {"listeners": L, "source": "hype-studio"}}
+            "hype": {"listeners": L, "viewers": viewers(), "source": "hype-studio"}}
 
 GUARD_CONF = "/var/lib/hype/guard_conf.json"
 def hl_send_np(c, it):
