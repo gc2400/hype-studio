@@ -1,19 +1,18 @@
 {
- "time": "2026-10-30T17:32:09",
+ "time": "2026-10-30T20:28:32",
  "result": "ok",
- "commit": "34a8a31c35622dbd1e4ae8b7e22992ed2a2657da",
- "subject": "Audience: TV viewers (test link + stream.hyperadio.nl/tv) with peak/unique today; heartbeat sends audience to Hype Live; nowplaying API hype.viewers",
+ "commit": "99e29e1b18dcf9e031a4bdec35963455ebc4196c",
+ "subject": "Paired clip sound: plays on during PIP, and is unmuted again when the video scene comes back (was silent for the rest of the song)",
  "log": [
-  "17:31:24 update ddb4038a \u2192 34a8a31c \u00b7 2 file(s): engine/engine.py, engine/guard.py",
-  "17:31:24 restart hype-guard",
-  "17:31:24 restart hype-engine",
-  "17:32:09 installed OK \u00b7 restarted: hype-engine, hype-guard"
+  "20:27:47 update 34a8a31c \u2192 99e29e1b \u00b7 1 file(s): engine/engine.py",
+  "20:27:47 restart hype-engine",
+  "20:28:32 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "CLUB HYPE \u2013 339 FYP Freddy Moreira",
+  "song": "Be\u00e9le \u2013 no tiene sentido",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
