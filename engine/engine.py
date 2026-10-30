@@ -141,37 +141,43 @@ def intro_len(it):
     return 0.0
 def smart_mix(it, nxt=None):
     """MIX + overlap from the loudness map: (cm, cross, fade) or None (map missing / MIX set by hand / switched off).
-    START and END are never crossed: the overlap always ends at END at the latest.
-    Songs: the outro (after the last loud moment) is used - a soft intro of the next song rises under a long outro,
-    a hard start comes in when the old song has dropped ~12 dB, an abrupt end changes tight (no gap).
-    Jingles: the next song starts where the voice ends, the echo / fade tail rings out under it."""
+    The next item never starts before START or after END. The old one may ring out after END only when END was not set
+    by hand (CLOSE / automatic END = the last loud moment): then its fading tail plays on under the next item, up to the
+    file's real audible end. An END you set by hand in Hype Studio is a hard stop.
+    Songs: a soft intro of the next song rises under a long outro, a hard start comes in when the old song has dropped
+    ~12 dB, an abrupt end changes tight (no gap). Jingles: the next song starts where the voice ends, the echo rings out."""
     if not SMART_MIX or not it or not it.get("path"): return None
     lm, L, mset = lm_info(it["path"])
     if not lm or L is None or mset: return None
-    cs = it.get("cue_start") or 0.0; ce = min(it.get("cue_end") or it.get("duration") or 0, len(lm) / 2) or (it.get("duration") or 0)
-    a, b = int(cs * 2), max(int(cs * 2) + 1, int(ce * 2))
+    cs = it.get("cue_start") or 0.0; dur = min(it.get("duration") or len(lm) / 2, len(lm) / 2)
+    end = min(it.get("cue_end") or dur, dur)                 # END: the next item starts by here at the latest
+    a = int(cs * 2)
+    tail_end = end
+    if it.get("cues_edited") != 1:                           # not your own END: the fading tail may ring past it
+        aud = next((i for i in range(len(lm) - 1, a - 1, -1) if lm[i] > -50), None)
+        if aud is not None: tail_end = max(end, min((aud + 1) / 2, end + 10.0, dur))
+    b = max(a + 1, int(tail_end * 2))
     if b - a < 4: return None
     jingle = it.get("section") in ("jingles", "ads")
     nl = intro_len(nxt) if nxt and nxt.get("section") == "music" else None
     hard_next = nxt is None or nxt.get("section") != "music" or nl is None or nl < 1.5
     if jingle:
         voice = next((i for i in range(b - 1, a - 1, -1) if lm[i] >= L - 8), None)
-        tv = (voice + 1) / 2 if voice is not None else ce
-        cm = min(max(cs, tv), ce - 0.3); cross = max(0.3, min(8.0, ce - cm))
-        fade = min(cross, 1.5) if hard_next else cross
-        return cm, cross, fade
+        tv = (voice + 1) / 2 if voice is not None else end
+        cm = min(max(cs, tv), end, tail_end - 0.3); cross = max(0.3, min(8.0, tail_end - cm))
+        return cm, cross, (min(cross, 1.5) if hard_next else cross)
     strong = next((i for i in range(b - 1, a - 1, -1) if lm[i] >= L - 6), None)
-    ts = (strong + 1) / 2 if strong is not None else ce
-    outro = ce - ts
+    ts = (strong + 1) / 2 if strong is not None else tail_end
+    outro = tail_end - ts
     if outro < 1.0:                                      # ends abruptly: tight change, no gap
-        cm = max(cs, ce - 0.4)
+        cm = tail_end - 0.4
     elif not hard_next:                                  # soft intro next: let it rise under the outro
-        cm = max(ts, ce - min(outro, 6.0, nl + 1.5))
-    else:                                                # hard start next: wait until the old song has dropped ~12 dB
-        drop = next((i for i in range(max(strong or a, a), b) if lm[i] < L - 12), None)
-        td = drop / 2 if drop is not None else ce
-        cm = min(max(ts, td - 0.3), ce - 0.5)
-    cm = max(cs, cm); cross = max(0.3, min(MIX_MAX, 4.0 if hard_next else 6.0, ce - cm))
+        cm = max(ts, tail_end - min(outro, 6.0, nl + 1.5))
+    else:                                                # hard start next: when the old song has dropped ~12 dB
+        drop = next((i for i in range(strong if strong is not None else a, b) if lm[i] < L - 12), None)
+        cm = min(max(ts, (drop / 2 if drop is not None else tail_end) - 0.3), tail_end - 0.5)
+    cm = max(cs, min(cm, end))
+    cross = max(0.3, min(MIX_MAX, 4.0 if hard_next else 6.0, tail_end - cm))
     return cm, cross, cross
 def annotate(it, pad=False, nxt=None):
     cs = it["cue_start"] or 0.0; dur = it["duration"] or it["cue_end"] or 0; ce = it["cue_end"] or dur
