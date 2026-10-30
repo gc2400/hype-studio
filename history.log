@@ -18,3 +18,4 @@
 2026-10-30T21:07:05 ok d7cecc74 Smart mix from the loudness map (songs: outro/intro aware, jingles: next song where the voice ends, echo under it); MIX AUTO/manual in both cue editors; Settings switch; maps for jingles; clips wait for the radio's audio latency (AV_LAG 0.2 s)
 2026-10-30T21:10:56 ok c78e9616 Smart mix: CLOSE/automatic END = next item starts by then, the fading tail may ring out to the real end; a hand-set END stays a hard stop
 2026-10-30T21:17:52 ok 26b20b4f Library: sort ⚠ problems first (+ count); mixes need no artist (FRIDAY 21/22 mixes were blocked by 'no artist')
+2026-10-30T21:24:02 ok c3eeb410 Library: separate ⚠ Problems button next to Sort

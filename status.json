@@ -1,19 +1,17 @@
 {
- "time": "2026-10-30T21:17:52",
+ "time": "2026-10-30T21:24:02",
  "result": "ok",
- "commit": "26b20b4ff37fcd60f561214d7b9385ee2e7853ef",
- "subject": "Library: sort \u26a0 problems first (+ count); mixes need no artist (FRIDAY 21/22 mixes were blocked by 'no artist')",
+ "commit": "c3eeb4104e4edc517c53c81d3abdd54b40fe5781",
+ "subject": "Library: separate \u26a0 Problems button next to Sort",
  "log": [
-  "21:17:06 update c78e9616 \u2192 26b20b4f \u00b7 3 file(s): engine/engine.py, engine/indexer.py, web/panel/library.html",
-  "21:17:06 restart hype-indexer",
-  "21:17:07 restart hype-engine",
-  "21:17:52 installed OK \u00b7 restarted: hype-engine, hype-indexer"
+  "21:24:02 update 26b20b4f \u2192 c3eeb410 \u00b7 1 file(s): web/panel/library.html",
+  "21:24:02 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Tyla \u2013 THAT GIRL",
+  "song": " \u2013 Hype SWP Club Hype",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
