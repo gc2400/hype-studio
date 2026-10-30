@@ -1,18 +1,17 @@
 {
- "time": "2026-10-31T00:43:20",
+ "time": "2026-10-31T00:47:27",
  "result": "ok",
- "commit": "11ad96fdfe90cf7a4d53e8e9e2b9143b2fed46d8",
- "subject": "Panel: no emojis on tabs, banks and pad buttons (DUCK / VIDEO / LOOP), MEDIA bank stands out in yellow, playlists: 'All N' or 'Next N' choice, library rows no longer move on hover (buttons appear over the row)",
+ "commit": "bc02577516dcd35aaa65c1e028b5f6abb8b29e5b",
+ "subject": "Panel: Up next without the History link, library sections as the same switch as the Library page, hover buttons on the row colour; Library page: the list ends at the window bottom",
  "log": [
-  "00:42:35 update f51d32a7 \u2192 11ad96fd \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
-  "00:42:35 restart hype-engine",
-  "00:43:20 installed OK \u00b7 restarted: hype-engine"
+  "00:47:27 update 11ad96fd \u2192 bc025775 \u00b7 2 file(s): web/panel/index.html, web/panel/library.html",
+  "00:47:27 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "De La Rose x Ryan Castro \u2013 LA MONDA",
+  "song": "Tyla x Wizkid \u2013 DYNAMITE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
