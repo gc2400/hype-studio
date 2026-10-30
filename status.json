@@ -1,18 +1,17 @@
 {
- "time": "2026-10-30T17:17:59",
+ "time": "2026-10-30T17:22:07",
  "result": "ok",
- "commit": "b7bd87b932ef088c5fff79baa41f18db51540a47",
- "subject": "One mixtape per hour: the clock never goes round for a 2nd mix (also after a restart/replan); Up next times in Inter bold",
+ "commit": "11765c65f2250ad3bb08970afd1c0e83c35b2508",
+ "subject": "Header clock in Inter bold",
  "log": [
-  "17:17:14 update a9f12e5a \u2192 b7bd87b9 \u00b7 3 file(s): engine/engine.py, engine/planner.py, web/panel/index.html",
-  "17:17:14 restart hype-engine",
-  "17:17:59 installed OK \u00b7 restarted: hype-engine"
+  "17:22:07 update b7bd87b9 \u2192 11765c65 \u00b7 1 file(s): web/panel/header.js",
+  "17:22:07 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "CLUB HYPE \u2013 339 FYP Freddy Moreira",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.5,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
