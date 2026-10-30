@@ -450,6 +450,7 @@ def rule_matches(c, rule, it):
         base = ref.split("/")[-1]
         return f == ref or f.startswith(ref + "/") or ("/" in ref and (f == base or f.endswith("/" + base)))
     if kind == "playlist": return in_playlist(c, ref, it["path"])
+    if kind == "song": return it.get("path") == ref
     if kind == "any": return True
     return False
 

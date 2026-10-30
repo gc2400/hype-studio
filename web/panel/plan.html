@@ -100,6 +100,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
   <section id="tab-pl" class="split">
     <div class="card side">
       <div class="row between"><span class="lab">Playlists</span><button class="btn sm yellow" id="plNew">+ New</button></div>
+      <input type="search" id="plQ" placeholder="Search playlists…" style="width:100%">
       <div class="list" id="plList"></div>
     </div>
     <div class="card main" id="plEdit" hidden>
@@ -136,6 +137,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
   <section id="tab-ck" class="split" hidden>
     <div class="card side">
       <div class="row between"><span class="lab">Clocks</span><button class="btn sm yellow" id="ckNew">+ New</button></div>
+      <input type="search" id="ckQ" placeholder="Search clocks…" style="width:100%">
       <div class="list" id="ckList"></div>
     </div>
     <div class="card main" id="ckEdit" hidden>
@@ -256,7 +258,8 @@ const loadAll = () => Promise.all([get('playlists'), get('clocks'), get('folders
 /* ---------------- playlists ---------------- */
 let cur = null;
 function renderPL() {
-  $('#plList').innerHTML = PL.map(p => `<button class="li ${cur && cur.id === p.id ? 'sel' : ''}" data-id="${p.id}"><div style="flex:1"><b>${esc(p.name)}</b><br><span>${p.rotate ? 'rotation · ' + p.sources.length + ' sources · ' : ''}${p.count} items · ${p.shuffle ? 'random' : 'in order'}${p.rotate ? '' : ' · ' + (p.loop ? 'loop' : 'no loop')}</span></div></button>`).join('') || '<span class="muted">No playlists yet. Make one with + New.</span>';
+  const pq = nf($('#plQ').value);
+  $('#plList').innerHTML = PL.filter(p => !pq || nf(p.name).includes(pq)).map(p => `<button class="li ${cur && cur.id === p.id ? 'sel' : ''}" data-id="${p.id}"><div style="flex:1"><b>${esc(p.name)}</b><br><span>${p.rotate ? 'rotation · ' + p.sources.length + ' sources · ' : ''}${p.count} items · ${p.shuffle ? 'random' : 'in order'}${p.rotate ? '' : ' · ' + (p.loop ? 'loop' : 'no loop')}</span></div></button>`).join('') || '<span class="muted">No playlists yet. Make one with + New.</span>';
   $$('#plList [data-id]').forEach(b => b.onclick = () => openPL(PL.find(p => p.id == b.dataset.id)));
 }
 function openPL(p) {
@@ -319,6 +322,7 @@ function bindPick(kind) { $$('#pickRes [data-v]').forEach(b => b.onclick = () =>
 let pqT; $('#pickQ').oninput = () => { clearTimeout(pqT); pqT = setTimeout(fillPicker, 200); };
 $('#addFolder').onclick = () => openPicker('folder'); $('#addSong').onclick = () => openPicker('song'); $('#addJingle').onclick = () => openPicker('jingle'); $('#addList').onclick = () => openPicker('playlist');
 $('#plRotate').onchange = () => renderSources();
+$('#plQ').oninput = () => renderPL(); $('#ckQ').oninput = () => renderCK();
 $('#plNew').onclick = () => openPL({id: null, name: '', loop: true, shuffle: true, rotate: false, sources: [], count: 0});
 $('#plSave').onclick = () => { cur.name = $('#plName').value; cur.loop = $('#plLoop').checked; cur.shuffle = $('#plShuffle').checked; cur.rotate = $('#plRotate').checked;
   post('plan/save_playlist', cur).then(r => { toast('Playlist saved'); return loadAll().then(() => openPL(PL.find(p => p.id === r.id))); }).catch(e => toast(e.message, 1)); };
@@ -330,7 +334,8 @@ let ck = null;
 const KINDS = [['playlist', 'Playlist'], ['folder', 'Folder'], ['showjingle', 'Show sweeper'], ['jingle', 'Jingle / sweeper'], ['id', 'Station ID'], ['song', 'Song'], ['file', 'File (by name)'], ['adbreak', 'Ad break']];
 const STARTS = [['continue', 'Where it left off'], ['start', 'From the start'], ['random', 'Random place']];
 function renderCK() {
-  $('#ckList').innerHTML = CK.map(c => `<button class="li ${ck && ck.id === c.id ? 'sel' : ''}" data-id="${c.id}"><span class="dot" style="background:${esc(c.color)}"></span><div style="flex:1"><b>${esc(c.name)}</b><br><span>${c.slots.length} slots${c.resume ? ' · continues' : ' · from the top'}</span></div></button>`).join('') || '<span class="muted">No clocks yet.</span>';
+  const cq = nf($('#ckQ').value);
+  $('#ckList').innerHTML = CK.filter(c => !cq || nf(c.name).includes(cq)).map(c => `<button class="li ${ck && ck.id === c.id ? 'sel' : ''}" data-id="${c.id}"><span class="dot" style="background:${esc(c.color)}"></span><div style="flex:1"><b>${esc(c.name)}</b><br><span>${c.slots.length} slots${c.resume ? ' · continues' : ' · from the top'}</span></div></button>`).join('') || '<span class="muted">No clocks yet.</span>';
   $$('#ckList [data-id]').forEach(b => b.onclick = () => openCK(CK.find(c => c.id == b.dataset.id)));
 }
 function openCK(c) { ck = JSON.parse(JSON.stringify(c)); $('#ckEdit').hidden = false; $('#ckName').value = ck.name;  $('#ckColor').value = ck.color || '#05A9C6'; $('#ckResume').checked = !!ck.resume; $('#ckDel').hidden = !ck.id; renderSlots(); renderCK(); }
@@ -478,8 +483,8 @@ function renderOv() {
   $('#ovRules').innerHTML = OV.map((r, i) => `<tr>
     <td><input type="checkbox" data-i="${i}" data-f="enabled" ${r.enabled ? 'checked' : ''} style="width:20px;height:20px;accent-color:var(--y)"></td>
     <td><input type="text" data-i="${i}" data-f="name" value="${esc(r.name)}" placeholder="e.g. New Music intro"></td>
-    <td><div class="row" style="flex-wrap:nowrap"><select data-i="${i}" data-f="match_kind"><option value="folder" ${r.match_kind === 'folder' ? 'selected' : ''}>Folder</option><option value="playlist" ${r.match_kind === 'playlist' ? 'selected' : ''}>Playlist</option><option value="any" ${r.match_kind === 'any' ? 'selected' : ''}>Any song</option></select>
-      ${r.match_kind !== 'any' ? `<select data-i="${i}" data-f="match_ref"><option value="">– choose –</option>${matchOpts(r).map(([v, l]) => `<option value="${esc(v)}" ${String(r.match_ref) === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>` : ''}</div></td>
+    <td><div class="row" style="flex-wrap:nowrap"><select data-i="${i}" data-f="match_kind"><option value="folder" ${r.match_kind === 'folder' ? 'selected' : ''}>Folder</option><option value="playlist" ${r.match_kind === 'playlist' ? 'selected' : ''}>Playlist</option><option value="song" ${r.match_kind === 'song' ? 'selected' : ''}>One song</option><option value="any" ${r.match_kind === 'any' ? 'selected' : ''}>Any song</option></select>
+      ${r.match_kind === 'song' ? `<div style="position:relative;min-width:240px"><input type="search" data-songq="${i}" placeholder="Search a song…" value="${esc(r.match_label || (r.match_ref ? r.match_ref.split('/').pop().replace(/\.[^.]+$/, '') : ''))}" style="width:100%"><div class="pick" data-songres="${i}" hidden style="position:absolute;z-index:20;left:0;right:0;top:100%;max-height:260px;overflow:auto;background:var(--card);border:1px solid var(--line2);border-radius:10px"></div></div>` : r.match_kind !== 'any' ? `<select data-i="${i}" data-f="match_ref"><option value="">– choose –</option>${matchOpts(r).map(([v, l]) => `<option value="${esc(v)}" ${String(r.match_ref) === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>` : ''}</div></td>
     <td><select data-i="${i}" data-f="jingle_ref"><option value="">– choose –</option>${jOpts.map(([v, l]) => `<option value="${esc(v)}" ${r.jingle_ref === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></td>
     <td><div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="1" data-i="${i}" data-f="every" value="${r.every}" style="width:64px"><span class="muted">song</span></div></td>
     <td><div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="0" data-i="${i}" data-f="min_gap" value="${r.min_gap}" style="width:64px"><span class="muted">min</span></div></td>
@@ -487,6 +492,10 @@ function renderOv() {
     <td><select data-i="${i}" data-f="duck">${[[0.2, '20 %'], [0.35, '35 %'], [0.5, '50 %'], [0.7, '70 %']].map(([v, l]) => `<option value="${v}" ${Math.abs(r.duck - v) < .01 ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
     <td><div class="row" style="flex-wrap:nowrap"><button class="btn sm" data-oup="${i}" aria-label="Move up">↑</button><button class="btn sm red" data-odel="${i}" aria-label="Remove rule">×</button></div></td></tr>`).join('') || '<tr><td colspan="9" class="muted">No rules yet. Example: songs in NEW get a sweeper from SWEEPERS, every song, at least 10 min apart.</td></tr>';
   $$('#ovRules [data-f]').forEach(e => e.onchange = () => { const r = OV[+e.dataset.i], f = e.dataset.f; r[f] = e.type === 'checkbox' ? e.checked : ['every', 'min_gap', 'offset', 'duck'].includes(f) ? +e.value : e.value; if (f === 'match_kind') { r.match_ref = ''; renderOv(); } });
+  $$('#ovRules [data-songq]').forEach(inp => { let t; inp.oninput = () => { clearTimeout(t); const i = +inp.dataset.songq, box = document.querySelector(`[data-songres="${i}"]`);
+    t = setTimeout(() => { if (!inp.value.trim()) { box.hidden = true; return; } get('library?section=music&q=' + encodeURIComponent(inp.value)).then(d => {
+      box.innerHTML = d.items.slice(0, 12).map(s => `<button data-p="${esc(s.path)}" data-l="${esc((s.artist ? s.artist + ' – ' : '') + s.title)}"><b>${esc(s.artist ? s.artist + ' – ' : '')}${esc(s.title)}</b><span>${esc(s.folder)}</span></button>`).join('') || '<span class="muted" style="padding:8px">Nothing found.</span>';
+      box.hidden = false; box.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { OV[i].match_ref = b.dataset.p; OV[i].match_label = b.dataset.l; renderOv(); }); }); }, 200); }; });
   $$('#ovRules [data-oup]').forEach(b => b.onclick = () => { const i = +b.dataset.oup; if (i) [OV[i - 1], OV[i]] = [OV[i], OV[i - 1]]; renderOv(); });
   $$('#ovRules [data-odel]').forEach(b => b.onclick = () => { OV.splice(+b.dataset.odel, 1); renderOv(); });
 }
