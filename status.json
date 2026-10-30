@@ -1,18 +1,17 @@
 {
- "time": "2026-10-30T23:54:30",
+ "time": "2026-10-31T00:00:40",
  "result": "ok",
- "commit": "88035f86da95a2b0752f037ab14b3c9649e54e46",
- "subject": "Planning: search bars for playlists and clocks; sweeper-over rules can target one song",
+ "commit": "3b64b581af8fbf1880fa64358a9944f848116dc6",
+ "subject": "Cue editor: saves by itself, Automatic cues without a question, a click near a marker jumps there (only a real drag moves it), \u00b11 s; On screen: 'All CLASSICS folders' choice (wildcard rules visible)",
  "log": [
-  "23:53:45 update ed3c3010 \u2192 88035f86 \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
-  "23:53:45 restart hype-engine",
-  "23:54:30 installed OK \u00b7 restarted: hype-engine"
+  "00:00:40 update 88035f86 \u2192 3b64b581 \u00b7 3 file(s): web/panel/index.html, web/panel/library.html, web/panel/plan.html",
+  "00:00:40 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Kapo x Ryan Castro \u2013 D\u00d3NDE",
+  "song": "Davido x Leon Thomas \u2013 Tell Everybody",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.7,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
