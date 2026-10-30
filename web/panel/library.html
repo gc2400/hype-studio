@@ -89,7 +89,7 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
       <div class="scroll" id="secs" style="flex-wrap:wrap;overflow:visible"></div>
       <div class="scroll" id="folders" style="flex-wrap:wrap;overflow:visible"></div>
       <div class="scroll" id="subfolders" hidden style="flex-wrap:wrap;overflow:visible"></div>
-      <div class="row between" style="flex-wrap:wrap"><div class="row" style="gap:5px"><button class="btn sm" id="bRecent" title="Songs uploaded in the last 7 days, newest first">⬆ Recently uploaded</button><button class="btn sm" id="bSort">Sort: A–Z</button><span class="muted" id="cnt"></span></div></div>
+      <div class="row between" style="flex-wrap:wrap"><div class="row" style="gap:5px"><button class="btn sm" id="bRecent" title="Songs uploaded in the last 7 days, newest first">⬆ Recently uploaded</button><button class="btn sm" id="bSort">Sort: A–Z</button><button class="btn sm" id="bProb" title="Files with a problem first (e.g. an upload that did not finish), with the reason – fix them one by one">⚠ Problems</button><span class="muted" id="cnt"></span></div></div>
       <div class="row" id="kinds" style="flex-wrap:wrap;gap:5px"><button class="btn sm on" data-k="">All</button><button class="btn sm" data-k="audio" title="Audio files (with or without a clip)">♪ Audio</button><button class="btn sm" data-k="pair" title="Audio file + its own clip (same name in /clips)">♪ + ▶ Audio with clip</button><button class="btn sm" data-k="noclip" title="Audio file, no clip → TV shows the Hype Screen">♪ Audio, no clip</button><button class="btn sm" data-k="video" title="Video files (radio and TV play the same file)">▶ Video</button><span style="flex:1"></span><button class="btn sm" id="onlyNew" title="Only songs that still have automatic cue points">○ Only automatic cue points</button></div>
       <div class="res" id="res" role="listbox" aria-label="Songs"></div>
     </section>
@@ -140,13 +140,13 @@ function added(t) { if (!t) return ''; const d = new Date(t * 1000), h = (Date.n
 let KIND = '', AUTOC = 0;
 function visible() { return LIB ? LIB.items : []; }
 function lib(keepSel) {
-  $('#bSort').textContent = 'Sort: ' + (SORT === 'new' ? 'newest first' : SORT === 'problems' ? '⚠ problems first' : 'A–Z'); $('#bRecent').classList.toggle('yellow', !!RECENT);
+  $('#bSort').textContent = 'Sort: ' + (SORT === 'new' ? 'newest first' : 'A–Z'); $('#bProb').classList.toggle('yellow', SORT === 'problems'); $('#bRecent').classList.toggle('yellow', !!RECENT);
   return api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + (RECENT ? 'new' : SORT) + '&recent=' + RECENT + (MUS() && KIND ? '&kind=' + KIND : '') + (AUTOC ? '&auto=1' : '')).then(d => {
     $$('#kinds [data-k]').forEach(b => b.classList.toggle('on', b.dataset.k === KIND)); $('#kinds').hidden = !MUS() && !AUTOC && false;
     $$('#kinds [data-k]').forEach(b => b.hidden = !MUS());
     $('#onlyNew').classList.toggle('on', !!AUTOC); $('#onlyNew').textContent = (AUTOC ? '● ' : '○ ') + 'Only automatic cue points';
     LIB = d; remember();
-    if (d.problems) $('#bSort').innerHTML = esc($('#bSort').textContent) + ` <b style="color:#FF8A97">⚠ ${d.problems}</b>`;
+    $('#bProb').innerHTML = '⚠ Problems' + (d.problems ? ` <b style="color:#FF8A97">${d.problems}</b>` : ' <span style="opacity:.6">0</span>');
     $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="btn sm ${k === SEC ? 'yellow' : ''}" data-sec="${k}">${n} <span style="opacity:.7">${d.counts[k] || 0}</span></button>`).join('');
     $$('#secs [data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];
@@ -219,7 +219,8 @@ $('#ovSel').onchange = () => { const v = $('#ovSel').value; api('cmd/set_overlay
 let qT; $('#q').oninput = () => { clearTimeout(qT); qT = setTimeout(lib, 200); };
 $('#onlyNew').onclick = () => { AUTOC = AUTOC ? 0 : 1; lib(); };
 $$('#kinds [data-k]').forEach(b => b.onclick = () => { KIND = b.dataset.k; lib(); });
-$('#bSort').onclick = () => { SORT = SORT === 'az' ? 'new' : SORT === 'new' ? 'problems' : 'az'; RECENT = 0; lib(); };
+$('#bSort').onclick = () => { SORT = SORT === 'new' ? 'az' : 'new'; RECENT = 0; lib(); };
+$('#bProb').onclick = () => { SORT = SORT === 'problems' ? 'az' : 'problems'; RECENT = 0; lib(); };
 $('#bRecent').onclick = () => { RECENT = RECENT ? 0 : 7; if (RECENT) { GENRE = ''; FOLDER = ''; } lib().then(() => { if (RECENT && visible().length && !SEL) pick(visible()[0]); }); };
 document.addEventListener('keydown', e => {
   const typing = ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName) && document.activeElement.type !== 'checkbox';
