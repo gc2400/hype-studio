@@ -13,3 +13,4 @@
 2026-10-30T17:22:07 ok 11765c65 Header clock in Inter bold
 2026-10-30T17:26:14 ok e2daf1a4 TV clock box: time in Inter bold
 2026-10-30T17:28:18 ok ddb4038a TV clock: normal digits (the tabular 1 looked different from the temperature)
+2026-10-30T17:32:09 ok 34a8a31c Audience: TV viewers (test link + stream.hyperadio.nl/tv) with peak/unique today; heartbeat sends audience to Hype Live; nowplaying API hype.viewers
