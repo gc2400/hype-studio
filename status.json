@@ -1,18 +1,19 @@
 {
- "time": "2026-10-30T21:10:56",
+ "time": "2026-10-30T21:17:52",
  "result": "ok",
- "commit": "c78e961643e8b9041a011735641a05f913c81d7b",
- "subject": "Smart mix: CLOSE/automatic END = next item starts by then, the fading tail may ring out to the real end; a hand-set END stays a hard stop",
+ "commit": "26b20b4ff37fcd60f561214d7b9385ee2e7853ef",
+ "subject": "Library: sort \u26a0 problems first (+ count); mixes need no artist (FRIDAY 21/22 mixes were blocked by 'no artist')",
  "log": [
-  "21:10:11 update d7cecc74 \u2192 c78e9616 \u00b7 1 file(s): engine/engine.py",
-  "21:10:11 restart hype-engine",
-  "21:10:56 installed OK \u00b7 restarted: hype-engine"
+  "21:17:06 update c78e9616 \u2192 26b20b4f \u00b7 3 file(s): engine/engine.py, engine/indexer.py, web/panel/library.html",
+  "21:17:06 restart hype-indexer",
+  "21:17:07 restart hype-engine",
+  "21:17:52 installed OK \u00b7 restarted: hype-engine, hype-indexer"
  ],
  "guard": {
-  "song": " \u2013 Hype SWP Club Hype",
+  "song": "Tyla \u2013 THAT GIRL",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
