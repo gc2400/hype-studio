@@ -77,6 +77,19 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
 .cdt .pos{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--y)}
 .cdf{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 @media (max-width:1250px){.cdg{grid-template-columns:minmax(0,1fr)}.cueside{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.ovb{grid-column:1/-1;flex-direction:row;align-items:center}.ovb .sel{flex:1}}
+.tb1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tb1 .search{flex:1 1 260px;margin:0}
+.seg{display:inline-flex;gap:2px;background:#071A2B;border:1px solid var(--line2,#23496B);border-radius:12px;padding:3px;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
+.seg button{border:0;background:transparent;color:var(--soft,#C9D7E3);font:inherit;font-size:12px;font-weight:800;padding:7px 10px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.seg button:hover{background:#0F2B44;color:#fff}.seg button.on{background:#FFE000;color:#061423}.seg button span{opacity:.65;font-weight:700;margin-left:3px}
+.tb2{display:flex;gap:6px;align-items:center}
+.strip{display:flex;gap:5px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin;padding-bottom:2px;flex:1;min-width:0}
+.strip .btn{flex:none}
+.fpanel{display:flex;flex-direction:column;gap:8px;background:#071A2B;border:1px solid var(--line2,#23496B);border-radius:12px;padding:10px 12px}
+.fr{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.fl{width:44px;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--mut,#A9BCCD);text-transform:uppercase}
+.chips{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-height:22px}
+.chips .fc{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 6px 3px 10px;border-radius:999px;background:#2B2500;color:#FFE000;border:1px solid #5a4d00;cursor:pointer}
+.chips .fc b{font-size:13px;opacity:.8}
+#bProb{color:#FF8A97;border-color:#5a2230}
 </style>
 </head>
 <body>
@@ -84,13 +97,23 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
   <header id="hhead"></header><script src="/panel/header.js?v=1793349956"></script>
   <div class="grid">
     <section class="card">
-      <label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-        <input id="q" type="search" placeholder="Search artist or title…  ( / )" autocomplete="off" aria-label="Search the library"></label>
-      <div class="scroll" id="secs" style="flex-wrap:wrap;overflow:visible"></div>
-      <div class="scroll" id="folders" style="flex-wrap:wrap;overflow:visible"></div>
-      <div class="scroll" id="subfolders" hidden style="flex-wrap:wrap;overflow:visible"></div>
-      <div class="row between" style="flex-wrap:wrap"><div class="row" style="gap:5px"><button class="btn sm" id="bRecent" title="Songs uploaded in the last 7 days, newest first">⬆ Recently uploaded</button><button class="btn sm" id="bSort">Sort: A–Z</button><button class="btn sm" id="bProb" title="Files with a problem first (e.g. an upload that did not finish), with the reason – fix them one by one">⚠ Problems</button><span class="muted" id="cnt"></span></div></div>
-      <div class="row" id="kinds" style="flex-wrap:wrap;gap:5px"><button class="btn sm on" data-k="">All</button><button class="btn sm" data-k="audio" title="Audio files (with or without a clip)">♪ Audio</button><button class="btn sm" data-k="pair" title="Audio file + its own clip (same name in /clips)">♪ + ▶ Audio with clip</button><button class="btn sm" data-k="noclip" title="Audio file, no clip → TV shows the Hype Screen">♪ Audio, no clip</button><button class="btn sm" data-k="video" title="Video files (radio and TV play the same file)">▶ Video</button><span style="flex:1"></span><button class="btn sm" id="onlyNew" title="Only songs that still have automatic cue points">○ Only automatic cue points</button></div>
+      <div class="tb1">
+        <label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="q" type="search" placeholder="Search artist or title…  ( / )" autocomplete="off" aria-label="Search the library"></label>
+        <div class="seg" id="secs" role="tablist" aria-label="Section"></div>
+      </div>
+      <div class="tb2">
+        <div class="strip" id="folders" aria-label="Genre"></div>
+        <button class="btn sm" id="bProb" hidden title="Files with a problem (e.g. an upload that did not finish) first, with the reason">⚠</button>
+        <button class="btn sm" id="bFilter" aria-expanded="false" title="Type, cue points, recently uploaded, sort">⚙ Filter</button>
+      </div>
+      <div class="strip" id="subfolders" hidden></div>
+      <div class="fpanel" id="fpanel" hidden>
+        <div class="fr"><span class="fl">Type</span><div class="row" id="kinds" style="flex-wrap:wrap;gap:5px"><button class="btn sm on" data-k="">All</button><button class="btn sm" data-k="audio" title="Audio files (with or without a clip)">♪ Audio</button><button class="btn sm" data-k="pair" title="Audio file + its own clip (same name in /clips)">♪ + ▶ With clip</button><button class="btn sm" data-k="noclip" title="Audio file, no clip → TV shows the Hype Screen">♪ No clip</button><button class="btn sm" data-k="video" title="Video files (radio and TV play the same file)">▶ Video</button></div></div>
+        <div class="fr"><span class="fl">Show</span><div class="row" style="flex-wrap:wrap;gap:5px"><button class="btn sm" id="bRecent" title="Uploaded in the last 7 days, newest first">⬆ Uploaded last 7 days</button><button class="btn sm" id="onlyNew" title="Only songs that still have automatic cue points">Only automatic cue points</button></div></div>
+        <div class="fr"><span class="fl">Sort</span><div class="row" style="gap:5px"><button class="btn sm" id="bSort">A–Z</button></div></div>
+      </div>
+      <div class="chips" id="chips"><span class="muted" id="cnt"></span></div>
       <div class="res" id="res" role="listbox" aria-label="Songs"></div>
     </section>
     <section class="card ed" id="ed">
@@ -140,14 +163,15 @@ function added(t) { if (!t) return ''; const d = new Date(t * 1000), h = (Date.n
 let KIND = '', AUTOC = 0;
 function visible() { return LIB ? LIB.items : []; }
 function lib(keepSel) {
-  $('#bSort').textContent = 'Sort: ' + (SORT === 'new' ? 'newest first' : 'A–Z'); $('#bProb').classList.toggle('yellow', SORT === 'problems'); $('#bRecent').classList.toggle('yellow', !!RECENT);
+  $('#bSort').textContent = SORT === 'new' ? 'Newest first' : 'A–Z'; $('#bProb').classList.toggle('yellow', SORT === 'problems'); $('#bRecent').classList.toggle('on', !!RECENT);
   return api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + (RECENT ? 'new' : SORT) + '&recent=' + RECENT + (MUS() && KIND ? '&kind=' + KIND : '') + (AUTOC ? '&auto=1' : '')).then(d => {
     $$('#kinds [data-k]').forEach(b => b.classList.toggle('on', b.dataset.k === KIND)); $('#kinds').hidden = !MUS() && !AUTOC && false;
     $$('#kinds [data-k]').forEach(b => b.hidden = !MUS());
-    $('#onlyNew').classList.toggle('on', !!AUTOC); $('#onlyNew').textContent = (AUTOC ? '● ' : '○ ') + 'Only automatic cue points';
+    $('#onlyNew').classList.toggle('on', !!AUTOC);
     LIB = d; remember();
-    $('#bProb').innerHTML = '⚠ Problems' + (d.problems ? ` <b style="color:#FF8A97">${d.problems}</b>` : ' <span style="opacity:.6">0</span>');
-    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="btn sm ${k === SEC ? 'yellow' : ''}" data-sec="${k}">${n} <span style="opacity:.7">${d.counts[k] || 0}</span></button>`).join('');
+    $('#bProb').hidden = !d.problems && SORT !== 'problems'; $('#bProb').textContent = '⚠ ' + (d.problems || 0);
+    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="${k === SEC ? 'on' : ''}" data-sec="${k}" role="tab" aria-selected="${k === SEC}">${n}<span>${d.counts[k] || 0}</span></button>`).join('');
+    renderChips();
     $$('#secs [data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];
     $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g || 'All'}</button>`).join('');
@@ -159,6 +183,21 @@ function lib(keepSel) {
     renderList(); if (keepSel && SEL) { const n = LIB.items.find(x => x.path === SEL.path); if (n) Object.assign(SEL, n); }
   });
 }
+// the filters that are on, as chips you can click away (so you always see why the list is short)
+const KLBL = {audio: '♪ Audio', pair: '♪ + ▶ With clip', noclip: '♪ No clip', video: '▶ Video'};
+function renderChips() {
+  const on = [];
+  if (KIND && MUS()) on.push(['kind', KLBL[KIND]]);
+  if (RECENT) on.push(['recent', 'Uploaded last 7 days']);
+  if (AUTOC) on.push(['auto', 'Only automatic cue points']);
+  if (SORT === 'new' && !RECENT) on.push(['sort', 'Newest first']);
+  if (SORT === 'problems') on.push(['sort', '⚠ Problems first']);
+  $$('#chips .fc').forEach(e => e.remove());
+  $('#chips').insertAdjacentHTML('afterbegin', on.map(([k, l]) => `<button class="fc" data-off="${k}" title="Switch off">${esc(l)} <b>×</b></button>`).join(''));
+  $$('#chips [data-off]').forEach(b => b.onclick = () => { const k = b.dataset.off; if (k === 'kind') KIND = ''; if (k === 'recent') RECENT = 0; if (k === 'auto') AUTOC = 0; if (k === 'sort') SORT = 'az'; lib(); });
+  $('#bFilter').innerHTML = '⚙ Filter' + (on.length ? ` <b style="color:#FFE000">${on.length}</b>` : '');
+}
+$('#bFilter').onclick = () => { const p = $('#fpanel'); p.hidden = !p.hidden; $('#bFilter').setAttribute('aria-expanded', String(!p.hidden)); $('#bFilter').classList.toggle('on', !p.hidden); };
 function renderList() {
   const L = visible(); $('#cnt').textContent = L.length + ' items';
   $('#res').innerHTML = L.map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
