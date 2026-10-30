@@ -272,7 +272,8 @@ class Screen:
             now = time.time()
             # artist + title in the Now Playing box (Music video scene only): after the start, and again halfway on longer songs
             at = [now + 5.0] + ([now + length / 2] if length > 150 else [])
-            self.np = {"id": uuid.uuid4().hex[:8], "title": it.get("title") or "", "artist": it.get("artist") or "", "at": at}
+            mix_no_artist = (it.get("folder") or "").upper().startswith("MIXES") and not (it.get("artist") or "").strip()
+            self.np = None if mix_no_artist else {"id": uuid.uuid4().hex[:8], "title": it.get("title") or "", "artist": it.get("artist") or "", "at": at}   # a mix without artist: no box
             if self.top10 and now - self.top10[1] < 120:
                 f = "TOP10/N%d.png" % self.top10[0]
                 if os.path.exists(os.path.join(planner.SCREEN_DIR, f)): self.add(None, f, 0.0, max(5.0, length - 1), "all")
