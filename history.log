@@ -26,3 +26,4 @@
 2026-10-30T23:08:41 ok 8504199b Throwback: jingles/THROWBACK is a Throwback sweeper folder; a throwback song from the clock gets one in front of it (once per clock hour), like New Music
 2026-10-30T23:15:36 ok 509d7a3b Throwback jingle only before songs from CLASSICS folders (not GOLD)
 2026-10-30T23:25:35 ok 29c9169b Playlists can hold a jingles folder (jingles/NEW MUSIC …: every file in it); folder rules accept wildcards (*CLASSICS*)
+2026-10-30T23:28:25 ok 3c03e248 Indexer: TV copies max 2.5 min per scan, so new uploads (and moved jingles) are picked up right away

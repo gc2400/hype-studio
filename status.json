@@ -1,18 +1,18 @@
 {
- "time": "2026-10-30T23:25:35",
+ "time": "2026-10-30T23:28:25",
  "result": "ok",
- "commit": "29c9169bbaaea08c3ca2b314dce5856c2b408ca7",
- "subject": "Playlists can hold a jingles folder (jingles/NEW MUSIC \u2026: every file in it); folder rules accept wildcards (*CLASSICS*)",
+ "commit": "3c03e248a7e454d47d3e3a6ea9587f89440c5d56",
+ "subject": "Indexer: TV copies max 2.5 min per scan, so new uploads (and moved jingles) are picked up right away",
  "log": [
-  "23:24:50 update 509d7a3b \u2192 29c9169b \u00b7 1 file(s): engine/planner.py",
-  "23:24:50 restart hype-engine",
-  "23:25:35 installed OK \u00b7 restarted: hype-engine"
+  "23:27:39 update 29c9169b \u2192 3c03e248 \u00b7 1 file(s): engine/indexer.py",
+  "23:27:40 restart hype-indexer",
+  "23:28:25 installed OK \u00b7 restarted: hype-indexer"
  ],
  "guard": {
-  "song": "Blaqbonez x Asake \u2013 Ikebe 3000",
+  "song": "CKay \u2013 BADAMINTON",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
