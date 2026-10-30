@@ -47,7 +47,10 @@ class Liq:
 
 def artist_key(a):
     """Each artist on its own: "Pop Smoke X 50 Cent x Roddy Ricch" → pop smoke · 50 cent · roddy ricch (x / X, ft., feat., featuring, vs, &, en, comma)."""
-    return [p.strip().lower() for p in re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|vs\.?|&|en|,)\s+|,", a or "", flags=re.I) if p.strip()]
+    out = [p.strip().lower() for p in re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|vs\.?|&|en|,)\s+|,", a or "", flags=re.I) if p.strip()]
+    return [p for p in out if p not in NOT_ARTISTS] or out          # "Club Hype x DJ Kim" = DJ Kim
+
+NOT_ARTISTS = {"club hype", "hype radio", "hype radio tv", "hype"}     # our own show / station names are not an artist
 
 class Picker:
     def __init__(self):
