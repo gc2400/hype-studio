@@ -1,20 +1,17 @@
 {
- "time": "2026-10-31T00:27:05",
+ "time": "2026-10-31T00:29:10",
  "result": "ok",
- "commit": "97553010d99d1d6d14dd70795fcfcba02a8b9a5d",
- "subject": "Test links removed (tv.hyperadio.nl test TV + radio); internal 256k mount renamed rec.mp3 (recordings); status page shows the real stream links; TV viewers only from stream.hyperadio.nl",
+ "commit": "892712bdb551c9eb15ee52b1561946bc7a17df3d",
+ "subject": "Library: two calm rows (search + sections, genres strip), Filter panel for type/recent/auto cues/sort, active filters as chips, problems badge only when there are any",
  "log": [
-  "00:25:34 update d7fbafa7 \u2192 97553010 \u00b7 5 file(s): engine/engine.py, engine/live.py, radio/radio.liq, system/nginx-hype.conf, web/status/index.html",
-  "00:26:20 lab: PASS (6/6 good readings)",
-  "00:26:20 restart hype-engine",
-  "00:26:20 restart hype-radio",
-  "00:27:05 installed OK \u00b7 restarted: hype-engine, hype-radio, nginx-reload"
+  "00:29:10 update 97553010 \u2192 892712bd \u00b7 1 file(s): web/panel/library.html",
+  "00:29:10 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Davido \u2013 On The Road",
+  "song": "Tekno \u2013 Press Button",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
