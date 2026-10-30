@@ -263,6 +263,7 @@ class ClockRunner:
         return self.st[cid]
     def next(self, c, at, ok, pick_jingle):
         key = runner_key(at)
+        if self.force_cid and getattr(self, "force_until", 0) and at >= self.force_until: self.force_cid = None   # "run now" ends with the hour
         cid = self.force_cid or clock_for(c, at)
         if cid is None: return None
         r_ = c.execute("SELECT resume FROM clocks WHERE id=?", (cid,)).fetchone()

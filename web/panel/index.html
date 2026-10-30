@@ -468,12 +468,14 @@ function renderLog() {
     el.ondragover = e => { e.preventDefault(); el.classList.add('drop'); };
     el.ondragleave = () => el.classList.remove('drop');
     el.ondrop = e => { e.preventDefault(); el.classList.remove('drop'); const d = e.dataTransfer.getData('text/plain'), to = +el.dataset.i;
+      if (d.startsWith('pl:')) return plDrop(d, 'log', to);
       if (d.startsWith('log:')) cmd('move', {id: d.slice(4), to}); else if (d.startsWith('lib:')) cmd('insert', {path: d.slice(4), pos: to}).then(() => toast('Added to Up next'));
       else if (d.startsWith('aux:')) { const [, a, id] = d.split(':'); const it = (S.aux[a] || []).find(x => x.id === id); if (it) cmd('insert', {path: it.path, pos: to}).then(() => toast('Added to Up next')); } };
   });
 }
 $('#log').ondragover = e => e.preventDefault();
 $('#log').ondrop = e => { if (e.target.closest('.li[draggable]')) return; const d = e.dataTransfer.getData('text/plain');
+  if (d.startsWith('pl:')) return plDrop(d, 'log', S.upcoming.length);
   let path = d.startsWith('lib:') ? d.slice(4) : null;
   if (d.startsWith('aux:')) { const [, a, id] = d.split(':'); const it = (S.aux[a] || []).find(x => x.id === id); path = it && it.path; }
   if (path) cmd('insert', {path, pos: S.upcoming.length}).then(() => toast('Added to the end of Up next')); };
@@ -500,7 +502,14 @@ function renderAux() {
   });
 }
 function auxCmd(a, d = {}) { auxSig = ''; return cmd(a, Object.assign({aux: AUX}, d)).then(r => { if (r && r.ok === false) toast(r.error, 1); return r; }); }
+// a playlist dragged from the library card: its next songs (its own order and rules) go to Up next or the AUX
+function plSongs(id, n) { return api('playlist_take?id=' + id + '&n=' + (n || 0)).then(r => r.paths || []); }
+function plDrop(d, where, pos) { const [, id, n] = d.split(':');
+  return plSongs(id, +n).then(paths => { if (!paths.length) return toast('That playlist has nothing to play right now', 1);
+    if (where === 'log') return cmd('insert_many', {paths, pos}).then(() => toast(paths.length + ' songs added to Up next'));
+    return auxCmd('aux_add', {paths, pos}).then(() => toast(paths.length + ' songs added to AUX ' + AUX)); }); }
 function auxDrop(d, pos) {
+  if (d.startsWith('pl:')) return plDrop(d, 'aux', pos);
   if (d.startsWith('lib:')) return auxCmd('aux_add', {path: d.slice(4), pos});
   if (d.startsWith('aux:')) { const [, a, id] = d.split(':'); if (a === AUX) return auxCmd('aux_move', {id, to: pos}); const it = (S.aux[a] || []).find(x => x.id === id); if (it) return auxCmd('aux_add', {path: it.path, pos}); }
   if (d.startsWith('log:')) { const it = S.upcoming.find(x => x.id === d.slice(4)); if (it) return auxCmd('aux_add', {path: it.path, pos}); }
@@ -732,12 +741,47 @@ $('#bDuck').onclick = () => { DUCK = !DUCK; try { localStorage.setItem('hypeDuck
 // ---------- library ----------
 let SEC = 'music', GENRE = '', FOLDER = '', SEL = null, LIB = null, LSORT = 'az';
 try { LSORT = localStorage.getItem('hypeLibSort') || 'az'; } catch (e) {}
-const SECS = [['music', 'Music'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads']];
+const SECS = [['music', 'Music'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['playlists', '≡ Playlists'], ['clocks', '◷ Clocks']];
+const nfx = t => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+let PLC = {pl: [], ck: []};
+function libPlan() {     // the Playlists / Clocks tabs of the library card
+  Promise.all([api('playlists'), api('clocks')]).then(([pl, ck]) => {
+    PLC = {pl, ck}; const cnt = Object.assign({}, (LIB && LIB.counts) || {}, {playlists: pl.length, clocks: ck.length});
+    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="btn sm ${k === SEC ? 'yellow' : ''}" data-sec="${k}">${n} <span style="opacity:.7">${cnt[k] ?? ''}</span></button>`).join('');
+    $('#secs').querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
+    $('#folders').innerHTML = ''; $('#subfolders').hidden = true; const q = nfx($('#q').value);
+    if (SEC === 'playlists') {
+      const L = pl.filter(p => !q || nfx(p.name).includes(q));
+      $('#res').innerHTML = L.map(p => { const all = !p.shuffle && !p.rotate;
+        return `<div class="ri" draggable="true" data-pl="${p.id}"><span class="chip blue">≡</span><div class="tx"><b>${esc(p.name)}</b><span>${p.rotate ? 'rotation · ' : ''}${p.count} items · ${all ? 'in order – the whole list' : p.shuffle ? 'smart pick' : 'in order'}</span></div>
+          <div class="acts">${all ? '' : `<input type="number" min="1" max="40" value="5" data-n title="How many songs" aria-label="How many songs" style="width:52px;height:30px;padding:0 6px">`}
+          <button class="btn" data-pact="next" aria-label="Play next" title="Play next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
+          <button class="btn" data-pact="end" aria-label="Add to the end" title="Add to the end (Up next / AUX)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+          <span class="auxbtn" title="Add to AUX 1 or AUX 2"><span class="lbl">AUX</span><button data-pact="aux" data-aux="1" aria-label="Add to AUX 1">1</button><button data-pact="aux" data-aux="2" aria-label="Add to AUX 2">2</button></span></div></div>`; }).join('') || '<div class="muted" style="padding:10px">No playlists found.</div>';
+      $('#res').querySelectorAll('[data-pl]').forEach(el => {
+        const n = () => { const i = el.querySelector('[data-n]'); return i ? Math.max(1, +i.value || 5) : 0; };
+        el.ondragstart = e => { if (e.target.closest('input')) return e.preventDefault(); e.dataTransfer.setData('text/plain', 'pl:' + el.dataset.pl + ':' + n()); };
+        el.querySelectorAll('[data-pact]').forEach(b => b.onclick = e => { e.stopPropagation(); const a = b.dataset.pact, man = S && !S.auto && !(S.dj && S.dj.on), id = el.dataset.pl;
+          plSongs(id, n()).then(paths => { if (!paths.length) return toast('That playlist has nothing to play right now', 1);
+            if (a === 'aux') return auxCmd('aux_add', {aux: b.dataset.aux, paths}).then(() => toast(paths.length + ' songs added to AUX ' + b.dataset.aux));
+            if (man) return auxCmd('aux_add', {aux: AUX, paths, pos: a === 'next' ? 0 : undefined}).then(() => toast(paths.length + ' songs added to AUX ' + AUX));
+            cmd('insert_many', {paths, pos: a === 'next' ? 0 : S.upcoming.length}).then(() => toast(paths.length + (a === 'next' ? ' songs play next' : ' songs added to the end of Up next'))); }); });
+      });
+    } else {
+      const L = ck.filter(c => !q || nfx(c.name).includes(q));
+      $('#res').innerHTML = L.map(c => `<div class="ri" data-ck="${c.id}"><span class="dot" style="background:${esc(c.color)};width:12px;height:12px;border-radius:4px;flex:none"></span><div class="tx"><b>${esc(c.name)}</b><span>${c.slots.length} slots</span></div>
+        <div class="acts"><button class="btn sm" data-run title="This clock takes over for the rest of this hour; the next hour follows the schedule again">▶ Run now</button></div></div>`).join('') || '<div class="muted" style="padding:10px">No clocks found.</div>';
+      $('#res').querySelectorAll('[data-ck]').forEach(el => el.querySelector('[data-run]').onclick = e => { e.stopPropagation();
+        cmd('run_clock', {id: +el.dataset.ck}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('"' + (ck.find(c => c.id == el.dataset.ck) || {}).name + '" runs until the next hour – see Up next')); });
+    }
+  });
+}
 function lib() {
+  if (SEC === 'playlists' || SEC === 'clocks') return libPlan();
   $('#libSort').textContent = LSORT === 'new' ? 'Newest' : 'A–Z';
   api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + LSORT).then(d => {
     LIB = d;
-    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="btn sm ${k === SEC ? 'yellow' : ''}" data-sec="${k}">${n} <span style="opacity:.7">${d.counts[k] || 0}</span></button>`).join('');
+    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="btn sm ${k === SEC ? 'yellow' : ''}" data-sec="${k}">${n} <span style="opacity:.7">${d.counts[k] ?? ''}</span></button>`).join('');
     $('#secs').querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     // level 1: genre folders · level 2: the subfolders of the chosen genre
     const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];

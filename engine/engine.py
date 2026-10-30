@@ -1089,6 +1089,22 @@ class Engine:
                 self.stop_at_end = True; self.take_back_next(); self.liq.cmd("radio.skip"); self.stopped = True
             elif action == "auto":
                 return self.cmd_auto(c, bool(d.get("on", True)))
+            elif action == "insert_many":      # a playlist dragged into Up next: its songs, in its own order
+                pos = int(d.get("pos", 0)); its = []
+                for p_ in d.get("paths") or []:
+                    r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (p_,)).fetchone()
+                    if r: its.append(row_item(r, "you"))
+                if not its: return {"ok": False, "error": "nothing to add"}
+                if pos == 0: self.take_back_next()
+                self.plan[pos:pos] = its; self.push_next(c)
+            elif action == "run_clock":        # "Run this clock now": it takes over for the rest of this hour
+                cid = int(d["id"])
+                if not c.execute("SELECT 1 FROM clocks WHERE id=?", (cid,)).fetchone(): return {"ok": False, "error": "clock not found"}
+                if self.liq_next and self.liq_next.get("src") == "clock": self.take_back_next()
+                self.plan = [p_ for p_ in self.plan if p_.get("src") != "clock" or p_.get("event")]
+                self.runner = planner.ClockRunner(); self.runner.force_cid = cid; self.runner.force_until = (int(time.time() // 3600) + 1) * 3600
+                self.hour_floor = 0; self.refill(c); self.push_next(c)
+                log.info("clock %s runs now (until the next hour)", cid)
             elif action == "insert":
                 r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (d["path"],)).fetchone()
                 if not r: return {"ok": False, "error": "not found"}
@@ -1669,6 +1685,18 @@ class H(BaseHTTPRequestHandler):
             if p == "/preview.jpg": return self.send(200, E.tv.screenshot(int(qs.get("w", ["640"])[0])), "image/jpeg")
             if p == "/playlists": return self.send(200, planner.api_playlists(dbc()))
             if p == "/playlist": return self.send(200, planner.api_preview_playlist(dbc(), int(qs["id"][0])))
+            if p == "/playlist_take":    # the next songs of a playlist (for Up next / AUX); they count as played in its order
+                c = dbc(); pid = int(qs["id"][0]); n = int(qs.get("n", ["0"])[0] or 0)
+                r = c.execute("SELECT loop, shuffle, rotate FROM playlists WHERE id=?", (pid,)).fetchone()
+                if not r: return self.send(404, {"error": "not found"})
+                if not r[1] and not r[2] and n <= 0: paths = planner.playlist_songs(c, pid)          # an ordered list (Top 10): all of it, from the top
+                else:
+                    paths = []
+                    for i in range(max(1, n or 5)):
+                        p_ = planner.take_from_playlist(c, pid, "start" if (i == 0 and not r[1] and not r[2]) else "continue", lambda x, P=paths: x not in P)
+                        if p_ and p_ not in paths: paths.append(p_)
+                    c.commit()
+                return self.send(200, {"paths": paths})
             if p == "/clocks": return self.send(200, planner.api_clocks(dbc()))
             if p == "/schedule": return self.send(200, planner.api_schedule(dbc()))
             if p == "/folders": return self.send(200, planner.api_folders(dbc()))
