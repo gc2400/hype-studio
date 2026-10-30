@@ -1682,6 +1682,10 @@ class H(BaseHTTPRequestHandler):
                 MP3_HITS.append((time.time(), self.headers.get("X-Real-IP", ""), self.headers.get("X-UA", "")))
                 del MP3_HITS[:-2000]
                 return self.send(200, {"ok": True})
+            if p == "/version":      # the installed commit (pages offer a reload when it changes)
+                try: v = open("/var/lib/hype/deployed_commit").read().strip()[:12]
+                except Exception: v = ""
+                return self.send(200, {"v": v})
             if p == "/audience": return self.send(200, {"radio": listeners(), "tv": viewers(), "t": int(time.time())})
             if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))

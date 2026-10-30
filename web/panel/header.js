@@ -141,6 +141,16 @@
   }
   function load() { api('state').then(d => { S = d; skew = Date.now() / 1000 - d.server_time; paint(); }).catch(() => { q('#stRadio').className = 'chip bad'; }); }
   load(); setInterval(load, 4000);
+  // a new Hype Studio version was installed: offer a reload (never reloads by itself while you are working)
+  let ver = null;
+  const verCheck = () => fetch('/api/version', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(d => {
+    if (!d || !d.v) return; if (ver === null) { ver = d.v; return; }
+    if (d.v !== ver && !document.getElementById('hUpd')) {
+      const b = document.createElement('button'); b.id = 'hUpd'; b.textContent = '↻ Hype Studio was updated – click to reload';
+      b.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;background:#FFE000;color:#061423;border:0;border-radius:12px;padding:11px 18px;font:800 14px Inter,system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.45);cursor:pointer';
+      b.onclick = () => location.reload(); document.body.appendChild(b);
+    } }).catch(() => {});
+  verCheck(); setInterval(verCheck, 60000);
   setInterval(() => { q('#clock').textContent = new Date(Date.now() - skew * 1000).toTimeString().slice(0, 8); }, 250);
   q('#' + A).onclick = () => api('cmd/auto', {on: true}).then(load);
   q('#' + M).onclick = () => api('cmd/auto', {on: false}).then(load);
