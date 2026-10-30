@@ -1,17 +1,18 @@
 {
- "time": "2026-10-31T00:29:10",
+ "time": "2026-10-31T00:30:59",
  "result": "ok",
- "commit": "892712bdb551c9eb15ee52b1561946bc7a17df3d",
- "subject": "Library: two calm rows (search + sections, genres strip), Filter panel for type/recent/auto cues/sort, active filters as chips, problems badge only when there are any",
+ "commit": "5742d2ccaa6aeb4b59904276d40e85535d5d65bf",
+ "subject": "Panel library card: Playlists tab (play next / end / AUX, drag into Up next or AUX; ordered lists go whole, others the next N) and Clocks tab (Run now = rest of this hour)",
  "log": [
-  "00:29:10 update 97553010 \u2192 892712bd \u00b7 1 file(s): web/panel/library.html",
-  "00:29:10 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "00:30:13 update 892712bd \u2192 5742d2cc \u00b7 3 file(s): engine/engine.py, engine/planner.py, web/panel/index.html",
+  "00:30:14 restart hype-engine",
+  "00:30:59 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
   "song": "Tekno \u2013 Press Button",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },

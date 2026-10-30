@@ -36,3 +36,4 @@
 2026-10-31T00:24:31 ok d7fbafa7 Pads: banks named like a jingles folder follow that folder (new jingles appear by themselves); up to 64 pads per bank
 2026-10-31T00:27:05 ok 97553010 Test links removed (tv.hyperadio.nl test TV + radio); internal 256k mount renamed rec.mp3 (recordings); status page shows the real stream links; TV viewers only from stream.hyperadio.nl
 2026-10-31T00:29:10 ok 892712bd Library: two calm rows (search + sections, genres strip), Filter panel for type/recent/auto cues/sort, active filters as chips, problems badge only when there are any
+2026-10-31T00:30:59 ok 5742d2cc Panel library card: Playlists tab (play next / end / AUX, drag into Up next or AUX; ordered lists go whole, others the next N) and Clocks tab (Run now = rest of this hour)
