@@ -646,13 +646,14 @@ let BANKS = [], bank = 0, PEDIT = false, PADS = [];
 const PADC = ['#8C2A3A', '#B4651E', '#9C7A12', '#1E7A4A', '#1E6B7A', '#2A4FA0', '#5A3A8C', '#8C3A6B'];
 const PLAYING = {};   // path -> end time (ms)
 function loadPads() { return api('padbanks').then(b => { BANKS = b; if (bank >= BANKS.length) bank = 0; renderPads(); }); }
+setInterval(() => { if (!PEDIT && !document.hidden) api('padbanks').then(b => { if (JSON.stringify(b) !== JSON.stringify(BANKS)) { BANKS = b; if (bank >= BANKS.length) bank = 0; renderPads(); } }); }, 20000);   // new voice messages show up by themselves
 function renderPads() {
-  $('#padBanks').innerHTML = `<button class="btn sm ${bank === -1 ? 'on' : ''}" data-bank="-1" title="Pictures and videos from branding/media">▶ MEDIA</button>` + BANKS.map((b, i) => `<button class="btn sm ${i === bank ? 'on' : ''}" data-bank="${i}">${esc(b.name)}</button>`).join('');
+  $('#padBanks').innerHTML = `<button class="btn sm ${bank === -1 ? 'on' : ''}" data-bank="-1" title="Pictures and videos from branding/media">▶ MEDIA</button>` + BANKS.map((b, i) => { const nv = b.items.filter(p => p.voice && !p.played).length; return `<button class="btn sm ${i === bank ? 'on' : ''}" data-bank="${i}">${esc(b.name)}${nv ? ` <b style="background:#FFE000;color:#061423;border-radius:8px;padding:0 5px;font-size:10px">${nv}</b>` : ''}</button>`; }).join('');
   $$('#padBanks [data-bank]').forEach(b => b.onclick = () => { bank = +b.dataset.bank; if (bank === -1) loadMedia(); renderPads(); });
   $('#mediaBar').hidden = bank !== -1;
   if (bank === -1) return renderMediaPads();
   const B = BANKS[bank] || {items: []}; $('#bankName').value = B.name || ''; $('#pads').classList.toggle('edit', PEDIT); $('#padEditBar').hidden = !PEDIT;
-  $('#pads').innerHTML = B.items.map((p, i) => `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE RADIO\s*[-–]\s*/i, ''))}<small>${fmt(p.duration)}${p.has_video ? ' · video' : ''}${p.missing ? ' · not found' : ''}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmpad="${i}" title="Remove">×</span>` : ''}</button>`).join('')
+  $('#pads').innerHTML = B.items.map((p, i) => `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE RADIO\s*[-–]\s*/i, ''))}<small>${fmt(p.duration)}${p.voice ? (p.played ? ' · ✓ played' : ' · NEW') : ''}${p.has_video ? ' · video' : ''}${p.missing ? ' · not found' : ''}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmpad="${i}" title="Remove">×</span>` : ''}</button>`).join('')
     + (PEDIT ? '<button class="padadd" id="padDrop">drop here</button>' : '') || '<span class="muted">This bank is empty. Press ✎ EDIT and drag jingles from the library onto it.</span>';
   $$('#pads [data-pad]').forEach(b => {
     const p = B.items[+b.dataset.pad];
@@ -661,7 +662,7 @@ function renderPads() {
       if (PEDIT) { if (e.target.dataset.rmpad) { B.items.splice(+e.target.dataset.rmpad, 1); renderPads(); } return; }
       b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit');
       if ((S.pad_loops || []).includes(p.path)) { cmd('pad_unloop', {path: p.path}).then(() => { delete PLAYING[p.path]; }); return; }   // a looping pad: click = stop
-      cmd('pad', {path: p.path, duck: DUCK, loop: PLOOP, video: PVID && !!p.has_video}).then(() => { PLAYING[p.path] = Date.now() + (p.duration || 3) * 1000; });
+      cmd('pad', {path: p.path, duck: DUCK || !!p.voice, loop: PLOOP && !p.voice, video: PVID && !!p.has_video}).then(() => { PLAYING[p.path] = Date.now() + (p.duration || 3) * 1000; if (p.voice && !p.played) { p.played = Date.now() / 1000; renderPads(); } });
     };
     b.ondragstart = e => e.dataTransfer.setData('text/plain', 'pad:' + b.dataset.pad);
     b.ondragover = e => { if (PEDIT) e.preventDefault(); };

@@ -976,6 +976,14 @@ class Engine:
                 self.pad_loops.pop(d.get("path"), None); self.duck_until = 0; self.liq.cmd("pads.stop"); self.pad_video_off()
             elif action == "pad":
                 r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (d["path"],)).fetchone()
+                if d["path"].startswith("jingles/VOICE/"):              # a listener's voice: always over ducked music, never a loop
+                    d["duck"] = True; d["loop"] = False
+                    try:
+                        st = voice_state()
+                        for v in st.values():
+                            if v.get("path") == d["path"]: v["played"] = time.time()
+                        voice_save(st)
+                    except Exception: pass
                 if r and d.get("video"): self.pad_video(c, row_item(r, "pad"), bool(d.get("loop")))
                 if r and d.get("loop"): self.pad_loop(r, bool(d.get("duck")), float(planner.get_setting(c, "pad_duck", 0.25)))
                 elif r:
@@ -1516,7 +1524,12 @@ class H(BaseHTTPRequestHandler):
                                        "max_len": planner.get_setting(c_, "ad_max_len", 150), "max_spots": planner.get_setting(c_, "ad_max_spots", 3)})
             if p == "/lower": return self.send(200, dict(LOWER, scene=E.tv.scene))
             if p == "/settings": return self.send(200, get_settings())
-            if p == "/padbanks": return self.send(200, planner.api_padbanks(dbc()))
+            if p == "/padbanks":
+                b = planner.api_padbanks(dbc()); played = {v.get("path"): v.get("played") for v in voice_state().values()}
+                for bk in b:
+                    for it in bk["items"]:
+                        if it["path"].startswith("jingles/VOICE/"): it["voice"] = True; it["played"] = played.get(it["path"])
+                return self.send(200, b)
             if p == "/live": return self.send(200, E.live.status())
             if p == "/guest_info":      # public (guest page): who am I, which other guests are on
                 slot, info = E.live.guest_by_token((qs.get("t") or [""])[0])
@@ -1906,6 +1919,93 @@ def hl_send_np(c, it):
         except Exception as e: log.warning("Hype Live np: %s", e)
     threading.Thread(target=go, daemon=True).start()
 
+# ---------------- 🎙 voice messages from Hype Live → the VOICE pad bank ----------------
+VOICE_DIR = os.path.join(ROOT, "jingles", "VOICE"); VOICE_STATE = "/var/lib/hype/voice.json"; VOICE_DAYS = 14
+VOICE_BANK = "🎙 VOICE"
+def voice_state():
+    try: return json.load(open(VOICE_STATE))
+    except Exception: return {}
+def voice_save(st):
+    json.dump(st, open(VOICE_STATE + ".tmp", "w")); os.replace(VOICE_STATE + ".tmp", VOICE_STATE)
+def voice_when(v):
+    try: return float(v)
+    except Exception: pass
+    try:
+        import datetime; return datetime.datetime.fromisoformat(str(v).replace("Z", "+00:00")).timestamp()
+    except Exception: return time.time()
+def voice_bank(c):
+    r = c.execute("SELECT id FROM pad_banks WHERE name=?", (VOICE_BANK,)).fetchone()
+    if r: return r[0]
+    pos = (c.execute("SELECT MAX(pos) FROM pad_banks").fetchone()[0] or 0) + 1
+    bid = c.execute("INSERT INTO pad_banks(name, pos) VALUES(?,?)", (VOICE_BANK, pos)).lastrowid; c.commit(); return bid
+def voice_drop(c, st, vid):
+    v = st.pop(vid, None)
+    if not v: return
+    rel = v.get("path")
+    if rel:
+        try: os.remove(os.path.join(ROOT, rel))
+        except FileNotFoundError: pass
+        c.execute("DELETE FROM pad_items WHERE path=?", (rel,)); c.execute("DELETE FROM items WHERE path=?", (rel,)); c.commit()
+    log.info("voice: removed %s", vid)
+def voice_loop():
+    """Every 20 s: new voice messages Hype Live marked 'To Hype Studio' are downloaded, made into a clean mp3 in
+    jingles/VOICE and put on the 🎙 VOICE pad bank (they only play when you tap the pad). Then Hype Live gets the ack.
+    Deleted/blocked messages (Hype Live 'remove') and messages older than 14 days are removed again."""
+    while True:
+        time.sleep(20)
+        try:
+            try: g = json.load(open(GUARD_CONF))
+            except Exception: g = {}
+            if not g.get("hl_key"): continue
+            base = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_studio_voice=" + urllib.parse.quote(g["hl_key"])
+            def get(url, data=None, timeout=20):
+                r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1"}, method="POST" if data is not None else "GET")
+                return urllib.request.urlopen(r, timeout=timeout)
+            try: d = json.loads(get(base).read(500000).decode("utf-8", "replace"))
+            except urllib.error.HTTPError as e:
+                if e.code != 404: log.warning("voice: Hype Live %s", e.code)
+                continue
+            st = voice_state(); c = dbc(); changed = False
+            for vid in d.get("remove") or []:
+                if str(vid) in st: voice_drop(c, st, str(vid)); changed = True
+            for vid, v in list(st.items()):
+                if time.time() - v.get("received", 0) > VOICE_DAYS * 86400: voice_drop(c, st, vid); changed = True
+            os.makedirs(VOICE_DIR, exist_ok=True)
+            for it in d.get("items") or []:
+                vid = re.sub(r"[^A-Za-z0-9_-]", "", str(it.get("id") or ""))
+                if not vid or vid in st: continue
+                name = re.sub(r"[^\w .'-]", "", str(it.get("name") or "Listener"), flags=re.U).strip()[:30] or "Listener"
+                city = re.sub(r"[^\w .'-]", "", str(it.get("city") or ""), flags=re.U).strip()[:30]
+                src = os.path.join("/tmp", "voice_" + vid); fn = f"Voice - {name}{' (' + city + ')' if city else ''} {vid}.mp3"
+                try:
+                    with get(base + "&file=" + urllib.parse.quote(vid), timeout=60) as r, open(src, "wb") as f: f.write(r.read(30_000_000))
+                    tmp = os.path.join(VOICE_DIR, "." + fn)
+                    p_ = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vn", "-af", "highpass=f=80", "-ar", "44100", "-ac", "2", "-b:a", "192k", "-f", "mp3", tmp], timeout=120)
+                    if p_.returncode != 0: raise RuntimeError("ffmpeg could not read it")
+                    os.replace(tmp, os.path.join(VOICE_DIR, fn))
+                finally:
+                    try: os.remove(src)
+                    except FileNotFoundError: pass
+                st[vid] = {"path": os.path.relpath(os.path.join(VOICE_DIR, fn), ROOT), "name": name, "city": city, "source": it.get("source"),
+                           "received": voice_when(it.get("received")), "acked": False, "in_bank": False}
+                changed = True; log.info("voice: downloaded %s (%s)", vid, name)
+            # indexed? -> onto the VOICE bank (newest first) -> ack
+            for vid, v in st.items():
+                if v.get("acked"): continue
+                r = c.execute("SELECT problem FROM items WHERE path=?", (v["path"],)).fetchone()
+                if not r: continue                                   # the indexer has not seen it yet
+                if r[0]: log.warning("voice: %s unusable: %s", vid, r[0])
+                elif not v.get("in_bank"):
+                    bid = voice_bank(c)
+                    c.execute("UPDATE pad_items SET pos=pos+1 WHERE bank_id=?", (bid,))
+                    c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, 0, v["path"], "🎙 " + v["name"] + (" · " + v["city"] if v["city"] else ""), "#0277b8"))
+                    c.commit(); v["in_bank"] = True
+                try: a = get(base + "&ack=" + urllib.parse.quote(vid), data=b"").read(100).decode("utf-8", "replace")
+                except urllib.error.HTTPError as e: a = f"{e.code}"
+                v["acked"] = True; changed = True; log.info("voice: ack %s -> %s", vid, a[:30])
+            if changed: voice_save(st)
+        except Exception as e: log.warning("voice: %s", e)
+
 def guard_status(full=False):
     try: g = json.load(open("/var/lib/hype/guard.json"))
     except Exception: g = {"t": 0}
@@ -1990,5 +2090,6 @@ if __name__ == "__main__":
     tickers.start()
     threading.Thread(target=meter_loop, daemon=True).start()
     threading.Thread(target=agc_loop, daemon=True).start()
+    threading.Thread(target=voice_loop, daemon=True).start()
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()
