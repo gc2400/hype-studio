@@ -7,3 +7,4 @@
 2026-10-30T15:04:53 ok 6c8d937c Panel: preview scene label only on hover
 2026-10-30T15:21:16 error  
 2026-10-30T16:41:55 ok ba6bd444 AGC: gated broadcast-style AGC (15 s intro hold, freeze on quiet parts, slow up 20 s, fast catch, max +6 dB)
+2026-10-30T16:50:53 ok 2b30a939 AGC intro lift: per-song loudness map (indexer, backfilled slowly) + 4.5 s look-ahead lift that glides away before the drop

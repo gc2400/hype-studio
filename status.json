@@ -1,18 +1,19 @@
 {
- "time": "2026-10-30T16:41:55",
+ "time": "2026-10-30T16:50:53",
  "result": "ok",
- "commit": "ba6bd4443beb632239cfb56fa94af7d9c7b3862b",
- "subject": "AGC: gated broadcast-style AGC (15 s intro hold, freeze on quiet parts, slow up 20 s, fast catch, max +6 dB)",
+ "commit": "2b30a9396b2c971f2cbf2713fa0d71cdec9fc8a7",
+ "subject": "AGC intro lift: per-song loudness map (indexer, backfilled slowly) + 4.5 s look-ahead lift that glides away before the drop",
  "log": [
-  "16:41:10 update 6c8d937c \u2192 ba6bd444 \u00b7 2 file(s): engine/engine.py, web/panel/settings.html",
-  "16:41:10 restart hype-engine",
-  "16:41:55 installed OK \u00b7 restarted: hype-engine"
+  "16:50:07 update ba6bd444 \u2192 2b30a939 \u00b7 3 file(s): engine/engine.py, engine/indexer.py, web/panel/settings.html",
+  "16:50:08 restart hype-indexer",
+  "16:50:08 restart hype-engine",
+  "16:50:53 installed OK \u00b7 restarted: hype-engine, hype-indexer"
  ],
  "guard": {
-  "song": "Langa \u2013 Bottega",
+  "song": "Issairo x Ango x Jaido x Devi Dev \u2013 Dal Un Shot",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
