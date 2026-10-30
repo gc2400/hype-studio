@@ -98,7 +98,7 @@ def loud_map(mom):
 
 def make_lmaps(c, n=15):
     """Songs indexed before the loudness map existed: measure a few per round (low priority)."""
-    for p_, d_ in c.execute("""SELECT path, duration FROM items WHERE section='music' AND problem IS NULL AND has_audio=1
+    for p_, d_ in c.execute("""SELECT path, duration FROM items WHERE section IN ('music','jingles','ads') AND problem IS NULL AND has_audio=1
                                AND lmap IS NULL ORDER BY added_at DESC LIMIT ?""", (n,)).fetchall():
         try: lm = loudness_and_cues(os.path.join(ROOT, p_), d_)[5]
         except Exception as e: print("lmap:", p_, e, flush=True); lm = None

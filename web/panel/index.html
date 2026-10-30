@@ -378,7 +378,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <video id="cueMedia" playsinline preload="metadata"></video>
           <div class="cueside">
             <button class="cueset" data-set="s" style="color:var(--g)" title="Set START at the playhead (key S)"><span class="k">SET START</span><span class="v" id="vS">0:00.0</span></button>
-            <button class="cueset" data-set="m" style="color:var(--y)" title="Set MIX at the playhead (key M) – the next song starts here"><span class="k">SET MIX</span><span class="v" id="vM">0:00.0</span></button>
+            <button class="cueset" data-set="m" style="color:var(--y)" title="Set MIX at the playhead (key M) – the next song starts here"><span class="k">SET MIX</span><span class="v" id="vM">0:00.0</span></button><button class="btn sm" id="mixAuto" title="MIX back to AUTO: smart mix picks it from the song's loudness (your START and END stay)">AUTO</button>
             <button class="cueset" data-set="e" style="color:#FF8A97" title="Set END at the playhead (key E) – preview stops here"><span class="k">SET END</span><span class="v" id="vE">0:00.0</span></button>
             <div id="ovBox" class="ovb"><span class="lab">Intro sweeper</span>
             <select id="ovSel" class="sel" aria-label="Intro sweeper"></select></div>
@@ -801,8 +801,8 @@ function openCueDlg(it) {
   $('#dTitle').textContent = (it.artist ? it.artist + ' – ' : '') + it.title;
   const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode); $('#dBadge').textContent = bt; $('#dBadge').className = 'chip ' + bc;
   $('#tvInfo').textContent = SEC !== 'music' ? '' : it.mode === 'pair' ? 'TV plays the clip "' + (it.clip_path || '').replace(/^clips\//, '') + '" with its own sound (found by name).' : it.mode === 'clip' ? 'TV plays this video – radio and TV the same sound.' : 'No clip with the same name in /clips → TV shows the Hype Screen.';
-  CUE = {s: it.cue_start || 0, m: it.cue_mix || it.duration || 0, e: it.cue_end || it.duration || 0, d: it.duration || 1};
-  cuePeaks = []; fillCue(); drawCue();
+  CUE = {s: it.cue_start || 0, m: it.cue_mix || it.duration || 0, e: it.cue_end || it.duration || 0, d: it.duration || 1, auto: !it.mix_set};
+  cuePeaks = []; fillCue(); drawCue(); smartFetch();
   api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { cuePeaks = p; drawCue(); } });
   const m = M(); m.pause(); m.src = '../media/' + it.path.split('/').map(encodeURIComponent).join('/');
   m.style.display = it.has_video ? 'block' : 'none'; $('#cdg').classList.toggle('novid', !it.has_video); m.currentTime = CUE.s;
@@ -811,20 +811,24 @@ function openCueDlg(it) {
 $('#dClose').onclick = () => { M().pause(); $('#cueDlg').close(); };
 $('#cueDlg').addEventListener('close', () => M().pause());
 const fmtC = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), r = t - m * 60; return m + ':' + r.toFixed(1).padStart(4, '0'); };
-function fillCue() { $('#vS').textContent = fmtC(CUE.s); $('#vM').textContent = fmtC(CUE.m); $('#vE').textContent = fmtC(CUE.e); }
+let smT = null;
+function smartFetch() { if (!CUE || !CUE.auto || !SEL) return; const it = SEL; clearTimeout(smT);
+  smT = setTimeout(() => api('smartmix?path=' + encodeURIComponent(it.path) + '&s=' + CUE.s + '&e=' + CUE.e).then(r => { if (SEL === it && CUE.auto && r && r.mix != null) { CUE.m = r.mix; fillCue(); drawCue(); } }), 150); }
+function fillCue() { $('#vS').textContent = fmtC(CUE.s); $('#vM').textContent = (CUE.auto ? 'AUTO ' : '') + fmtC(CUE.m); $('#vE').textContent = fmtC(CUE.e); }
 function drawCue() {
   const c = $('#cueWave'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H); if (!CUE) return;
   const n = cuePeaks.length || 1, bw = W / n;
   for (let i = 0; i < cuePeaks.length; i++) { const f = i / n * CUE.d, h = Math.max(2, cuePeaks[i] * (H - 14)); x.fillStyle = f < CUE.s || f > CUE.e ? '#1A3550' : '#05A9C6'; x.fillRect(i * bw, (H - h) / 2, Math.max(1, bw - 1), h); }
-  [['s', '#3DDC97', 'START'], ['m', '#FFE000', 'MIX'], ['e', '#FF8A97', 'END']].forEach(([k, col, l]) => { const X = CUE[k] / CUE.d * W; x.fillStyle = col; x.fillRect(X - 2, 0, 4, H); x.font = 'bold 20px Inter'; x.fillText(l, k === 's' ? X + 6 : X - x.measureText(l).width - 6, k === 'm' ? H - 8 : 22); });
+  [['s', '#3DDC97', 'START'], ['m', '#FFE000', 'MIX'], ['e', '#FF8A97', 'END']].forEach(([k, col, l]) => { const X = CUE[k] / CUE.d * W; x.fillStyle = col; x.fillRect(X - 2, 0, 4, H); x.font = 'bold 20px Inter'; if (k === 'm' && CUE.auto) l = 'MIX AUTO'; x.fillText(l, k === 's' ? X + 6 : X - x.measureText(l).width - 6, k === 'm' ? H - 8 : 22); });
   const pos = M().currentTime || 0; x.fillStyle = '#fff'; x.fillRect(pos / CUE.d * W - 1, 0, 3, H);
 }
 function cueX(e) { const r = $('#cueWave').getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * CUE.d; }
 $('#cueWave').onpointerdown = e => { if (!CUE) return; const t = cueX(e), near = ['s', 'm', 'e'].reduce((a, k) => Math.abs(CUE[k] - t) < Math.abs(CUE[a] - t) ? k : a, 's');
   if (Math.abs(CUE[near] - t) / CUE.d < 0.015) { dragM = near; $('#cueWave').setPointerCapture(e.pointerId); } else { M().currentTime = t; drawCue(); } };
-$('#cueWave').onpointermove = e => { if (!dragM) return; CUE[dragM] = Math.round(cueX(e) * 10) / 10; if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; fillCue(); drawCue(); M().currentTime = CUE[dragM]; };
+$('#cueWave').onpointermove = e => { if (!dragM) return; CUE[dragM] = Math.round(cueX(e) * 10) / 10; if (dragM === 'm') CUE.auto = false; else smartFetch(); if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; fillCue(); drawCue(); M().currentTime = CUE[dragM]; };
 $('#cueWave').onpointerup = () => dragM = null;
-$$('[data-set]').forEach(b => b.onclick = () => { const k = b.dataset.set; CUE[k] = Math.round(M().currentTime * 10) / 10; if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; fillCue(); drawCue(); });
+$('#mixAuto').onclick = () => { if (!CUE) return; CUE.auto = true; fillCue(); drawCue(); smartFetch(); };
+$$('[data-set]').forEach(b => b.onclick = () => { const k = b.dataset.set; CUE[k] = Math.round(M().currentTime * 10) / 10; if (k === 'm') CUE.auto = false; else smartFetch(); if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; fillCue(); drawCue(); });
 function playFrom(t, until) { const m = M(); clearTimeout(cueStop); m.currentTime = Math.max(0, t); m.play(); if (until) { const chk = () => { if (m.currentTime >= until) m.pause(); else if (!m.paused) cueStop = setTimeout(chk, 80); }; chk(); } }
 $('#pvPlay').onclick = () => { const m = M(); m.paused ? m.play() : m.pause(); };
 // preview always stops at END (when it started before END)
@@ -837,7 +841,7 @@ $('#pvStart').onclick = () => playFrom(CUE.s); $('#pvMix').onclick = () => playF
 setInterval(() => { if (!CUE || !$('#cueDlg').open) return; const t = M().currentTime || 0; $('#pvPos').textContent = fmtC(t); drawCue(); }, 100);
 document.addEventListener('keydown', e => { if (!$('#cueDlg').open || e.target.tagName === 'SELECT') return; if (e.key === ' ') { e.preventDefault(); $('#pvPlay').click(); } if (e.key === 'ArrowLeft') M().currentTime -= e.shiftKey ? 0.1 : 1; if (e.key === 'ArrowRight') M().currentTime += e.shiftKey ? 0.1 : 1;
   const k = {s: 's', m: 'm', e: 'e'}[e.key.toLowerCase()]; if (k && !e.ctrlKey && !e.metaKey) { e.preventDefault(); document.querySelector('#cueDlg [data-set="' + k + '"]').click(); } });
-$('#cueSave').onclick = () => cmd('set_cues', {path: SEL.path, cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e}).then(r => { if (r.ok) { Object.assign(SEL, {cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e}); toast('Saved – the cue points stay with this song'); M().pause(); $('#cueDlg').close(); } else toast(r.error || 'Not saved', 1); });
+$('#cueSave').onclick = () => cmd('set_cues', {path: SEL.path, cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, mix_auto: !!CUE.auto}).then(r => { if (r.ok) { Object.assign(SEL, {cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, mix_set: CUE.auto ? 0 : 1}); toast('Saved – the cue points stay with this song'); M().pause(); $('#cueDlg').close(); } else toast(r.error || 'Not saved', 1); });
 $('#cueReset').onclick = () => { if (confirm('Go back to the automatic cue points for this song?')) cmd('reset_cues', {path: SEL.path}).then(() => toast('Automatic cue points will be measured again in a minute')); };
 // ---------- intro sweeper per song ----------
 function openOverlay(it) {

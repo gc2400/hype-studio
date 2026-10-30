@@ -118,11 +118,68 @@ ADBOX_ALWAYS = True # Settings → TV → ad box slideshow always on the Hype Sc
 JINGLE_DB = -3.0    # Settings → Mixing → Jingles volume (dB compared to the songs)
 JINGLE_FADE = 0.0   # Settings → Mixing → Jingles: fade-out (0 = plays out to its END)
 MIX_OUT = 1.5     # Settings → Mixing → fade-out of the old song (= how long both songs play together)
-def annotate(it, pad=False):
+# ---------------- smart mix (from the loudness map) ----------------
+SMART_MIX = True     # Settings → Mixing → Smart mix
+AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
+LM_CACHE = {}
+def lm_info(path):
+    """(loudness map, LUFS, mix_set) of a file - cached; cleared when its cue points change."""
+    if path in LM_CACHE: return LM_CACHE[path]
+    try:
+        r = dbc().execute("SELECT lmap, lufs, COALESCE(mix_set, 0) FROM items WHERE path=?", (path,)).fetchone()
+        v = ([int(x) for x in r[0].split(",")] if r and r[0] and r[0] != "-" else None, r[1] if r else None, bool(r and r[2]))
+    except Exception: v = (None, None, False)
+    if len(LM_CACHE) > 4000: LM_CACHE.clear()
+    LM_CACHE[path] = v; return v
+def intro_len(it):
+    """Seconds from START until the song is at its full level (0 = starts hard)."""
+    lm, L, _ = lm_info(it.get("path"))
+    if not lm or L is None: return None
+    cs = it.get("cue_start") or 0.0
+    for i in range(int(cs * 2), len(lm)):
+        if lm[i] >= L - 6: return max(0.0, i / 2 - cs)
+    return 0.0
+def smart_mix(it, nxt=None):
+    """MIX + overlap from the loudness map: (cm, cross, fade) or None (map missing / MIX set by hand / switched off).
+    START and END are never crossed: the overlap always ends at END at the latest.
+    Songs: the outro (after the last loud moment) is used - a soft intro of the next song rises under a long outro,
+    a hard start comes in when the old song has dropped ~12 dB, an abrupt end changes tight (no gap).
+    Jingles: the next song starts where the voice ends, the echo / fade tail rings out under it."""
+    if not SMART_MIX or not it or not it.get("path"): return None
+    lm, L, mset = lm_info(it["path"])
+    if not lm or L is None or mset: return None
+    cs = it.get("cue_start") or 0.0; ce = min(it.get("cue_end") or it.get("duration") or 0, len(lm) / 2) or (it.get("duration") or 0)
+    a, b = int(cs * 2), max(int(cs * 2) + 1, int(ce * 2))
+    if b - a < 4: return None
+    jingle = it.get("section") in ("jingles", "ads")
+    nl = intro_len(nxt) if nxt and nxt.get("section") == "music" else None
+    hard_next = nxt is None or nxt.get("section") != "music" or nl is None or nl < 1.5
+    if jingle:
+        voice = next((i for i in range(b - 1, a - 1, -1) if lm[i] >= L - 8), None)
+        tv = (voice + 1) / 2 if voice is not None else ce
+        cm = min(max(cs, tv), ce - 0.3); cross = max(0.3, min(8.0, ce - cm))
+        fade = min(cross, 1.5) if hard_next else cross
+        return cm, cross, fade
+    strong = next((i for i in range(b - 1, a - 1, -1) if lm[i] >= L - 6), None)
+    ts = (strong + 1) / 2 if strong is not None else ce
+    outro = ce - ts
+    if outro < 1.0:                                      # ends abruptly: tight change, no gap
+        cm = max(cs, ce - 0.4)
+    elif not hard_next:                                  # soft intro next: let it rise under the outro
+        cm = max(ts, ce - min(outro, 6.0, nl + 1.5))
+    else:                                                # hard start next: wait until the old song has dropped ~12 dB
+        drop = next((i for i in range(max(strong or a, a), b) if lm[i] < L - 12), None)
+        td = drop / 2 if drop is not None else ce
+        cm = min(max(ts, td - 0.3), ce - 0.5)
+    cm = max(cs, cm); cross = max(0.3, min(MIX_MAX, 4.0 if hard_next else 6.0, ce - cm))
+    return cm, cross, cross
+def annotate(it, pad=False, nxt=None):
     cs = it["cue_start"] or 0.0; dur = it["duration"] or it["cue_end"] or 0; ce = it["cue_end"] or dur
     cm = it["cue_mix"] if it["cue_mix"] and it["cue_mix"] > cs else ce
+    sm = None if pad else smart_mix(it, nxt)
     # the next song starts at full volume at MIX; the old one plays on under it and fades out over MIX_OUT seconds
-    if it.get("section") in ("jingles", "ads") and not pad:
+    if sm: cm, cross, fade = sm
+    elif it.get("section") in ("jingles", "ads") and not pad:
         # jingles/sweepers: the next song starts at the jingle MIX; the jingle tail plays out to its END
         # (Settings → Mixing → Jingles fade-out: 0 = no fade, else it fades over that many seconds)
         cross = max(0.3, min(8.0, ce - cm)); fade = JINGLE_FADE
@@ -397,8 +454,12 @@ class TV:
                         if (st0.media_cursor or 0) > 3000 and st0.media_state == "OBS_MEDIA_STATE_PLAYING": time.sleep(0.3)
                         if (cl.get_media_input_status(nxt).media_cursor or 0) > 3000: cl.set_media_input_cursor(nxt, 0)
                     except Exception: pass
+                if not sound and not (cue_start and cue_start > 0.3):
+                    # picture-only clip from the top: the radio's sound reaches OBS ~AV_LAG later (Liquidsoap + Pulse),
+                    # so the picture waits that long (the previous picture stays up) and starts at 0 with it
+                    seek_k = 0.0; delay = max(0.0, AV_LAG - (time.time() - t0))
                 if cue_start and cue_start > 0.3 and self._wait_open(cl, nxt):
-                    now_pos = cue_start + (time.time() - t0)
+                    now_pos = cue_start + (time.time() - t0) - (0.0 if sound else AV_LAG)   # where the sound in OBS is now
                     k = next((x for x in kf if x >= now_pos + 0.3), None) if (kf and not sound) else None
                     if k is not None and k - now_pos < 12:   # jump to that keyframe the moment the radio gets there
                         seek_k = k; delay = max(0.0, k - now_pos - 0.12)
@@ -519,6 +580,8 @@ class Engine:
         self.liq = Liq(); self.picker = Picker(); self.tv = TV(); self.runner = planner.ClockRunner()
         c0 = dbc(); planner.init(c0); planner.default_setup(c0); planner.init_overlays(c0); planner.init_shows(c0)
         planner.init_pads(c0); planner.init_screen(c0); self.screen = Screen()
+        try: c0.execute("ALTER TABLE items ADD COLUMN mix_set INT DEFAULT 0"); c0.commit()    # 1 = MIX set by hand (smart mix leaves it alone)
+        except sqlite3.OperationalError: pass
         self.live = live.Live(self.liq, self.tv, lambda: SHOW.get("title") or "show")
         self.tv.live = self.live.live; self.tv.route_audio(force=True)
         load_rotation()
@@ -546,6 +609,8 @@ class Engine:
         return {"paths": {i["path"] for i in items}, "artists": {a for i in items[-4:] for a in artist_key(i["artist"])}}
     @staticmethod
     def length(it):
+        sm = smart_mix(it) if it.get("section") in ("music", "jingles", "ads") else None
+        if sm: return max(1.0, sm[0] - (it.get("cue_start") or 0))
         return max(1.0, (it.get("cue_mix") or it.get("cue_end") or it.get("duration") or 180) - (it.get("cue_start") or 0))
     def cursor(self):
         """Estimated start time of the next item to plan."""
@@ -765,7 +830,7 @@ class Engine:
         if it.get("snap"):   # a resume clock goes on after the last item that really went out
             try: planner.save_clock_state(c, *it["snap"])
             except Exception as e: log.warning("clock state: %s", e)
-        res = self.liq.cmd("q.push " + annotate(it)); self.liq_next = it
+        res = self.liq.cmd("q.push " + annotate(it, nxt=self.plan[0] if self.plan else None)); self.liq_next = it
         log.info("queued %s – %s (%s) -> %s", it["artist"], it["title"], it["folder"], res.splitlines()[0] if res else "")
     def mix_in_run(self, at):
         """Is a mixtape on air / in Up next that starts in the same clock run (hour or show) as `at`? (after a restart or
@@ -1004,15 +1069,17 @@ class Engine:
                         pi = row_item(r, "pad"); self.liq.cmd("pads.push " + annotate(pi, True)); self.duck_for(((pi.get("cue_end") or pi.get("duration") or 5) - (pi.get("cue_start") or 0)), float(planner.get_setting(c, "pad_duck", 0.25)))
                     else: self.liq.cmd("pads.push " + annotate(row_item(r, "pad"), True))
             elif action == "set_cues":
-                cs, cm, ce = float(d["cue_start"]), float(d["cue_mix"]), float(d["cue_end"])
+                cs, cm, ce = float(d["cue_start"]), float(d["cue_mix"]), float(d["cue_end"]); auto = bool(d.get("mix_auto"))
+                if auto: cm = min(max(cm, cs), ce)
                 if not (0 <= cs <= cm <= ce): return {"ok": False, "error": "START must be before MIX, MIX before END"}
-                c.execute("UPDATE items SET cue_start=?, cue_mix=?, cue_end=?, cues_edited=1 WHERE path=?", (cs, cm, ce, d["path"])); c.commit()
+                c.execute("UPDATE items SET cue_start=?, cue_mix=?, cue_end=?, cues_edited=1, mix_set=? WHERE path=?", (cs, cm, ce, 0 if auto else 1, d["path"])); c.commit()
+                LM_CACHE.pop(d["path"], None)
                 for p_ in self.plan:
                     if p_["path"] == d["path"]: p_.update(cue_start=cs, cue_mix=cm, cue_end=ce)
             elif action == "show_intro":
                 self.tv.first_show_seen = True; self.tv.show_changed(SHOW.get("title"))
             elif action == "reset_cues":
-                c.execute("UPDATE items SET cues_edited=0, mtime=0 WHERE path=?", (d["path"],)); c.commit()
+                c.execute("UPDATE items SET cues_edited=0, mix_set=0, mtime=0 WHERE path=?", (d["path"],)); c.commit(); LM_CACHE.pop(d["path"], None)
             elif action == "set_overlay":
                 c.execute("UPDATE items SET overlay_mode=?, overlay_path=? WHERE path=?",
                           (d.get("mode") or None, d.get("jingle") if d.get("mode") == "song" else (None if d.get("mode") == "none" else c.execute("SELECT overlay_path FROM items WHERE path=?", (d["path"],)).fetchone()[0]), d["path"])); c.commit()
@@ -1204,7 +1271,7 @@ KIND_SQL = {"audio": "COALESCE(mode, 'audio') IN ('audio', 'pair')", "pair": "mo
             "noclip": "COALESCE(mode, 'audio') = 'audio'", "video": "mode = 'clip'"}
 def library(qs):
     c = dbc(); q = (qs.get("q", [""])[0]).strip(); sec = qs.get("section", ["music"])[0]; folder = qs.get("folder", [""])[0]
-    sql = "SELECT path, artist, title, folder, mode, clip_path, clip_suggest, clip_score, duration, has_video, problem, overlay_mode, overlay_path, cue_start, cue_mix, cue_end, cues_edited, added_at FROM items WHERE section=?"
+    sql = "SELECT path, artist, title, folder, mode, clip_path, clip_suggest, clip_score, duration, has_video, problem, overlay_mode, overlay_path, cue_start, cue_mix, cue_end, cues_edited, added_at, COALESCE(mix_set, 0) FROM items WHERE section=?"
     mixes = sec == "mixes"
     if sec in ("music", "mixes"): sec = "music"; sql += " AND folder " + ("" if mixes else "NOT ") + "LIKE 'MIXES%'"
     args = [sec]; sort = qs.get("sort", ["az"])[0]; recent = int(qs.get("recent", ["0"])[0] or 0)
@@ -1217,7 +1284,7 @@ def library(qs):
         sql += " AND lower(artist||' '||title||' '||filename) LIKE ?"; args.append(f"%{w}%")
     sql += " ORDER BY " + ("added_at DESC, artist, title" if sort == "new" else "artist, title") + " LIMIT 300"
     last = {r[0]: r[1] for r in c.execute("SELECT path, MAX(started) FROM asrun GROUP BY path")}
-    k = ["path", "artist", "title", "folder", "mode", "clip_path", "clip_suggest", "clip_score", "duration", "has_video", "problem", "overlay_mode", "overlay_path", "cue_start", "cue_mix", "cue_end", "cues_edited", "added_at"]
+    k = ["path", "artist", "title", "folder", "mode", "clip_path", "clip_suggest", "clip_score", "duration", "has_video", "problem", "overlay_mode", "overlay_path", "cue_start", "cue_mix", "cue_end", "cues_edited", "added_at", "mix_set"]
     out = []
     for r in c.execute(sql, args):
         d = dict(zip(k, r)); d["last"] = last.get(d["path"]); out.append(d)
@@ -1311,11 +1378,13 @@ def watch_show():
 SOUND_VARS = ["snd_drive", "snd_bass", "snd_bass_f", "snd_treble", "snd_mid", "snd_comp", "snd_monob", "snd_agc", "snd_ratio", "snd_thresh", "snd_attack", "snd_release", "snd_ceiling", "snd_punch", "mix_out", "mix_in"]
 def load_rotation():
     """Artist / song separation and the longest overlap, from Settings."""
-    global ARTIST_SEP, TITLE_SEP, MIX_MAX, JINGLE_FADE, JINGLE_DB, ADBOX_ALWAYS
+    global ARTIST_SEP, TITLE_SEP, MIX_MAX, JINGLE_FADE, JINGLE_DB, ADBOX_ALWAYS, SMART_MIX, AV_LAG
     c = dbc()
     ARTIST_SEP = 60 * float(planner.get_setting(c, "artist_sep_min", 75)); TITLE_SEP = 3600 * float(planner.get_setting(c, "title_sep_h", 3))
     JINGLE_FADE = float(planner.get_setting(c, "jingle_fade", 0.0)); JINGLE_DB = float(planner.get_setting(c, "jingle_db", -3.0))
     ADBOX_ALWAYS = bool(planner.get_setting(c, "adbox_always", True))
+    SMART_MIX = bool(planner.get_setting(c, "smart_mix", True))
+    AV_LAG = max(0.0, min(1.0, float(planner.get_setting(c, "av_lag", 0.20))))
     MIX_MAX = 8.0     # (the longest-overlap slider is gone: the overlap = the fade-out)
 LEVEL = {"l": 0.0, "r": 0.0, "asked": 0}
 AGC = {"db": 0.0, "lift": 0.0, "level": None, "strength": 0.7, "t": 0}
@@ -1450,7 +1519,7 @@ def get_settings():
         except Exception: snd[v] = None
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
-            "artist_sep_min": ARTIST_SEP / 60, "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
+            "artist_sep_min": ARTIST_SEP / 60, "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd}
 def set_settings(d):
     global MIX_OUT
@@ -1466,6 +1535,8 @@ def set_settings(d):
             if isinstance(v, dict): clean[str(n)[:40]] = {k: float(x) for k, x in v.items() if k in SOUND_VARS and isinstance(x, (int, float))}
         planner.set_setting(c, "sound_presets", clean)
     if "adbox_always" in d: planner.set_setting(c, "adbox_always", bool(d["adbox_always"]))
+    if "smart_mix" in d: planner.set_setting(c, "smart_mix", bool(d["smart_mix"]))
+    if "av_lag" in d: planner.set_setting(c, "av_lag", max(0.0, min(1.0, float(d["av_lag"]))))
     if "jingle_db" in d: planner.set_setting(c, "jingle_db", max(-12.0, min(3.0, float(d["jingle_db"]))))
     if "jingle_fade" in d: planner.set_setting(c, "jingle_fade", max(0.0, min(5.0, float(d["jingle_fade"]))))
     if "pad_duck" in d: planner.set_setting(c, "pad_duck", max(0.05, min(0.8, float(d["pad_duck"]))))
@@ -1511,6 +1582,13 @@ class H(BaseHTTPRequestHandler):
             if p == "/history": return self.send(200, history(qs))
             if p == "/media": return self.send(200, {"files": media_files(), "scenes": MEDIA_SCENES})
             if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners(), own_tv=viewers()))
+            if p == "/smartmix":     # the cue editor: where smart mix puts MIX for these START / END
+                c = dbc(); r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (qs["path"][0],)).fetchone()
+                if not r: return self.send(404, {"error": "not found"})
+                it = row_item(r); it["cue_start"] = float(qs.get("s", [it["cue_start"] or 0])[0]); it["cue_end"] = float(qs.get("e", [it["cue_end"] or it["duration"] or 0])[0])
+                lm, L, mset = lm_info(it["path"]); LM_CACHE[it["path"]] = (lm, L, False)
+                sm = smart_mix(it); LM_CACHE[it["path"]] = (lm, L, mset)
+                return self.send(200, {"mix": round(sm[0], 1) if sm else None, "overlap": round(sm[1], 1) if sm else None, "intro": intro_len(it), "smart": SMART_MIX})
             if p == "/audience": return self.send(200, {"radio": listeners(), "tv": viewers(), "t": int(time.time())})
             if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))

@@ -101,7 +101,7 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
           <video id="m" playsinline preload="metadata"></video>
           <div class="cueside">
             <button class="cueset" data-set="s" style="color:var(--g)" title="Set START at the playhead (key S)"><span class="k">SET START</span><span class="v" id="vS">0:00.0</span></button>
-            <button class="cueset" data-set="m" style="color:var(--y)" title="Set MIX at the playhead (key M) – the next song starts here"><span class="k">SET MIX</span><span class="v" id="vM">0:00.0</span></button>
+            <button class="cueset" data-set="m" style="color:var(--y)" title="Set MIX at the playhead (key M) – the next song starts here"><span class="k">SET MIX</span><span class="v" id="vM">0:00.0</span></button><button class="btn sm" id="mixAuto" title="MIX back to AUTO: smart mix picks it from the song's loudness (your START and END stay)">AUTO</button>
             <button class="cueset" data-set="e" style="color:#FF8A97" title="Set END at the playhead (key E) – preview stops here"><span class="k">SET END</span><span class="v" id="vE">0:00.0</span></button>
             <div id="ovBox" class="ovb"><span class="lab">Intro sweeper</span><select class="sel" id="ovSel" aria-label="Intro sweeper for this song"></select></div>
           </div>
@@ -172,8 +172,8 @@ function pick(it) {
   $('#eSub').textContent = it.folder + ' · ' + fmt(it.duration) + (it.last ? ' · played ' + ago(it.last) : '');
   const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode); $('#eBadge').textContent = bt; $('#eBadge').className = 'chip ' + bc;
   $('#eTv').textContent = !MUS() ? '' : it.mode === 'pair' ? 'TV plays the clip "' + (it.clip_path || '').replace(/^clips\//, '') + '" with its own sound (same name).' : it.mode === 'clip' ? 'Video file – radio and TV play the same.' : 'No clip with the same name in /clips → TV shows the Hype Screen.';
-  CUE = {s: it.cue_start || 0, m: it.cue_mix || it.duration || 0, e: it.cue_end || it.duration || 0, d: it.duration || 1};
-  peaks = []; fill(); draw(); api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { peaks = p; draw(); } });
+  CUE = {s: it.cue_start || 0, m: it.cue_mix || it.duration || 0, e: it.cue_end || it.duration || 0, d: it.duration || 1, auto: !it.mix_set};
+  peaks = []; fill(); draw(); smartFetch(); api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { peaks = p; draw(); } });
   const m = $('#m'); m.pause(); m.src = '../media/' + it.path.split('/').map(encodeURIComponent).join('/');
   m.style.display = it.has_video ? 'block' : 'none'; $('#cdg').classList.toggle('novid', !it.has_video); m.currentTime = CUE.s;
   $('#ovBox').hidden = !MUS();
@@ -181,15 +181,19 @@ function pick(it) {
     $('#ovSel').innerHTML = '<option value="rule">Follow the rules</option><option value="none">Never for this song</option>' + PADS.map(p => `<option value="${esc(p.path)}">Always: ${esc(p.folder)} · ${esc(p.title)}</option>`).join(''); $('#ovSel').value = cur; }
 }
 const fmtC = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), r = t - m * 60; return m + ':' + r.toFixed(1).padStart(4, '0'); };
-function fill() { $('#vS').textContent = fmtC(CUE.s); $('#vM').textContent = fmtC(CUE.m); $('#vE').textContent = fmtC(CUE.e); $('#bSave').textContent = dirty ? 'Save *' : 'Save'; }
+let smT = null;
+function smartFetch() { if (!CUE || !CUE.auto || !SEL) return; const it = SEL; clearTimeout(smT);
+  smT = setTimeout(() => api('smartmix?path=' + encodeURIComponent(it.path) + '&s=' + CUE.s + '&e=' + CUE.e).then(r => { if (SEL === it && CUE.auto && r && r.mix != null) { CUE.m = r.mix; fill(); draw(); } }), 150); }
+function fill() { $('#vS').textContent = fmtC(CUE.s); $('#vM').textContent = (CUE.auto ? 'AUTO ' : '') + fmtC(CUE.m); $('#vE').textContent = fmtC(CUE.e); $('#bSave').textContent = dirty ? 'Save *' : 'Save'; }
 function draw() {
   const c = $('#wave'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H); if (!CUE) return;
   const n = peaks.length || 1, bw = W / n;
   for (let i = 0; i < peaks.length; i++) { const f = i / n * CUE.d, h = Math.max(2, peaks[i] * (H - 18)); x.fillStyle = f < CUE.s || f > CUE.e ? '#1A3550' : '#05A9C6'; x.fillRect(i * bw, (H - h) / 2, Math.max(1, bw - 1), h); }
-  [['s', '#3DDC97', 'START'], ['m', '#FFE000', 'MIX'], ['e', '#FF8A97', 'END']].forEach(([k, col, l]) => { const X = CUE[k] / CUE.d * W; x.fillStyle = col; x.fillRect(X - 2, 0, 4, H); x.font = 'bold 24px Inter'; x.fillText(l, k === 's' ? X + 6 : X - x.measureText(l).width - 6, k === 'm' ? H - 10 : 26); });
+  [['s', '#3DDC97', 'START'], ['m', '#FFE000', 'MIX'], ['e', '#FF8A97', 'END']].forEach(([k, col, l]) => { const X = CUE[k] / CUE.d * W; x.fillStyle = col; x.fillRect(X - 2, 0, 4, H); x.font = 'bold 24px Inter'; if (k === 'm' && CUE.auto) l = 'MIX AUTO'; x.fillText(l, k === 's' ? X + 6 : X - x.measureText(l).width - 6, k === 'm' ? H - 10 : 26); });
   const p = $('#m').currentTime || 0; x.fillStyle = '#fff'; x.fillRect(p / CUE.d * W - 1, 0, 3, H);
 }
-function setCue(k, t) { CUE[k] = Math.round(t * 10) / 10; if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; dirty = true; fill(); draw(); }
+function setCue(k, t) { CUE[k] = Math.round(t * 10) / 10; if (k === 'm') CUE.auto = false; if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; dirty = true; fill(); draw(); if (k !== 'm') smartFetch(); }
+$('#mixAuto').onclick = () => { if (!CUE) return; CUE.auto = true; dirty = true; fill(); draw(); smartFetch(); };
 function cx(e) { const r = $('#wave').getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * CUE.d; }
 $('#wave').onpointerdown = e => { if (!CUE) return; const t = cx(e), near = ['s', 'm', 'e'].reduce((a, k) => Math.abs(CUE[k] - t) < Math.abs(CUE[a] - t) ? k : a, 's');
   if (Math.abs(CUE[near] - t) / CUE.d < 0.015) { drag = near; $('#wave').setPointerCapture(e.pointerId); } else { $('#m').currentTime = t; draw(); } };
@@ -205,7 +209,7 @@ requestAnimationFrame(cueTick);
 $('#bBack').onclick = () => { $('#m').currentTime -= 5; }; $('#bFwd').onclick = () => { $('#m').currentTime += 5; };
 $('#bStart').onclick = () => playFrom(CUE.s); $('#bMix').onclick = () => playFrom(CUE.m - 8, CUE.e);
 setInterval(() => { if (!CUE) return; const t = $('#m').currentTime || 0; $('#pos').textContent = fmtC(t); draw(); }, 100);
-function save() { return api('cmd/set_cues', {path: SEL.path, cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e}).then(r => { if (r.ok === false) { toast(r.error || 'Not saved'); return false; } Object.assign(SEL, {cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, cues_edited: 1}); dirty = false; fill(); renderList(); toast('Saved'); return true; }); }
+function save() { return api('cmd/set_cues', {path: SEL.path, cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, mix_auto: !!CUE.auto}).then(r => { if (r.ok === false) { toast(r.error || 'Not saved'); return false; } Object.assign(SEL, {cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, cues_edited: 1, mix_set: CUE.auto ? 0 : 1}); dirty = false; fill(); renderList(); toast('Saved'); return true; }); }
 function step(dir) { const L = visible(), i = SEL ? L.findIndex(x => x.path === SEL.path) : -1, n = L[Math.max(0, Math.min(L.length - 1, i + dir))]; if (n && n !== SEL) { $('#m').pause(); pick(n); } }
 $('#bSave').onclick = save; $('#bSaveNext').onclick = () => save().then(ok => ok && step(1));
 $('#bAuto').onclick = () => { if (confirm('Back to the automatic cue points for this song?')) api('cmd/reset_cues', {path: SEL.path}).then(() => toast('Automatic cue points are measured again in a minute')); };

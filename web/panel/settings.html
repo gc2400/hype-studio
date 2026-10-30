@@ -131,6 +131,7 @@ table{border-collapse:collapse;width:100%}
     <section class="card sec" data-sec="mixing">
       <span class="lab">Mixing · how one song goes into the next</span>
       <p class="muted" style="margin:0">At the old song's <b>MIX</b> point the new song starts at its full volume, and at the same moment the old song starts fading out underneath it – you still hear the end of the old one in the first seconds of the new one (like CLOSE). Cue points per song: Library page.</p>
+      <label class="opt" data-find="smart mix automatic overlap outro intro jingle echo tail"><input type="checkbox" id="smart_mix"><div><b>Smart mix</b><span>Hype Studio sets each MIX itself from the song's loudness: a soft intro rises under a long outro, a hard start comes in when the old song has faded, an abrupt end changes tight – and after a jingle the next song starts where the voice ends, with the echo ringing out under it. Your START and END are never crossed. A MIX you set by hand stays yours (AUTO in the cue editor gives it back). Off = the MIX points + Mix length below.</span></div></label>
       <div class="sl" data-find="fade out old song end"><label>Mix length<small>how long the old song fades out under the new one (1–2.5 s sounds tight)</small></label><input type="range" id="mix_out" min="0.2" max="6" step="0.1"><span class="v" id="mix_out_v"></span></div>
       <div class="sl" data-find="fade in new song start"><label>Fade-in of the new song<small>0 = starts at full volume (recommended)</small></label><input type="range" id="mix_in" min="0" max="3" step="0.1"><span class="v" id="mix_in_v"></span></div>
       
@@ -265,7 +266,7 @@ function render() {
     : mbm ? 'Your sliders (bass, treble, loudness …) with bass, mids and highs compressed on their own – the kick no longer pulls the vocals down. The Compression sliders are not used here.' : '';
   $$('#presets [data-p]').forEach(b => b.onclick = () => { const P_ = Object.assign({}, allPresets()[b.dataset.p]); delete P_.tip; pend = Object.assign({snd_punch: 0, snd_mid: 0}, P_); sendSound().then(() => { render(); toast('Preset: ' + b.dataset.p); }); });
   const ok = Object.values(ST.sound).every(v => v != null); $('#sndState').textContent = ok ? 'radio engine connected' : 'radio engine not reachable'; $('#sndState').style.color = ok ? 'var(--g)' : 'var(--r)';
-  ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
+  ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always', 'smart_mix'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
   $('#tv_clip_offset').value = ST.tv_clip_offset; $('#tv_clip_offset_v').textContent = fmtv(ST.tv_clip_offset, 'dB');
   $('#tv_clip_offset').oninput = () => $('#tv_clip_offset_v').textContent = fmtv(+$('#tv_clip_offset').value, 'dB');
   $('#tv_clip_offset').onchange = () => post('settings', {tv_clip_offset: +$('#tv_clip_offset').value}).then(d => { ST = d; toast('Saved – used from the next paired song'); });
