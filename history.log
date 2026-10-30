@@ -40,3 +40,4 @@
 2026-10-31T00:33:49 ok 099d8051 Rotation: a source that ended one round never starts the next (no LAT … LAT close together)
 2026-10-31T00:36:39 ok 61c07055 Pads: bank buttons wrap (no scrollbar); Library: sections above the search, genres wrap, compact on phones; Up next songs you added survive a restart
 2026-10-31T00:39:29 ok f51d32a7 Pages show '↻ Hype Studio was updated – click to reload' after an update
+2026-10-31T00:43:20 ok 11ad96fd Panel: no emojis on tabs, banks and pad buttons (DUCK / VIDEO / LOOP), MEDIA bank stands out in yellow, playlists: 'All N' or 'Next N' choice, library rows no longer move on hover (buttons appear over the row)

@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T00:39:29",
+ "time": "2026-10-31T00:43:20",
  "result": "ok",
- "commit": "f51d32a786803a51a36096b4807256d399e0f3c3",
- "subject": "Pages show '\u21bb Hype Studio was updated \u2013 click to reload' after an update",
+ "commit": "11ad96fdfe90cf7a4d53e8e9e2b9143b2fed46d8",
+ "subject": "Panel: no emojis on tabs, banks and pad buttons (DUCK / VIDEO / LOOP), MEDIA bank stands out in yellow, playlists: 'All N' or 'Next N' choice, library rows no longer move on hover (buttons appear over the row)",
  "log": [
-  "00:38:44 update 61c07055 \u2192 f51d32a7 \u00b7 2 file(s): engine/engine.py, web/panel/header.js",
-  "00:38:44 restart hype-engine",
-  "00:39:29 installed OK \u00b7 restarted: hype-engine"
+  "00:42:35 update f51d32a7 \u2192 11ad96fd \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "00:42:35 restart hype-engine",
+  "00:43:20 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Kybba x Kapo x Busy Signal \u2013 GIMIDI",
+  "song": "De La Rose x Ryan Castro \u2013 LA MONDA",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
