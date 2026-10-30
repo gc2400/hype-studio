@@ -23,3 +23,4 @@
 2026-10-30T22:16:40 ok eb6a4bb1 Listeners counted as unique devices (address + player): MP3 via Icecast's list matched to nginx-mirrored starts, HLS + TV from the logs; MP3 + HLS together without double counting
 2026-10-30T22:23:35 ok 80bd4f1c Return feed to the Mixcast: received in stereo (Chrome folded Opus to mono), 300 ms playout buffer against the 'under water' stretching, Opus 256k
 2026-10-30T22:32:10 ok 830c0d31 Return feed to the Mixcast unprocessed (peak safety only): during LIVE the music is processed once, not twice
+2026-10-30T23:08:41 ok 8504199b Throwback: jingles/THROWBACK is a Throwback sweeper folder; a throwback song from the clock gets one in front of it (once per clock hour), like New Music

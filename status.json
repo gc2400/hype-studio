@@ -1,19 +1,18 @@
 {
- "time": "2026-10-30T22:32:10",
+ "time": "2026-10-30T23:08:41",
  "result": "ok",
- "commit": "830c0d31971b617902d391de5511a3be36355107",
- "subject": "Return feed to the Mixcast unprocessed (peak safety only): during LIVE the music is processed once, not twice",
+ "commit": "8504199bd55fbe72f80fcc727de3007290369c16",
+ "subject": "Throwback: jingles/THROWBACK is a Throwback sweeper folder; a throwback song from the clock gets one in front of it (once per clock hour), like New Music",
  "log": [
-  "22:30:46 update 80bd4f1c \u2192 830c0d31 \u00b7 1 file(s): radio/radio.liq",
-  "22:31:25 lab: PASS (6/6 good readings)",
-  "22:31:25 restart hype-radio",
-  "22:32:10 installed OK \u00b7 restarted: hype-radio"
+  "23:07:56 update 830c0d31 \u2192 8504199b \u00b7 1 file(s): engine/engine.py",
+  "23:07:56 restart hype-engine",
+  "23:08:41 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Tiwa Savage x Wande Coal x MAVO \u2013 Energy",
+  "song": "Davido x Mayorkun x FOLA \u2013 B4 B4",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
