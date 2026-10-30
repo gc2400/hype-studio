@@ -236,7 +236,9 @@ def make_tv_copies(c, upgrades=3):
     rank = {p_: i for i, p_ in enumerate(soon)}
     old = [r[0] for r in c.execute("SELECT path FROM items WHERE has_video=1 AND problem IS NULL AND tv_path<>'' AND COALESCE(tv_v,1)<?", (TV_V,))]
     old = sorted(old, key=lambda p_: rank.get(p_, 9999))[:upgrades]
+    t_end = time.time() + 150      # max ~2.5 min of TV copies per scan, so new uploads are never stuck behind a big batch
     for path in new + old:
+        if time.time() > t_end: break
         if time.time() - TV_FAIL.get(path, 0) < 6 * 3600: continue
         out = os.path.join(TVDIR, hashlib.sha1(path.encode()).hexdigest()[:16] + ".mkv"); tmp = out + ".part.mkv"
         dur = (c.execute("SELECT duration FROM items WHERE path=?", (path,)).fetchone() or [0])[0] or 0
