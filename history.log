@@ -28,3 +28,4 @@
 2026-10-30T23:25:35 ok 29c9169b Playlists can hold a jingles folder (jingles/NEW MUSIC …: every file in it); folder rules accept wildcards (*CLASSICS*)
 2026-10-30T23:28:25 ok 3c03e248 Indexer: TV copies max 2.5 min per scan, so new uploads (and moved jingles) are picked up right away
 2026-10-30T23:40:26 ok ed3c3010 Playlists: dropped planned items give their place back (rotation really continues; also after a restart); honest Play order (rotation turns / smart pick); editor as a list with drag + arrows, + Jingles (folders or files), search without accents (also the Library)
+2026-10-30T23:54:30 ok 88035f86 Planning: search bars for playlists and clocks; sweeper-over rules can target one song
