@@ -1,0 +1,11 @@
+[Unit]
+Description=Hype Studio updater (installs tested changes from GitHub gc2400/hype-studio)
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/hype/updater.py
+Restart=always
+RestartSec=20
+
+[Install]
+WantedBy=multi-user.target
