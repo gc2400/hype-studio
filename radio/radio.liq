@@ -85,6 +85,9 @@ s = smooth_add(duration=0.4, p={duck()}, normal=s, special=over)   # (no longer 
 padq = request.queue(id="pads")
 pads = amplify(vol_pads, drop_metadata(amplify(override="liq_amplify", 1., padq)))
 s = add(normalize=false, [s, pads])
+# the automation UNPROCESSED for the studio's Mixcast (levelled per song + AGC, only a peak safety): during LIVE the Mixcast
+# mix comes back and is processed once on the way to air - so the music is never compressed twice
+ret = mksafe(ladspa.fastlookaheadlimiter(input_gain=0., limit=-1., release_time=0.08, s))
 
 # --- broadcast processing: warm bass, light compression, loud but clean limiter ---
 # Sound presets on ONE chain (switching chains is not possible here): snd_punch 0 = classic (the sliders), 1 = "Hype Punch":
@@ -210,5 +213,5 @@ output.icecast(%mp3(bitrate=128, samplerate=44100, stereo=true), host="127.0.0.1
   url="https://www.hyperadio.nl", public=false, s)
 output.pulseaudio(device="hype_air", clock_safe=false, s)
 output.pulseaudio(device="hype_fx", clock_safe=false, fx)
-# music + jingles for the studio (Mixcast USB fader) – always the automation, also while LIVE
-output.pulseaudio(device="hype_return", clock_safe=false, prog)
+# music + jingles for the studio (Mixcast USB fader) – always the automation (unprocessed), also while LIVE
+output.pulseaudio(device="hype_return", clock_safe=false, ret)
