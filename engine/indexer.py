@@ -24,6 +24,7 @@ def db():
     if "fp" not in cols: c.execute("ALTER TABLE items ADD COLUMN fp TEXT")
     if "genre" not in cols: c.execute("ALTER TABLE items ADD COLUMN genre TEXT")
     if "kf" not in cols: c.execute("ALTER TABLE items ADD COLUMN kf TEXT")
+    if "lmap" not in cols: c.execute("ALTER TABLE items ADD COLUMN lmap TEXT")   # loudness map: the loudest moment of every 0.5 s (for the AGC intro lift)
     if "added_at" not in cols:   # when the file first arrived (for "recently uploaded")
         c.execute("ALTER TABLE items ADD COLUMN added_at REAL"); c.execute("UPDATE items SET added_at=MIN(COALESCE(mtime, indexed_at), COALESCE(indexed_at, mtime))")
     c.execute("CREATE INDEX IF NOT EXISTS items_fp ON items(fp)")
@@ -85,7 +86,23 @@ def loudness_and_cues(path, duration):
             if cue_end and cue_end - mp > 20:   # long outro / spoken end: cap at 12 s before end
                 mp = cue_end - 12
             cue_mix = round(max(cue_start or 0, mp), 2)
-    return lufs, peak, cue_start, cue_mix, cue_end
+    return lufs, peak, cue_start, cue_mix, cue_end, loud_map(mom)
+
+def loud_map(mom):
+    """The loudest momentary level of every 0.5 s of the file, as whole dB ("-24,-23,...")."""
+    if not mom: return None
+    out = [-60] * (int(mom[-1][0] * 2) + 1)
+    for t, v in mom:
+        i = int(t * 2); out[i] = max(out[i], max(-60, int(round(v))))
+    return ",".join(map(str, out))
+
+def make_lmaps(c, n=15):
+    """Songs indexed before the loudness map existed: measure a few per round (low priority)."""
+    for p_, d_ in c.execute("""SELECT path, duration FROM items WHERE section='music' AND problem IS NULL AND has_audio=1
+                               AND lmap IS NULL ORDER BY added_at DESC LIMIT ?""", (n,)).fetchall():
+        try: lm = loudness_and_cues(os.path.join(ROOT, p_), d_)[5]
+        except Exception as e: print("lmap:", p_, e, flush=True); lm = None
+        c.execute("UPDATE items SET lmap=? WHERE path=?", (lm or "-", p_)); c.commit()
 
 def fingerprint(path, size):
     """Same song = same fingerprint, whatever its name or folder (size + first and last MB)."""
@@ -140,7 +157,7 @@ def index_file(c, path, st):
     ext = os.path.splitext(fn)[1].lower()
     row = dict(path=rel, section=section, folder=folder, filename=fn, size=st.st_size, mtime=st.st_mtime,
                artist="", title="", duration=None, has_video=0, has_audio=0, width=None, height=None,
-               lufs=None, peak=None, cue_start=None, cue_intro=None, cue_mix=None, cue_end=None,
+               lufs=None, peak=None, lmap=None, cue_start=None, cue_intro=None, cue_mix=None, cue_end=None,
                mode=None, problem=None, indexed_at=time.time(), tv_path=None, genre=genre, cues_edited=0)
     fp = fingerprint(path, st.st_size); row["fp"] = fp
     if not c.execute("SELECT 1 FROM items WHERE path=?", (rel,)).fetchone() and follow_move(c, rel, fp):
@@ -174,8 +191,8 @@ def index_file(c, path, st):
         elif (row["duration"] or 0) < 1:
             row["problem"] = "too short / empty"
         elif section in ("music", "jingles", "ads") or (section == "clips"):
-            lufs, peak, cs, cm, ce = loudness_and_cues(path, row["duration"])
-            row.update(lufs=lufs, peak=peak, cue_start=cs, cue_mix=cm, cue_end=ce)
+            lufs, peak, cs, cm, ce, lm = loudness_and_cues(path, row["duration"])
+            row.update(lufs=lufs, peak=peak, cue_start=cs, cue_mix=cm, cue_end=ce, lmap=lm)
         if section == "music" and not row["artist"]:
             row["problem"] = row["problem"] or "no artist (name the file 'Artist - Title')"
     if section == "music" and not row["problem"]:
@@ -304,6 +321,8 @@ def scan(full=False):
     make_tv_copies(c)
     make_keyframes(c)
     close_inbox(c)
+    try: make_lmaps(c)
+    except Exception as e: print("lmap error", e, flush=True)
     return n_new, len(gone)
 
 CLOSE_SEEN = [0.0]

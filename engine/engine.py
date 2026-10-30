@@ -884,6 +884,11 @@ class Engine:
             c.execute("INSERT INTO asrun(started,path,artist,title,folder,mode,clip,scene,kind) VALUES(?,?,?,?,?,?,?,?,?)",
                       (time.time(), path, it["artist"], it["title"], it["folder"], mode, it["clip_path"], scene, it["section"])); c.commit()
             self.now = dict(it, started=time.time(), scene=scene)
+            if it["section"] == "music":   # loudness map for the AGC intro lift
+                try:
+                    lm = c.execute("SELECT lmap FROM items WHERE path=?", (path,)).fetchone()
+                    if lm and lm[0] and lm[0] != "-": self.now["lmap"] = [int(x) for x in lm[0].split(",")]
+                except Exception: pass
             if it.get("deck"): self.deck = it["deck"]
             elif self.dj: self.deck = None
             if it["section"] == "music": self.intro_sweeper(c, it)
@@ -1292,7 +1297,23 @@ def load_rotation():
     ADBOX_ALWAYS = bool(planner.get_setting(c, "adbox_always", True))
     MIX_MAX = 8.0     # (the longest-overlap slider is gone: the overlap = the fade-out)
 LEVEL = {"l": 0.0, "r": 0.0, "asked": 0}
-AGC = {"db": 0.0, "level": None, "strength": 0.7, "t": 0}
+AGC = {"db": 0.0, "lift": 0.0, "level": None, "strength": 0.7, "t": 0}
+def intro_lift(now, st):
+    """Look-ahead lift (from the song's loudness map): a quiet intro / breakdown is brought up to ~3 dB under the
+    song's own level, and the lift is already gone when the beat drops (it looks 3 s ahead) - so no limiter hit."""
+    lm = now.get("lmap"); lufs = now.get("lufs")
+    if not lm or lufs is None or now.get("section") != "music": return 0.0
+    t = (now.get("cue_start") or 0) + time.time() - (now.get("started") or 0)
+    cm = now.get("cue_mix") or now.get("cue_end")
+    if cm and t > cm - 1: return 0.0                              # the fade-out at the end stays a fade-out
+    i = int(t * 2); top = min(8.0, 9.0 * st); ref = lufs - 3.0
+    ahead = lm[max(0, i - 1): i + 10]                              # now ... 4.5 s ahead
+    if not ahead or max(ahead[:3]) < -50: return 0.0               # silence / near-silence: never pull up noise
+    # glide: the lift may be at most 2.5 dB higher per second still to go before a loud part (ends 0.5 s before it)
+    want = top
+    for j, v in enumerate(ahead):
+        want = min(want, max(0.0, ref - v) + 2.5 * max(0.0, (j - 2) * 0.5))
+    return max(0.0, want)
 def agc_loop():
     """Gated AGC on the music (broadcast style): evens out differences BETWEEN songs, leaves the dynamics WITHIN a song alone.
     - measures after the EQ (feedback), corrects for its own gain;
@@ -1304,7 +1325,7 @@ def agc_loop():
     HOLD_S, GATE_DB = 15.0, 6.0
     avg = None                        # the level without our gain, smoothed over ~3 s (so single beats do not move it)
     body = None                       # the slow "body" level (~20 s) that the gate compares against
-    sock = None; last_set = None; n = 0
+    sock = None; last_set = None; n = 0; lift_t = 0.0
     while True:
         time.sleep(DT)
         try:
@@ -1325,7 +1346,14 @@ def agc_loop():
             lvl = float(v[5]); AGC["level"] = lvl
             st = AGC["strength"]; up_max, down_max = min(6.0, 8.0 * st), -6.0 * st
             g = AGC["db"]; state = "ride"
-            if st <= 0.01: g += (0.0 - g) * DT / 1.5; state = "off"       # off: back to 0 dB
+            lift = AGC["lift"]
+            lw = intro_lift(E.now, st) if (st > 0.01 and E.now and not E.stopped) else 0.0
+            lift = lw if lw < lift else min(lw, lift + 2.0 * DT)        # up max 2 dB/s, down at once (the look-ahead already started it early)
+            if lift > 0.3: lift_t = time.time()
+            if lift > 0.3 or time.time() - lift_t < 4.0:              # lifting (or just done): the song AGC keeps still, the 3 s meter still has the lift in it
+                state = "lift" if lift > 0.3 else "hold"
+                if lvl > TARGET + 4.0: lift = max(0.0, lift - 1.0)     # safety: still too loud -> lift away fast
+            elif st <= 0.01: g += (0.0 - g) * DT / 1.5; state = "off"       # off: back to 0 dB
             elif lvl > -40.0 and E.now and not E.stopped:
                 raw = lvl - g                                             # the level without our own gain
                 age = time.time() - (E.now.get("started") or 0)
@@ -1342,9 +1370,10 @@ def agc_loop():
                     g += (want - g) * min(1.0, DT / tau)
             else: state = "hold"
             AGC["state"] = state
-            AGC["db"] = g; AGC["t"] = time.time()
-            if last_set is None or abs(g - last_set) > 0.05:
-                ask(f"var.set agc_g = {10 ** (g / 20):.4f}"); last_set = g
+            AGC["db"] = g; AGC["lift"] = lift; AGC["t"] = time.time()
+            tot = max(-10.0, min(9.5, g + lift))
+            if last_set is None or abs(tot - last_set) > 0.05:
+                ask(f"var.set agc_g = {10 ** (tot / 20):.4f}"); last_set = tot
         except Exception as ex:
             try: sock.close()
             except Exception: pass
@@ -1463,7 +1492,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners()))
             if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))
-            if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01})
+            if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"] + AGC["lift"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01})
             if p == "/history.csv":
                 h = history(qs, limit=5000); import csv, io; b = io.StringIO(); w = csv.writer(b, delimiter=";")
                 w.writerow(["date", "time", "artist", "title", "folder", "type", "length", "tv", "file"])
