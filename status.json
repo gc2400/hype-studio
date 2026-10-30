@@ -1,18 +1,20 @@
 {
- "time": "2026-10-31T00:24:31",
+ "time": "2026-10-31T00:27:05",
  "result": "ok",
- "commit": "d7fbafa7ffbcfe05f303018d126a4f0f6918905c",
- "subject": "Pads: banks named like a jingles folder follow that folder (new jingles appear by themselves); up to 64 pads per bank",
+ "commit": "97553010d99d1d6d14dd70795fcfcba02a8b9a5d",
+ "subject": "Test links removed (tv.hyperadio.nl test TV + radio); internal 256k mount renamed rec.mp3 (recordings); status page shows the real stream links; TV viewers only from stream.hyperadio.nl",
  "log": [
-  "00:23:45 update c59ef4b2 \u2192 d7fbafa7 \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
-  "00:23:45 restart hype-engine",
-  "00:24:31 installed OK \u00b7 restarted: hype-engine"
+  "00:25:34 update d7fbafa7 \u2192 97553010 \u00b7 5 file(s): engine/engine.py, engine/live.py, radio/radio.liq, system/nginx-hype.conf, web/status/index.html",
+  "00:26:20 lab: PASS (6/6 good readings)",
+  "00:26:20 restart hype-engine",
+  "00:26:20 restart hype-radio",
+  "00:27:05 installed OK \u00b7 restarted: hype-engine, hype-radio, nginx-reload"
  ],
  "guard": {
-  "song": "J Balvin x Ryan Castro \u2013 Pal Agua",
+  "song": "Davido \u2013 On The Road",
   "listeners": 0,
   "obs": true,
-  "seg_age": 3.3,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
