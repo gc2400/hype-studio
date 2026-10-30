@@ -348,7 +348,8 @@ class TV:
       While LIVE: only your studio mix, straight from the studio stream (same path as the cameras = in sync), never a clip's sound."""
       with self.olock:
         live = bool(getattr(self, "live", False))
-        split = bool(self.clip_sound and scene_has_video(self.scene)) and not live
+        # PIP too: the sponsor frame goes around the video, so the clip's sound plays on (no switch to the mp3 and back)
+        split = bool(self.clip_sound and (scene_has_video(self.scene) or self.scene == "PIP")) and not live
         if (split, live) == (self.split, getattr(self, "_live_r", None)) and not force: return
         try:
             cl = self.client()
@@ -358,6 +359,7 @@ class TV:
             except Exception as e: log.warning("Studio audio: %s", e)
             if not split:
                 for n in ("Clip A", "Clip B"): cl.set_input_mute(n, True)
+            elif self.cur in ("Clip A", "Clip B"): cl.set_input_mute(self.cur, False)   # back to the video: its sound again (it was muted while away)
             self.split = split; self._live_r = live
         except Exception as e: log.warning("TV audio: %s", e); self.cl = None
     def _wait_open(self, cl, name):
