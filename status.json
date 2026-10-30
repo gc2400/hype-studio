@@ -1,18 +1,18 @@
 {
- "time": "2026-10-30T23:28:25",
+ "time": "2026-10-30T23:40:26",
  "result": "ok",
- "commit": "3c03e248a7e454d47d3e3a6ea9587f89440c5d56",
- "subject": "Indexer: TV copies max 2.5 min per scan, so new uploads (and moved jingles) are picked up right away",
+ "commit": "ed3c3010432dbae0309fd6782fa062315adebc9c",
+ "subject": "Playlists: dropped planned items give their place back (rotation really continues; also after a restart); honest Play order (rotation turns / smart pick); editor as a list with drag + arrows, + Jingles (folders or files), search without accents (also the Library)",
  "log": [
-  "23:27:39 update 29c9169b \u2192 3c03e248 \u00b7 1 file(s): engine/indexer.py",
-  "23:27:40 restart hype-indexer",
-  "23:28:25 installed OK \u00b7 restarted: hype-indexer"
+  "23:39:41 update 3c03e248 \u2192 ed3c3010 \u00b7 3 file(s): engine/engine.py, engine/planner.py, web/panel/plan.html",
+  "23:39:41 restart hype-engine",
+  "23:40:26 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "CKay \u2013 BADAMINTON",
+  "song": "Langa \u2013 Bottega",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
