@@ -13,6 +13,7 @@ engine/hype-stats.py|/usr/local/bin/hype-stats.py|755|hype-stats
 radio/radio.liq|/etc/hype/radio.liq|644|hype-radio
 tv/ladder.sh|/etc/hype/ladder.sh|755|hype-ladder
 tv/sway.conf|/etc/hype/sway.conf|644|-
+tv/radio_hls.sh|/etc/hype/radio_hls.sh|755|hype-radio-hls
 web/panel/index.html|/var/www/studio/panel/index.html|644|-
 web/panel/library.html|/var/www/studio/panel/library.html|644|-
 web/panel/plan.html|/var/www/studio/panel/plan.html|644|-
@@ -45,5 +46,7 @@ system/hype-return.service|/etc/systemd/system/hype-return.service|644|daemon-re
 system/hype-stats.service|/etc/systemd/system/hype-stats.service|644|daemon-reload
 system/hype-studio-in.service|/etc/systemd/system/hype-studio-in.service|644|daemon-reload
 system/hype-sway.service|/etc/systemd/system/hype-sway.service|644|daemon-reload
-system/hype-updater.service|/etc/systemd/system/hype-updater.service|644|daemon-reload
+system/hype-radio-hls.service|/etc/systemd/system/hype-radio-hls.service|644|daemon-reload
+system/hype-updater.service|/etc/systemd/system/hype-radio-hls.service|/etc/systemd/system/hype-radio-hls.service|644|daemon-reload
+system/hype-updater.service|644|daemon-reload
 deploy/updater.py|/opt/hype/updater.py|755|hype-updater

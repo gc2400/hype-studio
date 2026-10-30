@@ -82,6 +82,8 @@
       <div class="r"><span>Playout</span>${yes(r.on_air, 'on air', 'stopped')}</div>
       <div class="r"><span>Hype Studio stream (MP3 ${r.kbps || '–'}k)</span>${yes(r.ok, 'live', 'down')}</div>
       <div class="r"><span>Listeners on this stream</span><b class="big">${r.listeners ?? '–'}</b></div>
+      <div class="r"><span>Own streams now (MP3 + HLS)</span><b class="big">${d.own ? d.own.current : '–'}</b></div>
+      <div class="r"><span>· MP3 / HLS · peak today</span><b>${d.own ? d.own.mp3 + ' / ' + d.own.hls + ' · ' + d.own.peak_today : '–'}</b></div>
       <div class="r"><span>Public radio (Streamerr) now</span><b class="big">${p.ok ? p.listeners : '–'}</b></div>
       <h4>TV</h4>
       <div class="r"><span>OBS streaming</span>${yes(t.obs, 'yes', 'no')}</div>

@@ -1,0 +1,13 @@
+[Unit]
+Description=Hype radio HLS (AAC 128k, for iPhone + website)
+After=hype-pulse.service hype-radio.service
+Requires=hype-pulse.service
+
+[Service]
+Environment=XDG_RUNTIME_DIR=/run/hype
+ExecStart=/etc/hype/radio_hls.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

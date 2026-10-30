@@ -1413,7 +1413,8 @@ class H(BaseHTTPRequestHandler):
             if p == "/library": return self.send(200, library(qs))
             if p == "/history": return self.send(200, history(qs))
             if p == "/media": return self.send(200, {"files": media_files(), "scenes": MEDIA_SCENES})
-            if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status()))
+            if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners()))
+            if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))
             if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"], 1), "agc_on": AGC["strength"] > 0.01})
             if p == "/history.csv":
@@ -1731,6 +1732,73 @@ def streams_status(eng):
         d["server"] = {"load": round(la, 2), "cpus": os.cpu_count(), "disk_free_gb": du}
     except Exception: pass
     _ST.update(t=time.time(), d=d); return d
+LISTEN = {"t": 0, "d": None}
+LSTATS_FILE = "/var/lib/hype/listeners.json"
+def hls_radio_ips(window=30):
+    """Devices that fetched radio HLS pieces in the last `window` s (nginx log of stream.hyperadio.nl)."""
+    ips = set(); now = time.time()
+    try:
+        with open("/var/log/nginx/stream.access.log", "rb") as f:
+            f.seek(0, 2); n = f.tell(); f.seek(max(0, n - 2_000_000)); lines = f.read().decode("utf-8", "replace").splitlines()
+        for ln in reversed(lines):
+            if " /r" not in ln or ".ts " not in ln: continue
+            m = re.match(r'(\S+) \S+ \S+ \[([^\]]+)\]', ln)
+            if not m: continue
+            try: t = time.mktime(time.strptime(m.group(2).split()[0], "%d/%b/%Y:%H:%M:%S"))
+            except ValueError: continue
+            if now - t > window: break
+            ips.add(m.group(1))
+    except OSError: pass
+    return ips
+def listeners():
+    """Radio listeners on Hype Studio's own streams: MP3 (Icecast connections) + HLS (devices) – now, peak today, unique today."""
+    if LISTEN["d"] and time.time() - LISTEN["t"] < 10: return LISTEN["d"]
+    mp3 = 0
+    try:
+        ice = json.loads(urllib.request.urlopen("http://127.0.0.1:8000/status-json.xsl", timeout=3).read())["icestats"].get("source") or []
+        ice = ice if isinstance(ice, list) else [ice]
+        mp3 = sum(int(x.get("listeners", 0)) for x in ice if str(x.get("listenurl", "")).endswith("/radio.mp3"))
+    except Exception: pass
+    ips = hls_radio_ips(); now_n = mp3 + len(ips)
+    day = time.strftime("%Y-%m-%d")
+    try: st = json.load(open(LSTATS_FILE))
+    except Exception: st = {}
+    if st.get("day") != day: st = {"day": day, "peak": 0, "peak_t": 0, "uniq": [], "mp3_peak": 0}
+    if now_n > st["peak"]: st["peak"], st["peak_t"] = now_n, int(time.time())
+    st["mp3_peak"] = max(st.get("mp3_peak", 0), mp3)
+    u = set(st.get("uniq", []))
+    for ip in ips: u.add(hashlib.sha1((day + ip).encode()).hexdigest()[:12])     # no IPs stored, only a daily hash
+    st["uniq"] = sorted(u)
+    try: json.dump(st, open(LSTATS_FILE, "w"))
+    except Exception: pass
+    d = {"current": now_n, "mp3": mp3, "hls": len(ips), "peak_today": st["peak"], "peak_time": st["peak_t"],
+         "unique_today": max(len(u) + st.get("mp3_peak", 0), st["peak"])}
+    LISTEN.update(t=time.time(), d=d); return d
+def nowplaying_api():
+    """AzuraCast-style /api/nowplaying/hype_radio, so Hype Live (and others) only need a different link."""
+    L = listeners(); n = E.now or {}; t = time.time()
+    def song(it, sid=""):
+        it = it or {}; a, ti = it.get("artist") or "", it.get("title") or ""
+        return {"id": sid or hashlib.md5((a + ti).encode()).hexdigest(), "text": (a + " - " + ti) if a else ti, "artist": a, "title": ti, "album": "", "genre": it.get("folder") or "", "art": "", "custom_fields": {}}
+    dur = E.length(n) if n.get("path") else 0
+    el = max(0, t - (n.get("started") or t))
+    nxt = (E.plan[0] if E.plan else None) if not E.liq_next else E.liq_next
+    hist = []
+    try:
+        for r in dbc().execute("SELECT started, artist, title, folder, kind FROM asrun ORDER BY started DESC LIMIT 11").fetchall()[1:]:
+            hist.append({"played_at": int(r[0]), "duration": 0, "playlist": r[3] or "", "is_request": False, "song": song({"artist": r[1], "title": r[2], "folder": r[3]})})
+    except Exception: pass
+    return {"station": {"id": 1, "name": "Hype Radio TV", "shortcode": "hype_radio", "listen_url": "https://stream.hyperadio.nl/radio.mp3",
+                        "hls_url": "https://stream.hyperadio.nl/radio.m3u8", "hls_enabled": True, "is_public": True,
+                        "mounts": [{"name": "MP3 128", "url": "https://stream.hyperadio.nl/radio.mp3", "bitrate": 128, "format": "mp3", "is_default": True}]},
+            "listeners": {"total": L["current"], "unique": L["current"], "current": L["current"]},
+            "live": {"is_live": E.live.status().get("air") == "studio" if hasattr(E, "live") else False, "streamer_name": "", "broadcast_start": None},
+            "now_playing": {"sh_id": int(n.get("started") or 0), "played_at": int(n.get("started") or t), "duration": round(dur), "elapsed": round(el), "remaining": round(max(0, dur - el)),
+                            "playlist": n.get("folder") or "", "streamer": "", "is_request": False, "song": song(n),
+                            "type": "song" if n.get("section") == "music" else "jingle" if n.get("section") == "jingles" else (n.get("section") or "")},
+            "playing_next": {"song": song(nxt)} if nxt else None, "song_history": hist, "is_online": not E.stopped,
+            "hype": {"listeners": L, "source": "hype-studio"}}
+
 GUARD_CONF = "/var/lib/hype/guard_conf.json"
 def guard_status(full=False):
     try: g = json.load(open("/var/lib/hype/guard.json"))

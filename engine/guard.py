@@ -122,7 +122,7 @@ class Guard:
         try:
             ice = http_json("http://127.0.0.1:8000/status-json.xsl")["icestats"].get("source") or []
             ice = ice if isinstance(ice, list) else [ice]
-            m = next((x for x in ice if str(x.get("listenurl", "")).endswith("/test.mp3")), None)
+            m = next((x for x in ice if str(x.get("listenurl", "")).endswith("/radio.mp3")), None)    # the public MP3 stream
             st["mount"] = bool(m); st["listeners"] = int(m.get("listeners", 0)) if m else 0
         except Exception: st["mount"] = False
         # --- tv ---
@@ -130,6 +130,10 @@ class Guard:
         try: obs_on, cl = obs_streaming()
         except Exception: pass
         st["obs"] = obs_on; st["seg_age"] = seg_age()
+        try:
+            rt = max((os.path.getmtime(os.path.join("/dev/shm/radio-hls", f)) for f in os.listdir("/dev/shm/radio-hls") if f.endswith(".ts")), default=0)
+            st["radio_hls_age"] = round(time.time() - rt, 1) if rt else None
+        except OSError: st["radio_hls_age"] = None
         if paused:
             for k in list(self.since): self.since[k] = time.time()   # don't count problems during a deploy
             self.state = st; return
@@ -158,6 +162,9 @@ class Guard:
         t = self.bad("hls_late", bool(obs_on) and (sa is None or sa > 20))
         if t > 20: self.restart("ladder", "hype-ladder", f"TV stream: no new pieces for {sa} s"); self.since["hls_late"] = time.time()
         self.bad("mount", not st["mount"])
+        ra = st.get("radio_hls_age")
+        t = self.bad("radio_hls", ra is None or ra > 20)
+        if t > 20: self.restart("radio_hls", "hype-radio-hls", f"Radio HLS stream: no new pieces for {ra} s"); self.since["radio_hls"] = time.time()
         self.state = st
 
     def problems(self):
@@ -191,7 +198,7 @@ class Guard:
             self.hb = {"ok": False, "t": time.time(), "answer": str(e)[:80]}
 
 PIDS = {"silence": "Silence on air", "liq_down": "Radio engine not answering", "engine_down": "Playout engine not answering",
-        "obs_down": "OBS not answering", "obs_off": "OBS not streaming", "hls_late": "TV stream stalled", "mount": "Radio stream (Icecast) missing"}
+        "obs_down": "OBS not answering", "obs_off": "OBS not streaming", "hls_late": "TV stream stalled", "mount": "Radio stream (MP3) missing", "radio_hls": "Radio HLS stream stalled"}
 MIN_SHOW = {"silence": 15, "mount": 30}
 
 if __name__ == "__main__":
