@@ -595,6 +595,7 @@ class Engine:
             at = max(self.cursor(), hf)
             ph = self.pending_hour(c, at)
             if ph: at = ph - 1        # the TOH of this hour hasn't played yet: keep planning with the old hour's clock
+            if self.runner.mix_key != planner.runner_key(at) and self.mix_in_run(at): self.runner.mix_key = planner.runner_key(at)
             it = self.picker.next_planned(c, self.avoid(), at, self.runner)
             if it and self.runner.snap: it["snap"] = self.runner.snap
             if not it: it = self.picker.next(c, self.avoid())     # nothing in the clocks: built-in test clock
@@ -764,6 +765,16 @@ class Engine:
             except Exception as e: log.warning("clock state: %s", e)
         res = self.liq.cmd("q.push " + annotate(it)); self.liq_next = it
         log.info("queued %s – %s (%s) -> %s", it["artist"], it["title"], it["folder"], res.splitlines()[0] if res else "")
+    def mix_in_run(self, at):
+        """Is a mixtape on air / in Up next that starts in the same clock run (hour or show) as `at`? (after a restart or
+        a replan the clock runner is new and does not know it - so a 2nd mix is never planned in the same hour)"""
+        k = planner.runner_key(at); is_mix = lambda p_: (p_.get("folder") or "").upper().startswith("MIXES")
+        if self.now.get("path") and is_mix(self.now) and planner.runner_key(self.now.get("started") or 0) == k: return True
+        t = max(time.time(), (self.now.get("started") or 0) + self.length(self.now)) if self.now.get("path") else time.time()
+        for p_ in ([self.liq_next] if self.liq_next else []) + self.plan:
+            if is_mix(p_) and planner.runner_key(t) == k: return True
+            t += self.length(p_)
+        return False
     def filler(self, c, gap):
         """A song (same folder as the one on air, else any music) whose length ends closest to the hour."""
         now = time.time(); av = self.avoid(); rec = self.picker.recent

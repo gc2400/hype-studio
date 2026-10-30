@@ -235,6 +235,7 @@ class ClockRunner:
     Hour clocks start at the top every hour; 'resume' clocks (CLOSE show clocks) go on where they left off."""
     def __init__(self):
         self.key = None; self.st = {}; self.snap = None; self.jrun = 0; self.force_cid = None; self.skipped = []
+        self.mix_key = None    # the clock run (hour/show) that already has its mixtape: one mix per run, the clock never goes round for a 2nd
     def _state(self, c, cid, resume):
         if cid not in self.st:
             r = c.execute("SELECT i, left_, first FROM clock_state WHERE clock_id=?", (cid,)).fetchone() if resume else None
@@ -254,7 +255,9 @@ class ClockRunner:
         sl = slots(c, cid)
         if not sl: return None
         for _ in range(len(sl) * 3):
-            if st[0] >= len(sl): st[0] = 0                  # clock done: run it again
+            if st[0] >= len(sl):
+                if self.mix_key == key: return None          # this hour already had its mix: no 2nd round (the engine fills with songs)
+                st[0] = 0                                    # clock done: run it again
             kind, ref, amount, start = sl[st[0]]
             if st[1] == 0:
                 if amount and amount >= 999: st[1] = 10**6      # fill until the hour / show ends
@@ -289,6 +292,9 @@ class ClockRunner:
                     r_b = c.execute("SELECT brand FROM ad_spots WHERE path=?", (path,)).fetchone()
                     if r_b and r_b[0]: brands.add(r_b[0].strip().lower())
             st[2] = False
+            if path and kind in ("playlist", "folder") and c.execute("SELECT 1 FROM items WHERE path=? AND folder LIKE 'MIXES%'", (path,)).fetchone():
+                if self.mix_key == key: path = None; st[0] += 1; st[1] = 0; continue   # only 1 mixtape per hour
+                self.mix_key = key
             if not path: self.skipped = (self.skipped + [(kind, ref)])[-60:]
             if path and not c.execute("SELECT 1 FROM items WHERE path=? AND section='music'", (path,)).fetchone():
                 if self.jrun >= 2: path = None                   # never more than 2 jingles in a row (e.g. music folders still empty)
