@@ -1,17 +1,19 @@
 {
- "time": "2026-10-30T14:51:01",
+ "time": "2026-10-30T14:52:49",
  "result": "ok",
- "commit": "ab20ecf3738e499b1573357aeb58c374ce462781",
- "subject": "ADS tab: dark date fields",
+ "commit": "47e30c74f247f6f8991800b68816cc8f0bab175c",
+ "subject": "PIP showings logged (frame + seconds) and sent with the heartbeat for Hype Live sponsor reports",
  "log": [
-  "14:51:01 update d3f5805f \u2192 ab20ecf3 \u00b7 1 file(s): web/panel/plan.html",
-  "14:51:01 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:52:04 update ab20ecf3 \u2192 47e30c74 \u00b7 2 file(s): engine/engine.py, engine/guard.py",
+  "14:52:04 restart hype-guard",
+  "14:52:04 restart hype-engine",
+  "14:52:49 installed OK \u00b7 restarted: hype-engine, hype-guard"
  ],
  "guard": {
   "song": "Blaqbonez x Asake \u2013 Ikebe 3000",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },

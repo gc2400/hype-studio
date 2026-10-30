@@ -2,3 +2,4 @@
 2026-10-30T14:42:02 ok 16152155 Artists split also on X/vs/featuring; preview controls only on hover; Panel + DJ names; hover on header buttons; REC shape
 2026-10-30T14:48:56 ok d3f5805f Ad breaks: sponsor spots X per day (clock slot + fixed time), Planning ADS tab, proof of play + now playing to Hype Live (switches, off until go-live)
 2026-10-30T14:51:01 ok ab20ecf3 ADS tab: dark date fields
+2026-10-30T14:52:49 ok 47e30c74 PIP showings logged (frame + seconds) and sent with the heartbeat for Hype Live sponsor reports
