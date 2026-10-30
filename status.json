@@ -1,18 +1,19 @@
 {
- "time": "2026-10-30T20:28:32",
+ "time": "2026-10-30T21:07:05",
  "result": "ok",
- "commit": "99e29e1b18dcf9e031a4bdec35963455ebc4196c",
- "subject": "Paired clip sound: plays on during PIP, and is unmuted again when the video scene comes back (was silent for the rest of the song)",
+ "commit": "d7cecc74ea5e82cd66cbaca5173d7e9d179ac535",
+ "subject": "Smart mix from the loudness map (songs: outro/intro aware, jingles: next song where the voice ends, echo under it); MIX AUTO/manual in both cue editors; Settings switch; maps for jingles; clips wait for the radio's audio latency (AV_LAG 0.2 s)",
  "log": [
-  "20:27:47 update 34a8a31c \u2192 99e29e1b \u00b7 1 file(s): engine/engine.py",
-  "20:27:47 restart hype-engine",
-  "20:28:32 installed OK \u00b7 restarted: hype-engine"
+  "21:06:20 update 99e29e1b \u2192 d7cecc74 \u00b7 5 file(s): engine/engine.py, engine/indexer.py, web/panel/index.html, web/panel/library.html, web/panel/settings.html",
+  "21:06:20 restart hype-indexer",
+  "21:06:20 restart hype-engine",
+  "21:07:05 installed OK \u00b7 restarted: hype-engine, hype-indexer"
  ],
  "guard": {
-  "song": "Be\u00e9le \u2013 no tiene sentido",
+  "song": "Chimbala x Rochy RD \u2013 Careta (Remix)",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },

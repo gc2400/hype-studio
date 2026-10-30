@@ -15,3 +15,4 @@
 2026-10-30T17:28:18 ok ddb4038a TV clock: normal digits (the tabular 1 looked different from the temperature)
 2026-10-30T17:32:09 ok 34a8a31c Audience: TV viewers (test link + stream.hyperadio.nl/tv) with peak/unique today; heartbeat sends audience to Hype Live; nowplaying API hype.viewers
 2026-10-30T20:28:32 ok 99e29e1b Paired clip sound: plays on during PIP, and is unmuted again when the video scene comes back (was silent for the rest of the song)
+2026-10-30T21:07:05 ok d7cecc74 Smart mix from the loudness map (songs: outro/intro aware, jingles: next song where the voice ends, echo under it); MIX AUTO/manual in both cue editors; Settings switch; maps for jingles; clips wait for the radio's audio latency (AV_LAG 0.2 s)
