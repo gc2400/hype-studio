@@ -1,0 +1,9 @@
+[Unit]
+Description=Hype Studio login (password + 2-factor)
+After=network.target
+[Service]
+ExecStart=/usr/bin/python3 /opt/hype/hype_auth.py
+Restart=always
+RestartSec=2
+[Install]
+WantedBy=multi-user.target

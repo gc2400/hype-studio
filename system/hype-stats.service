@@ -1,0 +1,7 @@
+[Unit]
+Description=Hype Studio stats for the status page
+[Service]
+ExecStart=/usr/local/bin/hype-stats.py
+Restart=always
+[Install]
+WantedBy=multi-user.target

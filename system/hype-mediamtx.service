@@ -1,0 +1,7 @@
+[Unit]
+Description=Hype stream router (MediaMTX)
+[Service]
+ExecStart=/opt/mediamtx/mediamtx /opt/mediamtx/mediamtx.yml
+Restart=always
+[Install]
+WantedBy=multi-user.target

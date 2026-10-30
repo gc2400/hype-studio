@@ -1,0 +1,10 @@
+[Unit]
+Description=Hype Studio library indexer (watches /srv/hype)
+After=local-fs.target
+[Service]
+ExecStart=/opt/hype/indexer.py --watch
+Nice=10
+IOSchedulingClass=idle
+Restart=always
+[Install]
+WantedBy=multi-user.target

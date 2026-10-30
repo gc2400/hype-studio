@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hype Studio · Broadcast</title>
+<link rel="icon" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--mut:#A9BCCD;--soft:#C9D7E3;--y:#FFE000;--b:#05A9C6;--g:#3DDC97;--r:#FF4D5E;--o:#FFB547}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
+button,input,select{font-family:inherit}
+.mono{font-family:'JetBrains Mono',monospace}
+.wrap{padding:14px;display:flex;flex-direction:column;gap:14px;max-width:1500px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}.brand img{width:44px;height:44px}h1{margin:0;font-size:20px;font-weight:900}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.lab{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.between{justify-content:space-between}
+.btn{cursor:pointer;border-radius:10px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);font-weight:700;font-size:13px;min-height:40px;padding:0 12px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--b)}.btn.on{background:var(--b);color:var(--bg);border-color:var(--b)}
+.btn.yellow{background:var(--y);color:var(--bg);border-color:var(--y)}.btn.red{background:#3A0E18;color:#FF8A97;border-color:var(--r)}
+.btn.sm{min-height:30px;font-size:12px;padding:0 9px}.btn:disabled{opacity:.4;cursor:default}
+.golive{min-height:64px;font-size:20px;font-weight:900;letter-spacing:.06em;padding:0 28px;border-radius:14px;border:2px solid var(--r);background:#3A0E18;color:#FF8A97;cursor:pointer}
+.golive.live{background:var(--r);color:#fff;box-shadow:0 0 0 6px rgba(255,77,94,.25);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 12px rgba(255,77,94,.08)}}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--card2);color:var(--soft);border:1px solid var(--line2)}
+.chip.ok{color:var(--g);border-color:var(--g)}.chip.bad{color:#FF8A97;border-color:var(--r)}.chip.wait{color:var(--o);border-color:var(--o)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:14px;align-items:start}
+.dev{display:grid;grid-template-columns:190px 1fr 120px;gap:10px;align-items:center}
+.dev label b{display:block;font-size:14px}.dev label small{color:var(--mut);font-size:12px}
+select,input[type=text]{background:var(--deep);border:1px solid var(--line2);border-radius:10px;color:var(--txt);font-size:14px;min-height:40px;padding:0 10px;width:100%;min-width:0}
+.meter{height:10px;border-radius:6px;background:var(--deep);overflow:hidden}.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--g) 70%,var(--y) 88%,var(--r));transition:width .08s}
+.cams{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.cams video,.pgm{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;object-fit:cover;display:block}
+.vbox{position:relative}.vbox .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:13px;text-align:center;padding:10px;pointer-events:none}
+.vbox .tag{position:absolute;top:8px;left:8px}
+.scn{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px}.scn .btn{min-height:36px;font-size:12px}.scn .btn.live{box-shadow:0 0 0 2px var(--y);border-color:var(--y)}
+.guest{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;padding:8px;border-radius:12px;background:var(--deep)}
+.guest video{width:150px;aspect-ratio:16/9;background:#000;border-radius:8px;object-fit:cover}
+.muted{color:var(--mut);font-size:13px}
+.q{display:grid;grid-template-columns:150px 1fr;gap:8px 10px;align-items:center}.q b{font-size:13px}
+table.hl{width:100%;border-collapse:collapse;font-size:12px}table.hl th{text-align:left;color:var(--mut);font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 6px}table.hl td{padding:6px;border-top:1px solid var(--line)}
+#airBox.on{border-color:var(--g);background:#0B2A22}#airBox.lost{border-color:var(--r);background:#2A0E16}
+.gvol{display:flex;align-items:center;gap:8px;min-width:220px}.gvol input{flex:1;accent-color:var(--y)}.gvol span{font-size:12px;color:var(--y);width:44px;text-align:right}
+.good{color:var(--g)}.warn{color:var(--o)}.badc{color:#FF8A97}
+.how{font-size:13px;color:var(--soft);line-height:1.5}.how b{color:var(--txt)}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line2);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none}.toast.show{opacity:1}
+@media (max-width:700px){.grid2{grid-template-columns:1fr}.dev{grid-template-columns:1fr}.guest{grid-template-columns:1fr}}
+
+/* slim scrollbars in the Hype colours */
+*{scrollbar-width:thin;scrollbar-color:#23496B transparent}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:#23496B;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#05A9C6;background-clip:padding-box}
+::-webkit-scrollbar-button{display:none;width:0;height:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="hhead"></header><script src="/panel/header.js?v=1793349956"></script>
+
+  <section class="card">
+    <div class="row between">
+      <div class="row" style="gap:14px">
+        <button class="golive" id="goLive" disabled>GO LIVE</button>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="row"><span class="chip" id="stStudio">Studio: not connected</span><span class="chip" id="stOnAir">On air: automation</span><span class="chip" id="stRec">REC off</span></div>
+          <span class="muted" id="stHint">Connect the studio below, then press GO LIVE. Your Mixcast mix goes on air; END LIVE goes back to the automation (music never stops).</span>
+        </div>
+      </div>
+      <div class="row"><button class="btn yellow" id="connect">Connect studio</button><button class="btn red" id="disconnect" hidden>Disconnect</button></div>
+    </div>
+  </section>
+
+  <section class="card" id="airBox" style="flex-direction:row;align-items:center;gap:14px;padding:12px 14px">
+    <span style="font-size:28px" id="airIcon">◌</span>
+    <div style="flex:1;min-width:0"><div style="font-size:17px;font-weight:900" id="airTitle">On air: the automation</div><div class="muted" id="airSub">When you are LIVE this turns green: only your studio mix is on the radio and the TV (no clip sound).</div></div>
+    <span class="chip" id="airDrops" hidden></span>
+  </section>
+
+  <div class="grid2">
+    <section class="card">
+      <span class="lab">Studio devices (this laptop)</span>
+      <div class="dev"><label><b>Studio mix → air</b><small>Mixcast 4 (USB recording)</small></label><select id="dMix"></select><div class="meter"><i id="mMix"></i></div></div>
+      <div class="dev"><label><b>Music → Mixcast</b><small>plays on your USB fader</small></label><select id="dMusic"></select><div class="meter"><i id="mMusic"></i></div></div>
+      <div class="dev"><label><b>Guests → Mixcast</b><small>TRRS fader (laptop headphone out)</small></label><select id="dGuests"></select><div class="meter"><i id="mGuests"></i></div></div>
+      <div class="dev"><label><b>Mix-minus ← Mixcast</b><small>what guests hear (TRRS, laptop mic in)</small></label><select id="dMinus"></select><div class="meter"><i id="mMinus"></i></div></div>
+      <div class="dev"><label><b>Camera 1</b><small>your USB cam</small></label><select id="dCam1"></select><span></span></div>
+      <div class="dev"><label><b>Camera 2</b><small>optional</small></label><select id="dCam2"></select><span></span></div>
+      <details class="how"><summary style="cursor:pointer;font-weight:700">How to cable the Mixcast</summary>
+        <p><b>USB</b> laptop ↔ Mixcast: the music comes in on the <b>USB fader</b>, and the Mixcast's main mix goes back to the laptop (Studio mix → air).<br>
+        <b>TRRS cable</b> laptop headphone/mic jack ↔ Mixcast <b>TRRS</b>: guests come in on the <b>TRRS fader</b>; the Mixcast sends a mix-minus (everything except the guests) back, so guests hear you and the music but not themselves.<br>
+        <b>Audio-only guest by phone:</b> pair the phone with the Mixcast <b>Bluetooth</b> and call – the Mixcast does the mix-minus.<br>
+        Everyone in the studio: <b>headphones</b>.</p></details>
+    </section>
+
+    <section class="card">
+      <span class="lab">Your cameras</span>
+      <div class="cams"><div class="vbox"><video id="vCam1" muted playsinline autoplay></video><span class="ph" id="phCam1">Camera 1: choose your USB cam on the left</span></div><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div></div>
+      <span class="lab" style="margin-top:4px">Broadcast quality <span class="muted" style="text-transform:none;letter-spacing:0">· saved on this laptop</span></span>
+      <div class="q">
+        <b>Studio audio</b><select id="qAudio"><option value="128">128 kbps stereo</option><option value="192">192 kbps stereo</option><option value="256">256 kbps stereo (recommended)</option><option value="320">320 kbps stereo</option><option value="510">510 kbps stereo (max)</option></select>
+        <b>Camera picture</b><select id="qRes"><option value="1280x720">720p (1280×720)</option><option value="1920x1080">1080p (1920×1080, recommended)</option></select>
+        <b>Frames per second</b><select id="qFps"><option value="25">25 fps (recommended, = the TV)</option><option value="30">30 fps</option></select>
+        <b>Camera bitrate</b><select id="qVkbps"><option value="2500">2.5 Mbps</option><option value="4500">4.5 Mbps</option><option value="6000">6 Mbps (recommended)</option><option value="8000">8 Mbps</option><option value="12000">12 Mbps</option></select>
+        <b>Lip sync (TV)</b><div class="gvol"><input type="range" id="qSync" min="-500" max="800" step="20" aria-label="Lip sync"><span class="mono" id="qSyncV">0 ms</span></div>
+      </div>
+      <span class="muted" style="font-size:12px">Lip sync: move right if your <b>voice comes after</b> your mouth moves… left if the <b>picture is late</b>. 0 = straight through (recommended start).</span>
+      <span class="muted" style="font-size:12px" id="qNote">Your upload is 65 Mbps – 1 camera at 6 Mbps + audio uses about 10 %. Changes apply when you (re)connect the studio.</span>
+      <span class="lab" style="margin-top:4px">Connection <span class="muted" style="text-transform:none;letter-spacing:0">· live, every 2 s</span></span>
+      <table class="hl"><thead><tr><th>Stream</th><th>State</th><th>Sending</th><th>Picture</th><th>Loss</th><th>Delay</th></tr></thead><tbody id="health"><tr><td colspan="6" class="muted">Connect the studio to see the connection.</td></tr></tbody></table>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="row between"><span class="lab">Guests · max. 6 · they join with a link on their phone or laptop (no app)</span>
+      <div class="row"><input type="text" id="gName" placeholder="Guest name, e.g. DJ Kim" style="width:220px"><select id="gMode" style="width:200px" aria-label="Video or audio only"><option value="video">Video + sound</option><option value="audio">Audio only (like a phone call)</option></select><button class="btn yellow" id="gAdd">+ Invite guest</button></div></div>
+    <div id="guests" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="row" style="gap:10px"><span class="muted">Which camera / guest is in CAM 1 · 2 · 3 · 4 of the scenes:</span><div class="row" id="camSlots"></div></div>
+    <span class="muted" style="font-size:12px">Guests' video and sound adjust to their own internet automatically (a weak line gets a lower picture, the voice stays clear). Scenes and lower thirds: the panel, LIVE mode.</span>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="hype-rtc.js"></script>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const authed = r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); } return r; };
+const get = p => fetch('../api/' + p, {cache: 'no-store'}).then(authed).then(r => r.json());
+const post = (p, d) => fetch('../api/' + p, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d || {})}).then(authed).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); return j; });
+function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('show'), 2600); }
+const store = (k, v) => { try { if (v === undefined) return localStorage.getItem('hypeStudio.' + k); localStorage.setItem('hypeStudio.' + k, v); } catch (e) {} };
+
+let L = null, KEY = '', conns = {}, guestEls = {}, connected = false;
+const STATE = {};
+function setState(name, st) { STATE[name] = st; const s = Object.values(STATE); const ok = s.filter(x => x === 'connected').length;
+  $('#stStudio').textContent = connected ? `Studio: ${ok}/${s.length} streams connected` : 'Studio: not connected'; $('#stStudio').className = 'chip ' + (connected ? (ok === s.length ? 'ok' : 'wait') : ''); }
+
+// ---------- devices ----------
+async function listDevices() {
+  try { const s = await navigator.mediaDevices.getUserMedia({audio: true, video: true}); s.getTracks().forEach(t => t.stop()); } catch (e) { toast('Allow camera and microphone to choose your devices'); }
+  const d = await navigator.mediaDevices.enumerateDevices();
+  const opt = (kind, none) => (none ? `<option value="">${none}</option>` : '') + d.filter(x => x.kind === kind).map(x => `<option value="${x.deviceId}">${esc(x.label || kind)}</option>`).join('');
+  $('#dMix').innerHTML = opt('audioinput'); $('#dMinus').innerHTML = opt('audioinput', '– no mix-minus (guests hear the studio mix) –');
+  $('#dMusic').innerHTML = opt('audiooutput'); $('#dGuests').innerHTML = opt('audiooutput', '– same as music –');
+  $('#dCam1').innerHTML = opt('videoinput', '– no camera –'); $('#dCam2').innerHTML = opt('videoinput', '– no camera –');
+  ['dMix', 'dMinus', 'dMusic', 'dGuests', 'dCam1', 'dCam2'].forEach(id => { const v = store(id); if (v !== null && [...$('#' + id).options].some(o => o.value === v)) $('#' + id).value = v; $('#' + id).onchange = () => store(id, $('#' + id).value); });
+  $('#dCam1').addEventListener('change', () => camPreview(1)); $('#dCam2').addEventListener('change', () => camPreview(2));
+  if (!$('#dCam1').value && $('#dCam1').options.length > 1 && store('dCam1') === null) $('#dCam1').selectedIndex = 1;
+  camPreview(1); camPreview(2);
+  const mix = [...$('#dMix').options].find(o => /mixcast|tascam/i.test(o.text)); if (mix && store('dMix') === null) $('#dMix').value = mix.value;
+  const mo = [...$('#dMusic').options].find(o => /mixcast|tascam/i.test(o.text)); if (mo && store('dMusic') === null) $('#dMusic').value = mo.value;
+}
+const PREV = {};
+async function camPreview(n) {
+  const sel = $('#dCam' + n), v = $('#vCam' + n), ph = $('#phCam' + n);
+  if (PREV[n]) { PREV[n].getTracks().forEach(t => t.stop()); PREV[n] = null; }
+  if (!sel.value) { v.srcObject = null; ph.hidden = false; ph.textContent = 'Camera ' + n + ': none'; return null; }
+  try { PREV[n] = await navigator.mediaDevices.getUserMedia(camConstraints(sel.value)); v.srcObject = PREV[n]; ph.hidden = true; return PREV[n]; }
+  catch (e) { ph.hidden = false; ph.textContent = 'Camera ' + n + ': ' + (e.name === 'NotReadableError' ? 'in use by another app' : 'not allowed / not found'); return null; }
+}
+const Q = () => ({a: +$('#qAudio').value, w: +$('#qRes').value.split('x')[0], h: +$('#qRes').value.split('x')[1], fps: +$('#qFps').value, v: +$('#qVkbps').value});
+const camConstraints = id => ({video: {deviceId: {exact: id}, width: {ideal: Q().w}, height: {ideal: Q().h}, frameRate: {ideal: Q().fps, max: Q().fps}}, audio: false});
+[['qAudio', '256'], ['qRes', '1920x1080'], ['qFps', '25'], ['qVkbps', '6000']].forEach(([id, def]) => { const v = store(id); $('#' + id).value = v !== null && [...$('#' + id).options].some(o => o.value === v) ? v : def;
+  $('#' + id).onchange = () => { store(id, $('#' + id).value); if (id === 'qRes' || id === 'qFps') { camPreview(1); camPreview(2); } toast(connected ? 'Saved – Disconnect and Connect again to use it' : 'Saved'); }; });
+const rawAudio = id => ({audio: {deviceId: id ? {exact: id} : undefined, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2, sampleRate: 48000}, video: false});
+function meterTo(stream, id) { HypeRTC.meter(stream, v => { $('#' + id).style.width = Math.min(100, v * 110) + '%'; }); }
+
+// ---------- connect the studio ----------
+async function connect() {
+  if (connected) return; connected = true; $('#connect').hidden = true; $('#disconnect').hidden = false;
+  try {
+    const mix = await navigator.mediaDevices.getUserMedia(rawAudio($('#dMix').value)); meterTo(mix, 'mMix');
+    conns.studio = HypeRTC.keep('studio mix', () => HypeRTC.publish('studio', mix, {key: KEY, audioKbps: Q().a}), setState);
+    if ($('#dMinus').value) { const mm = await navigator.mediaDevices.getUserMedia(rawAudio($('#dMinus').value)); meterTo(mm, 'mMinus');
+      conns.minus = HypeRTC.keep('mix-minus', () => HypeRTC.publish('mixminus', mm, {key: KEY, audioKbps: 128}), setState); }
+    else conns.minus = HypeRTC.keep('mix-minus', () => HypeRTC.publish('mixminus', mix, {key: KEY, audioKbps: 128}), setState);
+    for (const [n, sel, vid] of [['cam1', '#dCam1', '#vCam1'], ['cam2', '#dCam2', '#vCam2']]) {
+      if (!$(sel).value) continue;
+      const cs = PREV[n.slice(3)] || await camPreview(+n.slice(3)); if (!cs) continue;
+      conns[n] = HypeRTC.keep(n, () => HypeRTC.publish(n, cs, {key: KEY, videoKbps: Q().v}), setState);
+    }
+    // music back to the Mixcast USB fader
+    const ma = new Audio(); ma.autoplay = true; document.body.appendChild(ma);
+    conns.music = HypeRTC.keep('music', async () => { const r = await HypeRTC.play('return', {key: KEY}); ma.srcObject = r.stream; if (ma.setSinkId && $('#dMusic').value) await ma.setSinkId($('#dMusic').value); ma.play().catch(() => {}); meterTo(r.stream, 'mMusic'); return r; }, setState);
+    toast('Studio connected – check the meters, then GO LIVE');
+  } catch (e) { toast('Could not start: ' + e.message); disconnect(); }
+}
+function disconnect() {
+  Object.values(conns).forEach(c => c.close()); conns = {}; Object.keys(STATE).forEach(k => delete STATE[k]);
+  Object.values(guestEls).forEach(g => g.conn && g.conn.close()); guestEls = {}; renderGuests(true);
+  connected = false; $('#connect').hidden = false; $('#disconnect').hidden = true; $('#stStudio').textContent = 'Studio: not connected'; $('#stStudio').className = 'chip';
+}
+$('#connect').onclick = connect; $('#disconnect').onclick = () => { if (!L || !L.live || confirm('You are LIVE. Disconnect the studio? The radio goes back to the automation.')) disconnect(); };
+
+// ---------- GO LIVE ----------
+$('#goLive').onclick = () => {
+  if (L.live) { if (confirm('END LIVE and go back to the automation?')) post('live/off').then(d => { L = d; render(); toast('Back to the automation'); }); return; }
+  if (!L.studio_online) return toast('The studio mix is not reaching the server yet – Connect studio first');
+  post('live/on').then(d => { L = d; render(); toast('You are LIVE'); });
+};
+
+// ---------- guests ----------
+$('#gAdd').onclick = () => post('live/guest_add', {name: $('#gName').value, mode: $('#gMode').value}).then(d => { $('#gName').value = ''; toast('Guest link made – send it to your guest'); refresh(); }).catch(e => toast(e.message));
+function guestLink(g) { return location.origin + '/guest/?t=' + encodeURIComponent(g.token); }
+function renderGuests(force) {
+  if (!L) return;
+  const G = L.guests || {}, box = $('#guests');
+  const sig = JSON.stringify(Object.entries(G).map(([s, g]) => [s, g.name, g.online]));
+  if (sig !== box.dataset.sig || force) {
+    box.dataset.sig = sig;
+    box.innerHTML = Object.entries(G).map(([s, g]) => `<div class="guest" data-slot="${s}"><div class="vbox"><video muted playsinline autoplay></video><span class="ph">${g.online ? (connected ? 'connecting…' : 'press Connect studio to see and hear') : 'not joined yet'}</span></div>
+      <div style="min-width:0"><b>${esc(g.name)}</b> <span class="chip ${g.online ? 'ok' : ''}" style="margin-left:6px">${g.online ? 'online' : 'waiting'}</span> <span class="chip">${g.mode === 'audio' ? '☎ audio only' : '🎥 video'}</span><br>
+      <label class="gvol" style="margin:6px 0"><span class="lab" style="width:auto;color:var(--mut)">VOL</span><input type="range" min="0" max="2" step="0.01" value="${g.vol == null ? 1 : g.vol}" data-gvol="${s}" aria-label="Volume of ${esc(g.name)}"><span class="mono" data-gvl="${s}">${Math.round(100 * (g.vol == null ? 1 : g.vol))}%</span></label>
+      <span class="muted mono" style="font-size:11px;word-break:break-all">${esc(guestLink(g))}</span></div>
+      <div class="row"><button class="btn sm" data-copy="${s}">Copy link</button><a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('Join Hype Radio TV live: ' + guestLink(g) + ' (use headphones)')}">WhatsApp</a><button class="btn sm red" data-rm="${s}">Remove</button></div></div>`).join('')
+      || '<span class="muted">No guests yet. Type a name and press + Invite guest – you get a link to send (WhatsApp). Audio-only guests can also call in by phone over the Mixcast Bluetooth.</span>';
+    $$('[data-gvol]').forEach(i => { let t; i.oninput = () => { const s = i.dataset.gvol; $(`[data-gvl="${s}"]`).textContent = Math.round(i.value * 100) + '%'; GV_LOCAL[s] = {v: +i.value, t: Date.now()}; applyVol(); clearTimeout(t); t = setTimeout(() => post('live/guest_vol', {slot: s, vol: +i.value}), 150); }; i.ondblclick = () => { i.value = 1; i.oninput(); }; });
+    $$('[data-copy]').forEach(b => b.onclick = () => { navigator.clipboard.writeText(guestLink(G[b.dataset.copy])).then(() => toast('Link copied')); });
+    $$('[data-rm]').forEach(b => b.onclick = () => { if (confirm('Remove this guest? Their link stops working.')) post('live/guest_remove', {slot: b.dataset.rm}).then(refresh); });
+    Object.keys(guestEls).forEach(s => { if (!G[s] || !G[s].online) { guestEls[s].conn && guestEls[s].conn.close(); delete guestEls[s]; } });
+  }
+  // online guests: their picture here, their voice to the Mixcast TRRS (guests output)
+  Object.entries(G).forEach(([s, g]) => {
+    const el = box.querySelector(`[data-slot="${s}"] video`);
+    if (g.online && connected && !guestEls[s]) {
+      guestEls[s] = {conn: HypeRTC.keep(s, async () => { const r = await HypeRTC.play(s, {key: KEY, video: true});
+        const v = box.querySelector(`[data-slot="${s}"] video`); if (v) { v.srcObject = r.stream; const ph = v.parentNode.querySelector('.ph'); if (ph) ph.hidden = true; v.muted = true; v.play().catch(() => {}); }
+        // the voice goes through a gain (0–200 %) to the Mixcast TRRS output
+        const E = guestEls[s]; try { E.ac && E.ac.close(); } catch (e) {}
+        E.ac = new AudioContext(); E.gain = E.ac.createGain(); E.ac.createMediaStreamSource(r.stream).connect(E.gain); E.gain.connect(E.ac.destination);
+        const sink = $('#dGuests').value || $('#dMusic').value; if (E.ac.setSinkId && sink) { try { await E.ac.setSinkId(sink); } catch (e) {} }
+        E.ac.resume().catch(() => {}); applyVol(); meterTo(r.stream, 'mGuests');
+        return r; }, setState)};
+    } else if (guestEls[s] && el && !el.srcObject) { guestEls[s].conn.close(); try { guestEls[s].ac && guestEls[s].ac.close(); } catch (e) {} delete guestEls[s]; }
+  });
+  applyVol();
+}
+
+// guest levels: from this page or the panel (LIVE mode); 100 % = as they come in, up to 200 % (+6 dB)
+const GV_LOCAL = {};
+function applyVol() {
+  const G = (L && L.guests) || {};
+  Object.entries(guestEls).forEach(([s, E]) => { if (!E.gain) return; const loc = GV_LOCAL[s], v = loc && Date.now() - loc.t < 4000 ? loc.v : ((G[s] || {}).vol ?? 1);
+    E.gain.gain.setTargetAtTime(Math.max(0, Math.min(2, v)), E.ac.currentTime, 0.05);
+    const inp = document.querySelector(`[data-gvol="${s}"]`); if (inp && !(loc && Date.now() - loc.t < 4000) && document.activeElement !== inp) { inp.value = v; const l = document.querySelector(`[data-gvl="${s}"]`); if (l) l.textContent = Math.round(v * 100) + '%'; } });
+}
+// ---------- camera slots ----------
+function renderSlots() {
+  const srcs = L.sources;
+  $('#camSlots').innerHTML = ['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'].map(c => `<label class="row" style="gap:6px"><b style="font-size:13px">${c}</b><select data-cam="${c}" style="width:190px">${Object.entries(srcs).map(([k, v]) => `<option value="${k}" ${L.cams[c] === k ? 'selected' : ''}>${esc(v.name || k)}${v.online ? ' ●' : ''}</option>`).join('')}</select></label>`).join('');
+  $$('[data-cam]').forEach(s => s.onchange = () => post('live/cam', {cam: s.dataset.cam, src: s.value}).then(d => { L = d; toast(s.dataset.cam + ' = ' + s.options[s.selectedIndex].text); }).catch(e => toast(e.message)));
+}
+
+// ---------- connection health (what the browser really sends) ----------
+const LAST = {};
+async function health() {
+  const rows = [];
+  for (const [n, c] of Object.entries(conns)) {
+    const pc = c && c.pc; if (!pc) { rows.push([n, STATE[n] || '–']); continue; }
+    let kbps = 0, pic = '', loss = '', rtt = '', lim = '';
+    try { const st = await pc.getStats(); let bytes = 0, lost = 0, sent = 0;
+      st.forEach(r => {
+        if (r.type === 'outbound-rtp') { bytes += r.bytesSent || 0; sent += r.packetsSent || 0; if (r.kind === 'video') { pic = (r.frameWidth ? r.frameWidth + '×' + r.frameHeight : '') + (r.framesPerSecond ? ' · ' + Math.round(r.framesPerSecond) + ' fps' : ''); if (r.qualityLimitationReason && r.qualityLimitationReason !== 'none') lim = r.qualityLimitationReason; } }
+        if (r.type === 'inbound-rtp') { bytes += r.bytesReceived || 0; if (r.kind === 'video' && r.frameWidth) pic = r.frameWidth + '×' + r.frameHeight + (r.framesPerSecond ? ' · ' + Math.round(r.framesPerSecond) + ' fps' : ''); }
+        if (r.type === 'remote-inbound-rtp') { lost += r.packetsLost || 0; if (r.roundTripTime != null) rtt = Math.round(r.roundTripTime * 1000) + ' ms'; }
+        if (r.type === 'candidate-pair' && r.nominated && r.currentRoundTripTime != null && !rtt) rtt = Math.round(r.currentRoundTripTime * 1000) + ' ms'; });
+      const p = LAST[n], now = Date.now(); if (p) kbps = Math.round((bytes - p.b) * 8 / (now - p.t)); LAST[n] = {b: bytes, t: now};
+      loss = sent ? (100 * lost / (sent + lost)).toFixed(1) + ' %' : ''; } catch (e) {}
+    const lossN = parseFloat(loss) || 0;
+    rows.push([n, STATE[n] || '–', kbps ? (kbps >= 1000 ? (kbps / 1000).toFixed(1) + ' Mbps' : kbps + ' kbps') : '', pic + (lim ? ' <span class="warn">(' + lim + ' limits it)</span>' : ''), `<span class="${lossN > 2 ? 'badc' : lossN > 0.5 ? 'warn' : 'good'}">${loss}</span>`, rtt]);
+  }
+  $('#health').innerHTML = rows.length ? rows.map(r => `<tr><td><b>${esc(r[0])}</b></td><td class="${r[1] === 'connected' ? 'good' : 'warn'}">${esc(r[1])}</td><td class="mono">${r[2] || ''}</td><td>${r[3] || ''}</td><td>${r[4] || ''}</td><td class="mono">${r[5] || ''}</td></tr>`).join('') : '<tr><td colspan="6" class="muted">Connect the studio to see the connection.</td></tr>';
+}
+setInterval(health, 2000);
+// ---------- status ----------
+let since = null;
+function render() {
+  const g = $('#goLive'); g.disabled = false; g.textContent = L.live ? 'END LIVE' : 'GO LIVE'; g.classList.toggle('live', L.live);
+  $('#stOnAir').textContent = L.live ? (L.studio_online ? 'On air: STUDIO' : 'On air: automation (studio lost!)') : 'On air: automation'; $('#stOnAir').className = 'chip ' + (L.live ? (L.studio_online ? 'bad' : 'wait') : '');
+  const ab = $('#airBox'), studioAir = L.live && L.air === 'studio';
+  ab.classList.toggle('on', studioAir); ab.classList.toggle('lost', L.live && !studioAir);
+  $('#airIcon').textContent = studioAir ? '✓' : L.live ? '⚠' : '◌';
+  $('#airTitle').textContent = studioAir ? 'On air: ONLY your studio mix – radio + TV' : L.live ? 'LIVE, but your studio signal is not arriving – the automation fills in' : 'On air: the automation';
+  $('#airSub').textContent = studioAir ? 'TV sound comes straight from your studio stream (in sync with the cameras); no clip sound.' : L.live ? 'Check Connect studio and the "studio" row in Connection.' : 'When you are LIVE this turns green: only your studio mix is on the radio and the TV (no clip sound).';
+  $('#airDrops').hidden = !L.live; $('#airDrops').textContent = L.drops ? L.drops + ' drop-out' + (L.drops > 1 ? 's' : '') + ' this show' : 'no drop-outs'; $('#airDrops').className = 'chip ' + (L.drops ? 'wait' : 'ok');
+  if (document.activeElement !== $('#qSync')) { $('#qSync').value = L.lip_sync || 0; $('#qSyncV').textContent = (L.lip_sync > 0 ? '+' : '') + (L.lip_sync || 0) + ' ms'; }
+  $('#stRec').textContent = L.rec ? 'REC ● ' + L.rec.file : 'REC off'; $('#stRec').className = 'chip ' + (L.rec ? 'bad' : '');
+  if (!$('#camSlots').dataset.done || document.activeElement.tagName !== 'SELECT') { renderSlots(); $('#camSlots').dataset.done = 1; }
+  renderGuests();
+}
+$('#qSync').oninput = () => { const v = +$('#qSync').value; $('#qSyncV').textContent = (v > 0 ? '+' : '') + v + ' ms'; };
+$('#qSync').onchange = () => post('live/settings', {lip_sync: +$('#qSync').value}).then(d => { L = d; toast('Lip sync set'); });
+function refresh() { return get('live').then(d => { L = d; KEY = d.studio_key; render(); }).catch(() => {}); }
+refresh().then(listDevices); setInterval(refresh, 2000);
+</script>
+</body>
+</html>

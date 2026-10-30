@@ -1,0 +1,11 @@
+[Unit]
+Description=Hype audio bus (PulseAudio, null sink hype_air)
+[Service]
+Environment=HOME=/root
+Environment=XDG_RUNTIME_DIR=/run/hype
+ExecStartPre=/bin/mkdir -p -m 700 /run/hype
+ExecStart=/usr/bin/pulseaudio --daemonize=no --exit-idle-time=-1 --disallow-exit --log-target=journal
+ExecStartPost=/bin/sh -c 'sleep 2; pactl load-module module-null-sink sink_name=hype_air sink_properties=device.description=HypeAir rate=48000; pactl load-module module-null-sink sink_name=hype_fx sink_properties=device.description=HypeFX rate=48000; pactl load-module module-null-sink sink_name=hype_return sink_properties=device.description=HypeReturn rate=48000 || true'
+Restart=always
+[Install]
+WantedBy=multi-user.target

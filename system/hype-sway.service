@@ -1,0 +1,11 @@
+[Unit]
+Description=Hype virtual screen on the Intel GPU (sway headless)
+[Service]
+Environment=HOME=/root
+Environment=XDG_RUNTIME_DIR=/run/hype
+Environment=WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=gles2 WLR_DRM_DEVICES=/dev/dri/card0
+ExecStartPre=/bin/mkdir -p -m 700 /run/hype
+ExecStart=/usr/bin/sway -c /etc/hype/sway.conf
+Restart=always
+[Install]
+WantedBy=multi-user.target

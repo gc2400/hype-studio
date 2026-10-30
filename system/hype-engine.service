@@ -1,0 +1,10 @@
+[Unit]
+Description=Hype playout engine (clock, queue, TV switching)
+After=hype-radio.service hype-obs.service
+[Service]
+Environment=HOME=/root
+ExecStart=/usr/bin/python3 /opt/hype/engine.py
+Restart=always
+RestartSec=3
+[Install]
+WantedBy=multi-user.target

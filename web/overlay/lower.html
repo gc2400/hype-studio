@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Lower third</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* Hype lower thirds (Gianno's READ_ME v3): style A = dark panel + yellow line (S/M/L/XL), style C = Hype Blue bar (C / C_G) */
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transparent;font-family:Inter,"Inter Display",sans-serif}
+#lt{position:absolute;inset:0;opacity:0;transform:translateX(-40px);transition:opacity .35s ease,transform .35s ease}
+#lt.on{opacity:1;transform:none}
+#bg{position:absolute;left:0;top:0;width:1920px;height:1080px}
+.t{position:absolute;white-space:nowrap;transform-origin:left center;line-height:1}
+#name{color:#fff;font-size:40px}
+#role{font-size:21px}
+#handle{color:#FFE000}
+#hc{position:absolute;color:#FFE000;font-weight:700;font-size:24px;white-space:nowrap;line-height:1;transform:translateY(-50%)}
+</style></head>
+<body><div id="lt"><img id="bg" alt=""><div class="t" id="name"></div><div class="t" id="role"><span id="roletx"></span><span id="handle"></span></div><div id="hc"></div></div>
+<script>
+const A = {S: 450, M: 700, L: 1080, XL: 1680};
+const $ = id => document.getElementById(id);
+let rev = -1, shown = false;
+function isG(scene) { return / G$/.test(scene || '') || / V G$/.test(scene || ''); }
+function fit(el, max) { el.style.transform = 'translateY(-50%)'; const w = el.scrollWidth; if (w > max) el.style.transform = `translateY(-50%) scale(${max / w})`; }
+function render(L) {
+  const g = isG(L.scene), style = (L.style || 'A').toUpperCase();
+  const name = $('name'), role = $('role'), hc = $('hc');
+  name.textContent = L.name || ''; $('roletx').textContent = L.role || '';
+  if (style === 'C') {
+    const file = g ? 'Lower_Third_C_G.png' : 'Lower_Third_C.png', right = g ? 1290 : 1810;
+    $('bg').src = '/lowerthirds/' + file;
+    name.style.cssText = 'left:110px;top:973px;font-weight:900'; role.style.cssText = 'left:110px;top:1013px;font-weight:500;color:#D6E8F5';
+    $('handle').textContent = ''; hc.textContent = L.handle || ''; hc.style.cssText = `right:${1920 - right}px;top:988px`;
+    const max = right - 110 - (L.handle ? hc.scrollWidth + 40 : 0);
+    fit(name, max); fit(role, max);
+  } else {
+    hc.textContent = '';
+    name.style.cssText = 'left:130px;top:973px;font-weight:800'; role.style.cssText = 'left:130px;top:1013px;font-weight:400;color:rgba(255,255,255,.75)';
+    $('handle').textContent = L.handle ? '   ' + L.handle : ''; $('handle').style.cssText = 'font-weight:600;white-space:pre';
+    name.style.transform = role.style.transform = 'translateY(-50%)';
+    const need = Math.max(name.scrollWidth, role.scrollWidth);
+    let size = (L.size && L.size !== 'auto') ? L.size.toUpperCase() : (['S', 'M', 'L', 'XL'].find(k => A[k] >= need) || 'XL');
+    if (g && size === 'XL') size = 'L';                 // G scenes: poll/chat on the right
+    $('bg').src = '/lowerthirds/Lower_Third_A_' + size + '.png';
+    fit(name, A[size]); fit(role, A[size]);
+  }
+}
+async function poll() {
+  try {
+    const L = await (await fetch('/api/lower', {cache: 'no-store'})).json();
+    if (L.rev !== rev || L.scene !== poll.scene) { rev = L.rev; poll.scene = L.scene;
+      if (L.visible) { if (!shown) render(L); else { $('lt').classList.remove('on'); await new Promise(r => setTimeout(r, 200)); render(L); } }
+    }
+    $('lt').classList.toggle('on', !!L.visible); shown = !!L.visible;
+  } catch (e) {}
+  setTimeout(poll, 400);
+}
+document.fonts && document.fonts.load('800 40px Inter').finally(poll); if (!document.fonts) poll();
+</script></body></html>

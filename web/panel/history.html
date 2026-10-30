@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hype Studio · History</title>
+<link rel="icon" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--mut:#A9BCCD;--y:#FFE000;--b:#05A9C6;--g:#3DDC97;--r:#FF4D5E}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
+button,input,select{font-family:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.wrap{padding:10px 14px;display:flex;flex-direction:column;gap:10px;max-width:1300px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}.brand img{width:40px;height:40px}
+h1{margin:0;font-size:20px;font-weight:900}h1 small{color:var(--mut);font-weight:600;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:999px;white-space:nowrap;background:var(--card2);color:var(--mut);text-decoration:none}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.btn{cursor:pointer;border-radius:10px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);font-weight:700;font-size:13px;min-height:36px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn:hover{border-color:var(--b)}.btn.on{background:var(--b);color:var(--bg);border-color:var(--b)}
+input[type=date],input[type=search]{background:var(--deep);border:1px solid var(--line2);border-radius:10px;color:var(--txt);min-height:36px;padding:0 10px;font-size:13px;color-scheme:dark}
+input[type=search]{flex:1;min-width:200px}
+.muted{color:var(--mut);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--card)}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.j td{color:var(--mut)}tr.hr td{border-top:2px solid var(--line2)}
+td.t{font-family:'JetBrains Mono',monospace;white-space:nowrap;color:var(--y);width:1%}
+td b{font-weight:700}
+.tag{font-size:10px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:999px;background:var(--card2);color:var(--mut);white-space:nowrap}
+.tag.music{background:#062F38;color:var(--b)}.tag.jingles{background:#1E1438;color:#B9A2FF}.tag.ads{background:#3A2A00;color:#FFB54D}
+.scroll{max-height:calc(100vh - 210px);overflow:auto}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="hhead"></header><script src="/panel/header.js?v=1793349956"></script>
+  <section class="card">
+    <div class="row">
+      <button class="btn" id="prev" aria-label="Previous day">◀</button><input type="date" id="day" aria-label="Day"><button class="btn" id="next" aria-label="Next day">▶</button><button class="btn" id="today">Today</button>
+      <input type="search" id="q" placeholder="Search artist, title or folder…" aria-label="Search">
+      <span class="row" style="gap:4px" id="types"><button class="btn on" data-t="">All</button><button class="btn" data-t="music">Songs</button><button class="btn" data-t="jingles">Jingles</button><button class="btn" data-t="ads">Ads</button></span>
+      <a class="btn" id="csv" title="Download this day as a spreadsheet (proof of play)">⬇ CSV</a>
+    </div>
+    <div class="muted" id="sum"></div>
+    <div class="scroll"><table><thead><tr><th>Time</th><th>Artist – title</th><th>Folder</th><th>Type</th><th>Length</th><th>TV</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </section>
+</div>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const fmt = s => Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0');
+const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+let TYPE = '', T = null;
+$('#day').value = iso(new Date());
+function load() {
+  const day = $('#day').value, q = $('#q').value.trim();
+  const qs = 'day=' + day + '&type=' + TYPE + '&q=' + encodeURIComponent(q);
+  $('#csv').href = '../api/history.csv?' + qs;
+  fetch('../api/history?' + qs).then(r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw 0; } return r.json(); }).then(d => {
+    let lastH = null;
+    $('#rows').innerHTML = d.items.map(r => { const h = r.time.slice(0, 2), hr = lastH !== null && h !== lastH; lastH = h;
+      return `<tr class="${r.type !== 'music' ? 'j' : ''} ${hr ? 'hr' : ''}"><td class="t">${r.time}</td><td>${r.artist ? '<b>' + esc(r.artist) + '</b> – ' : ''}${esc(r.title)}</td><td class="muted">${esc(r.folder)}</td><td><span class="tag ${r.type}">${r.type === 'music' ? 'SONG' : r.type === 'jingles' ? 'JINGLE' : 'AD'}</span></td><td class="mono muted">${r.len ? fmt(r.len) : ''}</td><td class="muted">${esc(r.scene)}</td></tr>`; }).join('')
+      || '<tr><td colspan="6" class="muted" style="padding:20px;text-align:center">Nothing on air for this day' + (q || TYPE ? ' with this filter' : '') + '.</td></tr>';
+    $('#sum').textContent = d.count + ' items · ' + d.songs + ' songs' + (day === iso(new Date()) ? ' · updates every 30 s' : '');
+  }).catch(() => {});
+}
+function shift(n) { const d = new Date($('#day').value + 'T12:00'); d.setDate(d.getDate() + n); $('#day').value = iso(d); load(); }
+$('#prev').onclick = () => shift(-1); $('#next').onclick = () => shift(1); $('#today').onclick = () => { $('#day').value = iso(new Date()); load(); };
+$('#day').onchange = load; $('#q').oninput = () => { clearTimeout(T); T = setTimeout(load, 250); };
+$$('#types [data-t]').forEach(b => b.onclick = () => { TYPE = b.dataset.t; $$('#types [data-t]').forEach(x => x.classList.toggle('on', x === b)); load(); });
+load(); setInterval(() => { if ($('#day').value === iso(new Date()) && !document.hidden) load(); }, 30000);
+</script>
+</body>
+</html>

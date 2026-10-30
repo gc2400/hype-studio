@@ -1,0 +1,149 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Hype graphics</title>
+<style>
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transparent;font-family:Inter,'Inter Display',system-ui,sans-serif}
+.full{position:absolute;left:0;top:0;width:1920px;height:1080px}
+#time{position:absolute;left:1618px;top:245px;width:108px;height:46px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:27px;color:#061423;letter-spacing:.5px}
+#temp{position:absolute;left:1726px;top:245px;width:81px;height:46px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:23px;color:#fff}
+#showbox{position:absolute;left:64px;top:52px;display:flex;flex-direction:column;opacity:0;transform:translateX(-20px);transition:opacity .6s,transform .6s}
+#showbox.on{opacity:1;transform:none}
+#showbox .lbl{align-self:flex-start;background:#FFE000;color:#061423;font-size:15px;font-weight:900;letter-spacing:.16em;padding:5px 12px;border-radius:8px 8px 0 0}
+#showbox .nm{background:rgba(4,28,51,.86);border-left:5px solid #FFE000;border-radius:0 12px 12px 12px;padding:10px 22px 12px 18px;color:#fff;font-size:34px;font-weight:900;letter-spacing:-.01em;text-transform:uppercase;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+#showimg{opacity:0;transition:opacity .6s}#showimg.on{opacity:1}
+body.pip #showbox,body.pip #showimg{visibility:hidden}   /* PIP scene: the video window is where the show name sits */
+#screen .it{position:absolute;left:0;top:0;width:1920px;height:1080px;object-fit:contain;opacity:0;transition:opacity .45s}
+#screen .it.on{opacity:1}
+#slides img{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0;transition:opacity .8s}#slides img.on{opacity:1}
+#slides img{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0;transition:opacity .8s}#slides img.on{opacity:1}
+#np{position:absolute;left:0;top:742px;width:932px;height:322px;display:none}
+#np video{position:absolute;left:0;top:0;width:932px;height:322px}
+#np .tx{text-transform:uppercase;position:absolute;left:256px;top:70px;width:585px;opacity:0;transform:translateX(-14px);transition:opacity .35s,transform .35s}
+#np.txon .tx{opacity:1;transform:none}
+#np .t{font-family:Inter,sans-serif;font-weight:800;font-size:44px;line-height:50px;letter-spacing:-.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#np .a{font-family:Inter,sans-serif;font-weight:500;font-size:28px;line-height:34px;color:rgba(255,255,255,.78);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ticker bar (same look as the CLOSE bars 12/13/15): yellow label · dark sub-label · scrolling text · hyperadio.nl */
+#tk{position:absolute;left:80px;top:979px;width:1760px;height:64px;display:flex;border-radius:18px;overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,.42);
+  transform:translateY(120px);opacity:0;transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .4s}
+#tk.on{transform:none;opacity:1}
+#tk .lb{flex:none;display:flex;align-items:center;gap:12px;padding:0 30px 0 26px;background:#FFE000;color:#061423;font-weight:900;font-size:26px;letter-spacing:.14em;white-space:nowrap}
+#tk .lb svg{width:24px;height:24px}#tk .lb i{font-style:normal;color:#0277B8}
+#tk .sb{flex:none;display:flex;align-items:center;gap:8px;padding:0 20px;background:rgba(8,14,27,.84);color:#fff;font-weight:800;font-size:14px;letter-spacing:.2em;white-space:nowrap;border-right:1px solid rgba(255,255,255,.12)}
+#tk .sb:before{content:"";width:8px;height:8px;border-radius:50%;background:#FF4D5E}
+#tk .tr{flex:1;position:relative;overflow:hidden;background:rgba(8,14,27,.84)}
+/* with the bar PNG (branding/screen): the picture + the text in its dark track */
+#tkw{transform:translateY(130px);opacity:0;transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .4s}#tkw.on{transform:none;opacity:1}
+#tka{position:absolute;overflow:hidden}
+#tkbg{position:absolute;background:rgba(4,9,18,.85)}   /* BEHIND the PNG: label box + track get darker, the PNG outlines stay on top */
+.st{position:absolute;left:0;top:0;height:64px;display:flex;align-items:center;white-space:nowrap;will-change:transform;font-weight:500;font-size:25px;color:#fff}
+.st span{padding:0 22px}.st b{color:#FFE000;font-weight:900}
+#tk .ur{flex:none;display:flex;align-items:center;padding:0 26px;background:linear-gradient(90deg,#05A9C6,#0277B8);color:#fff;font-weight:800;font-size:22px;letter-spacing:.01em}
+</style></head><body>
+<div id="slides"></div>
+<div id="np"><video id="npv" src="np_box.webm" muted playsinline preload="auto"></video><div class="tx"><div class="t" id="npt"></div><div class="a" id="npa"></div></div></div>
+<div id="screen"></div>
+<img id="showimg" class="full" alt="">
+<div id="showbox"><span class="lbl">NOW ON HYPE</span><span class="nm" id="shownm"></span></div>
+<img class="full" src="clockbox.png" alt="">
+<div id="time">--:--</div><div id="temp">–°</div>
+<div id="tk"><div class="lb"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg><span><i>HYPE</i> <span id="tkl"></span></span></div><div class="sb" id="tks"></div><div class="tr" id="tktr"><div class="st" id="tkt"></div></div><div class="ur">hyperadio.nl</div></div>
+<div id="tkw" class="full"><div id="tkbg"></div><img id="tkimg" class="full" alt=""><div id="tka"></div></div>
+<script>
+const $ = s => document.querySelector(s);
+// capitals are wide: shrink a long title/artist until it fits the box (never below min px)
+function fitText(el, max, min) { let f = max; el.style.fontSize = f + 'px'; while (el.scrollWidth > el.clientWidth && f > min) { f -= 1; el.style.fontSize = f + 'px'; } }
+function clock() { const d = new Date(); $('#time').textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+let lastShow = null;
+function data() {
+  fetch('/api/graphics').then(r => r.json()).then(g => {
+    $('#temp').textContent = g.temp == null ? '–°' : g.temp + '°';
+    const key = (g.show || '') + '|' + (g.show_image || '');
+    if (key !== lastShow) {
+      lastShow = key;
+      $('#showbox').classList.remove('on'); $('#showimg').classList.remove('on');
+      setTimeout(() => {
+        if (g.show_image) { $('#showimg').src = '/shownames/' + encodeURIComponent(g.show_image); $('#showimg').classList.add('on'); }
+        else if (g.show) { $('#shownm').textContent = g.show; $('#showbox').classList.add('on'); }
+      }, 700);
+    }
+  }).catch(() => {});
+}
+clock(); setInterval(clock, 1000); data(); setInterval(data, 15000);
+// on-screen items (New Music, Throwback …): the engine says what shows when
+const SHOWN = {};
+function screen() {
+  fetch('/api/screen').then(r => r.json()).then(d => {
+    const off = Date.now() / 1000 - d.now, want = {};
+    d.items.forEach(it => { want[it.id] = it; });
+    Object.keys(SHOWN).forEach(id => { if (!want[id]) { const el = SHOWN[id]; el.classList.remove('on'); setTimeout(() => el.remove(), 600); delete SHOWN[id]; } });
+    d.items.forEach(it => {
+      let el = SHOWN[it.id];
+      if (!el) {
+        const vid = /\.(webm|mp4|mov)$/i.test(it.url.split("?")[0]);
+        el = document.createElement(vid ? 'video' : 'img'); el.className = 'it'; el.src = it.url;
+        if (vid) { el.muted = true; el.playsInline = true; el.autoplay = false; }
+        $('#screen').appendChild(el); SHOWN[it.id] = el;
+      }
+      const now = Date.now() / 1000 - off, live = now >= it.start && now < it.end;
+      if (live && !el.classList.contains('on')) { el.classList.add('on'); if (el.play) { el.currentTime = 0; el.play().catch(() => {}); } }
+      if (!live && el.classList.contains('on')) el.classList.remove('on');
+    });
+    document.body.classList.toggle('pip', d.scene === 'PIP');
+    ticker(d.ticker);
+    slideshow(d.slides_layer === 'graphics' ? (d.slides || []) : [], d.slide_s || 30);
+    nowPlaying(d.np, Date.now() / 1000 - off);
+  }).catch(() => {}).finally(() => setTimeout(screen, 500));
+}
+// ticker: smooth scroll at a steady speed; a new ticker (or new headlines) slides in; it gives way to the Now Playing box
+const TK = {key: null, sig: null, x: 0, w: 0, last: 0, want: false}, TK_SPEED = 115;   // px per second
+function ticker(t) {
+  TK.want = !!t;
+  if (!t) return;
+  const sig = t.key + '|' + t.items.join('|');
+  if (sig === TK.sig) return;
+  const fresh = t.key !== TK.key; TK.key = t.key; TK.sig = sig;
+  // bar PNG (Gianno's) when there is one, else the drawn bar
+  const st = $('#tkt');
+  if (t.bar && t.area) { const a = $('#tka'); if ($('#tkimg').getAttribute('src') !== t.bar) $('#tkimg').src = t.bar;
+    Object.assign(a.style, {left: t.area.x + 'px', top: t.area.y + 'px', width: t.area.w + 'px', height: t.area.h + 'px'});
+    const A = t.area; Object.assign($('#tkbg').style, {left: (A.bx ?? A.x) + 'px', top: (A.by ?? A.y) + 'px', width: (A.bw ?? A.w) + 'px', height: (A.bh ?? A.h) + 'px'}); st.style.height = t.area.h + 'px'; a.appendChild(st); TK.png = true; }
+  else { st.style.height = '64px'; $('#tktr').appendChild(st); TK.png = false; }
+  $('#tkl').textContent = t.label; $('#tks').textContent = t.sub || ''; $('#tks').style.display = t.sub ? 'flex' : 'none';
+  const one = t.items.map(x => '<span>' + x.replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c])) + '</span><b>•</b>').join('');
+  st.innerHTML = one + one;       // twice: a seamless loop
+  TK.w = st.scrollWidth / 2; if (fresh) TK.x = 0;
+}
+function tkRun(ts) {
+  const show = TK.want;     // the ticker may stay on together with the Now Playing box (Gianno)
+  $('#tk').classList.toggle('on', show && !TK.png); $('#tkw').classList.toggle('on', show && !!TK.png);
+  const dt = TK.last ? Math.min(0.1, (ts - TK.last) / 1000) : 0; TK.last = ts;
+  if (TK.w > 0) { TK.x = (TK.x + TK_SPEED * dt) % TK.w; $('#tkt').style.transform = 'translate3d(' + (-TK.x).toFixed(1) + 'px,0,0)'; }
+  requestAnimationFrame(tkRun);
+}
+requestAnimationFrame(tkRun);
+// ad box slideshow as an element in the other scenes (in the Hype Screen scene its own source, under the Live Layer, does it)
+let SL = [], slI = -1, slT = 0;
+function slideshow(list, secs) {
+  const box = $('#slides');
+  if (list.join() !== SL.join()) { SL = list; box.innerHTML = list.map(u => `<img src="${u}" alt="">`).join(''); slI = -1; slT = 0; }
+  if (!SL.length) return;
+  if (Date.now() - slT > secs * 1000) { slI = (slI + 1) % SL.length; slT = Date.now(); [...box.children].forEach((im, i) => im.classList.toggle('on', i === slI)); }
+}
+// Now Playing box with artist + title (Music video scene only): the 18 s animation, text on top
+let NP = {key: null};
+function nowPlaying(np, now) {
+  const box = $('#np'), v = $('#npv');
+  const at = np ? np.at.find(t => now >= t && now < t + 18) : null;
+  const key = at ? np.id + '|' + at : null;
+  if (key && key !== NP.key) {
+    NP.key = key; $('#npt').textContent = np.title; $('#npa').textContent = np.artist;
+    box.style.display = 'block'; box.classList.remove('txon');
+    fitText($('#npt'), 44, 30); fitText($('#npa'), 28, 20);
+    v.currentTime = Math.max(0, now - at); v.play().catch(() => {});
+  }
+  if (!key && NP.key) { NP.key = null; box.style.display = 'none'; box.classList.remove('txon'); v.pause(); }
+  NP.on = !!key;
+}
+// the text follows the animation's own clock (not the server's), so it always lands exactly in the box: in at 1.25 s, out at 16.75 s
+(function npText() { const v = $('#npv'), box = $('#np'); if (NP.on) { const t = v.currentTime || 0; box.classList.toggle('txon', t > 1.25 && t < 16.75); } requestAnimationFrame(npText); })();
+screen();
+</script></body></html>

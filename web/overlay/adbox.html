@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Hype ad box</title>
+<style>
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transparent}
+#slides img{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0;transition:opacity .8s}#slides img.on{opacity:1}
+</style></head><body>
+<div id="slides"></div>
+<script>
+// ad box slideshow (Hype Screen scene only – the engine sends the list only there).
+// Its own OBS source: above the Hype Screen page, below the Live Layer.
+const box = document.getElementById('slides');
+let SL = [], slI = -1, slT = 0;
+function slideshow(list, secs) {
+  if (list.join() !== SL.join()) { SL = list; box.innerHTML = list.map(u => `<img src="${u}" alt="">`).join(''); slI = -1; slT = 0; }
+  if (!SL.length) return;
+  if (Date.now() - slT > secs * 1000) { slI = (slI + 1) % SL.length; slT = Date.now(); [...box.children].forEach((im, i) => im.classList.toggle('on', i === slI)); }
+}
+function poll() { fetch('/api/screen').then(r => r.json()).then(d => slideshow(d.slides_layer === 'adbox' ? (d.slides || []) : [], d.slide_s || 30)).catch(() => {}).finally(() => setTimeout(poll, 1000)); }
+poll();
+</script></body></html>

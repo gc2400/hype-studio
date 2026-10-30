@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hype Studio – status</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<style>
+:root{--bg:#061423;--card:#0B2236;--line:#17344F;--txt:#F2F6FA;--mut:#A9BCCD;--y:#FFE000;--b:#05A9C6;--g:#3DDC97;--r:#FF4D5E;--o:#FFB547}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
+.wrap{max-width:1280px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+h1{margin:0;font-size:22px;font-weight:900}.sub{color:var(--mut);font-size:13px}
+.chip{display:inline-flex;gap:6px;align-items:center;font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 9px;border-radius:999px;background:#0F2B44}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.wide{grid-column:1/-1}
+.lab{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.mono{font-family:'JetBrains Mono',monospace}.big{font-size:40px;font-weight:700;line-height:1}
+.bar{height:8px;background:#071A2B;border-radius:4px;overflow:hidden}.bar>i{display:block;height:100%;background:var(--g)}
+.row{display:flex;justify-content:space-between;gap:10px;font-size:14px}.row span:first-child{color:var(--mut)}
+video{width:100%;max-width:960px;aspect-ratio:16/9;background:#000;border-radius:12px}
+.ok{color:var(--g)}.bad{color:var(--r)}.warn{color:var(--o)}
+input{width:100%;font:inherit;font-size:13px;color:var(--txt);background:#071A2B;border:1px solid #23496B;border-radius:10px;padding:10px}
+</style></head><body><header id="hhead"></header><script src="/panel/header.js?v=1793349956"></script><div class="wrap">
+
+<div class="grid">
+<section class="card wide" style="flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between"><div><span class="lab">Server</span><div class="sub">hype-studio · 88.99.105.186 · updates every 5 s</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" id="age">connecting…</span><span class="chip" id="up"></span></div></section>
+<section class="card wide"><div class="row"><span class="lab">What viewers get · TV + radio stream</span><span class="chip" id="lvl">auto quality</span></div>
+<video id="v" controls muted playsinline></video>
+<audio controls preload="none" src="https://tv.hyperadio.nl/radio-test-dbd4c5f6b0ea.mp3" style="width:320px;max-width:100%"></audio>
+<label class="sub">Radio link (VLC)<input readonly value="https://tv.hyperadio.nl/radio-test-dbd4c5f6b0ea.mp3" onclick="this.select()"></label>
+<label class="sub">TV link (VLC, website player)<input readonly value="https://tv.hyperadio.nl/test-dbd4c5f6b0ea/master.m3u8" onclick="this.select()"></label></section>
+<section class="card"><span class="lab">Running</span><div id="procs"></div><div class="row"><span>Newest stream piece</span><b id="seg" class="mono"></b></div></section>
+<section class="card"><span class="lab">CPU</span><div class="big mono" id="cpu">–</div><div class="bar"><i id="cpub"></i></div>
+<div class="row"><span>Load (1/5/15 min)</span><b class="mono" id="load"></b></div><div class="row"><span>Temperature</span><b class="mono" id="temp"></b></div>
+<div class="row"><span>Graphics chip clock</span><b class="mono" id="gpu"></b></div></section>
+<section class="card"><span class="lab">Memory &amp; disks</span>
+<div class="row"><span>RAM</span><b class="mono" id="ram"></b></div><div class="bar"><i id="ramb"></i></div>
+<div class="row"><span>System (/)</span><b class="mono" id="root"></b></div><div class="bar"><i id="rootb"></i></div>
+<div class="row"><span>Media (/srv)</span><b class="mono" id="srv"></b></div><div class="bar"><i id="srvb"></i></div>
+<div class="row"><span>Upload to viewers</span><b class="mono" id="net"></b></div></section>
+<section class="card"><span class="lab">Disk mirror &amp; health</span><div id="raid"></div><div id="smart"></div></section>
+</section>
+</div></div>
+<script>
+var v=document.getElementById('v'),src='https://tv.hyperadio.nl/test-dbd4c5f6b0ea/master.m3u8';
+if(window.Hls&&Hls.isSupported()){var h=new Hls({liveSyncDurationCount:3});h.loadSource(src);h.attachMedia(v);
+h.on(Hls.Events.LEVEL_SWITCHED,function(e,d){var l=h.levels[d.level];q('lvl').textContent='playing '+l.height+'p';});}
+else{v.src=src;}
+function q(i){return document.getElementById(i)}
+function gb(b){return (b/1073741824).toFixed(1)}function tb(b){return (b/1099511627776).toFixed(2)+' TB'}
+function bar(id,p){var e=q(id);e.style.width=Math.min(100,p)+'%';e.style.background=p>85?'var(--r)':p>65?'var(--y)':'var(--g)'}
+function tick(){fetch('stats.json?'+Date.now()).then(function(r){if(r.status===401){location.href="/login";throw 0}return r.json()}).then(function(d){
+q('age').textContent='● live '+d.time;q('age').className='chip ok';
+var u=+d.uptime;q('up').textContent='up '+Math.floor(u/86400)+'d '+Math.floor(u%86400/3600)+'h';
+q('cpu').textContent=d.cpu+'%';bar('cpub',d.cpu);q('load').textContent=d.load.map(function(x){return x.toFixed(2)}).join(' / ');
+q('temp').textContent=d.temp!=null?d.temp+' °C':'–';q('gpu').textContent=d.gpu_mhz!=null?d.gpu_mhz+' MHz':'–';
+q('ram').textContent=gb(d.ram.used*1024)+' / '+gb(d.ram.total*1024)+' GB';bar('ramb',100*d.ram.used/d.ram.total);
+q('root').textContent=gb(d.disk_root.used)+' / '+gb(d.disk_root.total)+' GB';bar('rootb',100*d.disk_root.used/d.disk_root.total);
+q('srv').textContent=tb(d.disk_srv.used)+' / '+tb(d.disk_srv.total);bar('srvb',100*d.disk_srv.used/d.disk_srv.total);
+q('net').textContent=d.upload_mbit+' Mbit/s';
+q('seg').textContent=d.seg_age!=null?d.seg_age+' s ago':'none';q('seg').className='mono '+(d.seg_age!=null&&d.seg_age<6?'ok':'bad');
+q('procs').innerHTML=Object.keys(d.procs).map(function(k){return '<div class="row"><span>'+k+'</span><b class="'+(d.procs[k]?'ok':'bad')+'">'+(d.procs[k]?'● running':'● stopped')+'</b></div>'}).join('');
+q('raid').innerHTML=d.raid.map(function(r){var both=r.state==='[UU]';return '<div class="row"><span>'+r.name+'</span><b class="'+(both?'ok':'bad')+'">'+(both?'both disks OK':'DISK PROBLEM '+r.state)+(r.sync?' · syncing '+r.sync:'')+'</b></div>'}).join('');
+q('smart').innerHTML=d.smart.map(function(s){return '<div class="row"><span>'+s.disk+' health</span><b class="'+(s.ok?(s.realloc>0?'warn':'ok'):'bad')+'">'+(s.ok?'passed':'FAILING')+' · '+s.realloc+' retired spots · '+Math.round(s.hours/8766*10)/10+' yr</b></div>'}).join('');
+}).catch(function(){q('age').textContent='● no data';q('age').className='chip bad'})}
+tick();setInterval(tick,5000);
+
+
+</script></body></html>

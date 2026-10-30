@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hype Studio · Library</title>
+<link rel="icon" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--mut:#A9BCCD;--soft:#C9D7E3;--y:#FFE000;--b:#05A9C6;--b2:#0277B8;--g:#3DDC97;--r:#FF4D5E;--rdark:#3A0E18}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
+button,input,select{font-family:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.wrap{padding:10px 14px;display:flex;flex-direction:column;gap:10px;max-width:1800px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}.brand img{width:40px;height:40px}
+h1{margin:0;font-size:20px;font-weight:900}h1 small{color:var(--mut);font-weight:600;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:999px;white-space:nowrap;background:var(--card2);color:var(--mut);text-decoration:none}
+.b-audio{background:var(--card2);color:var(--mut)}.b-clip{background:#062F38;color:var(--b)}.b-pair{background:#2B2500;color:var(--y)}.b-jingle{background:#1E1438;color:#B9A2FF}
+.grid{display:grid;grid-template-columns:minmax(360px,1fr) minmax(480px,1.25fr);gap:14px;align-items:start}
+@media (max-width:1000px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ed{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto;padding:12px;gap:8px}
+#box{gap:8px!important}
+.btn{min-height:34px}
+.lab{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.row{display:flex;align-items:center;gap:8px}.between{justify-content:space-between}
+.btn{cursor:pointer;border-radius:10px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);font-weight:700;font-size:13px;min-height:38px;padding:0 12px}
+.btn:hover{border-color:var(--b)}.btn.on{background:var(--b);color:var(--bg);border-color:var(--b)}
+.btn.yellow{background:var(--y);color:var(--bg);border-color:var(--y)}.btn.sm{min-height:30px;font-size:11px;padding:0 9px}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.search{display:flex;align-items:center;gap:8px;background:var(--deep);border:1px solid var(--line2);border-radius:12px;padding:0 12px;min-height:46px}
+.search input{background:transparent;border:0;color:var(--txt);font-size:15px;width:100%;outline:none}
+.res{display:flex;flex-direction:column;max-height:calc(100vh - 270px);min-height:300px;overflow:auto}
+.ri{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;border:1px solid transparent;cursor:pointer}
+.ri:hover{background:var(--card2)}.ri.sel{background:var(--card2);border-color:var(--y)}
+.ri .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.ri .tx b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ri .tx span{font-size:11px;color:var(--mut)}
+.ri .ed1{width:8px;height:8px;border-radius:50%;flex:none;background:transparent}.ri .ed1.on{background:var(--g)}
+video{width:100%;height:min(30vh,300px);object-fit:contain;background:#000;border-radius:12px;display:block}
+canvas.wave{width:100%;height:58px;background:var(--deep);border-radius:10px;display:block;cursor:pointer}
+.tp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cuegrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.cuegrid .btn{min-height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.cuegrid .btn b{font-family:'JetBrains Mono',monospace;font-size:15px}
+.cuegrid small{font-size:10px;color:var(--mut);font-weight:600}
+select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:36px;padding:0 8px;flex:1;min-width:0}
+.keys{font-size:11px;color:var(--mut);line-height:1.7}.keys kbd{font-family:'JetBrains Mono',monospace;background:var(--deep);border:1px solid var(--line2);border-radius:5px;padding:0 5px;color:var(--soft)}
+.muted{color:var(--mut);font-size:12px}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line2);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none}.toast.show{opacity:1}
+.empty{padding:40px;text-align:center;color:var(--mut)}
+
+/* slim scrollbars in the Hype colours */
+*{scrollbar-width:thin;scrollbar-color:#23496B transparent}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:#23496B;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#05A9C6;background-clip:padding-box}
+::-webkit-scrollbar-button{display:none;width:0;height:0}
+.cdh{display:flex;align-items:flex-start;gap:10px}.cdh .t{flex:1;min-width:0}
+.cdh .t b{display:block;font-size:17px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cdh .t span{display:block;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cdg{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:12px;align-items:start}
+.cdg.novid{grid-template-columns:minmax(0,1fr)}
+#m{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;display:block}
+.cueside{display:flex;flex-direction:column;gap:6px}
+.cueset{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;min-height:40px;padding:0 12px;border-radius:10px;background:var(--deep);border:1px solid var(--line2);color:var(--txt);font:inherit;cursor:pointer;text-align:left}
+.cueset:hover{border-color:currentColor}
+.cueset .k{font-size:12px;font-weight:800;letter-spacing:.06em}
+.cueset .v{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--txt)}
+.cueside .sel{width:100%;background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:34px;padding:0 8px;font:inherit;font-size:13px}
+.ovb{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.novid .cueside{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.novid .ovb{grid-column:1/-1;flex-direction:row;align-items:center}.novid .ovb .sel{flex:1}
+.cdt{display:flex;align-items:center;gap:6px}
+.cdt .btn{min-height:34px;min-width:44px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.cdt .btn svg{width:18px;height:18px}
+.cdt .pos{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--y)}
+.cdf{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media (max-width:1250px){.cdg{grid-template-columns:minmax(0,1fr)}.cueside{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.ovb{grid-column:1/-1;flex-direction:row;align-items:center}.ovb .sel{flex:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="hhead"></header><script src="/panel/header.js?v=1793349956"></script>
+  <div class="grid">
+    <section class="card">
+      <label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input id="q" type="search" placeholder="Search artist or title…  ( / )" autocomplete="off" aria-label="Search the library"></label>
+      <div class="scroll" id="secs" style="flex-wrap:wrap;overflow:visible"></div>
+      <div class="scroll" id="folders" style="flex-wrap:wrap;overflow:visible"></div>
+      <div class="scroll" id="subfolders" hidden style="flex-wrap:wrap;overflow:visible"></div>
+      <div class="row between" style="flex-wrap:wrap"><div class="row" style="gap:5px"><button class="btn sm" id="bRecent" title="Songs uploaded in the last 7 days, newest first">⬆ Recently uploaded</button><button class="btn sm" id="bSort">Sort: A–Z</button><span class="muted" id="cnt"></span></div></div>
+      <div class="row" id="kinds" style="flex-wrap:wrap;gap:5px"><button class="btn sm on" data-k="">All</button><button class="btn sm" data-k="audio" title="Audio files (with or without a clip)">♪ Audio</button><button class="btn sm" data-k="pair" title="Audio file + its own clip (same name in /clips)">♪ + ▶ Audio with clip</button><button class="btn sm" data-k="noclip" title="Audio file, no clip → TV shows the Hype Screen">♪ Audio, no clip</button><button class="btn sm" data-k="video" title="Video files (radio and TV play the same file)">▶ Video</button><span style="flex:1"></span><button class="btn sm" id="onlyNew" title="Only songs that still have automatic cue points">○ Only automatic cue points</button></div>
+      <div class="res" id="res" role="listbox" aria-label="Songs"></div>
+    </section>
+    <section class="card ed" id="ed">
+      <div class="empty" id="none">Click a song on the left.</div>
+      <div id="box" hidden style="display:flex;flex-direction:column;gap:8px">
+        <div class="cdh"><div class="t"><b id="eTitle"></b><span id="eSub"></span><span id="eTv"></span></div><span class="chip" id="eBadge"></span></div>
+        <div class="cdg" id="cdg">
+          <video id="m" playsinline preload="metadata"></video>
+          <div class="cueside">
+            <button class="cueset" data-set="s" style="color:var(--g)" title="Set START at the playhead (key S)"><span class="k">SET START</span><span class="v" id="vS">0:00.0</span></button>
+            <button class="cueset" data-set="m" style="color:var(--y)" title="Set MIX at the playhead (key M) – the next song starts here"><span class="k">SET MIX</span><span class="v" id="vM">0:00.0</span></button>
+            <button class="cueset" data-set="e" style="color:#FF8A97" title="Set END at the playhead (key E) – preview stops here"><span class="k">SET END</span><span class="v" id="vE">0:00.0</span></button>
+            <div id="ovBox" class="ovb"><span class="lab">Intro sweeper</span><select class="sel" id="ovSel" aria-label="Intro sweeper for this song"></select></div>
+          </div>
+        </div>
+        <canvas class="wave" id="wave" width="1600" height="110" style="height:56px" aria-label="Waveform: click to jump, drag the markers"></canvas>
+        <div class="cdt">
+          <button class="btn" id="bBack" title="−5 s (←)">−5s</button>
+          <button class="btn yellow" id="bPlay" title="Play / pause (Space)" aria-label="Play or pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg></button>
+          <button class="btn" id="bFwd" title="+5 s (→)">+5s</button>
+          <button class="btn" id="bStart" title="Play from START (1)">▶ START</button>
+          <button class="btn" id="bMix" title="Play the last 8 s into the MIX, stops at END (2)">▶ MIX</button>
+          <span class="pos" id="pos">0:00.0</span>
+        </div>
+        <div class="cdf"><button class="btn sm" id="bAuto" title="Back to the automatic cue points">Automatic cues</button><button class="btn sm" id="bNextUp" title="Play this song next on air">⏭ Play next on air</button><span style="flex:1"></span><button class="btn" id="bSave">Save</button><button class="btn yellow" id="bSaveNext" title="Enter">Save + next ▶</button></div>
+        <div class="keys"><kbd>↑</kbd><kbd>↓</kbd> song · <kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> 1 s (<kbd>Shift</kbd> 0.1 s) · <kbd>S</kbd><kbd>M</kbd><kbd>E</kbd> set cue · <kbd>1</kbd> from START · <kbd>2</kbd> into MIX · <kbd>Enter</kbd> save + next · <kbd>/</kbd> search</div>
+      </div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const api = (p, body) => fetch('../api/' + p, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); } return r.json(); });
+const fmt = s => { if (s == null || isNaN(s)) return '–'; s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const badge = m => m === 'pair' ? ['PAIRED', 'b-pair'] : m === 'clip' ? ['CLIP', 'b-clip'] : (m || '').startsWith('jingle') ? ['JINGLE', 'b-jingle'] : ['AUDIO', 'b-audio'];
+function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('show'), 2000); }
+function ago(t) { const m = Math.round((Date.now() / 1000 - t) / 60); return m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; }
+let SEC = 'music', GENRE = '', FOLDER = '', LIB = null, SEL = null, CUE = null, peaks = [], drag = null, stopT = null, PADS = [], dirty = false;
+const SECS = [['music', 'Music'], ['mixes', 'Mixes'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads']];
+const MUS = () => SEC === 'music' || SEC === 'mixes';
+let SORT = 'az', RECENT = 0;
+try { const st = JSON.parse(localStorage.getItem('hypeLib') || '{}'); SEC = st.sec || SEC; GENRE = st.genre || ''; FOLDER = st.folder || ''; SORT = st.sort || 'az'; RECENT = st.recent || 0; } catch (e) {}
+function remember() { try { localStorage.setItem('hypeLib', JSON.stringify({sec: SEC, genre: GENRE, folder: FOLDER, sort: SORT, recent: RECENT})); } catch (e) {} }
+function added(t) { if (!t) return ''; const d = new Date(t * 1000), h = (Date.now() / 1000 - t) / 3600; return 'added ' + (h < 24 ? Math.max(1, Math.round(h)) + ' h ago' : d.toLocaleDateString('nl-NL', {day: 'numeric', month: 'short'})); }
+let KIND = '', AUTOC = 0;
+function visible() { return LIB ? LIB.items : []; }
+function lib(keepSel) {
+  $('#bSort').textContent = 'Sort: ' + (SORT === 'new' ? 'newest first' : 'A–Z'); $('#bRecent').classList.toggle('yellow', !!RECENT);
+  return api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + (RECENT ? 'new' : SORT) + '&recent=' + RECENT + (MUS() && KIND ? '&kind=' + KIND : '') + (AUTOC ? '&auto=1' : '')).then(d => {
+    $$('#kinds [data-k]').forEach(b => b.classList.toggle('on', b.dataset.k === KIND)); $('#kinds').hidden = !MUS() && !AUTOC && false;
+    $$('#kinds [data-k]').forEach(b => b.hidden = !MUS());
+    $('#onlyNew').classList.toggle('on', !!AUTOC); $('#onlyNew').textContent = (AUTOC ? '● ' : '○ ') + 'Only automatic cue points';
+    LIB = d; remember();
+    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="btn sm ${k === SEC ? 'yellow' : ''}" data-sec="${k}">${n} <span style="opacity:.7">${d.counts[k] || 0}</span></button>`).join('');
+    $$('#secs [data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
+    const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];
+    $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g || 'All'}</button>`).join('');
+    $$('#folders [data-g]').forEach(b => b.onclick = () => { GENRE = b.dataset.g; FOLDER = ''; lib(); });
+    const subs = GENRE ? [...new Set(d.all_folders.filter(f => f.startsWith(GENRE + '/')).map(f => f.split('/').slice(0, 2).join('/')))] : [];
+    $('#subfolders').hidden = !subs.length;
+    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? f.split('/').slice(1).join('/') : 'All ' + esc(GENRE)}</button>`).join('');
+    $$('#subfolders [data-f]').forEach(b => b.onclick = () => { FOLDER = b.dataset.f; lib(); });
+    renderList(); if (keepSel && SEL) { const n = LIB.items.find(x => x.path === SEL.path); if (n) Object.assign(SEL, n); }
+  });
+}
+function renderList() {
+  const L = visible(); $('#cnt').textContent = L.length + ' items';
+  $('#res').innerHTML = L.map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
+    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''}" role="option" data-p="${esc(it.path)}"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}</span></div></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
+  $$('#res .ri').forEach(el => el.onclick = () => pick(LIB.items.find(x => x.path === el.dataset.p)));
+}
+function pick(it) {
+  if (!it) return; if (dirty && SEL && !confirm('Your cue changes for "' + SEL.title + '" are not saved. Go on?')) return;
+  SEL = it; dirty = false; $$('#res .ri').forEach(r => { const on = r.dataset.p === it.path; r.classList.toggle('sel', on); if (on) r.scrollIntoView({block: 'nearest'}); });
+  $('#none').hidden = true; $('#box').hidden = false;
+  $('#eTitle').textContent = (it.artist ? it.artist + ' – ' : '') + it.title;
+  $('#eSub').textContent = it.folder + ' · ' + fmt(it.duration) + (it.last ? ' · played ' + ago(it.last) : '');
+  const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode); $('#eBadge').textContent = bt; $('#eBadge').className = 'chip ' + bc;
+  $('#eTv').textContent = !MUS() ? '' : it.mode === 'pair' ? 'TV plays the clip "' + (it.clip_path || '').replace(/^clips\//, '') + '" with its own sound (same name).' : it.mode === 'clip' ? 'Video file – radio and TV play the same.' : 'No clip with the same name in /clips → TV shows the Hype Screen.';
+  CUE = {s: it.cue_start || 0, m: it.cue_mix || it.duration || 0, e: it.cue_end || it.duration || 0, d: it.duration || 1};
+  peaks = []; fill(); draw(); api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { peaks = p; draw(); } });
+  const m = $('#m'); m.pause(); m.src = '../media/' + it.path.split('/').map(encodeURIComponent).join('/');
+  m.style.display = it.has_video ? 'block' : 'none'; $('#cdg').classList.toggle('novid', !it.has_video); m.currentTime = CUE.s;
+  $('#ovBox').hidden = !MUS();
+  if (MUS()) { const cur = it.overlay_mode === 'none' ? 'none' : it.overlay_mode === 'song' && it.overlay_path ? it.overlay_path : 'rule';
+    $('#ovSel').innerHTML = '<option value="rule">Follow the rules</option><option value="none">Never for this song</option>' + PADS.map(p => `<option value="${esc(p.path)}">Always: ${esc(p.folder)} · ${esc(p.title)}</option>`).join(''); $('#ovSel').value = cur; }
+}
+const fmtC = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), r = t - m * 60; return m + ':' + r.toFixed(1).padStart(4, '0'); };
+function fill() { $('#vS').textContent = fmtC(CUE.s); $('#vM').textContent = fmtC(CUE.m); $('#vE').textContent = fmtC(CUE.e); $('#bSave').textContent = dirty ? 'Save *' : 'Save'; }
+function draw() {
+  const c = $('#wave'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H); if (!CUE) return;
+  const n = peaks.length || 1, bw = W / n;
+  for (let i = 0; i < peaks.length; i++) { const f = i / n * CUE.d, h = Math.max(2, peaks[i] * (H - 18)); x.fillStyle = f < CUE.s || f > CUE.e ? '#1A3550' : '#05A9C6'; x.fillRect(i * bw, (H - h) / 2, Math.max(1, bw - 1), h); }
+  [['s', '#3DDC97', 'START'], ['m', '#FFE000', 'MIX'], ['e', '#FF8A97', 'END']].forEach(([k, col, l]) => { const X = CUE[k] / CUE.d * W; x.fillStyle = col; x.fillRect(X - 2, 0, 4, H); x.font = 'bold 24px Inter'; x.fillText(l, k === 's' ? X + 6 : X - x.measureText(l).width - 6, k === 'm' ? H - 10 : 26); });
+  const p = $('#m').currentTime || 0; x.fillStyle = '#fff'; x.fillRect(p / CUE.d * W - 1, 0, 3, H);
+}
+function setCue(k, t) { CUE[k] = Math.round(t * 10) / 10; if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; dirty = true; fill(); draw(); }
+function cx(e) { const r = $('#wave').getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * CUE.d; }
+$('#wave').onpointerdown = e => { if (!CUE) return; const t = cx(e), near = ['s', 'm', 'e'].reduce((a, k) => Math.abs(CUE[k] - t) < Math.abs(CUE[a] - t) ? k : a, 's');
+  if (Math.abs(CUE[near] - t) / CUE.d < 0.015) { drag = near; $('#wave').setPointerCapture(e.pointerId); } else { $('#m').currentTime = t; draw(); } };
+$('#wave').onpointermove = e => { if (drag) { setCue(drag, cx(e)); $('#m').currentTime = CUE[drag]; } };
+$('#wave').onpointerup = () => drag = null;
+$$('[data-set]').forEach(b => b.onclick = () => setCue(b.dataset.set, $('#m').currentTime));
+function playFrom(t, until) { const m = $('#m'); clearTimeout(stopT); m.currentTime = Math.max(0, t); m.play(); if (until) { const chk = () => { if (m.currentTime >= until) m.pause(); else if (!m.paused) stopT = setTimeout(chk, 80); }; chk(); } }
+$('#bPlay').onclick = () => { const m = $('#m'); m.paused ? m.play() : m.pause(); };
+// preview always stops at END (when it started before END)
+$('#m').addEventListener('play', () => { $('#m')._lim = CUE && $('#m').currentTime < CUE.e - 0.05; });
+function cueTick() { const m = $('#m'); if (CUE && !m.paused && m._lim && m.currentTime >= CUE.e) { m.pause(); m.currentTime = CUE.e; draw(); } requestAnimationFrame(cueTick); }
+requestAnimationFrame(cueTick);
+$('#bBack').onclick = () => { $('#m').currentTime -= 5; }; $('#bFwd').onclick = () => { $('#m').currentTime += 5; };
+$('#bStart').onclick = () => playFrom(CUE.s); $('#bMix').onclick = () => playFrom(CUE.m - 8, CUE.e);
+setInterval(() => { if (!CUE) return; const t = $('#m').currentTime || 0; $('#pos').textContent = fmtC(t); draw(); }, 100);
+function save() { return api('cmd/set_cues', {path: SEL.path, cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e}).then(r => { if (r.ok === false) { toast(r.error || 'Not saved'); return false; } Object.assign(SEL, {cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, cues_edited: 1}); dirty = false; fill(); renderList(); toast('Saved'); return true; }); }
+function step(dir) { const L = visible(), i = SEL ? L.findIndex(x => x.path === SEL.path) : -1, n = L[Math.max(0, Math.min(L.length - 1, i + dir))]; if (n && n !== SEL) { $('#m').pause(); pick(n); } }
+$('#bSave').onclick = save; $('#bSaveNext').onclick = () => save().then(ok => ok && step(1));
+$('#bAuto').onclick = () => { if (confirm('Back to the automatic cue points for this song?')) api('cmd/reset_cues', {path: SEL.path}).then(() => toast('Automatic cue points are measured again in a minute')); };
+$('#bNextUp').onclick = () => api('cmd/insert', {path: SEL.path, pos: 0}).then(() => toast('Plays next on air'));
+$('#ovSel').onchange = () => { const v = $('#ovSel').value; api('cmd/set_overlay', v === 'rule' || v === 'none' ? {path: SEL.path, mode: v} : {path: SEL.path, mode: 'song', jingle: v}).then(() => { SEL.overlay_mode = v === 'rule' || v === 'none' ? v : 'song'; SEL.overlay_path = v; toast('Saved'); }); };
+let qT; $('#q').oninput = () => { clearTimeout(qT); qT = setTimeout(lib, 200); };
+$('#onlyNew').onclick = () => { AUTOC = AUTOC ? 0 : 1; lib(); };
+$$('#kinds [data-k]').forEach(b => b.onclick = () => { KIND = b.dataset.k; lib(); });
+$('#bSort').onclick = () => { SORT = SORT === 'new' ? 'az' : 'new'; RECENT = 0; lib(); };
+$('#bRecent').onclick = () => { RECENT = RECENT ? 0 : 7; if (RECENT) { GENRE = ''; FOLDER = ''; } lib().then(() => { if (RECENT && visible().length && !SEL) pick(visible()[0]); }); };
+document.addEventListener('keydown', e => {
+  const typing = ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName) && document.activeElement.type !== 'checkbox';
+  if (e.key === '/' && !typing) { e.preventDefault(); $('#q').focus(); return; }
+  if (e.key === 'Escape' && typing) { document.activeElement.blur(); return; }
+  if (typing) { if (e.key === 'ArrowDown' || e.key === 'Enter') { e.preventDefault(); document.activeElement.blur(); if (!SEL) step(1); } return; }
+  const m = $('#m');
+  if (e.key === 'ArrowDown') { e.preventDefault(); step(1); } else if (e.key === 'ArrowUp') { e.preventDefault(); step(-1); }
+  if (!SEL) return;
+  if (e.key === ' ') { e.preventDefault(); $('#bPlay').click(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); m.currentTime -= e.shiftKey ? 0.1 : 1; }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); m.currentTime += e.shiftKey ? 0.1 : 1; }
+  else if (e.key === 's' || e.key === 'S') setCue('s', m.currentTime);
+  else if (e.key === 'm' || e.key === 'M') setCue('m', m.currentTime);
+  else if (e.key === 'e' || e.key === 'E') setCue('e', m.currentTime);
+  else if (e.key === '1') $('#bStart').click(); else if (e.key === '2') $('#bMix').click();
+  else if (e.key === 'Enter') { e.preventDefault(); $('#bSaveNext').click(); }
+});
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+api('pads').then(p => { PADS = p; }); lib();
+</script>
+</body>
+</html>

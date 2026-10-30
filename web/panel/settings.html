@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hype Studio · Settings</title>
+<link rel="icon" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--mut:#A9BCCD;--soft:#C9D7E3;--y:#FFE000;--b:#05A9C6;--g:#3DDC97;--r:#FF4D5E;--o:#FFB547}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
+button,input,select{font-family:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.wrap{padding:14px;display:flex;flex-direction:column;gap:14px;max-width:1500px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}.brand img{width:44px;height:44px}
+h1{margin:0;font-size:20px;font-weight:900}
+.nav{display:flex;gap:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.lab{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.between{justify-content:space-between}
+.btn{cursor:pointer;border-radius:10px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);font-weight:700;font-size:13px;min-height:40px;padding:0 12px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--b)}.btn.on{background:var(--b);color:var(--bg);border-color:var(--b)}
+.btn.yellow{background:var(--y);color:var(--bg);border-color:var(--y)}.btn.red{background:#3A0E18;color:#FF8A97;border-color:var(--r)}
+.btn.sm{min-height:30px;font-size:12px;padding:0 9px}.btn:disabled{opacity:.4;cursor:default}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.tabs{display:flex;background:var(--deep);border-radius:11px;padding:3px;gap:3px;max-width:960px;flex-wrap:wrap}
+.tab{cursor:pointer;flex:1;min-height:40px;border-radius:9px;border:0;background:transparent;color:var(--mut);font-weight:800;font-size:13px;letter-spacing:.06em}
+.tab.on{background:var(--b);color:var(--bg)}
+.split{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.side{flex:1 1 260px;max-width:340px}.main{flex:999 1 560px;min-width:0}
+.list{display:flex;flex-direction:column;gap:4px}
+.li{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid transparent;cursor:pointer;background:none;color:inherit;text-align:left;width:100%}
+.li:hover{background:var(--card2)}.li.sel{background:var(--card2);border-color:var(--line2)}
+.li b{font-size:14px}.li span{font-size:12px;color:var(--mut)}
+.dot{width:12px;height:12px;border-radius:4px;flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 9px;border-radius:999px;background:var(--card2);color:var(--soft);border:1px solid var(--line2)}
+.chip button{border:0;background:none;color:var(--mut);cursor:pointer;font-size:15px;line-height:1;padding:0}
+.chip button:hover{color:var(--r)}
+input[type=text],input[type=search],input[type=number],select{background:var(--deep);border:1px solid var(--line2);border-radius:10px;color:var(--txt);font-size:14px;min-height:40px;padding:0 10px}
+input[type=text]{width:100%}
+label.tg{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;cursor:pointer}
+label.tg input{width:20px;height:20px;accent-color:var(--y)}
+.muted{color:var(--mut);font-size:13px}
+.pick{max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:2px;background:var(--deep);border-radius:10px;padding:6px}
+.pick button{display:flex;justify-content:space-between;gap:10px;border:0;background:none;color:var(--txt);padding:8px;border-radius:8px;cursor:pointer;text-align:left;font-size:13px}
+.pick button:hover{background:var(--card2)}.pick button span{color:var(--mut)}
+.order{display:flex;flex-direction:column;gap:2px;max-height:360px;overflow:auto}
+.order div{display:flex;gap:10px;font-size:13px;padding:5px 8px;border-radius:8px}
+.order div.nextup{background:#2B2500;color:var(--y);font-weight:700}
+.order div.done{opacity:.45}
+table{border-collapse:collapse;width:100%}
+.slots td,.slots th{padding:6px;text-align:left;font-size:13px;border-bottom:1px solid var(--line)}
+.slots th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.slots select,.slots input{width:100%}
+.slots .num{width:80px}
+.grid{overflow-x:auto}
+.grid table{min-width:900px;user-select:none}
+.grid th{font-size:11px;color:var(--mut);font-weight:700;padding:4px;text-align:center}
+.grid td{height:30px;border:1px solid var(--bg);border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;color:rgba(6,20,35,.85);text-align:center;overflow:hidden;white-space:nowrap}
+.grid td.empty{background:var(--deep)}
+.grid td.day{background:none;color:var(--soft);font-size:12px;cursor:default;text-align:left;padding-right:8px;width:52px}
+.brush{display:flex;gap:6px;flex-wrap:wrap}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line2);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}.toast.err{border-color:var(--r);color:#FF8A97}
+
+.sl{display:grid;grid-template-columns:200px 1fr 70px;gap:10px;align-items:center}
+.sl input[type=range]{width:100%;accent-color:var(--y)}
+.sl .v{font-family:'JetBrains Mono',monospace;font-size:13px;text-align:right;color:var(--y)}
+.sl small{display:block;color:var(--mut);font-size:11px;font-weight:500}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px;align-items:start}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:10px;border-radius:12px;background:var(--deep)}
+.opt input{width:22px;height:22px;accent-color:var(--y);flex:none;margin-top:2px}
+.opt b{display:block;font-size:14px}.opt span{font-size:13px;color:var(--mut)}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line2);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}.sl{grid-template-columns:1fr 60px}.sl label{grid-column:1/-1}}
+
+.setwrap{display:grid;grid-template-columns:260px 1fr;gap:14px;align-items:start}
+.snav{position:sticky;top:14px;gap:4px;padding:10px}
+.snav .search input{width:100%;margin-bottom:6px}
+.sbtn{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid transparent;background:none;color:var(--txt);padding:9px 10px;border-radius:10px;cursor:pointer;font:inherit}
+.sbtn b{font-size:14px}.sbtn span{font-size:11px;color:var(--mut)}.sbtn:hover{background:var(--card2)}.sbtn.on{background:var(--card2);border-color:var(--y)}
+.scont{display:flex;flex-direction:column;gap:14px;max-width:980px}
+.hit{outline:2px solid var(--y);outline-offset:3px;border-radius:10px}
+@media (max-width:800px){.setwrap{grid-template-columns:1fr}.snav{position:static}}
+/* slim scrollbars in the Hype colours */
+*{scrollbar-width:thin;scrollbar-color:#23496B transparent}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:#23496B;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#05A9C6;background-clip:padding-box}
+::-webkit-scrollbar-button{display:none;width:0;height:0}
+#tkRows input:not([type=checkbox]),#tkRows textarea{background:var(--card);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:34px;padding:0 10px;font:inherit;font-size:13px}
+#tkRows textarea{padding:8px 10px}#tkRows input[type=checkbox]{width:18px;height:18px;accent-color:var(--y)}
+.dm{display:grid;grid-template-columns:130px 1fr 96px;gap:10px;align-items:center;font-size:12px;font-weight:700;color:#A9BCCD}
+.dm b{font-family:'JetBrains Mono',ui-monospace,monospace;color:#F2F6FA;text-align:right}
+.db{height:10px;background:#0B2236;border-radius:5px;overflow:hidden}.db i{display:block;height:100%;width:0;border-radius:5px;transition:width .15s,background .3s}
+#g_key,#g_url{background:#071A2B;color:#F2F6FA;border:1px solid #23496B;border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;min-height:36px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="hhead"></header><script src="/panel/header.js?v=1793349956"></script>
+  <div class="setwrap">
+    <nav class="snav card" aria-label="Settings sections">
+      <label class="search"><input type="search" id="sq" placeholder="Find a setting…" aria-label="Find a setting"></label>
+      <button class="sbtn" data-sec="sound"><b>🎚 Sound</b><span>processing · presets</span></button>
+      <button class="sbtn" data-sec="mixing"><b>⇄ Mixing</b><span>how songs go into each other</span></button>
+      <button class="sbtn" data-sec="rotation"><b>♻ Rotation &amp; planning</b><span>repeats · hit the hour</span></button>
+      <button class="sbtn" data-sec="tv"><b>📺 TV</b><span>clip sound</span></button>
+      <button class="sbtn" data-sec="tickers"><b>▤ Tickers</b><span>news · traffic · showbizz · agenda · weather</span></button>
+      <button class="sbtn" data-sec="live"><b>🔴 Live &amp; restream</b><span>recording · lip sync · YouTube…</span></button>
+      <button class="sbtn" data-sec="guard"><b>🛡 Alarm &amp; Hype Live</b><span>self-repair · phone alerts</span></button>
+    </nav>
+    <div class="scont">
+    <section class="card sec" data-sec="sound">
+      <div class="row between"><span class="lab">Sound · radio + TV · changes are live</span><span class="chip" id="sndState">–</span></div>
+      <div class="row" id="sndMode" style="gap:6px"><span class="lab" style="width:auto">Sound</span><button class="btn sm" data-m="0">Classic (presets + sliders)</button><button class="btn sm" data-m="0.5" title="The Classic sliders, but bass, mids and highs are compressed on their own: a hard kick no longer turns the whole mix down">Classic + multiband</button><button class="btn sm" data-m="1">⚡ Hype Punch</button><span class="muted" style="font-size:12px" id="sndModeTip"></span></div>
+      <div class="row" id="presets"></div>
+      <div id="dynBox" style="background:#071A2B;border:1px solid #17344F;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px">
+        <div class="row between"><span class="lab" style="width:auto">On air now · what the processing does</span><span class="muted" style="font-size:11px" id="dynTip">listen + watch: good = compressor 2–4 dB, limiter 0–2 dB on loud parts</span></div>
+        <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" id="swComp" title="Switch the compressor off for a moment to hear what it does. The limiter always stays on; the loudness stays about the same.">COMPRESSOR: ON</button><button class="btn sm" hidden id="swMonob" title="Below 120 Hz left and right become the same: kick and bass hit tighter and sound the same on phones and mono speakers. Highs and vocals keep their stereo.">MONO BASS: OFF</button><span class="muted" style="font-size:11px">A/B: switch, listen, switch back</span></div>
+        <div class="dm"><span>Compressor</span><div class="db"><i id="dmC"></i></div><b id="dvC">–</b></div>
+        <div class="dm"><span>Limiter</span><div class="db"><i id="dmL"></i></div><b id="dvL">–</b></div>
+        <div class="dm"><span>Loudness on air</span><div class="db"><i id="dmU"></i></div><b id="dvU">–</b></div>
+      </div>
+      <div id="sliders" style="display:flex;flex-direction:column;gap:12px"></div>
+      <p class="muted" style="margin:0">Listen on the stream while you move a slider – it changes within a second. Settings are kept after a restart.</p>
+    </section>
+    <section class="card sec" data-sec="mixing">
+      <span class="lab">Mixing · how one song goes into the next</span>
+      <p class="muted" style="margin:0">At the old song's <b>MIX</b> point the new song starts at its full volume, and at the same moment the old song starts fading out underneath it – you still hear the end of the old one in the first seconds of the new one (like CLOSE). Cue points per song: Library page.</p>
+      <div class="sl" data-find="fade out old song end"><label>Mix length<small>how long the old song fades out under the new one (1–2.5 s sounds tight)</small></label><input type="range" id="mix_out" min="0.2" max="6" step="0.1"><span class="v" id="mix_out_v"></span></div>
+      <div class="sl" data-find="fade in new song start"><label>Fade-in of the new song<small>0 = starts at full volume (recommended)</small></label><input type="range" id="mix_in" min="0" max="3" step="0.1"><span class="v" id="mix_in_v"></span></div>
+      
+      <div class="sl" data-find="jingle sweeper id volume loud level"><label>Jingles volume<small>compared to the songs – jingles are short and dense, so they sound louder at the same loudness</small></label><input type="range" id="jingle_db" min="-10" max="3" step="0.5"><span class="v" id="jingle_db_v"></span></div>
+      <div class="sl" data-find="jingle sweeper id fade out tail"><label>Jingles: fade-out<small>0 = a jingle/sweeper plays out to its END while the next song starts at its MIX (recommended)</small></label><input type="range" id="jingle_fade" min="0" max="3" step="0.1"><span class="v" id="jingle_fade_v"></span></div>
+      <div class="sl" data-find="duck pads music level jingle over"><label>Music under ducked pads<small>how low the music goes while a pad plays with DUCK MUSIC on</small></label><input type="range" id="pad_duck" min="0.1" max="0.6" step="0.05"><span class="v" id="pad_duck_v"></span></div>
+      <p class="muted" style="margin:0">"Play now" in the panel/DJ decks is always a quick cut (0.25 s).</p>
+    </section>
+    <section class="card sec" data-sec="rotation">
+      <span class="lab">Rotation · repeats</span>
+      <div class="sl" data-find="artist repeat separation"><label>Same artist again after<small>an artist is not played twice within this time</small></label><input type="range" id="artist_sep_min" min="0" max="240" step="5"><span class="v" id="artist_sep_min_v"></span></div>
+      <div class="sl" data-find="song repeat separation title"><label>Same song again after<small>a song is not repeated within this time</small></label><input type="range" id="title_sep_h" min="0.5" max="24" step="0.5"><span class="v" id="title_sep_h_v"></span></div>
+      <span class="lab" style="margin-top:6px">Planning</span>
+      <label class="opt" data-find="smart picking rested yesterday"><input type="checkbox" id="smart_pick"><div><b>Smart song picking</b><span>Picks the song that rested longest, keeps artists apart, and avoids the song that played yesterday around this time. Off = random order, each song once per round.</span></div></label>
+      <label class="opt" data-find="hit the hour top of the hour"><input type="checkbox" id="hit_hour"><div><b>Hit the hour</b><span>Near the top of the hour it picks a song whose length ends close to :00, so the top-of-the-hour sweeper and the next clock start on time. Every hour starts with its :00 items (Top of the hour), then the clock from its first slot.</span></div></label>
+      <label class="opt" data-find="hour preview planning"><input type="checkbox" id="hour_preview"><div><b>Hour preview</b><span>In Planning, preview any hour or clock as a timeline with warnings (empty folders, too many jingles, running late).</span></div></label>
+    </section>
+    <section class="card sec" data-sec="tv">
+      <label class="opt" data-find="ad box slideshow adbox hype screen"><input type="checkbox" id="adbox_always"><div><b>Ad box slideshow always on the Hype Screen</b><span>Every PNG in branding/adbox, 30 s each. Off = only when you put it on (+ ELEMENT) or plan it (Planning → ON SCREEN → ▦ Ad box slideshow), in any scene.</span></div></label>
+      <span class="lab">TV · paired songs</span>
+      <p class="muted" style="margin:0">A song that has a clip with the same name in /clips: the radio plays the audio file, the TV plays the clip with its own sound. This sets how loud that clip sound is on TV compared to the radio.</p>
+      <div class="sl" data-find="clip sound tv loudness"><label>Clip sound on TV<small>dB compared to the radio</small></label><input type="range" id="tv_clip_offset" min="-10" max="10" step="0.5"><span class="v" id="tv_clip_offset_v"></span></div>
+    </section>
+    <section class="card sec" data-sec="tickers">
+      <div class="row between"><span class="lab">Tickers · the scrolling bar at the bottom of the TV</span><button class="btn sm" id="tkAdd">+ Ticker</button></div>
+      <p class="muted" style="margin:0">A ticker reads an <b>RSS feed</b> (e.g. nu.nl/rss) or a <b>Hype Live ticker link</b> (hyperadio.nl/?hype_ticker=traffic …) every 10 minutes. Show it with <b>Planning → ON SCREEN</b> (e.g. "At a time *:20 → ▤ Ticker: TRAFFIC, 60 s"), or tick "always on the Hype Screen". A planned ticker goes over the always-on one; the bar gives way to the Now Playing box.</p>
+      <div id="tkRows" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div class="row"><button class="btn sm yellow" id="tkSave">Save tickers</button><span class="muted" style="font-size:12px" id="tkInfo"></span></div>
+    </section>
+    <section class="card sec" data-sec="guard">
+      <span class="lab">Alarm · self-repair · Hype Live</span>
+      <div id="gNow" style="display:flex;flex-direction:column;gap:6px"></div>
+      <label class="opt" data-find="repair restart automatic"><input type="checkbox" id="g_repair"><div><b>Repair by itself</b><span>Silence, a stalled TV stream or a part that stops answering: Hype Studio restarts that part (max. 3× per 30 min, then it only alarms).</span></div></label>
+      <label class="opt" data-find="hype live heartbeat alarm push"><input type="checkbox" id="g_heartbeat"><div><b>Report to Hype Live every minute</b><span>Hype Live shows it in Health and pushes problems to your phone (Hype Live app). No report for 3 minutes = an alarm too.</span></div></label>
+      <div class="row" style="gap:8px;flex-wrap:wrap" data-find="hype live key link"><input type="password" id="g_key" placeholder="Hype Live key (⚙️ Settings → 🔗 Links)" autocomplete="off" style="flex:1;min-width:220px"><input type="url" id="g_url" style="width:220px" aria-label="Website"><button class="btn sm yellow" id="g_save">Save</button></div>
+      <span class="lab" style="margin-top:6px">Last events</span>
+      <div id="gEv" style="display:flex;flex-direction:column;gap:4px;font-size:13px"></div>
+    </section>
+    <section class="card sec" data-sec="live">
+      <span class="lab">Live · recording · restream</span>
+      <label class="opt" data-find="record live show recording"><input type="checkbox" id="auto_record"><div><b>Record every live show</b><span>GO LIVE starts a recording (video .mp4 + radio .mp3) in /recordings, END LIVE stops it. The REC button in the panel records any time.</span></div></label>
+      <div class="sl" data-find="lip sync camera delay"><label>Lip sync (TV)<small>right = sound later, left = picture later</small></label><input type="range" id="cam_delay" min="-500" max="800" step="20"><span class="v" id="cam_delay_v"></span></div>
+      <span class="lab" style="margin-top:6px">Restream to</span>
+      <div id="dests" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="row"><button class="btn sm" id="destAdd">+ Add</button><button class="btn sm yellow" id="destSave">Save restream</button></div>
+      <p class="muted" style="margin:0">Use the RTMP address and stream key from YouTube Studio (Go live → Stream), Facebook Live Producer, Twitch, … Turn each one on or off in the panel; "with GO LIVE" starts it together with GO LIVE. The stream is sent as it is (no extra load on the server).</p>
+    </section>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const authed = r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); } return r; };
+const get = p => fetch('../api/' + p).then(authed).then(r => r.json());
+const post = (p, d) => fetch('../api/' + p, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d)}).then(authed).then(r => r.json());
+function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('show'), 2000); }
+// live processing meters (Settings → Sound): dB the compressor / limiter take off, short-term loudness of what goes on air
+(function dyn() {
+  let pk = {c: 0, l: 0}, last = 0;
+  const col = (v, ok, much) => v <= ok ? '#3DDC97' : v <= much ? '#FFE000' : '#FF4D5E';
+  setInterval(() => {
+    if (document.hidden || !document.getElementById('dmC')) return;
+    fetch('/api/level').then(r => r.json()).then(d => {
+      const now = Date.now(), k = Math.exp(-(now - last) / 1500); last = now;      // hold the peaks a little so you can read them
+      pk.c = Math.max(d.comp || 0, pk.c * k); pk.l = Math.max(d.lim || 0, pk.l * k);
+      const set = (id, v, max, c, txt) => { const e = document.getElementById('dm' + id); e.style.width = Math.min(100, 100 * v / max) + '%'; e.style.background = c; document.getElementById('dv' + id).textContent = txt; };
+      set('C', pk.c, 10, col(pk.c, 4, 6), '−' + pk.c.toFixed(1) + ' dB');
+      set('L', pk.l, 8, col(pk.l, 2, 4), '−' + pk.l.toFixed(1) + ' dB');
+      const u = d.lufs; if (u != null && isFinite(u) && u > -60) set('U', Math.max(0, u + 30), 26, u > -9 ? '#FF4D5E' : u > -11 ? '#FFE000' : '#05A9C6', u.toFixed(1) + ' LUFS');
+    }).catch(() => {});
+  }, 200);
+})();
+const SL = [
+  ['snd_drive', 'Loudness', 'how hard it hits the limiter', 0, 10, 0.5, 'dB'],
+  ['snd_bass', 'Bass warmth', 'punch in the low end', 0, 8, 0.5, 'dB'],
+  ['snd_bass_f', 'Bass frequency', 'lower = deeper', 50, 160, 5, 'Hz'],
+  ['snd_mid', 'Upper mids (3.5 kHz)', 'minus = less harsh / tiring, plus = more presence', -4, 3, 0.5, 'dB'],
+  ['snd_treble', 'Treble', 'minus = warmer, plus = brighter', -4, 4, 0.5, 'dB'],
+  ['snd_ratio', 'Compression', '1 = none, 2 = light, 4 = strong', 1, 6, 0.1, ':1'],
+  ['snd_thresh', 'Compression starts at', 'lower = more compression', -30, 0, 1, 'dB'],
+  ['snd_attack', 'Attack', 'slower = more punch on the beat', 1, 100, 1, 'ms'],
+  ['snd_release', 'Release', 'how fast it lets go', 50, 1000, 10, 'ms'],
+  ['snd_ceiling', 'Ceiling', 'loudest peak allowed', -3, -0.1, 0.1, 'dB']];
+const PRESETS = {   // all on the Classic chain; target: loud enough to keep the energy, never tiring (ceiling −1 dB)
+  'Warm & punchy': {tip: 'the all-round Hype sound: warm bass, light compression', snd_drive: 5, snd_bass: 3, snd_bass_f: 85, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
+  'Warm & punchy multiband': {tip: 'Warm & punchy, but bass, mids and highs are compressed on their own: the kick no longer pulls the whole mix down', snd_punch: 0.5, snd_drive: 4.5, snd_bass: 3, snd_bass_f: 85, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
+  'Hype Energy': {tip: 'daytime: a bit brighter and more driving', snd_drive: 5.5, snd_bass: 3.5, snd_bass_f: 75, snd_mid: 0, snd_treble: 1, snd_ratio: 2.5, snd_thresh: -17, snd_attack: 25, snd_release: 200, snd_ceiling: -1},
+  'Deep Bass': {tip: 'Afro / dancehall / reggaeton: deeper low end, the kick comes through', snd_drive: 5, snd_bass: 5, snd_bass_f: 65, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2.2, snd_thresh: -16, snd_attack: 35, snd_release: 240, snd_ceiling: -1},
+  'Crisp Vocals': {tip: 'clear voices and hi-hats, tighter bass', snd_drive: 4.5, snd_bass: 2, snd_bass_f: 95, snd_mid: 0.5, snd_treble: 1.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
+  'Smooth Daytime': {tip: 'easy for long listening (work, shop): less pressure, still full', snd_drive: 4, snd_bass: 2.5, snd_bass_f: 90, snd_mid: -1, snd_treble: 0, snd_ratio: 2, snd_thresh: -15, snd_attack: 35, snd_release: 260, snd_ceiling: -1},
+  'Night Chill': {tip: 'late night / chill shows: softer top, gentle compression', snd_drive: 3, snd_bass: 3, snd_bass_f: 80, snd_mid: -1.5, snd_treble: -1, snd_ratio: 1.8, snd_thresh: -14, snd_attack: 40, snd_release: 300, snd_ceiling: -1.2},
+  'Loud club': {tip: 'party / club shows: the loudest one – check it does not tire', snd_drive: 6, snd_bass: 4.5, snd_bass_f: 70, snd_treble: 0.5, snd_ratio: 3, snd_thresh: -18, snd_attack: 20, snd_release: 180, snd_ceiling: -0.8},
+  'Hype Full ★ try first': {tip: 'full but never tiring: multiband, slow-ish attack for punch, highs a bit softer', snd_punch: 0.5, snd_drive: 4, snd_bass: 2.5, snd_bass_f: 80, snd_mid: -1.5, snd_treble: -1, snd_ratio: 2.2, snd_thresh: -18, snd_attack: 25, snd_release: 200, snd_ceiling: -1},
+  'Hype Active': {tip: 'more energy for daytime / drive time, still multiband so the kick does not pump', snd_punch: 0.5, snd_drive: 5, snd_bass: 3, snd_bass_f: 75, snd_mid: -0.5, snd_treble: 0, snd_ratio: 2.5, snd_thresh: -18, snd_attack: 20, snd_release: 180, snd_ceiling: -1},
+  'Clean & open': {tip: 'almost no processing – the songs are already mastered loud; most natural sound', snd_punch: 0, snd_drive: 3, snd_bass: 1.5, snd_bass_f: 90, snd_mid: -0.5, snd_treble: -0.5, snd_ratio: 1.6, snd_thresh: -14, snd_attack: 40, snd_release: 300, snd_ceiling: -1},
+  'Urban Warm': {tip: 'Afro / dancehall / Dutch: deep warm low end, soft top', snd_punch: 0.5, snd_drive: 4.5, snd_bass: 4, snd_bass_f: 65, snd_mid: -1, snd_treble: -1, snd_ratio: 2.2, snd_thresh: -17, snd_attack: 30, snd_release: 230, snd_ceiling: -1},
+  'Hip-hop Weight': {tip: '808s and sub bass with weight, kick stays round', snd_punch: 0.5, snd_drive: 4.5, snd_bass: 3.5, snd_bass_f: 60, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2.5, snd_thresh: -18, snd_attack: 35, snd_release: 250, snd_ceiling: -1},
+  'Easy Ears': {tip: 'for hours of listening (shops, offices, at work): soft highs, gentle, still full', snd_punch: 0.5, snd_drive: 3.5, snd_bass: 2, snd_bass_f: 85, snd_mid: -2, snd_treble: -1.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 260, snd_ceiling: -1.2},
+  'Weekend Party': {tip: 'Friday / Saturday night: loud and driving, multiband keeps it clean', snd_punch: 0.5, snd_drive: 5.5, snd_bass: 4, snd_bass_f: 70, snd_mid: -0.5, snd_treble: 0, snd_ratio: 2.8, snd_thresh: -19, snd_attack: 20, snd_release: 170, snd_ceiling: -0.8}};
+const PKEYS = ['snd_drive', 'snd_bass', 'snd_bass_f', 'snd_mid', 'snd_treble', 'snd_ratio', 'snd_thresh', 'snd_attack', 'snd_release', 'snd_ceiling'];
+const MINE = () => (ST && ST.sound_presets) || {};
+function allPresets() { const o = Object.assign({}, PRESETS); Object.entries(MINE()).forEach(([n, v]) => { o['★ ' + n] = Object.assign({tip: 'your own preset'}, v); }); return o; }
+function presetNow() { const S_ = (ST && ST.sound) || {}, P = allPresets();
+  const same = n => Math.abs((P[n].snd_punch || 0) - (S_.snd_punch || 0)) < 0.2 && PKEYS.every(k => P[n][k] === undefined || Math.abs((S_[k] ?? 1e9) - P[n][k]) < 0.06);
+  return Object.keys(P).find(same) || null; }
+let ST = null, sT = null, pend = {};
+function fmtv(v, u) { return (Math.round(v * 10) / 10) + (u === ':1' ? ':1' : ' ' + u); }
+function render() {
+  paintSw();
+  $('#sliders').innerHTML = SL.map(([k, l, h, mi, ma, st, u]) => `<div class="sl"><label for="${k}">${l}<small>${h}</small></label><input type="range" id="${k}" min="${mi}" max="${ma}" step="${st}" value="${ST.sound[k] ?? mi}"><span class="v" id="${k}_v">${ST.sound[k] == null ? '?' : fmtv(ST.sound[k], u)}</span></div>`).join('');
+  SL.forEach(([k, , , , , , u]) => { const e = $('#' + k); e.oninput = () => { $('#' + k + '_v').textContent = fmtv(+e.value, u); pend[k] = +e.value; clearTimeout(sT); sT = setTimeout(sendSound, 250); }; });
+  const cur = presetNow();
+  const AP = allPresets();
+  $('#presets').innerHTML = '<span class="lab" style="width:auto">Presets</span>' + Object.keys(AP).map(n => `<span class="row" style="gap:0"><button class="btn sm${n === cur ? ' on' : ''}" data-p="${esc(n)}" title="${esc(AP[n].tip)}">${esc(n)}</button>${n.startsWith('★ ') ? `<button class="btn sm" data-pdel="${esc(n.slice(2))}" title="Delete this preset" style="padding:0 7px">×</button>` : ''}</span>`).join('') +
+    `<button class="btn sm yellow" id="pSave" title="Keep the sliders as they are now as your own preset">＋ Save as my preset</button>` +
+    `<span class="muted" style="font-size:12px;flex-basis:100%">${cur ? '▶ ' + esc(cur) + ': ' + esc(AP[cur].tip) : (ST.sound && ST.sound.snd_punch > 0.75 ? 'Hype Punch is on – a preset switches back to the Classic chain.' : 'Own settings (sliders moved) – ＋ Save as my preset keeps them.')}</span>`;
+  $('#pSave').onclick = () => { const n = (prompt('Name for this preset (e.g. "Warm no pump")', cur && cur.startsWith('★ ') ? cur.slice(2) : '') || '').trim().slice(0, 40); if (!n) return;
+    const v = {}; [...PKEYS, 'snd_punch'].forEach(k => { if (ST.sound[k] != null) v[k] = ST.sound[k]; });
+    post('settings', {sound_presets: Object.assign({}, MINE(), {[n]: v})}).then(d => { ST = d; render(); toast('Preset "' + n + '" saved'); }); };
+  $$('#presets [data-pdel]').forEach(b => b.onclick = () => { const n = b.dataset.pdel; if (!confirm('Delete preset "' + n + '"?')) return; const m = Object.assign({}, MINE()); delete m[n];
+    post('settings', {sound_presets: m}).then(d => { ST = d; render(); toast('Deleted'); }); });
+  const sp = (ST && ST.sound && ST.sound.snd_punch) || 0, pm = sp > 0.75, mbm = sp > 0.25 && !pm;
+  $$('#sndMode [data-m]').forEach(b => { const m = +b.dataset.m; b.classList.toggle('on', m === 1 ? pm : m === 0.5 ? mbm : !pm && !mbm);
+    b.onclick = () => { pend = {snd_punch: m}; sendSound().then(() => { render(); toast(m === 1 ? 'Hype Punch on – listen, switch back any time' : m === 0.5 ? 'Classic + multiband on' : 'Classic sound'); }); }; });
+  $('#sndModeTip').textContent = pm ? 'Punch: 3-band compression, punch at 100 Hz, vocal presence + air. Loudness + Ceiling sliders still work.'
+    : mbm ? 'Your sliders (bass, treble, loudness …) with bass, mids and highs compressed on their own – the kick no longer pulls the vocals down. The Compression sliders are not used here.' : '';
+  $$('#presets [data-p]').forEach(b => b.onclick = () => { const P_ = Object.assign({}, allPresets()[b.dataset.p]); delete P_.tip; pend = Object.assign({snd_punch: 0, snd_mid: 0}, P_); sendSound().then(() => { render(); toast('Preset: ' + b.dataset.p); }); });
+  const ok = Object.values(ST.sound).every(v => v != null); $('#sndState').textContent = ok ? 'radio engine connected' : 'radio engine not reachable'; $('#sndState').style.color = ok ? 'var(--g)' : 'var(--r)';
+  ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
+  $('#tv_clip_offset').value = ST.tv_clip_offset; $('#tv_clip_offset_v').textContent = fmtv(ST.tv_clip_offset, 'dB');
+  $('#tv_clip_offset').oninput = () => $('#tv_clip_offset_v').textContent = fmtv(+$('#tv_clip_offset').value, 'dB');
+  $('#tv_clip_offset').onchange = () => post('settings', {tv_clip_offset: +$('#tv_clip_offset').value}).then(d => { ST = d; toast('Saved – used from the next paired song'); });
+}
+// ---------- sections + find ----------
+let SEC = 'sound'; try { SEC = localStorage.getItem('hypeSetSec') || 'sound'; } catch (e) {}
+// ---------- alarm & Hype Live ----------
+function gRender(g) {
+  const c = g.conf || {}, hb = g.heartbeat || {}, pr = g.problems || [];
+  $('#g_repair').checked = c.repair !== false; $('#g_heartbeat').checked = c.heartbeat !== false;
+  $('#g_url').value = c.hl_url || 'https://hyperadio.nl/'; $('#g_key').placeholder = c.has_key ? '•••••••• (key saved – type to replace)' : 'Hype Live key (⚙️ Settings → 🔗 Links)';
+  const ago = t => t ? Math.round((Date.now() / 1000 - t)) + ' s ago' : 'never';
+  $('#gNow').innerHTML = `<div class="row between"><b>${!g.fresh ? '<span style="color:var(--r)">● the guard is not running</span>' : pr.length ? '<span style="color:var(--r)">● ' + pr.map(p => esc(p.text)).join(' · ') + '</span>' : '<span style="color:var(--g)">● all OK</span>'}</b>
+     <span class="muted" style="font-size:12px">Hype Live: ${hb.ok === true ? '<span style="color:var(--g)">received ' + ago(hb.t) + '</span>' : hb.ok === false ? '<span style="color:var(--o)">' + esc(hb.answer || 'no answer') + '</span>' : esc(hb.answer || 'off')}</span></div>`;
+  $('#gEv').innerHTML = (g.events || []).slice(0, 12).map(e => `<div class="row" style="gap:8px"><span class="muted mono" style="width:60px">${new Date(e.t * 1000).toTimeString().slice(0, 5)}</span><span style="color:${e.level === 'bad' ? 'var(--r)' : e.level === 'repair' ? 'var(--o)' : e.level === 'ok' ? 'var(--g)' : 'var(--mut)'}">${esc(e.text)}</span></div>`).join('') || '<span class="muted">nothing yet</span>';
+}
+function gLoad() { get('guard').then(gRender).catch(() => {}); }
+const gPost = d => post('guard', d).then(g => { gRender(g); toast('Saved'); });
+$('#g_repair').onchange = () => gPost({repair: $('#g_repair').checked});
+$('#g_heartbeat').onchange = () => gPost({heartbeat: $('#g_heartbeat').checked});
+$('#g_save').onclick = () => { const d = {hl_url: $('#g_url').value.trim()}; if ($('#g_key').value.trim()) d.hl_key = $('#g_key').value.trim(); $('#g_key').value = ''; gPost(d); };
+gLoad(); setInterval(() => { if (SEC === 'guard' && !document.hidden) gLoad(); }, 5000);
+function showSec(n) { SEC = n; try { localStorage.setItem('hypeSetSec', n); } catch (e) {} $$('.sec').forEach(x => x.hidden = x.dataset.sec !== n); $$('.sbtn').forEach(b => b.classList.toggle('on', b.dataset.sec === n)); }
+$$('.sbtn').forEach(b => b.onclick = () => { $('#sq').value = ''; $$('.hit').forEach(x => x.classList.remove('hit')); showSec(b.dataset.sec); });
+$('#sq').oninput = () => { const q = $('#sq').value.trim().toLowerCase(); $$('.hit').forEach(x => x.classList.remove('hit'));
+  if (!q) return showSec(SEC);
+  $$('.sec').forEach(sec => { const items = [...sec.querySelectorAll('.sl, .opt')].filter(el => (el.textContent + ' ' + (el.dataset.find || '')).toLowerCase().includes(q));
+    items.forEach(el => el.classList.add('hit')); sec.hidden = !items.length && !sec.textContent.toLowerCase().includes(q); });
+  $$('.sbtn').forEach(b => b.classList.remove('on')); };
+showSec(SEC);
+// ---------- mixing + rotation ----------
+function bindSlider(id, unit, send, fmtf) { const e = $('#' + id); const f = fmtf || (v => (Math.round(v * 10) / 10) + ' ' + unit);
+  e.oninput = () => $('#' + id + '_v').textContent = f(+e.value); e.onchange = () => send(+e.value); }
+function renderMix() {
+  const S_ = ST.sound || {};
+  [['mix_out', S_.mix_out ?? 1.5, 's'], ['mix_in', S_.mix_in ?? 0, 's']].forEach(([k, v, u]) => { $('#' + k).value = v; $('#' + k + '_v').textContent = (Math.round(v * 10) / 10) + ' ' + u;
+    bindSlider(k, u, x => { pend = {[k]: x}; sendSound().then(() => toast('Saved – from the next song that is queued (about 1 song later)')); }); });
+  const jd = v => (v > 0 ? '+' : '') + (Math.round(v * 10) / 10) + ' dB';
+  $('#jingle_db').value = ST.jingle_db ?? -3; $('#jingle_db_v').textContent = jd(ST.jingle_db ?? -3); bindSlider('jingle_db', 'dB', x => post('settings', {jingle_db: x}).then(d => { ST = d; toast('Saved – from the next jingle that is queued'); }), jd);
+  const jf = v => +v === 0 ? 'plays out' : (Math.round(v * 10) / 10) + ' s';
+  $('#jingle_fade').value = ST.jingle_fade ?? 0; $('#jingle_fade_v').textContent = jf(ST.jingle_fade ?? 0); bindSlider('jingle_fade', 's', x => post('settings', {jingle_fade: x}).then(d => { ST = d; toast('Saved – from the next jingle that is queued'); }), jf);
+  const dbf = v => Math.round(20 * Math.log10(v)) + ' dB (' + Math.round(v * 100) + ' %)';
+  $('#pad_duck').value = ST.pad_duck ?? 0.25; $('#pad_duck_v').textContent = dbf(ST.pad_duck ?? 0.25); bindSlider('pad_duck', '', x => post('settings', {pad_duck: x}).then(d => { ST = d; toast('Saved – from the next pad'); }), dbf);
+  const hm = v => v >= 60 ? Math.floor(v / 60) + ' h ' + (v % 60 ? (v % 60) + ' min' : '') : v + ' min';
+  $('#artist_sep_min').value = ST.artist_sep_min ?? 75; $('#artist_sep_min_v').textContent = hm(ST.artist_sep_min ?? 75); bindSlider('artist_sep_min', 'min', x => post('settings', {artist_sep_min: x}).then(d => { ST = d; toast('Saved'); }), hm);
+  $('#title_sep_h').value = ST.title_sep_h ?? 3; $('#title_sep_h_v').textContent = (ST.title_sep_h ?? 3) + ' h'; bindSlider('title_sep_h', 'h', x => post('settings', {title_sep_h: x}).then(d => { ST = d; toast('Saved'); }));
+}
+// ---------- tickers ----------
+let TKS = [], TKD = {}, TKF = [];
+const ago_ = t => { if (!t) return 'not fetched yet'; const m = Math.round((Date.now() / 1000 - t) / 60); return m < 1 ? 'just now' : m + ' min ago'; };
+function renderTk() {
+  $('#tkRows').innerHTML = TKS.map((t, i) => { const d = TKD[t.id] || {};
+    const st = !t.url ? '<span style="color:var(--y)">no link yet</span>' : d.err && !d.n ? '<span style="color:var(--r)">' + esc(d.err) + '</span>' : (d.n || 0) + ' items · ' + ago_(d.at) + (d.first && d.first[0] ? ' · “' + esc(d.first[0]) + '”' : '');
+    return `<div class="card" style="background:var(--deep);padding:12px;gap:8px" data-find="ticker ${esc(t.label)}">
+      <div class="row" style="gap:8px;flex-wrap:wrap"><label class="row" style="gap:6px"><input type="checkbox" data-t="${i}" data-k="on" ${t.on ? 'checked' : ''}> <b>HYPE</b></label>
+        <input data-t="${i}" data-k="label" value="${esc(t.label)}" placeholder="NEWS" style="width:140px" aria-label="Name on the bar">
+        <input data-t="${i}" data-k="sub" value="${esc(t.sub)}" placeholder="NU.NL" style="width:170px" aria-label="Small label">
+        <label class="row" style="gap:6px;font-size:13px"><input type="checkbox" data-t="${i}" data-k="always" ${(t.always || []).includes('Hype Screen') ? 'checked' : ''}> always on the Hype Screen</label>
+        <span style="flex:1"></span><button class="btn sm" data-tdel="${i}" aria-label="Remove ticker">×</button></div>
+      <div class="row" style="gap:8px;font-size:13px"><span class="muted">Bar graphic</span><select data-t="${i}" data-k="bar" style="min-height:34px;background:var(--card);border:1px solid var(--line2);border-radius:8px;color:var(--txt);padding:0 8px"><option value="">drawn (no PNG)</option>${(TKF || []).filter(f => /\.png$/i.test(f)).map(f => `<option ${t.bar === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select></div>
+      <input data-t="${i}" data-k="url" value="${esc(t.url)}" placeholder="RSS or ticker link, e.g. https://www.nu.nl/rss" style="width:100%" aria-label="Link">
+      <div class="row" style="gap:8px;flex-wrap:wrap;font-size:13px"><span class="muted">max.</span><input type="number" min="1" max="30" data-t="${i}" data-k="max" value="${t.max}" style="width:64px"><span class="muted">items · only the last</span><input type="number" min="0" max="168" data-t="${i}" data-k="hours" value="${t.hours}" style="width:64px"><span class="muted">h (0 = all)</span></div>
+      <details><summary class="muted" style="cursor:pointer;font-size:12px">Never show headlines with these words</summary><textarea data-t="${i}" data-k="block" rows="3" style="width:100%;margin-top:6px">${esc(t.block || '')}</textarea></details>
+      <div class="muted" style="font-size:12px">${st}</div></div>`; }).join('');
+  $$('#tkRows [data-t]').forEach(el => el.onchange = () => { const t = TKS[+el.dataset.t], k = el.dataset.k;
+    if (k === 'on') t.on = el.checked; else if (k === 'always') t.always = el.checked ? ['Hype Screen'] : []; else if (k === 'max' || k === 'hours') t[k] = +el.value; else t[k] = el.value;
+    if (k === 'always' && el.checked) TKS.forEach((o, j) => { if (j !== +el.dataset.t) o.always = []; });   // one always-on ticker
+    if (k === 'always') renderTk(); });
+  $$('#tkRows [data-tdel]').forEach(b => b.onclick = () => { TKS.splice(+b.dataset.tdel, 1); renderTk(); });
+}
+function loadTk() { get('screenrules').then(d => { TKF = d.files || []; }).catch(() => {}).finally(() => get('tickers').then(d => { TKS = d.tickers; TKD = d.data || {}; renderTk(); }).catch(() => {})); }
+$('#tkAdd').onclick = () => { TKS.push({id: 'tk' + Date.now().toString(36), label: 'NEW', sub: '', url: '', always: [], max: 12, hours: 24, block: '', on: true}); renderTk(); };
+$('#tkSave').onclick = () => post('tickers', {tickers: TKS.map(t => Object.assign({}, t, {id: t.id.startsWith('tk') ? t.label : t.id}))}).then(d => { TKS = d.tickers; TKD = d.data || {}; renderTk(); toast('Saved – fetching the feeds now'); setTimeout(loadTk, 6000); });
+loadTk();
+function paintSw() {
+  const sd = (ST && ST.sound) || {}, c = (sd.snd_comp ?? 1) > 0.5, m = (sd.snd_monob ?? 0) > 0.5;
+  $('#swComp').textContent = 'COMPRESSOR: ' + (c ? 'ON' : 'OFF'); $('#swComp').classList.toggle('on', c); $('#swComp').classList.toggle('red', !c);
+  $('#swMonob').textContent = 'MONO BASS: ' + (m ? 'ON' : 'OFF'); $('#swMonob').classList.toggle('on', m);
+}
+$('#swComp').onclick = () => { const on = ((ST.sound || {}).snd_comp ?? 1) > 0.5; pend = {snd_comp: on ? 0 : 1}; sendSound().then(() => { paintSw(); toast(on ? 'Compressor OFF (limiter stays on) – listen, then switch it back on' : 'Compressor ON'); }); };
+$('#swMonob').onclick = () => { const on = ((ST.sound || {}).snd_monob ?? 0) > 0.5; pend = {snd_monob: on ? 0 : 1}; sendSound().then(() => { paintSw(); toast(on ? 'Mono bass OFF' : 'Mono bass ON – kick + bass in the middle'); }); };
+function sendSound() { const s = pend; pend = {}; return post('settings', {sound: s}).then(d => { ST = d; }); }
+get('settings').then(d => { ST = d; render(); renderMix(); });
+// ---------- live ----------
+let LV = null;
+const DPRESET = {youtube: ['YouTube', 'rtmp://a.rtmp.youtube.com/live2'], facebook: ['Facebook', 'rtmps://live-api-s.facebook.com:443/rtmp'], twitch: ['Twitch', 'rtmp://live.twitch.tv/app']};
+function lvRender() {
+  $('#auto_record').checked = LV.auto_record; $('#auto_record').onchange = () => post('live/settings', {auto_record: $('#auto_record').checked}).then(d => { LV = d; toast('Saved'); });
+  $('#cam_delay').value = LV.lip_sync || 0; $('#cam_delay_v').textContent = (LV.lip_sync || 0) + ' ms';
+  $('#cam_delay').oninput = () => $('#cam_delay_v').textContent = $('#cam_delay').value + ' ms';
+  $('#cam_delay').onchange = () => post('live/settings', {lip_sync: +$('#cam_delay').value}).then(d => { LV = d; toast('Saved'); });
+  $('#dests').innerHTML = Object.entries(LV.restream).map(([k, d]) => `<div class="opt" data-k="${esc(k)}" style="flex-wrap:wrap;gap:8px"><input type="text" data-f="name" value="${esc(d.name)}" placeholder="Name" style="max-width:140px"><input type="text" data-f="url" value="${esc(d.url)}" placeholder="rtmp://…" style="flex:1;min-width:200px"><input type="text" data-f="key" value="${esc(d.key)}" placeholder="stream key" style="max-width:180px"><label class="tg" style="font-size:13px"><input type="checkbox" data-f="with_live" ${d.with_live ? 'checked' : ''} style="width:18px;height:18px">with GO LIVE</label><button class="btn sm red" data-del="${esc(k)}">×</button></div>`).join('') || '<span class="muted">No destinations yet.</span>';
+  $$('#dests [data-del]').forEach(b => b.onclick = () => { delete LV.restream[b.dataset.del]; lvRender(); });
+}
+$('#destAdd').onclick = () => { const p = prompt('Which one? youtube, facebook, twitch or other', 'youtube'); if (!p) return; const k = p.toLowerCase().replace(/[^a-z0-9]/g, '') + (LV.restream[p] ? Object.keys(LV.restream).length : ''); const pr = DPRESET[p.toLowerCase()] || [p, ''];
+  LV.restream[k] = {name: pr[0], url: pr[1], key: '', with_live: false}; lvRender(); };
+$('#destSave').onclick = () => { const dests = {};
+  $$('#dests [data-k]').forEach(r => { const g = f => r.querySelector(`[data-f="${f}"]`); dests[r.dataset.k] = {name: g('name').value, url: g('url').value, key: g('key').value, with_live: g('with_live').checked}; });
+  post('live/settings', {dests}).then(d => { LV = d; lvRender(); toast('Restream saved'); }); };
+get('live').then(d => { LV = d; lvRender(); });
+</script>
+</body>
+</html>

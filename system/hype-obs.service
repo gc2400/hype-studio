@@ -1,0 +1,16 @@
+[Unit]
+Description=Hype TV picture (OBS, headless)
+After=hype-sway.service hype-pulse.service hype-mediamtx.service
+Requires=hype-sway.service
+[Service]
+ExecStartPre=/bin/mkdir -p -m 700 /run/hype
+Environment=HOME=/root
+Environment=XDG_RUNTIME_DIR=/run/hype
+Environment=WAYLAND_DISPLAY=wayland-1 QT_QPA_PLATFORM=wayland
+ExecStartPre=/bin/rm -rf /root/.config/obs-studio/.sentinel
+ExecStartPre=/bin/sleep 3
+ExecStart=/usr/bin/dbus-run-session /usr/bin/obs --profile Hype --collection Hype --startstreaming --disable-shutdown-check --disable-updater
+Restart=always
+RestartSec=5
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hype Studio · Planning</title>
+<link rel="icon" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--mut:#A9BCCD;--soft:#C9D7E3;--y:#FFE000;--b:#05A9C6;--g:#3DDC97;--r:#FF4D5E;--o:#FFB547}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
+button,input,select{font-family:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.wrap{padding:14px;display:flex;flex-direction:column;gap:14px;max-width:1500px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}.brand img{width:44px;height:44px}
+h1{margin:0;font-size:20px;font-weight:900}
+.nav{display:flex;gap:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.lab{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.between{justify-content:space-between}
+.btn{cursor:pointer;border-radius:10px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);font-weight:700;font-size:13px;min-height:40px;padding:0 12px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--b)}.btn.on{background:var(--b);color:var(--bg);border-color:var(--b)}
+.btn.yellow{background:var(--y);color:var(--bg);border-color:var(--y)}.btn.red{background:#3A0E18;color:#FF8A97;border-color:var(--r)}
+.btn.sm{min-height:30px;font-size:12px;padding:0 9px}.btn:disabled{opacity:.4;cursor:default}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.tabs{display:flex;background:var(--deep);border-radius:11px;padding:3px;gap:3px;max-width:960px;flex-wrap:wrap}
+.tab{cursor:pointer;flex:1;min-height:40px;border-radius:9px;border:0;background:transparent;color:var(--mut);font-weight:800;font-size:13px;letter-spacing:.06em}
+.tab.on{background:var(--b);color:var(--bg)}
+.split{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.side{flex:1 1 260px;max-width:340px}.main{flex:999 1 560px;min-width:0}
+.list{display:flex;flex-direction:column;gap:4px}
+.li{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid transparent;cursor:pointer;background:none;color:inherit;text-align:left;width:100%}
+.li:hover{background:var(--card2)}.li.sel{background:var(--card2);border-color:var(--line2)}
+.li b{font-size:14px}.li span{font-size:12px;color:var(--mut)}
+.dot{width:12px;height:12px;border-radius:4px;flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 9px;border-radius:999px;background:var(--card2);color:var(--soft);border:1px solid var(--line2)}
+.chip button{border:0;background:none;color:var(--mut);cursor:pointer;font-size:15px;line-height:1;padding:0}
+.chip button:hover{color:var(--r)}
+input[type=text],input[type=search],input[type=number],select{background:var(--deep);border:1px solid var(--line2);border-radius:10px;color:var(--txt);font-size:14px;min-height:40px;padding:0 10px}
+input[type=text]{width:100%}
+label.tg{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;cursor:pointer}
+label.tg input{width:20px;height:20px;accent-color:var(--y)}
+.muted{color:var(--mut);font-size:13px}
+.pick{max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:2px;background:var(--deep);border-radius:10px;padding:6px}
+.pick button{display:flex;justify-content:space-between;gap:10px;border:0;background:none;color:var(--txt);padding:8px;border-radius:8px;cursor:pointer;text-align:left;font-size:13px}
+.pick button:hover{background:var(--card2)}.pick button span{color:var(--mut)}
+.order{display:flex;flex-direction:column;gap:2px;max-height:360px;overflow:auto}
+.order div{display:flex;gap:10px;font-size:13px;padding:5px 8px;border-radius:8px}
+.order div.nextup{background:#2B2500;color:var(--y);font-weight:700}
+.order div.done{opacity:.45}
+table{border-collapse:collapse;width:100%}
+.slots td,.slots th{padding:6px;text-align:left;font-size:13px;border-bottom:1px solid var(--line)}
+.slots th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.slots select,.slots input{width:100%}
+.slots .num{width:80px}
+.grid{overflow-x:auto}
+.grid table{min-width:900px;user-select:none}
+.grid th{font-size:11px;color:var(--mut);font-weight:700;padding:4px;text-align:center}
+.grid td{height:30px;border:1px solid var(--bg);border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;color:rgba(6,20,35,.85);text-align:center;overflow:hidden;white-space:nowrap}
+.grid td.empty{background:var(--deep)}
+.grid td.day{background:none;color:var(--soft);font-size:12px;cursor:default;text-align:left;padding-right:8px;width:52px}
+.brush{display:flex;gap:6px;flex-wrap:wrap}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line2);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}.toast.err{border-color:var(--r);color:#FF8A97}
+
+/* slim scrollbars in the Hype colours */
+*{scrollbar-width:thin;scrollbar-color:#23496B transparent}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:#23496B;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#05A9C6;background-clip:padding-box}
+::-webkit-scrollbar-button{display:none;width:0;height:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="hhead"></header><script src="/panel/header.js?v=1793349956"></script>
+  <div class="tabs" role="tablist">
+    <button class="tab on" data-tab="pl" role="tab">PLAYLISTS</button>
+    <button class="tab" data-tab="ck" role="tab">CLOCKS</button>
+    <button class="tab" data-tab="sc" role="tab">SCHEDULE</button>
+    <button class="tab" data-tab="fx" role="tab">FIXED TIMES</button>
+    <button class="tab" data-tab="ov" role="tab">INTRO SWEEPERS</button>
+    <button class="tab" data-tab="os" role="tab">ON SCREEN</button>
+  </div>
+
+  <!-- PLAYLISTS -->
+  <section id="tab-pl" class="split">
+    <div class="card side">
+      <div class="row between"><span class="lab">Playlists</span><button class="btn sm yellow" id="plNew">+ New</button></div>
+      <div class="list" id="plList"></div>
+    </div>
+    <div class="card main" id="plEdit" hidden>
+      <div class="row between"><span class="lab">Playlist</span><span class="muted" id="plInfo"></span></div>
+      <label class="muted" style="display:flex;flex-direction:column;gap:6px">Name<input type="text" id="plName" placeholder="e.g. HEAVY"></label>
+      <div class="row" style="gap:20px">
+        <label class="tg"><input type="checkbox" id="plLoop"> Loop (start again at the end)</label>
+        <label class="tg"><input type="checkbox" id="plShuffle"> Randomize (every song once per round)</label>
+        <label class="tg" title="Like CLOSE POWER: one from AFRO, then LAT, then CARIB … Randomize = new order of the sources every round"><input type="checkbox" id="plRotate"> Rotation (take turns: the amount from each source, then the next)</label>
+      </div>
+      <span class="lab">What's in it</span>
+      <div class="row" id="plSources"></div>
+      <div class="row">
+        <button class="btn sm" id="addFolder">+ Folder</button>
+        <button class="btn sm" id="addSong">+ Song</button>
+        <button class="btn sm" id="addList">+ Playlist</button>
+      </div>
+      <div id="picker" hidden>
+        <input type="search" id="pickQ" placeholder="Search…" style="width:100%;margin-bottom:6px">
+        <div class="pick" id="pickRes"></div>
+      </div>
+      <div class="row between">
+        <div class="row"><button class="btn yellow" id="plSave">Save</button><button class="btn" id="plReset" title="The next time it plays from 'where it left off', it starts at the top again">Start from the top</button></div>
+        <button class="btn red" id="plDel">Delete</button>
+      </div>
+      <span class="lab">Play order now <span class="muted" style="text-transform:none;letter-spacing:0" id="plPos"></span></span>
+      <div class="order" id="plOrder"></div>
+    </div>
+  </section>
+
+  <!-- CLOCKS -->
+  <section id="tab-ck" class="split" hidden>
+    <div class="card side">
+      <div class="row between"><span class="lab">Clocks</span><button class="btn sm yellow" id="ckNew">+ New</button></div>
+      <div class="list" id="ckList"></div>
+    </div>
+    <div class="card main" id="ckEdit" hidden>
+      <div class="row" style="flex-wrap:nowrap">
+        <label class="muted" style="display:flex;flex-direction:column;gap:6px;flex:1">Name<input type="text" id="ckName" placeholder="e.g. Clock A"></label>
+        <label class="muted" style="display:flex;flex-direction:column;gap:6px">Colour<input type="color" id="ckColor" style="width:60px;height:40px;border:0;background:none;padding:0"></label>
+      </div>
+      <label class="row" style="gap:8px;font-size:13px"><input type="checkbox" id="ckResume" style="width:20px;height:20px;accent-color:var(--y)"><span><b>Goes on where it left off</b> (like CLOSE): the next hour continues with the next slot. Off = the clock starts at slot 1 every hour.</span></label>
+      <div style="overflow-x:auto">
+      <table class="slots">
+        <thead><tr><th>#</th><th>Type</th><th>Which</th><th>How many</th><th>Start</th><th></th></tr></thead>
+        <tbody id="ckSlots"></tbody>
+      </table>
+      </div>
+      <div class="row"><button class="btn sm" id="slotAdd">+ Add slot</button><span class="muted" id="ckSum"></span></div>
+      <div class="row between"><div class="row"><button class="btn yellow" id="ckSave">Save</button><button class="btn" id="ckPrev" data-pv="1">👁 Preview an hour</button></div><button class="btn red" id="ckDel">Delete</button></div>
+      <p class="muted" style="margin:0">Every hour starts with the top of the hour (fixed time). A clock with "goes on where it left off" then continues with its next slot (CLOSE show clocks); other clocks start at slot 1 every hour (and at a show start on the half hour). When a clock is done before the hour ends it starts again. A slot plays the amount you choose (<b>all</b> = one full round, <b>fill</b> = until the hour or show ends), then the next slot follows. The top-of-the-hour sweeper is a fixed time (every hour). Never more than 2 jingles in a row, and artist separation always applies.</p>
+    </div>
+  </section>
+
+  <!-- SCHEDULE -->
+  <section id="tab-sc" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="card">
+      <div class="row between"><span class="lab">Shows from hyperadio.nl · choose a clock per show</span><button class="btn yellow" id="shSave">Save show clocks</button></div>
+      <p class="muted" style="margin:0">Show times come from your website schedule (checked every hour). A show's clock starts at the show start, also on the half hour (e.g. Fresh Out 20:30). Hours without a show clock use the grid below.</p>
+      <div style="overflow-x:auto"><table class="slots"><thead><tr><th>Show</th><th>When</th><th>Clock</th></tr></thead><tbody id="shRows"></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="row between"><span class="lab">Hour grid (fallback) · pick a clock, then click or drag over the hours · cells show the website show</span><button class="btn yellow" id="scSave">Save schedule</button></div>
+      <div class="row"><button class="btn sm" id="pvMode" data-pv="1" title="Click an hour in the grid to hear what it will play">👁 Preview mode: OFF</button><span class="muted" id="pvHint"></span></div>
+      <div class="brush" id="brush"></div>
+      <div class="grid"><table id="grid"></table></div>
+    </div>
+  </section>
+  <!-- ON SCREEN -->
+  <section id="tab-os" hidden>
+    <div class="card">
+      <div class="row between"><span class="lab">On screen · show your graphics on TV when something plays</span><button class="btn yellow" id="osSave">Save</button></div>
+      <p class="muted" style="margin:0">Upload your graphics to <b>branding/screen</b> (FileZilla). Make them 1920×1080 with a transparent background, as <b>PNG</b> (or a transparent <b>WebM</b> for animation) – they are placed full screen, so the position is in the image itself. Example: <i>New Music</i> image when a song from NEW plays, 3 s after the start, for 10 s.</p>
+      <div style="overflow-x:auto">
+      <table class="slots">
+        <thead><tr><th>On</th><th>Name</th><th>When</th><th>Which</th><th>Graphic</th><th>After</th><th>For</th><th>Every</th><th>Where</th><th>Days · hours</th><th></th></tr></thead>
+        <tbody id="osRows"></tbody>
+      </table>
+      </div>
+      <div class="row"><button class="btn sm" id="osAdd">+ Add</button><span class="muted" id="osFiles"></span></div>
+      <p class="muted" style="margin:8px 0 0"><b style="color:var(--y)">Hype Top 10 – automatic:</b> after each number jingle (TOP10N10 … TOP10N1) the next song shows its number (branding/screen/TOP10/N10.png … N1.png) for the whole song, on every scene. No rule needed.</p>
+    </div>
+  </section>
+  <section class="card" id="pvBox" hidden>
+    <div class="row between"><span class="lab" id="pvTitle">Hour preview</span><button class="btn sm" id="pvClose">Close</button></div>
+    <div id="pvWarn" style="display:flex;flex-direction:column;gap:6px"></div>
+    <div class="muted" id="pvSum"></div>
+    <div class="muted" style="font-size:12px">An example run: the real songs can differ (smart picking and what played before decide on the day).</div>
+    <div class="order" id="pvList" style="max-height:480px"></div>
+  </section>
+  <!-- FIXED TIMES -->
+  <section id="tab-fx" hidden>
+    <div class="card">
+      <div class="row between"><span class="lab">Fixed times · something plays at a set time</span><button class="btn yellow" id="fxSave">Save fixed times</button></div>
+      <p class="muted" style="margin:0"><b>After the song</b> = plays right after the song that is on air at that time (smooth, like a soft fixed time). <b>Exactly on time</b> = fades the song out at the minute and starts it (like CLOSE ASSIGN PLAY TIME). A playlist block always plays from the start (e.g. the Top 10). Time <b>*:00</b> = every hour (e.g. the top-of-the-hour sweeper).</p>
+      <div style="overflow-x:auto">
+      <table class="slots">
+        <thead><tr><th>On</th><th>Name</th><th>Days</th><th>Time</th><th>What</th><th>Which</th><th>How many</th><th>Start</th><th></th></tr></thead>
+        <tbody id="fxRows"></tbody>
+      </table>
+      </div>
+      <div class="row"><button class="btn sm" id="fxAdd">+ Add fixed time</button></div>
+    </div>
+  </section>
+
+  <!-- INTRO SWEEPERS -->
+  <section id="tab-ov" hidden>
+    <div class="card">
+      <div class="row between"><span class="lab">Sweeper over the start of a song · the music dips while it plays</span><button class="btn yellow" id="ovSave">Save rules</button></div>
+      <p class="muted" style="margin:0">Rules are checked from top to bottom; the first rule that fits a song is used. A song can also have its own choice in the library ("Always: …" or "Never"), e.g. the Number 1 sweeper only on the Hype Top 10 number 1. No intro sweeper right after a jingle or sweeper.</p>
+      <div style="overflow-x:auto">
+      <table class="slots">
+        <thead><tr><th>On</th><th>Name</th><th>For songs in</th><th>Sweeper from</th><th>Every</th><th>Min. gap</th><th>Start at</th><th>Music level</th><th></th></tr></thead>
+        <tbody id="ovRules"></tbody>
+      </table>
+      </div>
+      <div class="row"><button class="btn sm" id="ovAdd">+ Add rule</button></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const authed = r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); } return r; };
+const get = p => fetch('../api/' + p).then(authed).then(r => r.json());
+const post = (p, d) => fetch('../api/' + p, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d || {})}).then(authed).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); return j; });
+function toast(t, err) { const e = $('#toast'); e.textContent = t; e.className = 'toast show' + (err ? ' err' : ''); clearTimeout(e._t); e._t = setTimeout(() => e.className = 'toast', 2400); }
+$$('.tab').forEach(b => b.onclick = () => { $$('.tab').forEach(x => x.classList.toggle('on', x === b)); ['pl', 'ck', 'sc', 'fx', 'ov', 'os'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab); if (b.dataset.tab === 'sc') loadSchedule(); if (b.dataset.tab === 'ov') loadOv(); if (b.dataset.tab === 'fx') loadFx(); if (b.dataset.tab === 'os') loadOs(); });
+
+let PL = [], CK = [], FOLD = {music: [], counts: {}, jingles: []};
+const loadAll = () => Promise.all([get('playlists'), get('clocks'), get('folders')]).then(([p, c, f]) => { PL = p; CK = c; FOLD = f; renderPL(); renderCK(); });
+
+/* ---------------- playlists ---------------- */
+let cur = null;
+function renderPL() {
+  $('#plList').innerHTML = PL.map(p => `<button class="li ${cur && cur.id === p.id ? 'sel' : ''}" data-id="${p.id}"><div style="flex:1"><b>${esc(p.name)}</b><br><span>${p.rotate ? 'rotation · ' + p.sources.length + ' sources · ' : ''}${p.count} items · ${p.shuffle ? 'random' : 'in order'}${p.rotate ? '' : ' · ' + (p.loop ? 'loop' : 'no loop')}</span></div></button>`).join('') || '<span class="muted">No playlists yet. Make one with + New.</span>';
+  $$('#plList [data-id]').forEach(b => b.onclick = () => openPL(PL.find(p => p.id == b.dataset.id)));
+}
+function openPL(p) {
+  cur = JSON.parse(JSON.stringify(p)); $('#plEdit').hidden = false;
+  $('#plName').value = cur.name; $('#plLoop').checked = cur.loop; $('#plShuffle').checked = cur.shuffle; $('#plRotate').checked = !!cur.rotate;
+  $('#plDel').hidden = !cur.id; $('#plReset').hidden = !cur.id; $('#plInfo').textContent = cur.id ? cur.count + ' songs' : 'new';
+  renderSources(); renderPL(); $('#picker').hidden = true;
+  if (cur.id) get('playlist?id=' + cur.id).then(d => {
+    $('#plPos').textContent = `· ${d.count} songs, next up = #${Math.min(d.pos + 1, d.count)}${d.rounds ? ' · round ' + (d.rounds + 1) : ''}`;
+    $('#plOrder').innerHTML = d.songs.map((s, i) => `<div class="${i === d.pos ? 'nextup' : i < d.pos ? 'done' : ''}"><span class="mono" style="width:34px;color:var(--mut)">${i + 1}</span><span style="flex:1">${s.artist ? esc(s.artist) + ' – ' : ''}${esc(s.title)}</span><span class="muted">${esc(s.folder)}</span></div>`).join('');
+  }); else { $('#plOrder').innerHTML = ''; $('#plPos').textContent = ''; }
+}
+function srcLabel(s) { if (s.kind === 'folder') return '📁 ' + s.ref; if (s.kind === 'playlist') { const p = PL.find(x => x.id == s.ref); return '≡ ' + (p ? p.name : 'playlist ' + s.ref); } return (s.kind === 'file' ? '🔊 ' : '♪ ') + s.ref.split('/').pop().replace(/\.[^.]+$/, '') + (s.kind === 'file' && s.found === false ? ' (not uploaded yet)' : ''); }
+function renderSources() {
+  const rot = $('#plRotate').checked;
+  $('#plSources').innerHTML = cur.sources.map((s, i) => `<span class="chip" style="${s.found === false ? 'opacity:.55' : ''}">${rot ? `<input type="number" min="1" value="${s.amount || 1}" data-amt="${i}" title="How many from this source per turn" style="width:44px;height:24px;padding:0 4px">×` : ''}${esc(srcLabel(s))}<button aria-label="Remove" data-rm="${i}">×</button></span>`).join('') || '<span class="muted">Nothing yet – add folders, songs or playlists.</span>';
+  $$('#plSources [data-rm]').forEach(b => b.onclick = () => { cur.sources.splice(+b.dataset.rm, 1); renderSources(); });
+  $$('#plSources [data-amt]').forEach(e => e.onchange = () => { cur.sources[+e.dataset.amt].amount = Math.max(1, +e.value || 1); });
+}
+let pickMode = null;
+function openPicker(mode) { pickMode = mode; $('#picker').hidden = false; $('#pickQ').value = ''; $('#pickQ').focus(); fillPicker(); }
+function fillPicker() {
+  const q = $('#pickQ').value.toLowerCase();
+  if (pickMode === 'folder') {
+    $('#pickRes').innerHTML = FOLD.music.filter(f => f.toLowerCase().includes(q)).map(f => `<button data-v="${esc(f)}"><b style="padding-left:${(f.split('/').length - 1) * 16}px">📁 ${esc(f.split('/').pop())}</b><span>${f.includes('/') ? esc(f) + ' · ' : ''}${FOLD.counts[f] || 0} songs</span></button>`).join('') || '<span class="muted">No folders found.</span>';
+    bindPick('folder');
+  } else if (pickMode === 'playlist') {
+    $('#pickRes').innerHTML = PL.filter(p => (!cur.id || p.id !== cur.id) && p.name.toLowerCase().includes(q)).map(p => `<button data-v="${p.id}"><b>≡ ${esc(p.name)}</b><span>${p.count} songs</span></button>`).join('') || '<span class="muted">No other playlists.</span>';
+    bindPick('playlist');
+  } else {
+    get('library?section=music&q=' + encodeURIComponent(q)).then(d => {
+      $('#pickRes').innerHTML = d.items.slice(0, 60).map(s => `<button data-v="${esc(s.path)}"><b>${esc(s.artist)} – ${esc(s.title)}</b><span>${esc(s.folder)}</span></button>`).join('') || '<span class="muted">Nothing found.</span>';
+      bindPick('song');
+    });
+  }
+}
+function bindPick(kind) { $$('#pickRes [data-v]').forEach(b => b.onclick = () => { cur.sources.push({kind, ref: b.dataset.v, amount: 1}); renderSources(); toast('Added'); }); }
+let pqT; $('#pickQ').oninput = () => { clearTimeout(pqT); pqT = setTimeout(fillPicker, 200); };
+$('#addFolder').onclick = () => openPicker('folder'); $('#addSong').onclick = () => openPicker('song'); $('#addList').onclick = () => openPicker('playlist');
+$('#plRotate').onchange = () => renderSources();
+$('#plNew').onclick = () => openPL({id: null, name: '', loop: true, shuffle: true, rotate: false, sources: [], count: 0});
+$('#plSave').onclick = () => { cur.name = $('#plName').value; cur.loop = $('#plLoop').checked; cur.shuffle = $('#plShuffle').checked; cur.rotate = $('#plRotate').checked;
+  post('plan/save_playlist', cur).then(r => { toast('Playlist saved'); return loadAll().then(() => openPL(PL.find(p => p.id === r.id))); }).catch(e => toast(e.message, 1)); };
+$('#plDel').onclick = () => { if (confirm('Delete playlist "' + cur.name + '"? Clock slots that use it will be skipped.')) post('plan/delete_playlist', {id: cur.id}).then(() => { cur = null; $('#plEdit').hidden = true; toast('Deleted'); loadAll(); }); };
+$('#plReset').onclick = () => post('plan/reset_playlist', {id: cur.id}).then(() => { toast('Starts from the top next time'); openPL(cur); });
+
+/* ---------------- clocks ---------------- */
+let ck = null;
+const KINDS = [['playlist', 'Playlist'], ['folder', 'Folder'], ['showjingle', 'Show sweeper'], ['jingle', 'Jingle / sweeper'], ['id', 'Station ID'], ['song', 'Song'], ['file', 'File (by name)'], ['adbreak', 'Ad break']];
+const STARTS = [['continue', 'Where it left off'], ['start', 'From the start'], ['random', 'Random place']];
+function renderCK() {
+  $('#ckList').innerHTML = CK.map(c => `<button class="li ${ck && ck.id === c.id ? 'sel' : ''}" data-id="${c.id}"><span class="dot" style="background:${esc(c.color)}"></span><div style="flex:1"><b>${esc(c.name)}</b><br><span>${c.slots.length} slots${c.resume ? ' · continues' : ' · from the top'}</span></div></button>`).join('') || '<span class="muted">No clocks yet.</span>';
+  $$('#ckList [data-id]').forEach(b => b.onclick = () => openCK(CK.find(c => c.id == b.dataset.id)));
+}
+function openCK(c) { ck = JSON.parse(JSON.stringify(c)); $('#ckEdit').hidden = false; $('#ckName').value = ck.name;  $('#ckColor').value = ck.color || '#05A9C6'; $('#ckResume').checked = !!ck.resume; $('#ckDel').hidden = !ck.id; renderSlots(); renderCK(); }
+function refOptions(s) {
+  if (s.kind === 'playlist') return PL.map(p => [String(p.id), p.name + ' (' + p.count + ')']);
+  if (s.kind === 'folder') return [...(s.ref && !FOLD.music.includes(s.ref) ? [[s.ref, s.ref + ' (not uploaded yet)']] : []), ...FOLD.music.map(f => [f, f + ' (' + (FOLD.counts[f] || 0) + ')'])];
+  if (s.kind === 'jingle' || s.kind === 'id') return FOLD.jingles.map(f => [f, f]);
+  if (s.kind === 'showjingle') return FOLD.jingles.filter(f => !f.startsWith('SHOWS')).map(f => [f, 'show on air · else ' + f]);
+  return null;
+}
+function renderSlots() {
+  $('#ckSlots').innerHTML = ck.slots.map((s, i) => {
+    const opts = refOptions(s), multi = s.kind === 'playlist' || s.kind === 'folder';
+    const which = opts ? `<select data-i="${i}" data-f="ref"><option value="">– choose –</option>${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(s.ref) === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`
+      : s.kind === 'song' ? `<button class="btn sm" data-song="${i}" style="width:100%;justify-content:flex-start">${s.ref ? esc(s.ref.split('/').pop()) : 'Choose a song…'}</button>`
+      : s.kind === 'file' ? `<input type="text" data-i="${i}" data-f="ref" value="${esc(s.ref)}" placeholder="file name, e.g. HYPE RADIO - ID 1.mp4">` : '<span class="muted">from /ads</span>';
+    return `<tr><td class="mono muted">${i + 1}</td>
+      <td><select data-i="${i}" data-f="kind">${KINDS.map(([v, l]) => `<option value="${v}" ${s.kind === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+      <td>${which}</td>
+      <td>${multi ? `<div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="1" data-i="${i}" data-f="amount" value="${s.amount && s.amount < 999 ? s.amount : 1}" ${!s.amount || s.amount >= 999 ? 'disabled' : ''}><label class="tg" style="font-size:12px"><input type="checkbox" data-all="${i}" ${!s.amount ? 'checked' : ''}>all</label><label class="tg" style="font-size:12px" title="Keep playing this until the hour (or show) ends"><input type="checkbox" data-fill="${i}" ${s.amount >= 999 ? 'checked' : ''}>fill</label></div>` : (s.kind === 'adbreak' ? `<input class="num" type="number" min="1" data-i="${i}" data-f="amount" value="${s.amount || 2}">` : '<span class="muted">1</span>')}</td>
+      <td>${multi ? `<select data-i="${i}" data-f="start">${STARTS.map(([v, l]) => `<option value="${v}" ${s.start === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}</td>
+      <td><div class="row" style="flex-wrap:nowrap"><button class="btn sm" data-up="${i}" aria-label="Move up">↑</button><button class="btn sm" data-dn="${i}" aria-label="Move down">↓</button><button class="btn sm red" data-del="${i}" aria-label="Remove slot">×</button></div></td></tr>`;
+  }).join('');
+  $$('#ckSlots [data-f]').forEach(e => e.onchange = () => { const s = ck.slots[+e.dataset.i]; s[e.dataset.f] = e.dataset.f === 'amount' ? +e.value : e.value; if (e.dataset.f === 'kind') { s.ref = s.kind === 'id' ? 'IDS' : s.kind === 'jingle' || s.kind === 'showjingle' ? 'SWEEPERS' : ''; s.amount = s.kind === 'adbreak' ? 2 : 1; } renderSlots(); });
+  $$('#ckSlots [data-all]').forEach(e => e.onchange = () => { ck.slots[+e.dataset.all].amount = e.checked ? 0 : 1; renderSlots(); });
+  $$('#ckSlots [data-fill]').forEach(e => e.onchange = () => { ck.slots[+e.dataset.fill].amount = e.checked ? 999 : 1; renderSlots(); });
+  $$('#ckSlots [data-up]').forEach(b => b.onclick = () => { const i = +b.dataset.up; if (i) [ck.slots[i - 1], ck.slots[i]] = [ck.slots[i], ck.slots[i - 1]]; renderSlots(); });
+  $$('#ckSlots [data-dn]').forEach(b => b.onclick = () => { const i = +b.dataset.dn; if (i < ck.slots.length - 1) [ck.slots[i + 1], ck.slots[i]] = [ck.slots[i], ck.slots[i + 1]]; renderSlots(); });
+  $$('#ckSlots [data-del]').forEach(b => b.onclick = () => { ck.slots.splice(+b.dataset.del, 1); renderSlots(); });
+  $$('#ckSlots [data-song]').forEach(b => b.onclick = () => { const q = prompt('Search a song (artist or title):'); if (!q) return; get('library?section=music&q=' + encodeURIComponent(q)).then(d => { if (!d.items.length) return toast('Nothing found', 1); const s = d.items[0]; ck.slots[+b.dataset.song].ref = s.path; toast('Chosen: ' + s.artist + ' – ' + s.title); renderSlots(); }); });
+  const songs = ck.slots.reduce((n, s) => n + (s.kind === 'playlist' || s.kind === 'folder' ? (s.amount && s.amount < 999 ? s.amount : 0) : s.kind === 'song' || s.kind === 'file' ? 1 : 0), 0);
+  $('#ckSum').textContent = ck.slots.length + ' slots · ' + (ck.slots.some(s => s.amount >= 999) ? 'contains a "fill" slot' : ck.slots.some(s => (s.kind === 'playlist' || s.kind === 'folder') && !s.amount) ? 'contains an "all" slot' : songs + ' items per run');
+}
+$('#slotAdd').onclick = () => { ck.slots.push({kind: 'playlist', ref: '', amount: 1, start: 'continue'}); renderSlots(); };
+$('#ckNew').onclick = () => openCK({id: null, name: '', color: '#05A9C6', resume: false, slots: [{kind: 'id', ref: 'IDS', amount: 1, start: 'continue'}]});
+$('#ckSave').onclick = () => { ck.name = $('#ckName').value; ck.color = $('#ckColor').value; ck.resume = $('#ckResume').checked; 
+  if (ck.slots.some(s => ['playlist', 'folder', 'song', 'file'].includes(s.kind) && !s.ref)) return toast('Choose what to play in every slot', 1);
+  post('plan/save_clock', ck).then(r => { toast('Clock saved – the log is updated'); return loadAll().then(() => openCK(CK.find(c => c.id === r.id))); }).catch(e => toast(e.message, 1)); };
+$('#ckDel').onclick = () => { if (confirm('Delete clock "' + ck.name + '"? Hours that use it fall back to the first clock.')) post('plan/delete_clock', {id: ck.id}).then(() => { ck = null; $('#ckEdit').hidden = true; toast('Deleted'); loadAll(); }); };
+
+/* ---------------- schedule ---------------- */
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+let SC = {}, brush = null, painting = false;
+let SH = {shows: [], week: []}, SHMAP = {};
+function loadSchedule() { Promise.all([get('schedule'), get('shows')]).then(([d, sh]) => { SC = {}; d.forEach(c => SC[c.day + '-' + c.hour] = c.clock_id); SH = sh; SHMAP = {}; sh.shows.forEach(x => SHMAP[x.title] = x.clock_id); if (!brush && CK.length) brush = CK[0].id; renderShows(); renderGrid(); }); }
+function renderShows() {
+  $('#shRows').innerHTML = SH.shows.map((x, i) => `<tr><td><b>${esc(x.title)}</b></td><td class="muted">${esc(x.when.slice(0, 4).join(' · '))}${x.when.length > 4 ? ' · +' + (x.when.length - 4) + ' more' : ''}</td>
+    <td><select data-show="${esc(x.title)}"><option value="">– hour grid –</option>${CK.map(c => `<option value="${c.id}" ${SHMAP[x.title] === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></td></tr>`).join('') || '<tr><td colspan="3" class="muted">Loading the website schedule…</td></tr>';
+  $$('#shRows [data-show]').forEach(e => e.onchange = () => { SHMAP[e.dataset.show] = e.value ? +e.value : null; renderGrid(); });
+}
+function showAt(day, hour) { const m = hour * 60; return SH.week.find(s => { if (s.day !== day) return false; const [a1, a2] = s.start.split(':').map(Number), [b1, b2] = s.end.split(':').map(Number); let a = a1 * 60 + a2, b = b1 * 60 + b2 || 1440; if (b <= a) b = 1440; return a <= m && m < b || (a > m && a < m + 60); }); }
+$('#shSave').onclick = () => post('plan/save_show_clocks', {map: SHMAP}).then(() => toast('Show clocks saved – the log is updated')).catch(e => toast(e.message, 1));
+function renderGrid() {
+  $('#brush').innerHTML = CK.map(c => `<button class="btn sm ${brush === c.id ? 'on' : ''}" data-b="${c.id}"><span class="dot" style="background:${esc(c.color)}"></span>${esc(c.name)}</button>`).join('') + `<button class="btn sm ${brush === null ? 'on' : ''}" data-b="">Empty</button>`;
+  $$('#brush [data-b]').forEach(b => b.onclick = () => { brush = b.dataset.b ? +b.dataset.b : null; renderGrid(); });
+  let h = '<tr><th></th>' + [...Array(24).keys()].map(x => `<th>${String(x).padStart(2, '0')}</th>`).join('') + '</tr>';
+  DAYS.forEach((d, di) => { h += `<tr><td class="day">${d}</td>` + [...Array(24).keys()].map(x => { const sh = showAt(di, x), scid = sh && SHMAP[sh.title], cid = scid || SC[di + '-' + x], c = CK.find(k => k.id === cid);
+    return `<td data-c="${di}-${x}" class="${c ? '' : 'empty'}" style="${c ? 'background:' + c.color : ''}${scid ? ';box-shadow:inset 0 -4px 0 rgba(6,20,35,.55)' : ''}" title="${d} ${x}:00 · ${sh ? esc(sh.title) + ' · ' : ''}${c ? esc(c.name) : 'empty'}${scid ? ' (show clock)' : ''}">${sh ? esc(sh.title.replace(/^Hype /, '').slice(0, 7)) : c ? esc(c.name.slice(0, 3)) : ''}</td>`; }).join('') + '</tr>'; });
+  $('#grid').innerHTML = h;
+  $$('#grid [data-c]').forEach(td => { td.onmousedown = e => { painting = true; paint(td); e.preventDefault(); }; td.onmouseenter = () => painting && paint(td); });
+}
+let PVMODE = false, PVON = true;
+fetch('../api/settings').then(authed).then(r => r.json()).then(d => { PVON = d.hour_preview; $$('[data-pv]').forEach(b => b.hidden = !PVON); });
+$('#pvMode').onclick = () => { PVMODE = !PVMODE; $('#pvMode').textContent = '👁 Preview mode: ' + (PVMODE ? 'ON' : 'OFF'); $('#pvMode').classList.toggle('on', PVMODE); $('#pvHint').textContent = PVMODE ? 'click an hour in the grid' : ''; };
+$('#ckPrev').onclick = () => ck && ck.id ? preview('clock=' + ck.id, 'Clock "' + ck.name + '"') : toast('Save the clock first', 1);
+$('#pvClose').onclick = () => $('#pvBox').hidden = true;
+function preview(q, label) {
+  $('#pvBox').hidden = false; $('#pvTitle').textContent = 'Hour preview · ' + label + ' · loading…'; $('#pvList').innerHTML = ''; $('#pvWarn').innerHTML = ''; $('#pvSum').textContent = '';
+  get('preview_hour?' + q).then(d => {
+    if (d.off) { $('#pvBox').hidden = true; return toast('Hour preview is off (Settings)', 1); }
+    const t0 = new Date(d.start * 1000);
+    $('#pvTitle').textContent = 'Hour preview · ' + (q.startsWith('clock') ? label + ' · as the next hour (' + DAYS[(t0.getDay() + 6) % 7] + ' ' + t0.toTimeString().slice(0, 5) + ')' : label + ' · clock ' + d.clock);
+    $('#pvWarn').innerHTML = d.warnings.length ? d.warnings.map(w => `<div class="chip" style="border-color:var(--o);color:var(--o);border-radius:10px;white-space:normal">⚠ ${esc(w)}</div>`).join('') : '<div class="chip" style="border-color:var(--g);color:var(--g)">✓ No problems found</div>';
+    $('#pvSum').textContent = `${d.songs} songs · ${d.jingles} jingles · ` + (d.over > 0 ? `last item ends ${d.over} s after the hour` : `ends ${-d.over} s before the hour`) + ` · smart picking ${d.smart ? 'on' : 'off'} · hit the hour ${d.hit_hour ? 'on' : 'off'}`;
+    $('#pvList').innerHTML = d.items.map(x => `<div style="${x.section !== 'music' ? 'color:#B9A2FF' : ''}"><span class="mono" style="width:52px;color:var(--mut)">${new Date(x.t * 1000).toTimeString().slice(0, 5)}</span><span style="flex:1">${x.section !== 'music' ? '◆ ' : ''}${esc(x.artist ? x.artist + ' – ' : '')}${esc(x.title)}</span><span class="muted">${esc(x.folder)}</span><span class="mono muted" style="width:46px;text-align:right">${Math.floor(x.length / 60)}:${String(x.length % 60).padStart(2, '0')}</span></div>`).join('');
+    $('#pvBox').scrollIntoView({behavior: 'smooth', block: 'start'});
+  }).catch(() => toast('Preview failed', 1));
+}
+function paint(td) {
+  if (PVMODE) { const [d, h] = td.dataset.c.split('-'); painting = false; return preview(`day=${d}&hour=${h}`, DAYS[+d] + ' ' + String(h).padStart(2, '0') + ':00'); } SC[td.dataset.c] = brush; const c = CK.find(k => k.id === brush); td.style.background = c ? c.color : ''; td.className = c ? '' : 'empty'; td.textContent = c ? c.name.slice(0, 3) : ''; }
+document.addEventListener('mouseup', () => painting = false);
+$('#scSave').onclick = () => post('plan/set_schedule', {cells: Object.entries(SC).map(([k, v]) => { const [day, hour] = k.split('-'); return {day: +day, hour: +hour, clock_id: v}; })}).then(() => toast('Schedule saved – the log is updated')).catch(e => toast(e.message, 1));
+
+/* ---------------- fixed times ---------------- */
+let FX = [], FXJ = [];
+function loadFx() { Promise.all([get('events'), get('pads')]).then(([e, j]) => { FX = e; FXJ = j; renderFx(); }); }
+function renderFx() {
+  const whichOpts = e => e.kind === 'playlist' ? PL.map(p => [String(p.id), p.name]) : e.kind === 'folder' ? FOLD.music.map(f => [f, f]) : e.kind === 'jingle' ? [...FOLD.jingles.map(f => [f, 'Any from ' + f]), ...FXJ.map(j => [j.path, j.folder + ' · ' + j.title])] : null;
+  $('#fxRows').innerHTML = FX.map((e, i) => { const opts = whichOpts(e), multi = e.kind === 'playlist' || e.kind === 'folder';
+    return `<tr>
+    <td><input type="checkbox" data-i="${i}" data-f="enabled" ${e.enabled ? 'checked' : ''} style="width:20px;height:20px;accent-color:var(--y)"></td>
+    <td><input type="text" data-i="${i}" data-f="name" value="${esc(e.name)}" placeholder="e.g. Top 10"></td>
+    <td><div class="row" style="flex-wrap:nowrap;gap:2px">${DAYS.map((d, di) => `<button class="btn sm ${e.days.includes(String(di)) ? 'on' : ''}" data-day="${i}-${di}" style="padding:0 6px;min-width:34px">${d.slice(0, 2)}</button>`).join('')}</div></td>
+    <td><input type="text" data-i="${i}" data-f="at" value="${esc(e.at)}" placeholder="20:00" title="20:00, or *:00 = every hour" style="width:76px">${e.at && e.at[0] === '*' ? '<div class="muted" style="font-size:11px">every hour</div>' : ''}</td>
+    <td><select data-i="${i}" data-f="kind">${[['playlist', 'Playlist'], ['folder', 'Folder'], ['jingle', 'Jingle'], ['song', 'Song']].map(([v, l]) => `<option value="${v}" ${e.kind === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+    <td>${opts ? `<select data-i="${i}" data-f="ref"><option value="">– choose –</option>${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(e.ref) === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>` : `<button class="btn sm" data-fsong="${i}" style="width:100%;justify-content:flex-start">${e.ref ? esc(e.ref.split('/').pop()) : 'Choose a song…'}</button>`}</td>
+    <td>${multi ? `<div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="1" data-i="${i}" data-f="amount" value="${e.amount || 1}" ${!e.amount ? 'disabled' : ''} style="width:64px"><label class="tg" style="font-size:12px"><input type="checkbox" data-fall="${i}" ${!e.amount ? 'checked' : ''}>all</label></div>` : '<span class="muted">1</span>'}</td>
+    <td><select data-i="${i}" data-f="hard"><option value="0" ${!e.hard ? 'selected' : ''}>After the song</option><option value="1" ${e.hard ? 'selected' : ''}>Exactly on time</option></select></td>
+    <td><button class="btn sm red" data-fdel="${i}" aria-label="Remove">×</button></td></tr>`; }).join('') || '<tr><td colspan="9" class="muted">No fixed times yet. Example: Mon + Thu 20:00 · Playlist "Top 10" · all · after the song.</td></tr>';
+  $$('#fxRows [data-f]').forEach(el => el.onchange = () => { const e = FX[+el.dataset.i], f = el.dataset.f; e[f] = el.type === 'checkbox' ? el.checked : f === 'amount' ? +el.value : f === 'hard' ? el.value === '1' : el.value; if (f === 'kind') { e.ref = ''; e.amount = 1; renderFx(); } });
+  $$('#fxRows [data-day]').forEach(b => b.onclick = () => { const [i, di] = b.dataset.day.split('-'); const e = FX[+i]; e.days = e.days.includes(di) ? e.days.replace(di, '') : [...e.days + di].sort().join(''); renderFx(); });
+  $$('#fxRows [data-fall]').forEach(el => el.onchange = () => { FX[+el.dataset.fall].amount = el.checked ? 0 : 1; renderFx(); });
+  $$('#fxRows [data-fdel]').forEach(b => b.onclick = () => { FX.splice(+b.dataset.fdel, 1); renderFx(); });
+  $$('#fxRows [data-fsong]').forEach(b => b.onclick = () => { const q = prompt('Search a song (artist or title):'); if (!q) return; get('library?section=music&q=' + encodeURIComponent(q)).then(d => { if (!d.items.length) return toast('Nothing found', 1); FX[+b.dataset.fsong].ref = d.items[0].path; toast('Chosen: ' + d.items[0].artist + ' – ' + d.items[0].title); renderFx(); }); });
+}
+$('#fxAdd').onclick = () => { FX.push({name: '', enabled: true, days: '0123456', at: '20:00', kind: 'playlist', ref: '', amount: 0, hard: false}); renderFx(); };
+$('#fxSave').onclick = () => { if (FX.some(e => !e.ref || !/^(\d{1,2}|\*):\d{2}$/.test(e.at) || !e.days)) return toast('Fill in days, time and what to play in every row', 1);
+  post('plan/save_events', {events: FX}).then(() => { toast('Fixed times saved'); loadFx(); }).catch(e => toast(e.message, 1)); };
+
+/* ---------------- intro sweepers ---------------- */
+let OV = [], JIN = [];
+function loadOv() { Promise.all([get('overlays'), get('pads')]).then(([r, j]) => { OV = r; JIN = j; renderOv(); }); }
+function renderOv() {
+  const matchOpts = r => r.match_kind === 'folder' ? FOLD.music.map(f => [f, f]) : r.match_kind === 'playlist' ? PL.map(p => [String(p.id), p.name]) : [];
+  const jOpts = [['#SHOW', 'Show sweeper (show on air)'], ...FOLD.jingles.map(f => [f, 'Any from ' + f]), ...JIN.map(j => [j.path, j.folder + ' · ' + j.title])];
+  $('#ovRules').innerHTML = OV.map((r, i) => `<tr>
+    <td><input type="checkbox" data-i="${i}" data-f="enabled" ${r.enabled ? 'checked' : ''} style="width:20px;height:20px;accent-color:var(--y)"></td>
+    <td><input type="text" data-i="${i}" data-f="name" value="${esc(r.name)}" placeholder="e.g. New Music intro"></td>
+    <td><div class="row" style="flex-wrap:nowrap"><select data-i="${i}" data-f="match_kind"><option value="folder" ${r.match_kind === 'folder' ? 'selected' : ''}>Folder</option><option value="playlist" ${r.match_kind === 'playlist' ? 'selected' : ''}>Playlist</option><option value="any" ${r.match_kind === 'any' ? 'selected' : ''}>Any song</option></select>
+      ${r.match_kind !== 'any' ? `<select data-i="${i}" data-f="match_ref"><option value="">– choose –</option>${matchOpts(r).map(([v, l]) => `<option value="${esc(v)}" ${String(r.match_ref) === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>` : ''}</div></td>
+    <td><select data-i="${i}" data-f="jingle_ref"><option value="">– choose –</option>${jOpts.map(([v, l]) => `<option value="${esc(v)}" ${r.jingle_ref === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></td>
+    <td><div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="1" data-i="${i}" data-f="every" value="${r.every}" style="width:64px"><span class="muted">song</span></div></td>
+    <td><div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="0" data-i="${i}" data-f="min_gap" value="${r.min_gap}" style="width:64px"><span class="muted">min</span></div></td>
+    <td><div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="0" step="0.1" data-i="${i}" data-f="offset" value="${r.offset}" style="width:64px"><span class="muted">s</span></div></td>
+    <td><select data-i="${i}" data-f="duck">${[[0.2, '20 %'], [0.35, '35 %'], [0.5, '50 %'], [0.7, '70 %']].map(([v, l]) => `<option value="${v}" ${Math.abs(r.duck - v) < .01 ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+    <td><div class="row" style="flex-wrap:nowrap"><button class="btn sm" data-oup="${i}" aria-label="Move up">↑</button><button class="btn sm red" data-odel="${i}" aria-label="Remove rule">×</button></div></td></tr>`).join('') || '<tr><td colspan="9" class="muted">No rules yet. Example: songs in NEW get a sweeper from SWEEPERS, every song, at least 10 min apart.</td></tr>';
+  $$('#ovRules [data-f]').forEach(e => e.onchange = () => { const r = OV[+e.dataset.i], f = e.dataset.f; r[f] = e.type === 'checkbox' ? e.checked : ['every', 'min_gap', 'offset', 'duck'].includes(f) ? +e.value : e.value; if (f === 'match_kind') { r.match_ref = ''; renderOv(); } });
+  $$('#ovRules [data-oup]').forEach(b => b.onclick = () => { const i = +b.dataset.oup; if (i) [OV[i - 1], OV[i]] = [OV[i], OV[i - 1]]; renderOv(); });
+  $$('#ovRules [data-odel]').forEach(b => b.onclick = () => { OV.splice(+b.dataset.odel, 1); renderOv(); });
+}
+$('#ovAdd').onclick = () => { OV.push({name: '', enabled: true, match_kind: 'folder', match_ref: '', jingle_ref: FOLD.jingles.includes('SWEEPERS') ? 'SWEEPERS' : '', every: 1, min_gap: 10, offset: 0.5, duck: 0.35}); renderOv(); };
+$('#ovSave').onclick = () => { if (OV.some(r => !r.jingle_ref || (r.match_kind !== 'any' && !r.match_ref))) return toast('Choose the songs and the sweeper in every rule', 1);
+  post('plan/save_overlays', {rules: OV}).then(() => toast('Intro sweeper rules saved')).catch(e => toast(e.message, 1)); };
+
+/* ---------------- on screen ---------------- */
+let OS = [], OSF = [], SHOWS_ = [], OTK = [], OPIP = [];
+const TVSC = ["Music video", "Hype Screen", "Branding", "CAM 1", "CAM 2", "CAM 3", "CAM 4", "CAM 1 V", "CAM 1 G", "VID 1", "CAM 1 2", "CAM 1 2 V", "CAM 1 2 G", "VID 1 2", "CAM 1 2 3", "CAM 1 2 3 V G", "CAM 1 2 3 G", "VID 1 2 3", "CAM 1 2 3 B", "CAM 1 2 3 R", "CAM 1 V G", "CAM 1 V PIP", "VID 1 LIVE MIX", "CAM 1 2 3 4", "CAM 1 2 3 4 V"];   // scenes a rule can switch to (duration 0 = stays until AUTO SCENES)
+function loadOs() { Promise.all([get('screenrules'), get('shows')]).then(([d, sh]) => { OS = d.rules; OSF = d.files; OTK = d.tickers || []; OPIP = d.pip || []; SHOWS_ = sh.shows.map(x => x.title); renderOs(); }); }
+const TRIG = [['folder', 'Song from folder'], ['playlist', 'Song from playlist'], ['any', 'Every song'], ['jingle', 'Jingle plays'], ['show', 'Show starts'], ['time', 'At a time']];
+function renderOs() {
+  const refInput = (r, i) => r.trigger === 'folder' ? `<select data-i="${i}" data-f="ref"><option value="">– choose –</option>${FOLD.music.map(f => `<option value="${esc(f)}" ${r.ref === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select>`
+    : r.trigger === 'playlist' ? `<select data-i="${i}" data-f="ref"><option value="">– choose –</option>${PL.map(p => `<option value="${p.id}" ${String(r.ref) === String(p.id) ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`
+    : r.trigger === 'jingle' ? `<select data-i="${i}" data-f="ref"><option value="">any jingle</option>${FOLD.jingles.map(f => `<option value="${esc(f)}" ${r.ref === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select>`
+    : r.trigger === 'show' ? `<select data-i="${i}" data-f="ref"><option value="">every show</option>${SHOWS_.map(f => `<option value="${esc(f)}" ${r.ref === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select>`
+    : r.trigger === 'time' ? `<input type="text" data-i="${i}" data-f="ref" value="${esc(r.ref)}" placeholder="20:30 or *:15" style="width:110px">` : '<span class="muted">–</span>';
+  $('#osRows').innerHTML = OS.map((r, i) => `<tr>
+    <td><input type="checkbox" data-i="${i}" data-f="enabled" ${r.enabled ? 'checked' : ''} style="width:20px;height:20px;accent-color:var(--y)"></td>
+    <td><input type="text" data-i="${i}" data-f="name" value="${esc(r.name)}" placeholder="e.g. New Music"></td>
+    <td><select data-i="${i}" data-f="trigger">${TRIG.map(([v, l]) => `<option value="${v}" ${r.trigger === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+    <td>${refInput(r, i)}</td>
+    <td><div class="row" style="flex-wrap:nowrap"><select data-i="${i}" data-f="file"><option value="">– choose –</option><optgroup label="Graphic (branding/screen)">${OSF.map(f => `<option value="${esc(f)}" ${r.file === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}</optgroup><optgroup label="Ad box"><option value="adbox:" ${r.file === 'adbox:' ? 'selected' : ''}>▦ Ad box slideshow</option></optgroup><optgroup label="Ticker (Settings → Tickers)">${OTK.map(t => `<option value="ticker:${esc(t.id)}" ${r.file === 'ticker:' + t.id ? 'selected' : ''}>▤ Ticker: ${esc(t.label)}</option>`).join('')}</optgroup><optgroup label="Picture in picture (branding/pip)">${OPIP.map(f => `<option value="scene:PIP@${esc(f)}" ${r.file === 'scene:PIP@' + f ? 'selected' : ''}>▣ PIP · ${esc(f.replace(/^PIP_/, '').replace(/\.png$/i, ''))}</option>`).join('')}</optgroup><optgroup label="Switch the TV to a scene">${TVSC.map(n => `<option value="scene:${esc(n)}" ${r.file === 'scene:' + n ? 'selected' : ''}>▣ ${esc(n)}</option>`).join('')}</optgroup></select><button class="btn sm" data-ostest="${i}" title="Show it on TV now for 8 s">▶</button></div></td>
+    <td><div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="0" step="0.5" data-i="${i}" data-f="delay" value="${r.delay}" style="width:64px"><span class="muted">s</span></div></td>
+    <td><div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="0" step="1" data-i="${i}" data-f="duration" value="${r.duration}" style="width:64px" title="Graphic: 0 = the whole song · Scene/PIP: how long it stays, then back to the automatic scene (0 = until AUTO SCENES) · Ticker/ad box: 0 = 60 s"><span class="muted">s</span></div></td>
+    <td><div class="row" style="flex-wrap:nowrap"><input class="num" type="number" min="1" data-i="${i}" data-f="every" value="${r.every}" style="width:56px"><span class="muted">×</span></div></td>
+    <td><select data-i="${i}" data-f="where_"><option value="all" ${r.where_ === 'all' ? 'selected' : ''}>All scenes</option><option value="video" ${r.where_ === 'video' ? 'selected' : ''}>Only over music videos</option><option value="nocam" ${r.where_ === 'nocam' ? 'selected' : ''}>Not in camera scenes</option><option value="music_hype" ${r.where_ === 'music_hype' ? 'selected' : ''}>Music video + Hype Screen</option></select></td>
+    <td><div class="row" style="flex-wrap:nowrap;gap:2px">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, d) => `<button class="btn sm ${(r.days ?? '0123456').includes(String(d)) ? 'on' : ''}" data-day="${i}" data-d="${d}" style="min-width:24px;padding:0 4px" title="${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]}">${l}</button>`).join('')}<input type="text" data-i="${i}" data-f="hours" value="${esc(r.hours || '')}" placeholder="all day" title="Hours, e.g. 16-18 (empty = all day)" style="width:64px;margin-left:4px"></div></td>
+    <td><button class="btn sm red" data-osdel="${i}" aria-label="Remove">×</button></td></tr>`).join('') || '<tr><td colspan="10" class="muted">Nothing yet. Add one: e.g. Song from folder NEW · NewMusic.png · after 3 s · for 10 s.</td></tr>';
+  $('#osFiles').textContent = OSF.length ? OSF.length + ' graphics in branding/screen' : 'No graphics uploaded yet (branding/screen)';
+  $$('#osRows [data-f]').forEach(el => el.onchange = () => { const r = OS[+el.dataset.i], f = el.dataset.f; r[f] = el.type === 'checkbox' ? el.checked : ['delay', 'duration', 'every'].includes(f) ? +el.value : el.value; if (f === 'trigger') { r.ref = ''; renderOs(); } });
+  $$('#osRows [data-osdel]').forEach(b => b.onclick = () => { OS.splice(+b.dataset.osdel, 1); renderOs(); });
+  $$('#osRows [data-day]').forEach(b => b.onclick = () => { const r = OS[+b.dataset.day], d = b.dataset.d; let s_ = r.days ?? '0123456';
+    s_ = s_.includes(d) ? s_.replace(d, '') : s_ + d; r.days = [...'0123456'].filter(x => s_.includes(x)).join(''); renderOs(); });
+  $$('#osRows [data-ostest]').forEach(b => b.onclick = () => { const r = OS[+b.dataset.ostest]; if (!r.file) return toast('Choose a graphic first', 1); if (r.file.startsWith('scene:')) return post('cmd/scene', {scene: r.file.slice(6)}).then(() => toast('TV switched to ' + r.file.slice(6) + ' – AUTO SCENES in the panel to go back')); const tk = r.file.startsWith('ticker:') || r.file === 'adbox:'; post('cmd/screen_test', {file: r.file, duration: tk ? 30 : 8}).then(() => toast(tk ? 'On TV now for 30 s' : 'On TV now for 8 s')).catch(e => toast(e.message, 1)); });
+}
+$('#osAdd').onclick = () => { OS.push({name: '', enabled: true, trigger: 'folder', ref: '', file: '', delay: 3, duration: 10, every: 1, min_gap: 0, where_: 'all'}); renderOs(); };
+$('#osSave').onclick = () => { if (OS.some(r => !r.file)) return toast('Choose a graphic in every row', 1); post('plan/save_screen', {rules: OS}).then(() => { toast('Saved'); loadOs(); }).catch(e => toast(e.message, 1)); };
+loadAll();
+</script>
+</body>
+</html>
