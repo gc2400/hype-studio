@@ -316,12 +316,29 @@ class TV:
                     try: cl.set_current_scene_transition(tr); self._tr = tr
                     except Exception as e: log.warning("transition %s: %s", tr, e)
                 if prev != scene: cl.set_current_program_scene(scene)
+                if prev == "PIP" and scene != "PIP": self.pip_done()
+                if scene == "PIP" and prev != "PIP": self._pip_t = time.time(); self._pip_f = getattr(self, "pip", None)
                 self.scene = scene; self.prog = scene
         except Exception as e: log.warning("OBS scene: %s", e); self.cl = None
         self.route_audio()
+    def pip_done(self):
+        """A PIP showing ended: log frame + seconds for Hype Live's sponsor report (the frame name = the sponsor, e.g. PIP_Brand.png)."""
+        t0 = getattr(self, "_pip_t", None); f = getattr(self, "_pip_f", None); self._pip_t = None
+        if not t0 or not f: return
+        dur = round(time.time() - t0)
+        if dur < 3: return
+        name = os.path.splitext(os.path.basename(f))[0]
+        ev = {"t": int(t0), "type": "pip", "item": name, "brand": re.sub(r"^PIP[_ -]*", "", name, flags=re.I).replace("_", " ").strip(), "dur": dur}
+        try:
+            p = "/var/lib/hype/screen_events.json"
+            try: evs = json.load(open(p))
+            except Exception: evs = []
+            evs = (evs + [ev])[-500:]; json.dump(evs, open(p, "w"))
+        except Exception as e: log.warning("screen event: %s", e)
     def pip_frame(self, frame):
         f = os.path.join(PIP_DIR, os.path.basename(frame))
         if os.path.exists(f) and getattr(self, "pip", None) != f:
+            if getattr(self, "prog", None) == "PIP": self.pip_done(); self._pip_t = time.time(); self._pip_f = f   # another frame while PIP stays on
             self.client().set_input_settings("PIP frame", {"file": f}, True); self.pip = f
     def route_audio(self, force=False):
       """TV sound = the radio, except when a paired clip is on screen: then the clip's own sound (+ pads/sweepers).

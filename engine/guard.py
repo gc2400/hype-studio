@@ -189,11 +189,19 @@ class Guard:
                 "tv": {"streaming": d.get("obs"), "seg_age": d.get("seg_age")},
                 "problems": [{"id": p["id"], "text": p["text"], "since": int(p["since"])} for p in d["problems"]],
                 "events": [{"t": int(e["t"]), "level": e["level"], "text": e["text"]} for e in d["events"][:10]]}
+        try: sev = json.load(open("/var/lib/hype/screen_events.json"))
+        except Exception: sev = []
+        if sev: body["screen_events"] = sev[:200]     # PIP showings etc. (Hype Live logs the ones whose brand is a sponsor)
         url = c["hl_url"].rstrip("/") + "/?hype_studio=" + urllib.request.quote(c["hl_key"])
         try:
             r = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "User-Agent": "HypeStudio-Guard/1"})
             a = urllib.request.urlopen(r, timeout=10).read(200).decode("utf-8", "replace").strip()
             self.hb = {"ok": a.startswith("OK"), "t": time.time(), "answer": a[:80] if len(a) < 80 else "(Hype Live does not know this link yet – plugin update needed)"}
+            if a.startswith("OK") and sev and "ev=" in a:   # Hype Live confirmed it stored them ("OK ev=N"): keep only what came in meanwhile
+                try:
+                    now_ev = json.load(open("/var/lib/hype/screen_events.json"))
+                    json.dump(now_ev[len(sev[:200]):], open("/var/lib/hype/screen_events.json", "w"))
+                except Exception: pass
         except Exception as e:
             self.hb = {"ok": False, "t": time.time(), "answer": str(e)[:80]}
 
