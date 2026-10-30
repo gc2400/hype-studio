@@ -339,7 +339,7 @@ def intro_kind(it):
     if it.get("section") != "jingles": return None
     f, t = (it.get("folder") or "").upper(), (it.get("title") or "") + " " + os.path.basename(it.get("path") or "")
     if f.startswith("NEW MUSIC") or re.search(r"new music", t, re.I): return "new"
-    if re.search(r"throwback|old school|rewind", t, re.I): return "throwback"
+    if f.startswith("THROWBACK") or re.search(r"throwback|old school|rewind", t, re.I): return "throwback"
     return None
 
 def song_kind(it):
@@ -798,6 +798,14 @@ class Engine:
             log.info("skipped %s – no two jingles in a row", it.get("title")); return
         if it.get("section") == "music":
             sk = song_kind(it)
+            if sk == "throwback" and sk not in held and it.get("src") == "clock" and not self.tb_done():
+                # a throwback song in the clock: a jingle from jingles/THROWBACK goes in front of it (once per clock hour,
+                # like the New Music sweeper before the New Music song)
+                try:
+                    cc = dbc(); jp = planner.resolve_jingle(cc, "THROWBACK", list(self.avoid()["paths"]))
+                    r = cc.execute(f"SELECT {COLS} FROM items WHERE path=?", (jp,)).fetchone() if jp else None
+                    if r: held[sk] = (row_item(r, "clock"), 0); self.held = held
+                except Exception as e: log.warning("throwback sweeper: %s", e)
             if sk and sk in held:
                 hj = held.pop(sk)[0]
                 if self.is_jingle(last) and not after_toh and self.plan and not last.get("event") and last.get("src") == "clock":
@@ -807,6 +815,19 @@ class Engine:
                 j, n = held[k_]; held[k_] = (j, n + 1)
                 if n + 1 > 4: held.pop(k_)
         self.plan.append(it)
+    def tb_done(self):
+        """Has a Throwback sweeper played / been planned in the clock hour the next item falls in?"""
+        at = self.cursor(); k = planner.runner_key(at)
+        t = time.time()
+        if self.now.get("path"): t = max(t, (self.now.get("started") or t) + self.length(self.now))
+        for p_ in ([self.liq_next] if self.liq_next else []) + self.plan:
+            if intro_kind(p_) == "throwback" and planner.runner_key(t) == k: return True
+            t += self.length(p_)
+        try:
+            r = dbc().execute("SELECT MAX(started) FROM asrun WHERE folder LIKE 'THROWBACK%' OR (kind='jingles' AND lower(title) LIKE '%throwback%')").fetchone()
+            if r and r[0] and planner.runner_key(r[0]) == k: return True
+        except Exception: pass
+        return False
     def replan(self):
         """Clocks/schedule/playlists changed: rebuild the planned (clock) items, keep yours."""
         self.plan = [p for p in self.plan if p["src"] == "you"]; self.runner = planner.ClockRunner(); self.hour_floor = 0
