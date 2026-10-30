@@ -1,12 +1,12 @@
 {
- "time": "2026-10-31T00:05:32",
+ "time": "2026-10-31T00:08:23",
  "result": "ok",
- "commit": "7bb2005d3e962bfd9dca819c0089cb45544cbcda",
- "subject": "Intro sweepers page: list of songs with their own sweeper (set in the Library), \u00d7 = back to the rules",
+ "commit": "05425f1312226318afffec8dab5ab1255a1e2840",
+ "subject": "Per-song intro sweepers survive moved songs/jingles; the list shows its count and a hint when empty",
  "log": [
-  "00:04:47 update 3b64b581 \u2192 7bb2005d \u00b7 2 file(s): engine/engine.py, web/panel/plan.html",
-  "00:04:47 restart hype-engine",
-  "00:05:32 installed OK \u00b7 restarted: hype-engine"
+  "00:07:37 update 7bb2005d \u2192 05425f13 \u00b7 2 file(s): engine/indexer.py, web/panel/plan.html",
+  "00:07:37 restart hype-indexer",
+  "00:08:23 installed OK \u00b7 restarted: hype-indexer"
  ],
  "guard": {
   "song": "ROA x Anuel AA \u2013 Vamo a Vel",
