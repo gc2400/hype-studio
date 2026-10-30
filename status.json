@@ -1,18 +1,18 @@
 {
- "time": "2026-10-30T23:15:36",
+ "time": "2026-10-30T23:25:35",
  "result": "ok",
- "commit": "509d7a3b27824af1b32acfb3ad4d223f09dca297",
- "subject": "Throwback jingle only before songs from CLASSICS folders (not GOLD)",
+ "commit": "29c9169bbaaea08c3ca2b314dce5856c2b408ca7",
+ "subject": "Playlists can hold a jingles folder (jingles/NEW MUSIC \u2026: every file in it); folder rules accept wildcards (*CLASSICS*)",
  "log": [
-  "23:14:51 update 8504199b \u2192 509d7a3b \u00b7 1 file(s): engine/engine.py",
-  "23:14:51 restart hype-engine",
-  "23:15:36 installed OK \u00b7 restarted: hype-engine"
+  "23:24:50 update 509d7a3b \u2192 29c9169b \u00b7 1 file(s): engine/planner.py",
+  "23:24:50 restart hype-engine",
+  "23:25:35 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Tiakola x Jorja Smith \u2013 Jet Lag",
+  "song": "Blaqbonez x Asake \u2013 Ikebe 3000",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
