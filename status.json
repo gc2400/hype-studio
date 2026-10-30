@@ -1,18 +1,17 @@
 {
- "time": "2026-10-31T00:08:23",
+ "time": "2026-10-31T00:14:32",
  "result": "ok",
- "commit": "05425f1312226318afffec8dab5ab1255a1e2840",
- "subject": "Per-song intro sweepers survive moved songs/jingles; the list shows its count and a hint when empty",
+ "commit": "c59ef4b2aec482a01faaa7a01d05796ccef9b5f3",
+ "subject": "Planning: playlists/clocks list fills the window height and scrolls inside its box",
  "log": [
-  "00:07:37 update 7bb2005d \u2192 05425f13 \u00b7 2 file(s): engine/indexer.py, web/panel/plan.html",
-  "00:07:37 restart hype-indexer",
-  "00:08:23 installed OK \u00b7 restarted: hype-indexer"
+  "00:14:32 update 05425f13 \u2192 c59ef4b2 \u00b7 1 file(s): web/panel/plan.html",
+  "00:14:32 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "ROA x Anuel AA \u2013 Vamo a Vel",
+  "song": "Devi Dev x B'Jay \u2013 Lock You",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 2.8,
   "problems": [],
   "ok": true
  },
