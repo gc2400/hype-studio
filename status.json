@@ -1,17 +1,18 @@
 {
- "time": "2026-10-30T15:21:16",
- "result": "error",
- "commit": "",
- "subject": "",
+ "time": "2026-10-30T16:41:55",
+ "result": "ok",
+ "commit": "ba6bd4443beb632239cfb56fa94af7d9c7b3862b",
+ "subject": "AGC: gated broadcast-style AGC (15 s intro hold, freeze on quiet parts, slow up 20 s, fast catch, max +6 dB)",
  "log": [
-  "15:21:16 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
+  "16:41:10 update 6c8d937c \u2192 ba6bd444 \u00b7 2 file(s): engine/engine.py, web/panel/settings.html",
+  "16:41:10 restart hype-engine",
+  "16:41:55 installed OK \u00b7 restarted: hype-engine"
  ],
- "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "Ozuna x Jory Boy x \u00d1engo Flow \u2013 Vulnerable",
-  "listeners": 0,
+  "song": "Langa \u2013 Bottega",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
