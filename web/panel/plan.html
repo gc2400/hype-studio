@@ -28,6 +28,9 @@ h1{margin:0;font-size:20px;font-weight:900}
 .tabs{display:flex;background:var(--deep);border-radius:11px;padding:3px;gap:3px;max-width:960px;flex-wrap:wrap}
 .tab{cursor:pointer;flex:1;min-height:40px;border-radius:9px;border:0;background:transparent;color:var(--mut);font-weight:800;font-size:13px;letter-spacing:.06em}
 .tab.on{background:var(--b);color:var(--bg)}
+#plEdit,#ckEdit{scroll-margin-top:130px}
+@media (max-width:759px){.split > .side > .list{max-height:46vh;overflow-y:auto}}
+@media (max-width:700px){.tabs{gap:2px}.tab{flex:1 1 auto;min-height:36px;font-size:11px;letter-spacing:.03em;white-space:nowrap;padding:0 10px}}
 .split{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
 .side{flex:1 1 260px;max-width:340px}.main{flex:999 1 560px;min-width:0}
 .list{display:flex;flex-direction:column;gap:4px}
@@ -270,6 +273,7 @@ function renderPL() {
   $$('#plList [data-id]').forEach(b => b.onclick = () => openPL(PL.find(p => p.id == b.dataset.id)));
 }
 function openPL(p) {
+  if (innerWidth < 760) setTimeout(() => { const e = document.querySelector('#plEdit'); if (e) e.scrollIntoView({behavior: 'smooth', block: 'start'}); }, 80);
   cur = JSON.parse(JSON.stringify(p)); $('#plEdit').hidden = false;
   $('#plName').value = cur.name; $('#plLoop').checked = cur.loop; $('#plShuffle').checked = cur.shuffle; $('#plRotate').checked = !!cur.rotate;
   $('#plDel').hidden = !cur.id; $('#plReset').hidden = !cur.id; $('#plInfo').textContent = cur.id ? cur.count + ' songs' : 'new';
@@ -350,7 +354,8 @@ function renderCK() {
   $('#ckList').innerHTML = CK.filter(c => !cq || nf(c.name).includes(cq)).map(c => `<button class="li ${ck && ck.id === c.id ? 'sel' : ''}" data-id="${c.id}"><span class="dot" style="background:${esc(c.color)}"></span><div style="flex:1"><b>${esc(c.name)}</b><br><span>${c.slots.length} slots${c.resume ? ' · continues' : ' · from the top'}</span></div></button>`).join('') || '<span class="muted">No clocks yet.</span>';
   $$('#ckList [data-id]').forEach(b => b.onclick = () => openCK(CK.find(c => c.id == b.dataset.id)));
 }
-function openCK(c) { ck = JSON.parse(JSON.stringify(c)); $('#ckEdit').hidden = false; $('#ckName').value = ck.name;  $('#ckColor').value = ck.color || '#05A9C6'; $('#ckResume').checked = !!ck.resume; $('#ckDel').hidden = !ck.id; renderSlots(); renderCK(); }
+function openCK(c) {
+  if (innerWidth < 760) setTimeout(() => { const e = document.querySelector('#ckEdit'); if (e) e.scrollIntoView({behavior: 'smooth', block: 'start'}); }, 80); ck = JSON.parse(JSON.stringify(c)); $('#ckEdit').hidden = false; $('#ckName').value = ck.name;  $('#ckColor').value = ck.color || '#05A9C6'; $('#ckResume').checked = !!ck.resume; $('#ckDel').hidden = !ck.id; renderSlots(); renderCK(); }
 function refOptions(s) {
   if (s.kind === 'playlist') return PL.map(p => [String(p.id), p.name + ' (' + p.count + ')']);
   if (s.kind === 'folder') return [...(s.ref && !FOLD.music.includes(s.ref) ? [[s.ref, s.ref + ' (not uploaded yet)']] : []), ...FOLD.music.map(f => [f, f + ' (' + (FOLD.counts[f] || 0) + ')'])];

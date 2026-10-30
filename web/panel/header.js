@@ -52,7 +52,10 @@
   #hhead{flex-wrap:wrap;gap:8px;padding:8px 12px}
   #hhead .hb{order:1}#hhead .hst{order:2}#hhead .sp{order:3}#hhead .menu{display:block;order:4}
   #hhead .hctl{order:5;width:100%;justify-content:space-between}
-  #hhead .hctl > .btn{flex:1;min-height:40px;font-size:12px}#hhead .modes{flex:2;display:flex}#hhead .modes .btn{flex:1;min-height:34px;font-size:10px;padding:0 4px}#hhead .hnav a.out .lo{display:inline}
+  #hhead .hctl{gap:6px;flex-wrap:nowrap}
+  #hhead .hctl > .btn{flex:1 1 0;min-height:38px;height:38px;font-size:12px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;text-align:center;margin:0}
+  #hhead .modes{flex:1.5 1 0;display:flex;height:38px;box-sizing:border-box}#hhead .modes .btn{flex:1 1 0;min-height:0;height:100%;font-size:11px;padding:0 4px;display:inline-flex;align-items:center;justify-content:center;margin:0}
+  #hhead .hnav a.out .lo{display:inline}
   #hhead .hnav{order:6;display:none;width:100%;flex-direction:column;align-items:stretch;padding:6px}
   #hhead.open .hnav{display:flex}#hhead .hnav a{padding:13px 12px;font-size:15px}#hhead .hnav .sep{display:none}
   #hhead #clock{font-size:18px}
