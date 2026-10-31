@@ -11,7 +11,9 @@
 *{box-sizing:border-box}[hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;min-height:100%}
 .wrap{max-width:560px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px}
-h1{margin:0;font-size:24px;font-weight:900}h1 b{color:var(--y)}
+h1{margin:0;font-size:22px;font-weight:900;letter-spacing:.01em}h1 b{color:var(--y)}
+.top{display:flex;align-items:center;gap:12px;padding:6px 0 4px}.top img{width:56px;height:56px;border-radius:50%;flex:none;filter:drop-shadow(0 4px 14px rgba(5,169,198,.35))}
+.top .sub{display:block;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--b);margin-top:2px}
 p{margin:0;color:var(--mut);font-size:15px;line-height:1.45}
 video{width:100%;aspect-ratio:16/9;background:#000;border-radius:16px;object-fit:cover;transform:scaleX(-1)}
 .card{background:var(--card);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
@@ -35,7 +37,7 @@ body.incall .wrap{max-width:1100px}
 </head>
 <body>
 <div class="wrap">
-  <h1>HYPE <b>RADIO TV</b></h1>
+  <header class="top"><img src="logo.png" alt="Hype Radio TV" width="56" height="56"><div><h1>HYPE <b>RADIO TV</b></h1><span class="sub">Join the show live</span></div></header>
   <div id="bad" hidden class="card"><p id="badMsg"></p></div>
   <div id="ok" hidden style="display:flex;flex-direction:column;gap:14px">
     <p>Hi <b id="gName" style="color:#fff"></b> – you're invited to <b id="gShow" style="color:#fff"></b>. <b style="color:#fff">Use headphones</b> (earbuds are fine), so we don't hear ourselves back.</p>
@@ -43,6 +45,7 @@ body.incall .wrap{max-width:1100px}
     <div class="card" id="setup">
       <label>Camera<select id="cam"></select></label>
       <label>Microphone<select id="mic"></select></label>
+      <label id="spkL">Headphones / speaker<select id="spk"></select></label>
       <div class="meter"><i id="lvl"></i></div>
     </div>
     <div class="row" id="joinRow"><button class="btn y" id="joinV">Join with video</button><button class="btn o" id="joinA">Audio only</button></div>
@@ -61,11 +64,30 @@ const T = new URLSearchParams(location.search).get('t') || '';
 let ME = null, stream = null, pub = null, ret = null, air = null, others = {}, muted = false;
 function fail(m) { $('#bad').hidden = false; $('#ok').hidden = true; $('#badMsg').textContent = m; }
 async function info() { const r = await fetch('/api/guest_info?t=' + encodeURIComponent(T), {cache: 'no-store'}); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'not valid'); return j; }
+const SINK_OK = 'setSinkId' in HTMLMediaElement.prototype;      // choosing the output works in Chrome / Edge / Firefox (on iPhone the phone decides)
+let KNOWN = null;
 async function devices() {
-  const d = await navigator.mediaDevices.enumerateDevices();
-  $('#cam').innerHTML = d.filter(x => x.kind === 'videoinput').map(x => `<option value="${x.deviceId}">${x.label || 'Camera'}</option>`).join('');
-  $('#mic').innerHTML = d.filter(x => x.kind === 'audioinput').map(x => `<option value="${x.deviceId}">${x.label || 'Microphone'}</option>`).join('');
+  const d = await navigator.mediaDevices.enumerateDevices(), keep = {cam: $('#cam').value, mic: $('#mic').value, spk: $('#spk').value};
+  const real = x => x.deviceId && x.deviceId !== 'default' && x.deviceId !== 'communications';
+  const fill = (id, kind, name, first) => { $('#' + id).innerHTML = (first || '') + d.filter(x => x.kind === kind).map(x => `<option value="${x.deviceId}">${x.label || name}</option>`).join('');
+    if (keep[id] && [...$('#' + id).options].some(o => o.value === keep[id])) $('#' + id).value = keep[id]; };
+  fill('cam', 'videoinput', 'Camera'); fill('mic', 'audioinput', 'Microphone'); fill('spk', 'audiooutput', 'Output', '<option value="">System default (follows your headphones)</option>');
+  $('#spkL').hidden = !SINK_OK || !d.some(x => x.kind === 'audiooutput');
+  // a device that was just plugged in (headset, headphones, USB mic) is chosen by itself
+  const now = new Set(d.filter(real).map(x => x.kind + '|' + x.deviceId)), added = KNOWN ? d.filter(x => real(x) && !KNOWN.has(x.kind + '|' + x.deviceId)) : [];
+  KNOWN = now; let changed = false;
+  added.forEach(x => { const id = x.kind === 'audioinput' ? 'mic' : x.kind === 'audiooutput' ? 'spk' : x.kind === 'videoinput' ? 'cam' : null;
+    if (id) { $('#' + id).value = x.deviceId; changed = true; } });
+  return changed;
 }
+function applySink() { if (!SINK_OK) return; const v = $('#spk').value || '';
+  [$('#studio'), ...Object.values(others).map(o => o.a)].forEach(a => { try { a.setSinkId(v); } catch (e) {} }); }
+async function useDevices() {       // new camera / mic chosen: in a call the new one replaces the old one at once (no reconnect)
+  const video = !(ME && ME.mode === 'audio') && !$('#me').hidden;
+  await preview(video);
+  if (pub && pub.pc) pub.pc.getSenders().forEach(snd => { const t = snd.track ? stream.getTracks().find(x => x.kind === snd.track.kind) : null; if (t) snd.replaceTrack(t).catch(() => {}); });
+}
+navigator.mediaDevices.addEventListener('devicechange', async () => { const ch = await devices(); applySink(); if (ch) useDevices().catch(() => {}); });
 async function preview(video = true) {
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = await navigator.mediaDevices.getUserMedia({
@@ -81,10 +103,10 @@ function state(name, s) {
 }
 async function join(video) {
   try { await preview(video); } catch (e) { return alert('Please allow ' + (video ? 'camera and ' : '') + 'microphone.'); }
-  $('#setup').hidden = true; $('#joinRow').hidden = true; $('#inCall').hidden = false;
+  $('#joinRow').hidden = true; $('#inCall').hidden = false;      // the device choices stay: switch headphones / mic during the call
   pub = HypeRTC.keep('me', () => HypeRTC.publish(ME.slot, stream, {key: T, videoKbps: 1800, audioKbps: 64, stereo: false}), state);
   // what you hear: the studio (mix-minus) + the other guests
-  ret = HypeRTC.keep('studio', async () => { const r = await HypeRTC.play('mixminus', {key: T}); $('#studio').srcObject = r.stream; $('#studio').play().catch(() => {}); return r; }, () => {});
+  ret = HypeRTC.keep('studio', async () => { const r = await HypeRTC.play('mixminus', {key: T}); $('#studio').srcObject = r.stream; applySink(); $('#studio').play().catch(() => {}); return r; }, () => {});
   setInterval(listenOthers, 3000); listenOthers();
   // what is on air: a small picture (it follows your connection), next to your own camera - no sound (you hear the studio)
   document.body.classList.add('incall'); $('#airBox').hidden = false;
@@ -95,13 +117,14 @@ async function listenOthers() {
   let j; try { j = await info(); } catch (e) { return; }
   if (j.live) $('#dot').className = 'dot live';
   j.others.forEach(s => { if (others[s]) return; const a = new Audio(); a.autoplay = true; document.body.appendChild(a);
+    if (SINK_OK && $('#spk').value) { try { a.setSinkId($('#spk').value); } catch (e) {} }
     others[s] = {a, c: HypeRTC.keep(s, async () => { const r = await HypeRTC.play(s, {key: T}); a.srcObject = r.stream; a.play().catch(() => {}); return r; }, () => {})}; });
   Object.keys(others).forEach(s => { if (!j.others.includes(s)) { others[s].c.close(); others[s].a.remove(); delete others[s]; } });
 }
 $('#joinV').onclick = () => join(true); $('#joinA').onclick = () => join(false);
 $('#mute').onclick = () => { muted = !muted; stream.getAudioTracks().forEach(t => t.enabled = !muted); $('#mute').textContent = muted ? 'Unmute mic' : 'Mute mic'; $('#mute').className = 'btn ' + (muted ? 'y' : 'o'); };
 $('#leave').onclick = () => { pub && pub.close(); ret && ret.close(); air && air.close(); air = null; $('#airBox').hidden = true; document.body.classList.remove('incall'); Object.values(others).forEach(o => o.c.close()); stream && stream.getTracks().forEach(t => t.stop()); $('#inCall').hidden = true; $('#joinRow').hidden = false; $('#setup').hidden = false; $('#tip').textContent = ''; };
-$('#cam').onchange = () => preview(true).catch(() => {}); $('#mic').onchange = () => preview(!(ME && ME.mode === 'audio')).catch(() => {});
+$('#cam').onchange = () => useDevices().catch(() => {}); $('#mic').onchange = () => useDevices().catch(() => {}); $('#spk').onchange = applySink;
 info().then(async j => { ME = j; $('#ok').hidden = false; $('#gName').textContent = j.name; $('#gShow').textContent = j.show || 'Hype Radio TV';
   const audioOnly = j.mode === 'audio';   // the host invited you as a phone-style (audio only) guest
   if (audioOnly) { $('#joinV').hidden = true; $('#joinA').textContent = 'Join (audio only)'; $('#joinA').className = 'btn y'; $('#cam').closest('label').hidden = true; $('#me').hidden = true; }

@@ -32,6 +32,7 @@ web/overlay/clockbox.png|/var/www/overlay/clockbox.png|644|-
 web/overlay/np_box.webm|/var/www/overlay/np_box.webm|644|-
 web/guest/index.html|/var/www/guest/index.html|644|-
 web/guest/hype-rtc.js|/var/www/guest/hype-rtc.js|644|-
+web/guest/logo.png|/var/www/guest/logo.png|644|-
 system/nginx-hype.conf|/etc/nginx/sites-enabled/hype|644|nginx-reload
 system/hype-auth.service|/etc/systemd/system/hype-auth.service|644|daemon-reload
 system/hype-engine.service|/etc/systemd/system/hype-engine.service|644|daemon-reload
