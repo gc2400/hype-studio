@@ -1,19 +1,18 @@
 {
- "time": "2026-10-31T03:20:41",
+ "time": "2026-10-31T03:28:37",
  "result": "ok",
- "commit": "66196cc5d921dc13723cd0f1f9f8dc68ef3fc6fb",
- "subject": "Exact mix moments: the loudness measure every 0.1 s for the first and last seconds",
+ "commit": "d009f89fbe31c8a43f147f750ffab34e2f87e48c",
+ "subject": "Fine loudness backfill: gentler (lowest priority, one thread, a pause between files)",
  "log": [
-  "03:19:56 update 542941e1 \u2192 66196cc5 \u00b7 3 file(s): engine/close_import.py, engine/engine.py, engine/indexer.py",
-  "03:19:56 restart hype-indexer",
-  "03:19:56 restart hype-engine",
-  "03:20:41 installed OK \u00b7 restarted: hype-engine, hype-indexer"
+  "03:27:51 update 66196cc5 \u2192 d009f89f \u00b7 1 file(s): engine/indexer.py",
+  "03:27:51 restart hype-indexer",
+  "03:28:37 installed OK \u00b7 restarted: hype-indexer"
  ],
  "guard": {
-  "song": "Jaido x Issairo \u2013 Disiplina",
-  "listeners": 2,
+  "song": "Feid \u2013 TRANKAITO",
+  "listeners": 0,
   "obs": true,
-  "seg_age": 3.2,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
