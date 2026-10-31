@@ -1,17 +1,17 @@
 {
- "time": "2026-10-31T00:53:37",
+ "time": "2026-10-31T01:00:48",
  "result": "ok",
- "commit": "e80eb73e6034c71849f66c7c03d3530ca66d0010",
- "subject": "Phone: header buttons evenly sized and identical on every page; Planning tabs wrap cleanly, lists scroll in their box, opening a playlist/clock jumps to its editor",
+ "commit": "25c40ade0eee721d5545f404fd4ade9b9068b00d",
+ "subject": "Library: the editor is as tall as the song list and the video fills the free room (about twice as big); Planning on phones: list box full width like the rest",
  "log": [
-  "00:53:37 update bc025775 \u2192 e80eb73e \u00b7 2 file(s): web/panel/header.js, web/panel/plan.html",
-  "00:53:37 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "01:00:48 update e80eb73e \u2192 25c40ade \u00b7 2 file(s): web/panel/library.html, web/panel/plan.html",
+  "01:00:48 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Rich Kalashh \u2013 Rosea Malu",
+  "song": "GIMS \u2013 SOLEIL",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
