@@ -1,17 +1,18 @@
 {
- "time": "2026-10-31T23:18:36",
+ "time": "2026-10-31T23:37:45",
  "result": "ok",
- "commit": "62eab615cb9b7b8c0a6f7345e2bf2fe62626dae7",
- "subject": "Broadcast page: camera bitrate from 1 to 15 Mbps in small steps, 540p for a weak line, fitting defaults set once (1080p25, 4 Mbps, 256k sound), live note of what you send",
+ "commit": "0cf95cf180f675419e7657191c7b01993f1f0702",
+ "subject": "Cameras fit their box on black (a portrait phone shows upright, never stretched; black only while that camera sends); guest page asks phones to go horizontal; Broadcast page: lip sync wording fixed (it was the wrong way round)",
  "log": [
-  "23:18:36 update 6d938d2d \u2192 62eab615 \u00b7 1 file(s): web/panel/studio.html",
-  "23:18:36 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "23:37:00 update 62eab615 \u2192 0cf95cf1 \u00b7 3 file(s): engine/live.py, web/guest/index.html, web/panel/studio.html",
+  "23:37:00 restart hype-engine",
+  "23:37:45 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "FloyyMenor x Midnvght \u2013 V\u00c9NGATE",
+  "song": "Jay Wheeler \u2013 Fuga",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
