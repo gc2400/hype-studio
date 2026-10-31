@@ -22,6 +22,7 @@ h1{margin:0;font-size:20px;font-weight:900}h1 small{color:var(--mut);font-weight
 @media (max-width:1000px){.grid{grid-template-columns:1fr}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .ed{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto;padding:12px;gap:8px}
+@media (min-width:1001px){.ed{max-height:none}}
 #box{gap:8px!important}
 .btn{min-height:34px}
 .lab{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
@@ -63,7 +64,7 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
 .cdh .t span{display:block;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cdg{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:12px;align-items:start}
 .cdg.novid{grid-template-columns:minmax(0,1fr)}
-#m{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;display:block}
+#m{width:100%;aspect-ratio:16/9;height:auto;background:#000;border-radius:10px;display:block;object-fit:contain}
 .cueside{display:flex;flex-direction:column;gap:6px}
 .cueset{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;min-height:40px;padding:0 12px;border-radius:10px;background:var(--deep);border:1px solid var(--line2);color:var(--txt);font:inherit;cursor:pointer;text-align:left}
 .cueset:hover{border-color:currentColor}
@@ -199,9 +200,21 @@ function renderChips() {
   $$('#chips [data-off]').forEach(b => b.onclick = () => { const k = b.dataset.off; if (k === 'kind') KIND = ''; if (k === 'recent') RECENT = 0; if (k === 'auto') AUTOC = 0; if (k === 'sort') SORT = 'az'; lib(); });
   $('#bFilter').innerHTML = '⚙ Filter' + (on.length ? ` <b style="color:#FFE000">${on.length}</b>` : '');
 }
-// the song list ends at the bottom of the window: only the list scrolls, not the page
-function fitRes() { const r = $('#res'); if (!r) return; if (innerWidth <= 1000) { r.style.maxHeight = ''; return; }
-  r.style.maxHeight = Math.max(240, innerHeight - r.getBoundingClientRect().top - 30) + 'px'; }
+// the song list ends at the bottom of the window: only the list scrolls, not the page.
+// The editor on the right is as tall as the list card; the video takes the room that is left (bigger picture).
+function fitRes() { const r = $('#res'), ed = $('#ed'), m = $('#m'); if (!r) return;
+  if (innerWidth <= 1000) { r.style.maxHeight = ''; if (ed) ed.style.height = ''; if (m) m.style.height = ''; return; }
+  r.style.maxHeight = Math.max(240, innerHeight - r.getBoundingClientRect().top - 30) + 'px';
+  const left = r.closest('.card'); if (!ed || !left) return;
+  ed.style.height = left.getBoundingClientRect().height + 'px';
+  if (m && m.style.display !== 'none' && !$('#box').hidden) {
+    m.style.height = '';                                             // natural 16:9 height for this width first
+    const cs = getComputedStyle(ed), inner = ed.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const spare = inner - $('#box').getBoundingClientRect().height;   // room left at the bottom of the editor
+    const nat = m.getBoundingClientRect().height, w = m.getBoundingClientRect().width;
+    if (spare > 0) m.style.height = Math.round(nat + spare - 4) + 'px';               // grow into the free room (picture keeps its shape)
+    else if (spare < 0) m.style.height = Math.max(180, Math.round(nat + spare - 4)) + 'px';   // too tall: shrink so it all fits
+    void w; } }
 addEventListener('resize', fitRes); new ResizeObserver(fitRes).observe(document.body); setTimeout(fitRes, 60);
 $('#bFilter').onclick = () => { const p = $('#fpanel'); p.hidden = !p.hidden; setTimeout(fitRes, 0); $('#bFilter').setAttribute('aria-expanded', String(!p.hidden)); $('#bFilter').classList.toggle('on', !p.hidden); };
 function renderList() {
@@ -210,7 +223,8 @@ function renderList() {
     return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''}" role="option" data-p="${esc(it.path)}"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}</span></div></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
   $$('#res .ri').forEach(el => el.onclick = () => pick(LIB.items.find(x => x.path === el.dataset.p)));
 }
-function pick(it) {
+$('#m').addEventListener('loadedmetadata', () => fitRes());
+function pick(it) { setTimeout(fitRes, 0);
   if (!it) return; if (dirty && SEL) save();      // saves by itself: nothing gets lost when you go to the next song
   SEL = it; dirty = false; $$('#res .ri').forEach(r => { const on = r.dataset.p === it.path; r.classList.toggle('sel', on); if (on) r.scrollIntoView({block: 'nearest'}); });
   $('#none').hidden = true; $('#box').hidden = false;
