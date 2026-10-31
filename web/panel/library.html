@@ -69,6 +69,15 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
 .cueset{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;min-height:40px;padding:0 12px;border-radius:10px;background:var(--deep);border:1px solid var(--line2);color:var(--txt);font:inherit;cursor:pointer;text-align:left}
 .cueset:hover{border-color:currentColor}
 .cueset .k{font-size:12px;font-weight:800;letter-spacing:.06em}
+.cuebox{display:flex;flex-direction:column;gap:4px}.cuebox .cueset{grid-template-columns:1fr;min-height:34px;color:inherit}
+.nud{display:flex;gap:4px;align-items:center}
+.nud button{min-height:30px;min-width:38px;border-radius:8px;background:var(--deep);border:1px solid var(--line2);color:var(--soft);font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.nud button:hover{border-color:currentColor;color:var(--txt)}.nud .auto{color:var(--y);min-width:0;padding:0 8px}
+.tin{flex:1;min-width:0;width:0;min-height:30px;border-radius:8px;background:var(--deep);border:1px solid var(--line2);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;text-align:center;padding:0 4px}
+.tin:focus{outline:none;border-color:currentColor}
+@media (max-width:640px){.cdg .cueside{display:flex!important;flex-direction:column}.cuebox{display:grid;grid-template-columns:104px minmax(0,1fr);gap:6px;align-items:center}.cuebox .cueset{padding:0 10px}.cdg .ovb{flex-direction:column!important;align-items:stretch!important}}
+.zoomw{position:relative}.wave.zoom{height:64px;cursor:crosshair}
+.zl{position:absolute;right:8px;top:4px;font-size:11px;font-weight:700;color:var(--mut);pointer-events:none}
 .cueset .v{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--txt)}
 .cueside .sel{width:100%;background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:34px;padding:0 8px;font:inherit;font-size:13px}
 .ovb{display:flex;flex-direction:column;gap:4px;margin-top:4px}
@@ -126,13 +135,17 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
         <div class="cdg" id="cdg">
           <video id="m" playsinline preload="metadata"></video>
           <div class="cueside">
-            <button class="cueset" data-set="s" style="color:var(--g)" title="Set START at the playhead (key S)"><span class="k">SET START</span><span class="v" id="vS">0:00.0</span></button>
-            <button class="cueset" data-set="m" style="color:var(--y)" title="Set MIX at the playhead (key M) – the next song starts here"><span class="k">SET MIX</span><span class="v" id="vM">0:00.0</span></button><button class="btn sm" id="mixAuto" title="MIX back to AUTO: smart mix picks it from the song's loudness (your START and END stay)">AUTO</button>
-            <button class="cueset" data-set="e" style="color:#FF8A97" title="Set END at the playhead (key E) – preview stops here"><span class="k">SET END</span><span class="v" id="vE">0:00.0</span></button>
+            <div class="cuebox" style="color:var(--g)"><button class="cueset" data-set="s" title="Set START at the playhead (key S)"><span class="k">SET START</span></button>
+              <div class="nud"><button data-nud="s" data-d="-0.1" title="START 0.1 s earlier">−.1</button><input class="tin" data-k="s" id="vS" inputmode="decimal" aria-label="START time" title="Type a time, e.g. 0:12.35, then Enter"><button data-nud="s" data-d="0.1" title="START 0.1 s later">+.1</button></div></div>
+            <div class="cuebox" style="color:var(--y)"><button class="cueset" data-set="m" title="Set MIX at the playhead (key M) – the next song starts here"><span class="k">SET MIX</span></button>
+              <div class="nud"><button data-nud="m" data-d="-0.1" title="MIX 0.1 s earlier">−.1</button><input class="tin" data-k="m" id="vM" inputmode="decimal" aria-label="MIX time" title="Type a time, e.g. 2:51.9, then Enter"><button data-nud="m" data-d="0.1" title="MIX 0.1 s later">+.1</button><button class="auto" id="mixAuto" title="MIX back to AUTO: smart mix picks it from the song's loudness (your START and END stay)">AUTO</button></div></div>
+            <div class="cuebox" style="color:#FF8A97"><button class="cueset" data-set="e" title="Set END at the playhead (key E) – preview stops here"><span class="k">SET END</span></button>
+              <div class="nud"><button data-nud="e" data-d="-0.1" title="END 0.1 s earlier">−.1</button><input class="tin" data-k="e" id="vE" inputmode="decimal" aria-label="END time" title="Type a time, e.g. 2:54.0, then Enter"><button data-nud="e" data-d="0.1" title="END 0.1 s later">+.1</button></div></div>
             <div id="ovBox" class="ovb"><span class="lab">Intro sweeper</span><select class="sel" id="ovSel" aria-label="Intro sweeper for this song"></select></div>
           </div>
         </div>
         <canvas class="wave" id="wave" width="1600" height="110" style="height:56px" aria-label="Waveform: click to jump, drag the markers"></canvas>
+        <div class="zoomw"><canvas class="wave zoom" id="zoom" width="1600" height="120" aria-label="Zoom: 6 seconds around the marker you are setting – click to jump, drag a marker for a precise spot"></canvas><span class="zl" id="zl"></span></div>
         <div class="cdt">
           <button class="btn" id="bBack" title="−1 s (←)">−1s</button>
           <button class="btn yellow" id="bPlay" title="Play / pause (Space)" aria-label="Play or pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg></button>
@@ -142,7 +155,7 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
           <span class="pos" id="pos">0:00.0</span>
         </div>
         <div class="cdf"><button class="btn sm" id="bAuto" title="Back to the automatic cue points">Automatic cues</button><button class="btn sm" id="bNextUp" title="Play this song next on air">⏭ Play next on air</button><span style="flex:1"></span><button class="btn" id="bSave">Save</button><button class="btn yellow" id="bSaveNext" title="Enter">Save + next ▶</button></div>
-        <div class="keys"><kbd>↑</kbd><kbd>↓</kbd> song · <kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> 1 s (<kbd>Shift</kbd> 0.1 s) · <kbd>S</kbd><kbd>M</kbd><kbd>E</kbd> set cue · <kbd>1</kbd> from START · <kbd>2</kbd> into MIX · <kbd>Enter</kbd> save + next · <kbd>/</kbd> search</div>
+        <div class="keys"><kbd>↑</kbd><kbd>↓</kbd> song · <kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> 1 s (<kbd>Shift</kbd> 0.1 s) · <kbd>S</kbd><kbd>M</kbd><kbd>E</kbd> set cue · type a time in the box (e.g. 2:51.9) · <kbd>−.1</kbd><kbd>+.1</kbd> nudge · zoom: drag a marker · <kbd>1</kbd> from START · <kbd>2</kbd> into MIX · <kbd>Enter</kbd> save + next · <kbd>/</kbd> search</div>
       </div>
     </section>
   </div>
@@ -233,7 +246,7 @@ function pick(it) { setTimeout(fitRes, 0);
   const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode); $('#eBadge').textContent = bt; $('#eBadge').className = 'chip ' + bc;
   $('#eTv').textContent = !MUS() ? '' : it.mode === 'pair' ? 'TV plays the clip "' + (it.clip_path || '').replace(/^clips\//, '') + '" with its own sound (same name).' : it.mode === 'clip' ? 'Video file – radio and TV play the same.' : 'No clip with the same name in /clips → TV shows the Hype Screen.';
   CUE = {s: it.cue_start || 0, m: it.cue_mix || it.duration || 0, e: it.cue_end || it.duration || 0, d: it.duration || 1, auto: !it.mix_set};
-  peaks = []; fill(); draw(); smartFetch(); api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { peaks = p; draw(); } });
+  ZK = 's'; ZD = null; peaks = []; fill(); draw(); smartFetch(); api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { peaks = p; draw(); } });
   const m = $('#m'); m.pause(); m.src = '../media/' + it.path.split('/').map(encodeURIComponent).join('/');
   m.style.display = it.has_video ? 'block' : 'none'; $('#cdg').classList.toggle('novid', !it.has_video); m.currentTime = CUE.s;
   $('#ovBox').hidden = !MUS();
@@ -244,18 +257,53 @@ const fmtC = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), r = t
 let smT = null;
 function smartFetch() { if (!CUE || !CUE.auto || !SEL) return; const it = SEL; clearTimeout(smT);
   smT = setTimeout(() => api('smartmix?path=' + encodeURIComponent(it.path) + '&s=' + CUE.s + '&e=' + CUE.e).then(r => { if (SEL === it && CUE.auto && r && r.mix != null) { CUE.m = r.mix; fill(); draw(); } }), 150); }
-function fill() { $('#vS').textContent = fmtC(CUE.s); $('#vM').textContent = (CUE.auto ? 'AUTO ' : '') + fmtC(CUE.m); $('#vE').textContent = fmtC(CUE.e); $('#bSave').textContent = dirty ? 'Save *' : 'Save'; }
+const fmtF = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), r = t - m * 60; return m + ':' + r.toFixed(2).padStart(5, '0'); };
+function fill() { ['s', 'm', 'e'].forEach(k => { const el = $('#v' + k.toUpperCase()); if (document.activeElement !== el) el.value = fmtF(CUE[k]); });
+  $('#vM').placeholder = ''; $('#mixAuto').style.opacity = CUE.auto ? 1 : .55; $('#mixAuto').textContent = CUE.auto ? 'AUTO ✓' : 'AUTO'; $('#bSave').textContent = dirty ? 'Save *' : 'Save'; }
+function parseT(v) { v = String(v).trim().replace(',', '.'); if (!v) return null; const p = v.split(':'); let t = 0;
+  for (const x of p) { const n = parseFloat(x); if (isNaN(n)) return null; t = t * 60 + n; } return t; }
 function draw() {
   const c = $('#wave'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H); if (!CUE) return;
   const n = peaks.length || 1, bw = W / n;
   for (let i = 0; i < peaks.length; i++) { const f = i / n * CUE.d, h = Math.max(2, peaks[i] * (H - 18)); x.fillStyle = f < CUE.s || f > CUE.e ? '#1A3550' : '#05A9C6'; x.fillRect(i * bw, (H - h) / 2, Math.max(1, bw - 1), h); }
   [['s', '#3DDC97', 'START'], ['m', '#FFE000', 'MIX'], ['e', '#FF8A97', 'END']].forEach(([k, col, l]) => { const X = CUE[k] / CUE.d * W; x.fillStyle = col; x.fillRect(X - 2, 0, 4, H); x.font = 'bold 24px Inter'; if (k === 'm' && CUE.auto) l = 'MIX AUTO'; x.fillText(l, k === 's' ? X + 6 : X - x.measureText(l).width - 6, k === 'm' ? H - 10 : 26); });
   const p = $('#m').currentTime || 0; x.fillStyle = '#fff'; x.fillRect(p / CUE.d * W - 1, 0, 3, H);
+  if (!(typeof zpress !== 'undefined' && zpress && zpress.drag)) drawZoom();
 }
 let saveT = null;
 function saveSoon() { dirty = true; fill(); clearTimeout(saveT); saveT = setTimeout(() => { if (dirty && SEL) save(); }, 900); }   // auto-save
-function setCue(k, t) { CUE[k] = Math.round(t * 10) / 10; if (k === 'm') CUE.auto = false; if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; draw(); if (k !== 'm') smartFetch(); saveSoon(); }
-$('#mixAuto').onclick = () => { if (!CUE) return; CUE.auto = true; draw(); smartFetch(); saveSoon(); };
+let ZK = 's';     // the marker the zoom follows (the last one you touched)
+function setCue(k, t) { ZK = k; CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false; if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; draw(); if (k !== 'm') smartFetch(); saveSoon(); }
+$('#mixAuto').onclick = () => { if (!CUE) return; CUE.auto = true; ZK = 'm'; draw(); smartFetch(); saveSoon(); };
+$$('[data-nud]').forEach(b => b.onclick = () => { if (!CUE) return; const k = b.dataset.nud; setCue(k, CUE[k] + parseFloat(b.dataset.d)); const m = $('#m'); m.pause(); m.currentTime = CUE[k]; });
+$$('.tin').forEach(el => { el.onfocus = () => { ZK = el.dataset.k; el.select(); draw(); };
+  el.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') el.blur(); if (e.key === 'Escape') { el.value = fmtF(CUE[el.dataset.k]); el.blur(); } };
+  el.onblur = () => { if (!CUE) return; const t = parseT(el.value); if (t == null || Math.abs(t - CUE[el.dataset.k]) < 0.005) { fill(); return; }
+    setCue(el.dataset.k, t); const m = $('#m'); m.pause(); m.currentTime = CUE[el.dataset.k]; fill(); }; });
+// zoom: 6 s around the marker you are setting, 10 ms detail
+let ZD = null, zT = null, zBusy = false;
+function zoomWin() { const c = CUE[ZK] || 0; return Math.max(0, Math.min(Math.max(0, CUE.d - 6), c - 3)); }
+function zoomFetch() { if (!CUE || !SEL || zBusy) return; const t0 = Math.round(zoomWin() * 10) / 10, it = SEL;
+  if (ZD && ZD.path === it.path && Math.abs(ZD.t0 - t0) < 0.6) return;
+  zBusy = true; api('wavezoom?path=' + encodeURIComponent(it.path) + '&t=' + t0 + '&d=6').then(r => { zBusy = false; if (SEL === it) { ZD = {...r, path: it.path}; drawZoom(); } }).catch(() => { zBusy = false; }); }
+function drawZoom() {
+  const c = $('#zoom'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H); if (!CUE) return;
+  const t0 = zoomWin(), sp = 6, X = t => (t - t0) / sp * W;
+  for (let s = Math.ceil(t0 * 2) / 2; s < t0 + sp; s += 0.5) { x.fillStyle = Number.isInteger(s) ? '#23496B' : '#17344F'; x.fillRect(X(s), 0, 1, H); }
+  if (ZD && ZD.path === SEL.path) { const bw = W / (sp / ZD.step);
+    ZD.p.forEach((v, i) => { const t = ZD.t0 + i * ZD.step; if (t < t0 || t > t0 + sp) return; const h = Math.max(1, v * (H - 14)); x.fillStyle = t < CUE.s || t > CUE.e ? '#1A3550' : '#05A9C6'; x.fillRect(X(t), (H - h) / 2, Math.max(1, bw - 0.5), h); }); }
+  [['s', '#3DDC97'], ['m', '#FFE000'], ['e', '#FF8A97']].forEach(([k, col]) => { const t = CUE[k]; if (t < t0 || t > t0 + sp) return; x.fillStyle = col; x.fillRect(X(t) - (k === ZK ? 3 : 1.5), 0, k === ZK ? 6 : 3, H); });
+  const p = $('#m').currentTime || 0; if (p >= t0 && p <= t0 + sp) { x.fillStyle = '#fff'; x.fillRect(X(p) - 1, 0, 2, H); }
+  $('#zl').textContent = ({s: 'START', m: 'MIX', e: 'END'})[ZK] + ' · zoom ' + fmtC(t0) + ' – ' + fmtC(t0 + sp);
+  clearTimeout(zT); zT = setTimeout(zoomFetch, 120); }
+function zx(e) { const r = $('#zoom').getBoundingClientRect(); return zoomWin() + Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * 6; }
+let zpress = null;
+$('#zoom').onpointerdown = e => { if (!CUE) return; const t = zx(e), near = ['s', 'm', 'e'].reduce((a, k) => Math.abs(CUE[k] - t) < Math.abs(CUE[a] - t) ? k : a, ZK);
+  zpress = {x: e.clientX, t, k: Math.abs(CUE[near] - t) < 0.12 ? near : null, w0: zoomWin(), drag: false}; $('#zoom').setPointerCapture(e.pointerId); };
+$('#zoom').onpointermove = e => { if (!zpress) return; if (!zpress.drag && zpress.k && Math.abs(e.clientX - zpress.x) > 4) zpress.drag = true;
+  if (zpress.drag) { const r = $('#zoom').getBoundingClientRect(), t = zpress.w0 + Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * 6;   // the window stays put while you drag
+    const k = zpress.k; CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false; ZK = k; $('#m').currentTime = CUE[k]; fill(); draw(); } };
+$('#zoom').onpointerup = () => { if (!zpress) return; if (zpress.drag) setCue(zpress.k, CUE[zpress.k]); else { $('#m').currentTime = zpress.t; draw(); } zpress = null; };
 function cx(e) { const r = $('#wave').getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * CUE.d; }
 let press = null;     // a click (also right on a marker) jumps there; only when you really drag a marker does it move
 $('#wave').onpointerdown = e => { if (!CUE) return; const t = cx(e), near = ['s', 'm', 'e'].reduce((a, k) => Math.abs(CUE[k] - t) < Math.abs(CUE[a] - t) ? k : a, 's');

@@ -1490,14 +1490,22 @@ def library(qs):
     psql = "SELECT COUNT(*) FROM items WHERE section=? AND problem IS NOT NULL" + ((" AND folder " + ("" if mixes else "NOT ") + "LIKE 'MIXES%'") if sec == "music" else "")
     return {"problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "counts": counts}
 
+def wave_zoom(path, t0, dur=6.0):
+    """Fine waveform for the cue editor zoom: the loudest sample of every 10 ms from t0, over dur seconds."""
+    t0 = max(0.0, t0); dur = max(1.0, min(12.0, dur))
+    p = subprocess.run(["nice", "-n", "10", "ffmpeg", "-v", "error", "-ss", f"{t0:.3f}", "-t", f"{dur:.3f}", "-i", os.path.join(ROOT, path),
+                        "-map", "0:a:0", "-ac", "1", "-ar", "8000", "-f", "s16le", "-"], capture_output=True, timeout=30)
+    a = array.array("h"); a.frombytes(p.stdout[: len(p.stdout) // 2 * 2])
+    return {"t0": t0, "step": 0.01, "p": [round(max((abs(x) for x in a[i:i + 80]), default=0) / 32768, 3) for i in range(0, len(a) - 79, 80)]}
+
 def waveform(path):
     os.makedirs(WAVES, exist_ok=True)
-    f = os.path.join(WAVES, hashlib.sha1(path.encode()).hexdigest()[:16] + ".json")
+    f = os.path.join(WAVES, hashlib.sha1(path.encode()).hexdigest()[:16] + "_1600.json")
     if os.path.exists(f): return json.load(open(f))
     p = subprocess.run(["ffmpeg", "-v", "error", "-i", os.path.join(ROOT, path), "-map", "0:a:0", "-ac", "1", "-ar", "2000", "-f", "s16le", "-"],
                        capture_output=True, timeout=120)
     a = array.array("h"); a.frombytes(p.stdout[: len(p.stdout) // 2 * 2])
-    n = 400; step = max(1, len(a) // n)
+    n = 1600; step = max(1, len(a) // n)     # 1600 points: about 0.1 s per point on a 3-minute song
     peaks = [round(max((abs(x) for x in a[i:i + step]), default=0) / 32768, 3) for i in range(0, step * n, step)][:n]
     json.dump(peaks, open(f, "w")); return peaks
 
@@ -1804,6 +1812,7 @@ class H(BaseHTTPRequestHandler):
                 for r in reversed(h["items"]): w.writerow([h["day"], r["time"], r["artist"], r["title"], r["folder"], r["type"], r["len"], r["scene"], r["path"]])
                 return self.send(200, ("\ufeff" + b.getvalue()).encode("utf-8"), "text/csv; charset=utf-8")
             if p == "/wave": return self.send(200, waveform(qs["path"][0]))
+            if p == "/wavezoom": return self.send(200, wave_zoom(qs["path"][0], float(qs.get("t", ["0"])[0]), float(qs.get("d", ["6"])[0])))
             if p == "/preview.jpg": return self.send(200, E.tv.screenshot(int(qs.get("w", ["640"])[0])), "image/jpeg")
             if p == "/playlists": return self.send(200, planner.api_playlists(dbc()))
             if p == "/playlist": return self.send(200, planner.api_preview_playlist(dbc(), int(qs["id"][0])))
