@@ -145,13 +145,17 @@ class Live:
         try: cl.set_input_audio_sync_offset("Studio audio", max(0, min(1500, int(self.st.get("lip_sync", 0)))))
         except Exception as e: log.warning("studio audio sync: %s", e)
     # ---------- recording ----------
-    def start_rec(self, why="manual"):
+    def start_rec(self, why="manual", name=None, what="both"):
+        """what: both (video .mp4 + radio .mp3) | audio | video"""
         if self.rec: return
         os.makedirs(REC_DIR, exist_ok=True)
-        base = os.path.join(REC_DIR, time.strftime("%Y-%m-%d %H%M ") + safe_name(self.show_title()))
-        v = Proc("record video", ["-i", PROGRAM, "-c", "copy", "-f", "mp4", "-movflags", "+frag_keyframe+empty_moov+default_base_moof", base + ".mp4"], restart=False)
-        a = Proc("record audio", ["-i", RADIO, "-c", "copy", "-f", "mp3", base + ".mp3"], restart=False)
-        self.rec = {"why": why, "start": time.time(), "file": os.path.basename(base), "procs": [v, a]}
+        base = os.path.join(REC_DIR, time.strftime("%Y-%m-%d %H%M ") + safe_name(name or self.show_title()))
+        procs = []
+        if what in ("both", "video"):
+            procs.append(Proc("record video", ["-i", PROGRAM, "-c", "copy", "-f", "mp4", "-movflags", "+frag_keyframe+empty_moov+default_base_moof", base + ".mp4"], restart=False))
+        if what in ("both", "audio"):
+            procs.append(Proc("record audio", ["-i", RADIO, "-c", "copy", "-f", "mp3", base + ".mp3"], restart=False))
+        self.rec = {"why": why, "start": time.time(), "file": os.path.basename(base), "procs": procs}
         log.info("recording %s", base)
     def stop_rec(self):
         if not self.rec: return

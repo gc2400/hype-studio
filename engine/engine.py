@@ -1729,6 +1729,7 @@ class H(BaseHTTPRequestHandler):
                                        "max_len": planner.get_setting(c_, "ad_max_len", 150), "max_spots": planner.get_setting(c_, "ad_max_spots", 3)})
             if p == "/lower": return self.send(200, dict(LOWER, scene=E.tv.scene))
             if p == "/settings": return self.send(200, get_settings())
+            if p == "/autorec": return self.send(200, autorec_status())
             if p == "/padbanks":
                 b = planner.api_padbanks(dbc()); played = {v.get("path"): v.get("played") for v in voice_state().values()}
                 for bk in b:
@@ -1824,6 +1825,9 @@ class H(BaseHTTPRequestHandler):
             except Exception as e: return self.send(400, {"error": str(e)})
         if p == "/guard":
             return self.send(200, guard_save(d))
+        if p == "/autorec":
+            try: return self.send(200, autorec_save(d))
+            except Exception as e: return self.send(400, {"error": str(e)})
         if p == "/settings":
             try: return self.send(200, set_settings(d))
             except Exception as e: log.warning("settings: %s", e); return self.send(500, {"error": str(e)})
@@ -2160,6 +2164,77 @@ def hl_send_np(c, it):
         except Exception as e: log.warning("Hype Live np: %s", e)
     threading.Thread(target=go, daemon=True).start()
 
+# ---------------- automatic recordings (Settings → Auto recordings) ----------------
+AUTOREC_FILE = "/var/lib/hype/autorec.json"
+def autorec_load():
+    try: return json.load(open(AUTOREC_FILE))
+    except Exception: return {"rules": []}
+def autorec_active(r, t=None):
+    """Is this rule's window on now? kind show = while that show is on air (website schedule);
+    kind time = on its days between start and end (an end before the start = over midnight)."""
+    if not r.get("enabled", True): return False
+    t = t or time.time(); lt = time.localtime(t)
+    if r.get("kind") == "show":
+        s_ = planner.show_at(t); return bool(s_ and r.get("show") and s_["title"] == r["show"])
+    try:
+        a = [int(x) for x in (r.get("start") or "00:00").split(":")]; b = [int(x) for x in (r.get("end") or "00:00").split(":")]
+    except ValueError: return False
+    m, a, b = lt.tm_hour * 60 + lt.tm_min, a[0] * 60 + a[1], b[0] * 60 + b[1]
+    days = r.get("days") or "0123456"; d = str(lt.tm_wday); dprev = str((lt.tm_wday - 1) % 7)
+    if a < b: return d in days and a <= m < b
+    return (d in days and m >= a) or (dprev in days and m < b)          # over midnight: belongs to the day it started
+def autorec_loop():
+    """Starts / stops the automatic recordings. A recording you started yourself (REC / GO LIVE) is never touched."""
+    last_clean = 0; started = None      # the rule we started this window (stopped by hand with REC = stays off until its window ends)
+    while True:
+        time.sleep(20)
+        try:
+            L = getattr(E, "live", None)
+            if not L: continue
+            rules = autorec_load().get("rules", [])
+            act = next((r for r in rules if autorec_active(r)), None)
+            cur = L.rec
+            if cur and str(cur.get("why", "")).startswith("auto:"):
+                rid = cur["why"][5:]
+                if not act or str(act.get("id")) != rid:
+                    L.stop_rec(); log.info("auto recording stopped (%s)", rid); cur = None
+            if not act: started = None
+            if act and not L.rec and started != act.get("id"):
+                started = act.get("id"); nm = act.get("name") or (act.get("show") if act.get("kind") == "show" else "") or "Recording"
+                L.start_rec("auto:" + str(act.get("id")), name=nm, what=act.get("what") or "both")
+                log.info("auto recording started: %s", nm)
+            if time.time() - last_clean > 3600:          # clean up: an auto recording older than its rule's "keep" days
+                last_clean = time.time()
+                for r in rules:
+                    keep = int(r.get("keep_days") or 0); nm = live.safe_name(r.get("name") or r.get("show") or "")
+                    if keep <= 0 or not nm: continue
+                    for f in os.listdir(live.REC_DIR) if os.path.isdir(live.REC_DIR) else []:
+                        fp = os.path.join(live.REC_DIR, f)
+                        if os.path.splitext(f)[0].endswith(" " + nm) and time.time() - os.path.getmtime(fp) > keep * 86400:
+                            os.remove(fp); log.info("auto recording removed (older than %d days): %s", keep, f)
+        except Exception as e: log.warning("auto recordings: %s", e)
+def autorec_status():
+    d = autorec_load()
+    shows = sorted({s_["title"] for s_ in planner.WEEK if s_.get("title")})
+    files = []
+    try:
+        for f in sorted(os.listdir(live.REC_DIR), reverse=True)[:60]:
+            fp = os.path.join(live.REC_DIR, f); files.append({"file": f, "mb": round(os.path.getsize(fp) / 1e6, 1), "t": os.path.getmtime(fp)})
+    except OSError: pass
+    L = getattr(E, "live", None); rec = L.rec if L else None
+    return {"rules": d.get("rules", []), "shows": shows, "files": files, "free_gb": shutil_disk("/srv"),
+            "rec": {"why": rec["why"], "file": rec["file"], "start": rec["start"]} if rec else None}
+def autorec_save(d):
+    rules = []
+    for i, r in enumerate(d.get("rules") or []):
+        kind = "show" if r.get("kind") == "show" else "time"
+        rules.append({"id": str(r.get("id") or uuid.uuid4().hex[:8]), "enabled": bool(r.get("enabled", True)), "name": str(r.get("name") or "")[:60],
+                      "kind": kind, "show": str(r.get("show") or "")[:80], "days": "".join(ch for ch in str(r.get("days") or "0123456") if ch in "0123456"),
+                      "start": str(r.get("start") or "20:00")[:5], "end": str(r.get("end") or "22:00")[:5],
+                      "what": r.get("what") if r.get("what") in ("both", "audio", "video") else "both", "keep_days": max(0, min(365, int(r.get("keep_days") or 0)))})
+    json.dump({"rules": rules}, open(AUTOREC_FILE + ".tmp", "w")); os.replace(AUTOREC_FILE + ".tmp", AUTOREC_FILE)
+    return autorec_status()
+
 # ---------------- 🎙 voice messages from Hype Live → the VOICE pad bank ----------------
 VOICE_DIR = os.path.join(ROOT, "jingles", "VOICE"); VOICE_STATE = "/var/lib/hype/voice.json"; VOICE_DAYS = 14
 VOICE_BANK = "🎙 VOICE"
@@ -2332,5 +2407,6 @@ if __name__ == "__main__":
     threading.Thread(target=meter_loop, daemon=True).start()
     threading.Thread(target=agc_loop, daemon=True).start()
     threading.Thread(target=voice_loop, daemon=True).start()
+    threading.Thread(target=autorec_loop, daemon=True).start()
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()
