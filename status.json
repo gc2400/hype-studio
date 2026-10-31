@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T02:21:33",
+ "time": "2026-10-31T02:28:27",
  "result": "ok",
- "commit": "f648ee784c58197f71f73d58ca08f9b333043c86",
- "subject": "Clips: 1.2 s after the start the engine checks where the picture really is and corrects it once if OBS ignored the seek (picture stays in sync)",
+ "commit": "be51d843924a111622e5ad1b20004288fb950b87",
+ "subject": "Smart mix: intros 4+ dB under the song count as soft; after an abrupt end a soft intro starts a bit earlier under the last loud second; intro lift is there at once at a song's start (no hole after a loud ending)",
  "log": [
-  "02:20:48 update 85b8628c \u2192 f648ee78 \u00b7 1 file(s): engine/engine.py",
-  "02:20:48 restart hype-engine",
-  "02:21:33 installed OK \u00b7 restarted: hype-engine"
+  "02:27:42 update f648ee78 \u2192 be51d843 \u00b7 1 file(s): engine/engine.py",
+  "02:27:42 restart hype-engine",
+  "02:28:27 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "EMMAW \u2013 Ninja",
+  "song": "Ronnie Flex x Carel x Djahboy \u2013 DOE",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 2.1,
   "problems": [],
   "ok": true
  },
