@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T00:31:29",
+ "time": "2026-11-01T00:34:35",
  "result": "ok",
- "commit": "bbca08d0b174b339643773b1e37ad4f28d076744",
- "subject": "Broadcast page: music to the Mixcast with a 120 ms buffer instead of 300 ms (tighter talking over music)",
+ "commit": "5da16e63cec67d4720137dddf3692fc867506c0d",
+ "subject": "Broadcast page: fix the script error from the last update (a comment cut a line in half - the page froze); device changes no longer reopen the camera in a loop",
  "log": [
-  "00:31:29 update 1ef3c377 \u2192 bbca08d0 \u00b7 1 file(s): web/panel/studio.html",
-  "00:31:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "00:34:35 update bbca08d0 \u2192 5da16e63 \u00b7 1 file(s): web/panel/studio.html",
+  "00:34:35 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Sarz x Asake x Wizkid x Skillibeng \u2013 Getting Paid",
+  "song": "Broederliefde x Rich Kalashh \u2013 Shotgun",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
