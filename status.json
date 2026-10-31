@@ -1,19 +1,18 @@
 {
- "time": "2026-10-31T21:53:47",
+ "time": "2026-10-31T22:01:43",
  "result": "ok",
- "commit": "44da6185c0681ef1697583e7cf764e37b6c21904",
- "subject": "Library page: delete a file (asks first; goes to a bin for 30 days); cue editors: play turns into pause; phone: library card buttons show after tapping a song",
+ "commit": "4cc5c3f60650829215db17203e17094cdd0832f4",
+ "subject": "Library: add a song to a playlist from its row; row buttons float over the row (no more moving on hover); cue editors: one row of SET START / SET MIX / AUTO / SET END under the waveform (no time boxes), intro sweeper in the footer; phone layout wraps",
  "log": [
-  "21:53:02 update 8225225d \u2192 44da6185 \u00b7 4 file(s): engine/engine.py, engine/indexer.py, web/panel/index.html, web/panel/library.html",
-  "21:53:02 restart hype-indexer",
-  "21:53:02 restart hype-engine",
-  "21:53:47 installed OK \u00b7 restarted: hype-engine, hype-indexer"
+  "22:00:58 update 44da6185 \u2192 4cc5c3f6 \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/library.html",
+  "22:00:58 restart hype-engine",
+  "22:01:43 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Bad Bunny \u2013 NUEVAYoL",
+  "song": "Drake \u2013 Hold On, We\u2019re Going Home ft. Majid Jordan",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.1,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
