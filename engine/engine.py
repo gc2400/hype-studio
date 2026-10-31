@@ -993,7 +993,7 @@ class Engine:
                     if t_ >= e["t"] - 20: break
                     t_ += self.length(p_); idx += 1
                 if idx >= len(self.plan): continue           # the plan doesn't reach that time yet
-                for i, it in enumerate(items): it["event"] = ek; self.plan.insert(idx + i, it)
+                for i, it in enumerate(items): it["event"] = ek; it["event_t"] = e["t"]; self.plan.insert(idx + i, it)
                 log.info("fixed time %s planned in Up next (#%d): %s", e["at"], idx + 1, ", ".join(i["title"] for i in items)); continue
             items = self.event_items(c, e)
             if not items:
@@ -1212,14 +1212,16 @@ class Engine:
             elif action.startswith("aux_"):
                 return self.aux_cmd(c, action, d)
             elif action == "dj":     # DJ mode on/off: AUX 1 = deck A, AUX 2 = deck B; off = back to the clock
-                on = bool(d.get("on"))
-                if on: self.park(); self.auto = False
-                self.dj = on; self.aux_back()      # leaving DJ = MANUAL: your AUX keeps playing (AUTO / PLAY = back to the programming)
-                self.plan = self.keep_mine()
-                self.refill(c); self.push_next(c)
+                # The DJ view never switches AUTO off by itself: prepare your decks while the clock keeps playing.
+                # MANUAL (or MIX / PLAY NOW on a deck) hands the air to the decks.
+                on = bool(d.get("on")); self.dj = on
+                if not self.auto:
+                    self.aux_back(); self.plan = self.keep_mine()
+                    self.refill(c); self.push_next(c)
             elif action in ("dj_play", "dj_cue"):   # PLAY NOW (cut) / MIX (crossfade) this deck's next song, or load it as the next song
                 k = str(d.get("deck", "1")); how = d.get("how", "mix")
                 if not self.aux.get(k): return {"ok": False, "error": "this deck is empty – drag songs into it"}
+                if self.auto: self.park(); self.auto = False; self.dj = True      # starting a deck = the decks take over (AUTO is parked)
                 it = dict(self.aux[k].pop(0), id=uuid.uuid4().hex[:10], src="dj", deck=k); self.aux_save_file()
                 self.take_back_next()
                 for back in reversed([p_ for p_ in self.plan if p_.get("src") in ("dj", "aux")]):   # songs that were lined up go back on their deck
@@ -1248,14 +1250,17 @@ class Engine:
             return {"ok": True}
     def cmd_auto(self, c, on):
         """AUTO = the clocks and programming. MANUAL = your AUX lists play (the song on air always plays on)."""
-        if on == self.auto and not self.dj: return {"ok": True}
+        if on == self.auto: return {"ok": True}
         if on:
             self.aux_back(); self.dj = False; self.auto = True; self.stopped = False; self.stop_at_end = False
             keep = self.keep_mine()
             t, parked = self.parked or (0, [])
             played = {r[0] for r in c.execute("SELECT path FROM asrun WHERE started>=?", (t,))} | ({self.now.get("path")} if self.now else set())
             if parked and time.time() - t < 15 * 60:     # back within 15 min: the same Up next as before (nothing reshuffled)
-                self.plan = keep + [p_ for p_ in parked if p_["path"] not in played]
+                recent_j = {r[0] for r in c.execute("SELECT path FROM asrun WHERE started>=? AND kind IN ('jingles','ads')", (time.time() - 3600,))}
+                back = [p_ for p_ in parked if p_["path"] not in played and not (self.is_jingle(p_) and p_["path"] in recent_j)]
+                while back and self.is_jingle(back[0]) and self.is_jingle(self.now): back.pop(0)    # never two jingles in a row
+                self.plan = keep + back
             else:                                          # longer away: plan fresh from the clock of this moment
                 self.plan = keep; self.runner = planner.ClockRunner()
             self.parked = None
@@ -1273,10 +1278,14 @@ class Engine:
             out.append(p_)
         return out
     def keep_mine(self):
-        """What survives a re-plan: your own items and fixed times – but not the top of the hour (it is placed again at :00)."""
+        """What survives a re-plan: your own items and fixed times – but not the top of the hour (it is placed again at :00),
+        and not a fixed time that is still to come (it is placed again at its own time: after DJ / MANUAL the Up next before
+        it is different, so it would otherwise play too early)."""
         self.hour_floor = 0
         hk = {p_.get("event") for p_ in self.plan if p_.get("hour_T")}
-        return [p_ for p_ in self.plan if p_.get("src") in ("you", "fixed") and not (p_.get("event") and p_.get("event") in hk)]
+        now = time.time()
+        return [p_ for p_ in self.plan if p_.get("src") in ("you", "fixed") and not (p_.get("event") and p_.get("event") in hk)
+                and not (p_.get("src") == "fixed" and p_.get("event_t", 0) > now + 30)]
     def park(self):
         """Leaving AUTO: the clock's Up next is put aside (not thrown away), so AUTO comes back with the same songs."""
         self.take_back_next()
