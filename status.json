@@ -1,18 +1,19 @@
 {
- "time": "2026-10-31T02:54:23",
+ "time": "2026-10-31T03:20:41",
  "result": "ok",
- "commit": "542941e18e8031ec77a323fdafba34b21ad34494",
- "subject": "Paired clips line up with their song automatically",
+ "commit": "66196cc5d921dc13723cd0f1f9f8dc68ef3fc6fb",
+ "subject": "Exact mix moments: the loudness measure every 0.1 s for the first and last seconds",
  "log": [
-  "02:53:38 update c2988d58 \u2192 542941e1 \u00b7 1 file(s): engine/indexer.py",
-  "02:53:38 restart hype-indexer",
-  "02:54:23 installed OK \u00b7 restarted: hype-indexer"
+  "03:19:56 update 542941e1 \u2192 66196cc5 \u00b7 3 file(s): engine/close_import.py, engine/engine.py, engine/indexer.py",
+  "03:19:56 restart hype-indexer",
+  "03:19:56 restart hype-engine",
+  "03:20:41 installed OK \u00b7 restarted: hype-engine, hype-indexer"
  ],
  "guard": {
-  "song": "Darkoo \u2013 Focus On Me (All The Sexy Girls In The Club)",
+  "song": "Jaido x Issairo \u2013 Disiplina",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 3.2,
   "problems": [],
   "ok": true
  },

@@ -54,3 +54,4 @@
 2026-10-31T02:43:37 ok 72cad85c DJ: library rows show deck A / B buttons (always, also while AUTO plays); CLOSE cue files also match slightly renamed files (accents, ft./x/&, Official Video tags) - clips from AUTODOWNLOADS get their CLOSE start
 2026-10-31T02:48:29 ok c2988d58 CLOSE import: the loose name match only matches the same file type (an mp3's cue file never goes to the mp4 clip)
 2026-10-31T02:54:23 ok 542941e1 Paired clips line up with their song automatically
+2026-10-31T03:20:41 ok 66196cc5 Exact mix moments: the loudness measure every 0.1 s for the first and last seconds
