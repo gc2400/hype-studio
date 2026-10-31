@@ -1,18 +1,17 @@
 {
- "time": "2026-10-31T02:28:27",
+ "time": "2026-10-31T02:33:36",
  "result": "ok",
- "commit": "be51d843924a111622e5ad1b20004288fb950b87",
- "subject": "Smart mix: intros 4+ dB under the song count as soft; after an abrupt end a soft intro starts a bit earlier under the last loud second; intro lift is there at once at a song's start (no hole after a loud ending)",
+ "commit": "63ec5fec2bdebc06ff093dddedef646b63477f0a",
+ "subject": "DJ layout: deck A + pads left, library middle (full height), deck B + video/scenes right; no crossfader card or live card; tap the A / B tile to mix into that deck (MIX buttons removed)",
  "log": [
-  "02:27:42 update f648ee78 \u2192 be51d843 \u00b7 1 file(s): engine/engine.py",
-  "02:27:42 restart hype-engine",
-  "02:28:27 installed OK \u00b7 restarted: hype-engine"
+  "02:33:36 update be51d843 \u2192 63ec5fec \u00b7 1 file(s): web/panel/index.html",
+  "02:33:36 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Ronnie Flex x Carel x Djahboy \u2013 DOE",
+  "song": "HYPE RADIO \u2013 Custom ID_Non Stop",
   "listeners": 2,
   "obs": true,
-  "seg_age": 2.1,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
