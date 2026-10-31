@@ -62,3 +62,4 @@
 2026-10-31T20:56:31 ok 932531a1 Cue editor: keyboard shortcuts stay visible on small screens too
 2026-10-31T21:11:36 ok 986ddb59 Zoomable cue waveform (song/30/10/4 s, follows play line or marker, drag to move) in Library + Panel; ID over soft intros (Settings: on/off, max per hour, minutes apart; fits the ID's START-MIX in the quiet intro, only song to song); Up next keeps its songs at the top of the hour
 2026-10-31T21:40:58 ok ec0d2ac6 Nightly backup to the Hetzner Storage Box (settings 30 days + media mirror with 30 days of changed/deleted files); Status page shows the last good backup
+2026-10-31T21:51:58 ok 8225225d Radio HLS from the internal on-air stream instead of a Pulse capture (no more small hiccups); piece numbers keep counting up after a restart

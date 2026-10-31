@@ -1,15 +1,15 @@
 {
- "time": "2026-10-31T21:40:58",
+ "time": "2026-10-31T21:51:58",
  "result": "ok",
- "commit": "ec0d2ac6a4a1f66b03e2ccb162f6cb05ef6fb209",
- "subject": "Nightly backup to the Hetzner Storage Box (settings 30 days + media mirror with 30 days of changed/deleted files); Status page shows the last good backup",
+ "commit": "8225225d86cde0af6fbf4a26259ec6c6e7b10daa",
+ "subject": "Radio HLS from the internal on-air stream instead of a Pulse capture (no more small hiccups); piece numbers keep counting up after a restart",
  "log": [
-  "21:40:13 update 986ddb59 \u2192 ec0d2ac6 \u00b7 5 file(s): engine/hype-stats.py, system/hype-backup.service, system/hype-backup.sh, system/hype-backup.timer, web/status/index.html",
-  "21:40:13 restart hype-stats",
-  "21:40:58 installed OK \u00b7 restarted: hype-stats"
+  "21:51:13 update ec0d2ac6 \u2192 8225225d \u00b7 1 file(s): tv/radio_hls.sh",
+  "21:51:13 restart hype-radio-hls",
+  "21:51:58 installed OK \u00b7 restarted: hype-radio-hls"
  ],
  "guard": {
-  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
+  "song": "Bad Bunny \u2013 NUEVAYoL",
   "listeners": 0,
   "obs": true,
   "seg_age": 1.2,
