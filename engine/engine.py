@@ -787,7 +787,9 @@ class Engine:
                 self.hour_floor = hf = 0      # its top of the hour isn't planned (any more): plan with the clock of the hour we are in
             at = max(self.cursor(), hf)
             ph = self.pending_hour(c, at)
-            if ph: at = ph - 1        # the TOH of this hour hasn't played yet: keep planning with the old hour's clock
+            # the TOH of this hour hasn't played yet: keep planning with the old hour's clock - unless that TOH is already
+            # in Up next (hour_floor): then what comes after it is the new hour's clock from slot 1, and it stays at the TOH
+            if ph and hf != ph: at = ph - 1
             if self.runner.mix_key != planner.runner_key(at) and self.mix_in_run(at): self.runner.mix_key = planner.runner_key(at)
             planner.CTX["touched"] = {}
             try: it = self.picker.next_planned(c, self.avoid(), at, self.runner)
