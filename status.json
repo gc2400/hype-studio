@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T00:34:35",
+ "time": "2026-11-01T00:44:34",
  "result": "ok",
- "commit": "5da16e63cec67d4720137dddf3692fc867506c0d",
- "subject": "Broadcast page: fix the script error from the last update (a comment cut a line in half - the page froze); device changes no longer reopen the camera in a loop",
+ "commit": "1cdd800a6794670387dcc8fd263bde5fa0622800",
+ "subject": "END LIVE: the TV goes back to auto scenes; Panel preview light by default (360p, no sound) so it hardly uses your internet while broadcasting - sound on switches to the full preview",
  "log": [
-  "00:34:35 update bbca08d0 \u2192 5da16e63 \u00b7 1 file(s): web/panel/studio.html",
-  "00:34:35 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "00:43:49 update 5da16e63 \u2192 1cdd800a \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "00:43:49 restart hype-engine",
+  "00:44:34 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Broederliefde x Rich Kalashh \u2013 Shotgun",
+  "song": "Fireboy DML \u2013 ONE MAN REGIMENT",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },

@@ -80,3 +80,4 @@
 2026-11-01T00:24:18 ok 1ef3c377 OBS feed page on 127.0.0.1:8097 (8095 was taken)
 2026-11-01T00:31:29 ok bbca08d0 Broadcast page: music to the Mixcast with a 120 ms buffer instead of 300 ms (tighter talking over music)
 2026-11-01T00:34:35 ok 5da16e63 Broadcast page: fix the script error from the last update (a comment cut a line in half - the page froze); device changes no longer reopen the camera in a loop
+2026-11-01T00:44:34 ok 1cdd800a END LIVE: the TV goes back to auto scenes; Panel preview light by default (360p, no sound) so it hardly uses your internet while broadcasting - sound on switches to the full preview
