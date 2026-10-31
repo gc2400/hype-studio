@@ -124,6 +124,19 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
 #cueDlg .cues{margin-top:8px}
 @media (max-width:640px){.cdt{flex-wrap:wrap}.cdt .pos{margin-left:auto}.cues .cueset{font-size:11px;letter-spacing:.03em;padding:0 6px}}
 @media (hover:none) and (max-width:640px){.keys{display:none}}
+
+dialog#upDlg{background:var(--card);color:var(--txt);border:1px solid var(--line2);border-radius:16px;padding:14px 16px;width:min(560px,94vw);max-height:90vh;overflow:auto}
+dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
+#upDlg{display:none}#upDlg[open]{display:flex;flex-direction:column;gap:10px}
+.uph{display:flex;align-items:center;justify-content:space-between;font-size:16px}
+.upr{display:flex;gap:8px}
+.updrop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:22px 12px;border:2px dashed var(--line2);border-radius:12px;cursor:pointer;text-align:center}
+.updrop span{font-size:12px;color:var(--mut)}.updrop.over{border-color:var(--y);background:var(--card2)}
+.uplist{display:flex;flex-direction:column;gap:6px}
+.upi{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:8px 10px;border-radius:10px;background:var(--deep);font-size:12px}
+.upi b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.upi .st{color:var(--mut);font-weight:700}
+.upi .bar{grid-column:1/-1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}.upi .bar i{display:block;height:100%;width:0;background:var(--b)}
+.upi.ok .bar i{background:var(--g)}.upi.bad .st{color:#FF8A97}
 </style>
 </head>
 <body>
@@ -135,6 +148,7 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
         <div class="seg" id="secs" role="tablist" aria-label="Section"></div>
         <span style="flex:1"></span>
         <button class="btn sm" id="bProb" hidden title="Files with a problem (e.g. an upload that did not finish) first, with the reason">⚠</button>
+        <button class="btn sm" id="bUpload" title="Upload files into a library folder (for big batches WinSCP stays quicker)">⬆ Upload</button>
         <button class="btn sm" id="bFilter" aria-expanded="false" title="Type, cue points, recently uploaded, sort">⚙ Filter</button>
       </div>
       <label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
@@ -178,6 +192,14 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
     </section>
   </div>
 </div>
+<dialog id="upDlg" aria-label="Upload files">
+  <div class="uph"><b>Upload to the library</b><button class="btn sm" id="upClose" aria-label="Close">✕</button></div>
+  <div class="upr"><select class="f" id="upSec" aria-label="Section"></select><select class="f" id="upFolder" aria-label="Folder"></select></div>
+  <label class="updrop" id="upDrop"><input type="file" id="upFiles" multiple accept="audio/*,video/*,.mp3,.m4a,.wav,.flac,.mp4,.mov,.mkv,.webm" hidden>
+    <b>Drop files here</b><span>or tap to choose · audio and video · big files continue after a broken connection</span></label>
+  <div class="uplist" id="upList"></div>
+  <p class="muted" style="margin:0;font-size:11px">A file appears in the library about a minute after it's in (it gets analysed first). The same name in the same folder becomes "name (2)".</p>
+</dialog>
 <div class="toast" id="toast" role="status"></div>
 <script src="cuewave.js"></script>
 <script>
@@ -365,6 +387,53 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('pagehide', () => { if (dirty && SEL && CUE) fetch('../api/cmd/set_cues', {method: 'POST', keepalive: true, headers: {'Content-Type': 'application/json'}, body: JSON.stringify({path: SEL.path, cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, mix_auto: !!CUE.auto})}); });
 api('pads').then(p => { PADS = p; }); lib();
+
+// ---------- upload (resumable, 8 MB pieces) ----------
+const UP_CHUNK = 8 * 1024 * 1024, UPQ = []; let upBusy = false;
+const UP_SECS = [['music', 'Music', 'music'], ['mixes', 'Mixes', 'music'], ['clips', 'Clips', 'clips'], ['jingles', 'Jingles', 'jingles'], ['ads', 'Ads', 'ads']];
+function upFolders() { const k = $('#upSec').value, real = UP_SECS.find(x => x[0] === k)[2];
+  $('#upFolder').innerHTML = '<option value="">Loading…</option>';
+  api('library?section=' + k + '&q=' + encodeURIComponent('\u2400none\u2400')).then(d => {
+    const fs = (d.all_folders || d.folders || []).filter(Boolean);
+    const want = (SEC === k) ? (FOLDER || GENRE) : '';
+    $('#upFolder').innerHTML = fs.length ? fs.map(f => `<option value="${esc(real + '/' + f)}" ${f === want ? 'selected' : ''}>${esc(f)}</option>`).join('') : '<option value="">(no folders yet – make one with WinSCP)</option>'; }); }
+$('#bUpload').onclick = () => { $('#upSec').innerHTML = UP_SECS.map(([k, n]) => `<option value="${k}" ${k === SEC ? 'selected' : ''}>${n}</option>`).join(''); upFolders(); $('#upDlg').showModal(); };
+$('#upSec').onchange = upFolders; $('#upClose').onclick = () => $('#upDlg').close();
+$('#upFiles').onchange = e => { upAdd([...e.target.files]); e.target.value = ''; };
+const drop = $('#upDrop'); ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => upAdd([...e.dataTransfer.files]));
+async function upId(f, folder) { const b = new TextEncoder().encode([f.name, f.size, f.lastModified, folder].join('|'));
+  const h = await crypto.subtle.digest('SHA-1', b); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+function upAdd(files) { const folder = $('#upFolder').value; if (!folder) { toast('Choose a folder first'); return; }
+  files.forEach(f => { const el = document.createElement('div'); el.className = 'upi';
+    el.innerHTML = `<b>${esc(f.name)}</b><span class="st">waiting</span><div class="bar"><i></i></div>`; $('#upList').prepend(el);
+    UPQ.push({f, folder, el}); });
+  upRun(); }
+async function upRun() { if (upBusy) return; upBusy = true;
+  while (UPQ.length) { const job = UPQ.shift(); await upOne(job); }
+  upBusy = false; setTimeout(() => lib(true), 45000); }
+async function upOne({f, folder, el}) {
+  const st = el.querySelector('.st'), bar = el.querySelector('.bar i'), id = await upId(f, folder);
+  const q = '&id=' + id + '&name=' + encodeURIComponent(f.name) + '&folder=' + encodeURIComponent(folder) + '&total=' + f.size;
+  let off = 0, tries = 0;
+  try { const r = await api('upload/status?id=' + id); off = r.have || 0; } catch (e) {}
+  while (true) {
+    const pct = f.size ? Math.floor(off / f.size * 100) : 0; bar.style.width = pct + '%'; st.textContent = pct + ' %' + (tries ? ' · retrying' : '');
+    let r;
+    try {
+      const res = await fetch('../api/upload/chunk?off=' + off + q, {method: 'POST', headers: {'Content-Type': 'application/octet-stream'}, body: f.slice(off, Math.min(f.size, off + UP_CHUNK))});
+      if (res.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); return; }
+      r = await res.json();
+    } catch (e) { r = null; }
+    if (!r) { if (++tries > 40) { el.classList.add('bad'); st.textContent = 'stopped – choose the file again to continue'; return; }
+      await new Promise(ok => setTimeout(ok, Math.min(15000, 1000 * tries))); continue; }      // connection broke: wait, then go on where it was
+    if (r.ok === false) { el.classList.add('bad'); st.textContent = r.error || 'failed'; return; }
+    tries = 0;
+    if (r.done) { bar.style.width = '100%'; el.classList.add('ok'); st.textContent = 'done'; toast('Uploaded: ' + f.name); return; }
+    off = r.have;
+  }
+}
 </script>
 </body>
 </html>

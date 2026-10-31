@@ -1564,6 +1564,59 @@ def library(qs):
     psql = "SELECT COUNT(*) FROM items WHERE section=? AND problem IS NOT NULL" + ((" AND folder " + ("" if mixes else "NOT ") + "LIKE 'MIXES%'") if sec == "music" else "")
     return {"problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "counts": counts}
 
+# ---------- upload from the Library page (WinSCP stays the main way; this is for a phone / someone without server access) ----------
+UP_DIR = "/srv/hype-data/uploads"; UP_SECTIONS = ("music", "clips", "jingles", "ads")
+UP_EXT = {".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus", ".mp4", ".mov", ".mkv", ".m4v", ".webm"}
+def up_check(qs):
+    uid = qs.get("id", [""])[0]
+    if not re.fullmatch(r"[a-f0-9]{16,64}", uid): raise ValueError("bad upload id")
+    folder = os.path.normpath(qs.get("folder", [""])[0]).strip("/"); parts = folder.split("/")
+    if parts[0] not in UP_SECTIONS or ".." in parts or folder.startswith("."): raise ValueError("choose a library folder")
+    d = os.path.join(ROOT, folder)
+    if not os.path.isdir(d): raise ValueError("folder not found")
+    name = os.path.basename(qs.get("name", [""])[0]).replace("\x00", "").strip()
+    if not name or name.startswith(".") or os.path.splitext(name)[1].lower() not in UP_EXT: raise ValueError("only audio / video files")
+    total = int(qs.get("total", ["0"])[0] or 0)
+    if total <= 0 or total > 8 * 1024 ** 3: raise ValueError("file too big (max 8 GB)")
+    return uid, d, name, total
+def up_status(qs):
+    uid = qs.get("id", [""])[0]
+    if not re.fullmatch(r"[a-f0-9]{16,64}", uid): return {"ok": False, "error": "bad upload id"}
+    f = os.path.join(UP_DIR, uid + ".part")
+    return {"ok": True, "have": os.path.getsize(f) if os.path.exists(f) else 0}
+def up_chunk(qs, rfile, n):
+    try: uid, d, name, total = up_check(qs)
+    except ValueError as e:
+        rfile.read(n); return {"ok": False, "error": str(e)}
+    os.makedirs(UP_DIR, exist_ok=True)
+    for f in os.listdir(UP_DIR):                               # unfinished uploads are given up after 2 days
+        fp = os.path.join(UP_DIR, f)
+        try:
+            if time.time() - os.path.getmtime(fp) > 2 * 86400: os.remove(fp)
+        except OSError: pass
+    part = os.path.join(UP_DIR, uid + ".part"); have = os.path.getsize(part) if os.path.exists(part) else 0
+    off = int(qs.get("off", ["0"])[0] or 0)
+    if off != have: rfile.read(n); return {"ok": True, "have": have}          # resync (a piece was lost or sent twice)
+    if have == 0 and shutil.disk_usage(ROOT).free < total + 5 * 1024 ** 3: rfile.read(n); return {"ok": False, "error": "not enough space on the server"}
+    with open(part, "ab") as f:
+        left = n
+        while left > 0:
+            b = rfile.read(min(1 << 20, left))
+            if not b: break
+            f.write(b); left -= len(b)
+    have = os.path.getsize(part)
+    if have > total: os.remove(part); return {"ok": False, "error": "received more than the file size - try again"}
+    if have < total: return {"ok": True, "have": have}
+    stem, ext = os.path.splitext(name); dst = os.path.join(d, name); k = 2
+    while os.path.exists(dst): dst = os.path.join(d, f"{stem} ({k}){ext}"); k += 1
+    shutil.move(part, dst)
+    try:
+        import pwd, grp; os.chown(dst, pwd.getpwnam("upload").pw_uid, grp.getgrnam("hype").gr_gid)
+    except Exception: pass
+    os.chmod(dst, 0o664)
+    rel = os.path.relpath(dst, ROOT); log.info("uploaded from the Library page: %s (%.1f MB)", rel, total / 1048576)
+    return {"ok": True, "have": have, "done": True, "path": rel}
+
 def wave_zoom(path, t0, dur=6.0):
     """Fine waveform for the cue editor zoom: the loudest sample of every 10 ms from t0, over dur seconds."""
     t0 = max(0.0, t0); dur = max(1.0, min(60.0, dur))
@@ -1862,6 +1915,7 @@ class H(BaseHTTPRequestHandler):
         try:
             if p == "/state": return self.send(200, E.state())
             if p == "/library": return self.send(200, library(qs))
+            if p == "/upload/status": return self.send(200, up_status(qs))
             if p == "/history": return self.send(200, history(qs))
             if p == "/media": return self.send(200, {"files": media_files(), "scenes": MEDIA_SCENES})
             if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners(), own_tv=viewers()))
@@ -1956,7 +2010,11 @@ class H(BaseHTTPRequestHandler):
         except Exception as e:
             log.warning("GET %s: %s", p, e); self.send(500, {"error": str(e)})
     def do_POST(self):
-        n = int(self.headers.get("Content-Length", 0)); body = self.rfile.read(n)
+        n = int(self.headers.get("Content-Length", 0))
+        if urlparse(self.path).path in ("/api/upload/chunk", "/upload/chunk"):      # raw file piece, not JSON
+            try: return self.send(200, up_chunk(parse_qs(urlparse(self.path).query), self.rfile, n))
+            except Exception as e: log.warning("upload: %s", e); return self.send(500, {"ok": False, "error": str(e)})
+        body = self.rfile.read(n)
         try: d = json.loads(body or b"{}")
         except Exception: d = {}
         p = urlparse(self.path).path.replace("/api", "", 1)
