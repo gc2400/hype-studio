@@ -51,3 +51,4 @@
 2026-10-31T02:28:27 ok be51d843 Smart mix: intros 4+ dB under the song count as soft; after an abrupt end a soft intro starts a bit earlier under the last loud second; intro lift is there at once at a song's start (no hole after a loud ending)
 2026-10-31T02:33:36 ok 63ec5fec DJ layout: deck A + pads left, library middle (full height), deck B + video/scenes right; no crossfader card or live card; tap the A / B tile to mix into that deck (MIX buttons removed)
 2026-10-31T02:38:44 ok 460cebd6 DJ: crossfader back under the library, without the MIX button: tap A or B (or slide) to mix into that deck; the deck on air lights up
+2026-10-31T02:43:37 ok 72cad85c DJ: library rows show deck A / B buttons (always, also while AUTO plays); CLOSE cue files also match slightly renamed files (accents, ft./x/&, Official Video tags) - clips from AUTODOWNLOADS get their CLOSE start

@@ -1,17 +1,18 @@
 {
- "time": "2026-10-31T02:38:44",
+ "time": "2026-10-31T02:43:37",
  "result": "ok",
- "commit": "460cebd660921a6ec1b731ab86c07ca439abfbfd",
- "subject": "DJ: crossfader back under the library, without the MIX button: tap A or B (or slide) to mix into that deck; the deck on air lights up",
+ "commit": "72cad85c03effab91fd0ffda0d796c6d15a5e439",
+ "subject": "DJ: library rows show deck A / B buttons (always, also while AUTO plays); CLOSE cue files also match slightly renamed files (accents, ft./x/&, Official Video tags) - clips from AUTODOWNLOADS get their CLOSE start",
  "log": [
-  "02:38:44 update 63ec5fec \u2192 460cebd6 \u00b7 1 file(s): web/panel/index.html",
-  "02:38:44 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "02:42:52 update 460cebd6 \u2192 72cad85c \u00b7 2 file(s): engine/close_import.py, web/panel/index.html",
+  "02:42:52 restart hype-engine",
+  "02:43:37 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Devi Dev x Rich Kalashh \u2013 Riba Chest",
+  "song": "Ryan Castro x Feid \u2013 MENTIRA",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
