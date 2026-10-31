@@ -103,13 +103,13 @@ table.hl{width:100%;border-collapse:collapse;font-size:12px}table.hl th{text-ali
       <span class="lab" style="margin-top:4px">Broadcast quality <span class="muted" style="text-transform:none;letter-spacing:0">· saved on this laptop</span></span>
       <div class="q">
         <b>Studio audio</b><select id="qAudio"><option value="128">128 kbps stereo</option><option value="192">192 kbps stereo</option><option value="256">256 kbps stereo (recommended)</option><option value="320">320 kbps stereo</option><option value="510">510 kbps stereo (max)</option></select>
-        <b>Camera picture</b><select id="qRes"><option value="1280x720">720p (1280×720)</option><option value="1920x1080">1080p (1920×1080, recommended)</option></select>
+        <b>Camera picture</b><select id="qRes"><option value="960x540">540p (960×540) – weak connection</option><option value="1280x720">720p (1280×720)</option><option value="1920x1080">1080p (1920×1080, recommended)</option></select>
         <b>Frames per second</b><select id="qFps"><option value="25">25 fps (recommended, = the TV)</option><option value="30">30 fps</option></select>
-        <b>Camera bitrate</b><select id="qVkbps"><option value="2500">2.5 Mbps</option><option value="4500">4.5 Mbps</option><option value="6000">6 Mbps (recommended)</option><option value="8000">8 Mbps</option><option value="12000">12 Mbps</option></select>
+        <b>Camera bitrate</b><select id="qVkbps"><option value="1000">1 Mbps – very weak connection</option><option value="1500">1.5 Mbps</option><option value="2000">2 Mbps</option><option value="2500">2.5 Mbps – wifi, busy network</option><option value="3000">3 Mbps</option><option value="3500">3.5 Mbps</option><option value="4000">4 Mbps (recommended – wifi)</option><option value="4500">4.5 Mbps (= the TV's best quality)</option><option value="5000">5 Mbps</option><option value="6000">6 Mbps (recommended – network cable)</option><option value="7000">7 Mbps</option><option value="8000">8 Mbps</option><option value="10000">10 Mbps</option><option value="12000">12 Mbps</option><option value="15000">15 Mbps (max)</option></select>
         <b>Lip sync (TV)</b><div class="gvol"><input type="range" id="qSync" min="-500" max="800" step="20" aria-label="Lip sync"><span class="mono" id="qSyncV">0 ms</span></div>
       </div>
       <span class="muted" style="font-size:12px">Lip sync: move right if your <b>voice comes after</b> your mouth moves… left if the <b>picture is late</b>. 0 = straight through (recommended start).</span>
-      <span class="muted" style="font-size:12px" id="qNote">Your upload is 65 Mbps – 1 camera at 6 Mbps + audio uses about 10 %. Changes apply when you (re)connect the studio.</span>
+      <span class="muted" style="font-size:12px" id="qNote"></span>
       <span class="lab" style="margin-top:4px">Connection <span class="muted" style="text-transform:none;letter-spacing:0">· live, every 2 s</span></span>
       <table class="hl"><thead><tr><th>Stream</th><th>State</th><th>Sending</th><th>Picture</th><th>Loss</th><th>Delay</th></tr></thead><tbody id="health"><tr><td colspan="6" class="muted">Connect the studio to see the connection.</td></tr></tbody></table>
     </section>
@@ -150,7 +150,7 @@ async function listDevices() {
   $('#dMusic').innerHTML = opt('audiooutput'); $('#dGuests').innerHTML = opt('audiooutput', '– same as music –');
   $('#dCam1').innerHTML = opt('videoinput', '– no camera –'); $('#dCam2').innerHTML = opt('videoinput', '– no camera –');
   ['dMix', 'dMinus', 'dMusic', 'dGuests', 'dCam1', 'dCam2'].forEach(id => { const v = store(id); if (v !== null && [...$('#' + id).options].some(o => o.value === v)) $('#' + id).value = v;
-    $('#' + id).onchange = () => { store(id, $('#' + id).value); if (id === 'dCam1') camPreview(1); if (id === 'dCam2') camPreview(2); }; });
+    $('#' + id).onchange = () => { store(id, $('#' + id).value); qNoteUpd(); if (id === 'dCam1') camPreview(1); if (id === 'dCam2') camPreview(2); }; });
   if (!$('#dCam1').value && $('#dCam1').options.length > 1 && store('dCam1') === null) $('#dCam1').selectedIndex = 1;
   if (!connected) { camPreview(1); camPreview(2); }
   mmCheck();      // while connected the cameras on air are never touched
@@ -165,9 +165,14 @@ async function camPreview(n) {
   try { PREV[n] = await navigator.mediaDevices.getUserMedia(camConstraints(sel.value)); v.srcObject = PREV[n]; ph.hidden = true; return PREV[n]; }
   catch (e) { ph.hidden = false; ph.textContent = 'Camera ' + n + ': ' + (e.name === 'NotReadableError' ? 'in use by another app' : 'not allowed / not found'); return null; }
 }
+function qNoteUpd() { const cams = ['#dCam1', '#dCam2'].filter(x => $(x) && $(x).value).length || 1, mb = (Q().v * cams + Q().a) / 1000;
+  $('#qNote').textContent = `Sending about ${mb.toFixed(1)} Mbps (${cams} camera${cams > 1 ? 's' : ''} + sound). If the Connection table below shows loss or the picture stutters, go one step lower – on a network cable 6 Mbps is fine. Changes apply when you (re)connect the studio.`; }
 const Q = () => ({a: +$('#qAudio').value, w: +$('#qRes').value.split('x')[0], h: +$('#qRes').value.split('x')[1], fps: +$('#qFps').value, v: +$('#qVkbps').value});
 const camConstraints = id => ({video: {deviceId: {exact: id}, width: {ideal: Q().w}, height: {ideal: Q().h}, frameRate: {ideal: Q().fps, max: Q().fps}}, audio: false});
-[['qAudio', '256'], ['qRes', '1920x1080'], ['qFps', '25'], ['qVkbps', '6000']].forEach(([id, def]) => { const v = store(id); $('#' + id).value = v !== null && [...$('#' + id).options].some(o => o.value === v) ? v : def;
+// once: the settings that suit this studio (Mixcast music at 256k, 1080p25 like the TV, 4 Mbps: sharp on TV and with room for a wobbly line)
+setTimeout(qNoteUpd, 0);
+if (store('qVer') !== '2') { [['qAudio', '256'], ['qRes', '1920x1080'], ['qFps', '25'], ['qVkbps', '4000']].forEach(([k, v]) => store(k, v)); store('qVer', '2'); }
+[['qAudio', '256'], ['qRes', '1920x1080'], ['qFps', '25'], ['qVkbps', '4000']].forEach(([id, def]) => { const v = store(id); $('#' + id).value = v !== null && [...$('#' + id).options].some(o => o.value === v) ? v : def;
   $('#' + id).onchange = () => { store(id, $('#' + id).value); if (id === 'qRes' || id === 'qFps') { camPreview(1); camPreview(2); } toast(connected ? 'Saved – Disconnect and Connect again to use it' : 'Saved'); }; });
 const rawAudio = id => ({audio: {deviceId: id ? {exact: id} : undefined, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2, sampleRate: 48000}, video: false});
 function meterTo(stream, id) { HypeRTC.meter(stream, v => { $('#' + id).style.width = Math.min(100, v * 110) + '%'; }); }
