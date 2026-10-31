@@ -1,0 +1,10 @@
+[Unit]
+Description=Hype Studio nightly backup to the Storage Box
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/hype/hype-backup.sh
+Nice=19
+IOSchedulingClass=idle
+TimeoutStartSec=6h

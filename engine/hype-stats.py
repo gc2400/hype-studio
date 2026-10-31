@@ -35,6 +35,9 @@ def svc(u):
     return subprocess.run(["systemctl","is-active","--quiet",u]).returncode==0
 def proc(name):
     return subprocess.run(["pgrep","-f",name],capture_output=True).returncode==0
+def backup_info():
+    try: return json.load(open("/var/lib/hype/backup.json"))
+    except Exception: return None
 smart={"t":0,"v":[]}
 def smart_info():
     if time.time()-smart["t"]>3600:
@@ -66,7 +69,7 @@ while True:
     data={"time":time.strftime("%H:%M:%S"),"uptime":open("/proc/uptime").read().split()[0],
       "cpu":round(cpu,1),"load":os.getloadavg(),"temp":temp(),
       "ram":{"used":m["MemTotal"]-m["MemAvailable"],"total":m["MemTotal"]},
-      "disk_root":du("/"),"disk_srv":du("/srv"),"raid":raid(),"smart":smart_info(),
+      "disk_root":du("/"),"backup":backup_info(),"disk_srv":du("/srv"),"raid":raid(),"smart":smart_info(),
       "upload_mbit":round(up,2),"gpu_mhz":gpu,"seg_age":seg_age(),
       "procs":{k:svc(v) for k,v in [("Radio engine (Liquidsoap)","hype-radio"),("Playout engine","hype-engine"),("TV picture (OBS)","hype-obs"),("Stream qualities (ffmpeg)","hype-ladder"),("Stream router (MediaMTX)","hype-mediamtx"),("Graphics screen (sway)","hype-sway"),("Audio bus (Pulse)","hype-pulse"),("Library indexer","hype-indexer"),("Login (2-factor)","hype-auth")]}}
     tmp=OUT+".tmp"; json.dump(data,open(tmp,"w")); os.replace(tmp,OUT)

@@ -41,7 +41,7 @@ input{width:100%;font:inherit;font-size:13px;color:var(--txt);background:#071A2B
 <div class="row"><span>System (/)</span><b class="mono" id="root"></b></div><div class="bar"><i id="rootb"></i></div>
 <div class="row"><span>Media (/srv)</span><b class="mono" id="srv"></b></div><div class="bar"><i id="srvb"></i></div>
 <div class="row"><span>Upload to viewers</span><b class="mono" id="net"></b></div></section>
-<section class="card"><span class="lab">Disk mirror &amp; health</span><div id="raid"></div><div id="smart"></div></section>
+<section class="card"><span class="lab">Disk mirror &amp; health</span><div id="raid"></div><div id="smart"></div><div id="bk"></div></section>
 </section>
 </div></div>
 <script>
@@ -65,6 +65,8 @@ q('seg').textContent=d.seg_age!=null?d.seg_age+' s ago':'none';q('seg').classNam
 q('procs').innerHTML=Object.keys(d.procs).map(function(k){return '<div class="row"><span>'+k+'</span><b class="'+(d.procs[k]?'ok':'bad')+'">'+(d.procs[k]?'● running':'● stopped')+'</b></div>'}).join('');
 q('raid').innerHTML=d.raid.map(function(r){var both=r.state==='[UU]';return '<div class="row"><span>'+r.name+'</span><b class="'+(both?'ok':'bad')+'">'+(both?'both disks OK':'DISK PROBLEM '+r.state)+(r.sync?' · syncing '+r.sync:'')+'</b></div>'}).join('');
 q('smart').innerHTML=d.smart.map(function(s){return '<div class="row"><span>'+s.disk+' health</span><b class="'+(s.ok?(s.realloc>0?'warn':'ok'):'bad')+'">'+(s.ok?'passed':'FAILING')+' · '+s.realloc+' retired spots · '+Math.round(s.hours/8766*10)/10+' yr</b></div>'}).join('');
+var b=d.backup,bt=b&&b.last_ok,ago=bt?(Date.now()/1000-bt)/3600:null;
+q('bk').innerHTML='<div class="row"><span>Backup (Storage Box)</span><b class="'+(ago!=null&&ago<36?'ok':'bad')+'">'+(!b?'not run yet':ago==null?'FAILED: '+b.msg:'last OK '+(ago<1?Math.round(ago*60)+' min':Math.round(ago)+' h')+' ago'+(b.ok?'':' · last try FAILED: '+b.msg))+'</b></div>';
 }).catch(function(){q('age').textContent='● no data';q('age').className='chip bad'})}
 tick();setInterval(tick,5000);
 

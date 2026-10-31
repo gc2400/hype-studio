@@ -50,3 +50,6 @@ system/hype-sway.service|/etc/systemd/system/hype-sway.service|644|daemon-reload
 deploy/updater.py|/opt/hype/updater.py|755|hype-updater
 system/hype-radio-hls.service|/etc/systemd/system/hype-radio-hls.service|644|daemon-reload
 system/hype-updater.service|/etc/systemd/system/hype-updater.service|644|daemon-reload
+system/hype-backup.sh|/opt/hype/hype-backup.sh|755|-
+system/hype-backup.service|/etc/systemd/system/hype-backup.service|644|daemon-reload
+system/hype-backup.timer|/etc/systemd/system/hype-backup.timer|644|daemon-reload
