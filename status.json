@@ -1,17 +1,17 @@
 {
- "time": "2026-10-31T20:50:21",
+ "time": "2026-10-31T20:56:31",
  "result": "ok",
- "commit": "735e2a05a764034ef43b2d0ab9890830951194eb",
- "subject": "Cue editor zoom: shows right away, follows the playhead (click, play, arrows) or the marker you set; the editor always fits the screen height (compact on small screens)",
+ "commit": "932531a1dd73216996e3308a4bf04cfee0437d88",
+ "subject": "Cue editor: keyboard shortcuts stay visible on small screens too",
  "log": [
-  "20:50:21 update 48925205 \u2192 735e2a05 \u00b7 1 file(s): web/panel/library.html",
-  "20:50:21 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:56:31 update 735e2a05 \u2192 932531a1 \u00b7 1 file(s): web/panel/library.html",
+  "20:56:31 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Jeon \u2013 Baila",
+  "song": "B'JAY X RULY \u2013 COCO",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },

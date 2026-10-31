@@ -59,3 +59,4 @@
 2026-10-31T03:32:28 ok a8da8de0 END is the end: MIX back a few seconds before a CLOSE END; the old song fades out until END, never past it
 2026-10-31T20:45:13 ok 48925205 Cue editor: exact times - type a time, nudge 0.1 s per marker, a 6 s zoom with 10 ms detail; cues to 0.01 s; finer overview waveform
 2026-10-31T20:50:21 ok 735e2a05 Cue editor zoom: shows right away, follows the playhead (click, play, arrows) or the marker you set; the editor always fits the screen height (compact on small screens)
+2026-10-31T20:56:31 ok 932531a1 Cue editor: keyboard shortcuts stay visible on small screens too
