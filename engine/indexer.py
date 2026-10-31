@@ -106,12 +106,12 @@ def fine_map(mom, cs=0.0, dur=None, t_off=0.0):
     return json.dumps({"h": h, "t0": t0, "t": t}, separators=(",", ":"))
 
 def momentary(path, start, dur):
-    r = run(["nice", "-n", "15", "ffmpeg", "-hide_banner", "-nostats", "-ss", str(start), "-t", str(dur), "-i", path, "-map", "0:a:0",
+    r = run(["nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-nostats", "-threads", "1", "-ss", str(start), "-t", str(dur), "-i", path, "-map", "0:a:0",
              "-af", "ebur128=framelog=info", "-f", "null", "-"], 120)
     return [(float(m.group(1)), -120.0 if m.group(2) == "-inf" else float(m.group(2)))
             for m in re.finditer(r"t:\s*([\d.]+)\s+TARGET:[^M]*M:\s*(-?[\d.]+|-inf)", r.stderr)]
 
-def make_fine(c, budget=40.0):
+def make_fine(c, budget=12.0):
     """Files measured before the 0.1 s map existed: read only their first and last seconds again (a fraction of a second each)."""
     t_end = time.time() + budget
     for p_, d_, cs in c.execute("""SELECT path, duration, COALESCE(cue_start, 0) FROM items WHERE section IN ('music','jingles','ads')
@@ -125,6 +125,7 @@ def make_fine(c, budget=40.0):
             fm = fine_map(mom, cs, d_)
         except Exception as e: print("fine:", p_, e, flush=True); fm = None
         c.execute("UPDATE items SET fine=? WHERE path=?", (fm or "-", p_)); c.commit()
+        time.sleep(0.5)    # gently: the on-air sound and the TV encoders always come first
 
 def loud_map(mom):
     """The loudest momentary level of every 0.5 s of the file, as whole dB ("-24,-23,...")."""
