@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T00:22:29",
+ "time": "2026-11-01T00:24:18",
  "result": "ok",
- "commit": "efead7f2452b7b32f0a306ebae26d90ae171c25d",
- "subject": "Live inputs the VDO.Ninja way: OBS plays the studio sound, cameras and guests as browser sources with WebRTC straight from MediaMTX (low, steady delay; no RTSP/ffmpeg buffers); local feed page on 127.0.0.1:8095",
+ "commit": "1ef3c377eeaa2a15aab9ec9a56da7ae66cb74b83",
+ "subject": "OBS feed page on 127.0.0.1:8097 (8095 was taken)",
  "log": [
-  "00:21:44 update e204f305 \u2192 efead7f2 \u00b7 3 file(s): engine/live.py, system/nginx-hype.conf, web/obs/feed.html",
-  "00:21:44 restart hype-engine",
-  "00:22:29 installed OK \u00b7 restarted: hype-engine, nginx-reload"
+  "00:23:33 update efead7f2 \u2192 1ef3c377 \u00b7 2 file(s): engine/live.py, system/nginx-hype.conf",
+  "00:23:33 restart hype-engine",
+  "00:24:18 installed OK \u00b7 restarted: hype-engine, nginx-reload"
  ],
  "guard": {
-  "song": "Frenna x 3DDY \u2013 DJ",
+  "song": "Wisin x Kapo \u2013 Mu\u00e9velo Pa' M\u00ed",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },

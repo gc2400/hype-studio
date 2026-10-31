@@ -77,3 +77,4 @@
 2026-10-31T23:37:45 ok 0cf95cf1 Cameras fit their box on black (a portrait phone shows upright, never stretched; black only while that camera sends); guest page asks phones to go horizontal; Broadcast page: lip sync wording fixed (it was the wrong way round)
 2026-10-31T23:55:09 ok e204f305 Cue waveform: mouse wheel zooms in/out around the mouse; Library filter buttons without symbols
 2026-11-01T00:22:29 ok efead7f2 Live inputs the VDO.Ninja way: OBS plays the studio sound, cameras and guests as browser sources with WebRTC straight from MediaMTX (low, steady delay; no RTSP/ffmpeg buffers); local feed page on 127.0.0.1:8095
+2026-11-01T00:24:18 ok 1ef3c377 OBS feed page on 127.0.0.1:8097 (8095 was taken)
