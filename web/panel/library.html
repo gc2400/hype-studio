@@ -75,6 +75,7 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
 .nud button:hover{border-color:currentColor;color:var(--txt)}.nud .auto{color:var(--y);min-width:0;padding:0 8px}
 .tin{flex:1;min-width:0;width:0;min-height:30px;border-radius:8px;background:var(--deep);border:1px solid var(--line2);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;text-align:center;padding:0 4px}
 .tin:focus{outline:none;border-color:currentColor}
+#box.tight .keys{display:none}#box.tight .cuebox .cueset{min-height:28px}#box.tight .nud button,#box.tight .tin{min-height:28px}#box.tight .wave.zoom{height:48px}#box.tight canvas.wave{height:46px!important}#box.tight .cueside{gap:4px}#box.tight .ovb{margin-top:0}
 @media (max-width:640px){.cdg .cueside{display:flex!important;flex-direction:column}.cuebox{display:grid;grid-template-columns:104px minmax(0,1fr);gap:6px;align-items:center}.cuebox .cueset{padding:0 10px}.cdg .ovb{flex-direction:column!important;align-items:stretch!important}}
 .zoomw{position:relative}.wave.zoom{height:64px;cursor:crosshair}
 .zl{position:absolute;right:8px;top:4px;font-size:11px;font-weight:700;color:var(--mut);pointer-events:none}
@@ -216,18 +217,18 @@ function renderChips() {
 // the song list ends at the bottom of the window: only the list scrolls, not the page.
 // The editor on the right is as tall as the list card; the video takes the room that is left (bigger picture).
 function fitRes() { const r = $('#res'), ed = $('#ed'), m = $('#m'); if (!r) return;
-  if (innerWidth <= 1000) { r.style.maxHeight = ''; if (ed) ed.style.height = ''; if (m) m.style.height = ''; return; }
+  if (innerWidth <= 1000) { r.style.maxHeight = ''; if (ed) ed.style.height = ''; if (m) m.style.height = ''; $('#box').classList.remove('tight'); return; }
   r.style.maxHeight = Math.max(240, innerHeight - r.getBoundingClientRect().top - 30) + 'px';
   const left = r.closest('.card'); if (!ed || !left) return;
   ed.style.height = left.getBoundingClientRect().height + 'px';
-  if (m && m.style.display !== 'none' && !$('#box').hidden) {
-    m.style.height = '';                                             // natural 16:9 height for this width first
-    const cs = getComputedStyle(ed), inner = ed.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-    const spare = inner - $('#box').getBoundingClientRect().height;   // room left at the bottom of the editor
-    const nat = m.getBoundingClientRect().height, w = m.getBoundingClientRect().width;
-    if (spare > 0) m.style.height = Math.round(nat + spare - 4) + 'px';               // grow into the free room (picture keeps its shape)
-    else if (spare < 0) m.style.height = Math.max(180, Math.round(nat + spare - 4)) + 'px';   // too tall: shrink so it all fits
-    void w; } }
+  if ($('#box').hidden) return;
+  const spareOf = () => { const cs = getComputedStyle(ed); return ed.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - $('#box').getBoundingClientRect().height; };
+  const fit = () => { if (!m || m.style.display === 'none') return spareOf();
+    m.style.height = ''; const nat = m.getBoundingClientRect().height, sp = spareOf();
+    if (sp !== 0) m.style.height = Math.max(120, Math.round(nat + sp - 4)) + 'px';   // grow into the free room, or shrink so it all fits
+    return spareOf(); };
+  $('#box').classList.remove('tight');
+  if (fit() < 0) { $('#box').classList.add('tight'); fit(); } }      // small screen: a more compact editor, the page never scrolls
 addEventListener('resize', fitRes); new ResizeObserver(fitRes).observe(document.body); setTimeout(fitRes, 60);
 $('#bFilter').onclick = () => { const p = $('#fpanel'); p.hidden = !p.hidden; setTimeout(fitRes, 0); $('#bFilter').setAttribute('aria-expanded', String(!p.hidden)); $('#bFilter').classList.toggle('on', !p.hidden); };
 function renderList() {
@@ -246,7 +247,7 @@ function pick(it) { setTimeout(fitRes, 0);
   const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode); $('#eBadge').textContent = bt; $('#eBadge').className = 'chip ' + bc;
   $('#eTv').textContent = !MUS() ? '' : it.mode === 'pair' ? 'TV plays the clip "' + (it.clip_path || '').replace(/^clips\//, '') + '" with its own sound (same name).' : it.mode === 'clip' ? 'Video file – radio and TV play the same.' : 'No clip with the same name in /clips → TV shows the Hype Screen.';
   CUE = {s: it.cue_start || 0, m: it.cue_mix || it.duration || 0, e: it.cue_end || it.duration || 0, d: it.duration || 1, auto: !it.mix_set};
-  ZK = 's'; ZD = null; peaks = []; fill(); draw(); smartFetch(); api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { peaks = p; draw(); } });
+  ZK = 'p'; ZW = null; ZD = null; peaks = []; fill(); draw(); smartFetch(); api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { peaks = p; draw(); } });
   const m = $('#m'); m.pause(); m.src = '../media/' + it.path.split('/').map(encodeURIComponent).join('/');
   m.style.display = it.has_video ? 'block' : 'none'; $('#cdg').classList.toggle('novid', !it.has_video); m.currentTime = CUE.s;
   $('#ovBox').hidden = !MUS();
@@ -272,7 +273,7 @@ function draw() {
 }
 let saveT = null;
 function saveSoon() { dirty = true; fill(); clearTimeout(saveT); saveT = setTimeout(() => { if (dirty && SEL) save(); }, 900); }   // auto-save
-let ZK = 's';     // the marker the zoom follows (the last one you touched)
+let ZK = 'p', zpress = null;     // the zoom follows the playhead ('p'), or the marker you touched last
 function setCue(k, t) { ZK = k; CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false; if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; draw(); if (k !== 'm') smartFetch(); saveSoon(); }
 $('#mixAuto').onclick = () => { if (!CUE) return; CUE.auto = true; ZK = 'm'; draw(); smartFetch(); saveSoon(); };
 $$('[data-nud]').forEach(b => b.onclick = () => { if (!CUE) return; const k = b.dataset.nud; setCue(k, CUE[k] + parseFloat(b.dataset.d)); const m = $('#m'); m.pause(); m.currentTime = CUE[k]; });
@@ -280,12 +281,18 @@ $$('.tin').forEach(el => { el.onfocus = () => { ZK = el.dataset.k; el.select(); 
   el.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') el.blur(); if (e.key === 'Escape') { el.value = fmtF(CUE[el.dataset.k]); el.blur(); } };
   el.onblur = () => { if (!CUE) return; const t = parseT(el.value); if (t == null || Math.abs(t - CUE[el.dataset.k]) < 0.005) { fill(); return; }
     setCue(el.dataset.k, t); const m = $('#m'); m.pause(); m.currentTime = CUE[el.dataset.k]; fill(); }; });
-// zoom: 6 s around the marker you are setting, 10 ms detail
-let ZD = null, zT = null, zBusy = false;
-function zoomWin() { const c = CUE[ZK] || 0; return Math.max(0, Math.min(Math.max(0, CUE.d - 6), c - 3)); }
-function zoomFetch() { if (!CUE || !SEL || zBusy) return; const t0 = Math.round(zoomWin() * 10) / 10, it = SEL;
-  if (ZD && ZD.path === it.path && Math.abs(ZD.t0 - t0) < 0.6) return;
-  zBusy = true; api('wavezoom?path=' + encodeURIComponent(it.path) + '&t=' + t0 + '&d=6').then(r => { zBusy = false; if (SEL === it) { ZD = {...r, path: it.path}; drawZoom(); } }).catch(() => { zBusy = false; }); }
+// zoom: 6 s around the playhead (follows it while playing / when you jump), or around the marker you are setting
+let ZD = null, ZW = null, zBusy = false;
+function zoomWin() { if (!CUE) return 0; const mx = Math.max(0, CUE.d - 6), cl = v => Math.max(0, Math.min(mx, v));
+  if (zpress && zpress.drag) return ZW;                                   // dragging in the zoom: it holds still
+  if (ZK !== 'p') return (ZW = cl((CUE[ZK] || 0) - 3));
+  const m = $('#m'), t = m.currentTime || 0;
+  if (ZW == null || t < ZW + 0.3 || t > ZW + 5.7) ZW = cl(t - (m.paused ? 3 : 1.5));   // playing: page along, a bit ahead
+  return ZW; }
+function zoomFetch() { if (!CUE || !SEL || zBusy) return; const w = zoomWin(), it = SEL;
+  if (ZD && ZD.path === it.path && w >= ZD.t0 - 0.01 && w + 6 <= ZD.t0 + ZD.p.length * ZD.step + 0.05) return;   // already have it
+  const t0 = Math.max(0, Math.round((w - 3) * 10) / 10);
+  zBusy = true; api('wavezoom?path=' + encodeURIComponent(it.path) + '&t=' + t0 + '&d=12').then(r => { zBusy = false; if (SEL === it && r && r.p) { ZD = {...r, path: it.path}; drawZoom(); } }).catch(() => { zBusy = false; }); }
 function drawZoom() {
   const c = $('#zoom'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H); if (!CUE) return;
   const t0 = zoomWin(), sp = 6, X = t => (t - t0) / sp * W;
@@ -294,30 +301,29 @@ function drawZoom() {
     ZD.p.forEach((v, i) => { const t = ZD.t0 + i * ZD.step; if (t < t0 || t > t0 + sp) return; const h = Math.max(1, v * (H - 14)); x.fillStyle = t < CUE.s || t > CUE.e ? '#1A3550' : '#05A9C6'; x.fillRect(X(t), (H - h) / 2, Math.max(1, bw - 0.5), h); }); }
   [['s', '#3DDC97'], ['m', '#FFE000'], ['e', '#FF8A97']].forEach(([k, col]) => { const t = CUE[k]; if (t < t0 || t > t0 + sp) return; x.fillStyle = col; x.fillRect(X(t) - (k === ZK ? 3 : 1.5), 0, k === ZK ? 6 : 3, H); });
   const p = $('#m').currentTime || 0; if (p >= t0 && p <= t0 + sp) { x.fillStyle = '#fff'; x.fillRect(X(p) - 1, 0, 2, H); }
-  $('#zl').textContent = ({s: 'START', m: 'MIX', e: 'END'})[ZK] + ' · zoom ' + fmtC(t0) + ' – ' + fmtC(t0 + sp);
-  clearTimeout(zT); zT = setTimeout(zoomFetch, 120); }
+  $('#zl').textContent = (ZK === 'p' ? 'Zoom ' : ({s: 'START', m: 'MIX', e: 'END'})[ZK] + ' · zoom ') + fmtC(t0) + ' – ' + fmtC(t0 + sp);
+  zoomFetch(); }
 function zx(e) { const r = $('#zoom').getBoundingClientRect(); return zoomWin() + Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * 6; }
-let zpress = null;
 $('#zoom').onpointerdown = e => { if (!CUE) return; const t = zx(e), near = ['s', 'm', 'e'].reduce((a, k) => Math.abs(CUE[k] - t) < Math.abs(CUE[a] - t) ? k : a, ZK);
-  zpress = {x: e.clientX, t, k: Math.abs(CUE[near] - t) < 0.12 ? near : null, w0: zoomWin(), drag: false}; $('#zoom').setPointerCapture(e.pointerId); };
+  zpress = {x: e.clientX, t, k: Math.abs(CUE[near] - t) < 0.12 ? near : null, w0: zoomWin(), drag: false}; ZW = zpress.w0; $('#zoom').setPointerCapture(e.pointerId); };
 $('#zoom').onpointermove = e => { if (!zpress) return; if (!zpress.drag && zpress.k && Math.abs(e.clientX - zpress.x) > 4) zpress.drag = true;
   if (zpress.drag) { const r = $('#zoom').getBoundingClientRect(), t = zpress.w0 + Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * 6;   // the window stays put while you drag
     const k = zpress.k; CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false; ZK = k; $('#m').currentTime = CUE[k]; fill(); draw(); } };
-$('#zoom').onpointerup = () => { if (!zpress) return; if (zpress.drag) setCue(zpress.k, CUE[zpress.k]); else { $('#m').currentTime = zpress.t; draw(); } zpress = null; };
+$('#zoom').onpointerup = () => { if (!zpress) return; const z = zpress; zpress = null; if (z.drag) setCue(z.k, CUE[z.k]); else { $('#m').currentTime = z.t; if (ZK === 'p') ZW = z.w0; draw(); } };
 function cx(e) { const r = $('#wave').getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * CUE.d; }
 let press = null;     // a click (also right on a marker) jumps there; only when you really drag a marker does it move
 $('#wave').onpointerdown = e => { if (!CUE) return; const t = cx(e), near = ['s', 'm', 'e'].reduce((a, k) => Math.abs(CUE[k] - t) < Math.abs(CUE[a] - t) ? k : a, 's');
   press = {x: e.clientX, t, k: Math.abs(CUE[near] - t) / CUE.d < 0.015 ? near : null}; drag = null; $('#wave').setPointerCapture(e.pointerId); };
 $('#wave').onpointermove = e => { if (!press) return; if (!drag && press.k && Math.abs(e.clientX - press.x) > 5) drag = press.k; if (drag) { setCue(drag, cx(e)); $('#m').currentTime = CUE[drag]; } };
-$('#wave').onpointerup = () => { if (press && !drag) { $('#m').currentTime = press.t; draw(); } press = null; drag = null; };
+$('#wave').onpointerup = () => { if (press && !drag) { ZK = 'p'; ZW = null; $('#m').currentTime = press.t; draw(); } press = null; drag = null; };
 $$('[data-set]').forEach(b => b.onclick = () => setCue(b.dataset.set, $('#m').currentTime));
-function playFrom(t, until) { const m = $('#m'); clearTimeout(stopT); m.currentTime = Math.max(0, t); m.play(); if (until) { const chk = () => { if (m.currentTime >= until) m.pause(); else if (!m.paused) stopT = setTimeout(chk, 80); }; chk(); } }
-$('#bPlay').onclick = () => { const m = $('#m'); m.paused ? m.play() : m.pause(); };
+function playFrom(t, until) { const m = $('#m'); ZK = 'p'; ZW = null; clearTimeout(stopT); m.currentTime = Math.max(0, t); m.play(); if (until) { const chk = () => { if (m.currentTime >= until) m.pause(); else if (!m.paused) stopT = setTimeout(chk, 80); }; chk(); } }
+$('#bPlay').onclick = () => { const m = $('#m'); if (m.paused) { ZK = 'p'; m.play(); } else m.pause(); };
 // preview always stops at END (when it started before END)
 $('#m').addEventListener('play', () => { $('#m')._lim = CUE && $('#m').currentTime < CUE.e - 0.05; });
 function cueTick() { const m = $('#m'); if (CUE && !m.paused && m._lim && m.currentTime >= CUE.e) { m.pause(); m.currentTime = CUE.e; draw(); } requestAnimationFrame(cueTick); }
 requestAnimationFrame(cueTick);
-$('#bBack').onclick = () => { $('#m').currentTime -= 1; draw(); }; $('#bFwd').onclick = () => { $('#m').currentTime += 1; draw(); };
+$('#bBack').onclick = () => { ZK = 'p'; $('#m').currentTime -= 1; draw(); }; $('#bFwd').onclick = () => { ZK = 'p'; $('#m').currentTime += 1; draw(); };
 $('#bStart').onclick = () => playFrom(CUE.s); $('#bMix').onclick = () => playFrom(CUE.m - 8, CUE.e);
 setInterval(() => { if (!CUE) return; const t = $('#m').currentTime || 0; $('#pos').textContent = fmtC(t); draw(); }, 100);
 function save() { clearTimeout(saveT); if (!SEL || !CUE) return Promise.resolve(true); const it = SEL, q = {...CUE}; dirty = false;
@@ -343,8 +349,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowDown') { e.preventDefault(); step(1); } else if (e.key === 'ArrowUp') { e.preventDefault(); step(-1); }
   if (!SEL) return;
   if (e.key === ' ') { e.preventDefault(); $('#bPlay').click(); }
-  else if (e.key === 'ArrowLeft') { e.preventDefault(); m.currentTime -= e.shiftKey ? 0.1 : 1; }
-  else if (e.key === 'ArrowRight') { e.preventDefault(); m.currentTime += e.shiftKey ? 0.1 : 1; }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); ZK = 'p'; m.currentTime -= e.shiftKey ? 0.1 : 1; }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); ZK = 'p'; m.currentTime += e.shiftKey ? 0.1 : 1; }
   else if (e.key === 's' || e.key === 'S') setCue('s', m.currentTime);
   else if (e.key === 'm' || e.key === 'M') setCue('m', m.currentTime);
   else if (e.key === 'e' || e.key === 'E') setCue('e', m.currentTime);
