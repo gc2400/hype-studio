@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T03:28:37",
+ "time": "2026-10-31T03:32:28",
  "result": "ok",
- "commit": "d009f89fbe31c8a43f147f750ffab34e2f87e48c",
- "subject": "Fine loudness backfill: gentler (lowest priority, one thread, a pause between files)",
+ "commit": "a8da8de0449ef5dcfa39b0432ef42e7c0b5bcbf9",
+ "subject": "END is the end: MIX back a few seconds before a CLOSE END; the old song fades out until END, never past it",
  "log": [
-  "03:27:51 update 66196cc5 \u2192 d009f89f \u00b7 1 file(s): engine/indexer.py",
-  "03:27:51 restart hype-indexer",
-  "03:28:37 installed OK \u00b7 restarted: hype-indexer"
+  "03:31:43 update d009f89f \u2192 a8da8de0 \u00b7 2 file(s): engine/close_import.py, engine/engine.py",
+  "03:31:43 restart hype-engine",
+  "03:32:28 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Feid \u2013 TRANKAITO",
+  "song": "Frenna \u2013 NASA",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
