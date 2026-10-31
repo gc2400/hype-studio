@@ -1,18 +1,20 @@
 {
- "time": "2026-10-31T22:37:49",
+ "time": "2026-10-31T22:55:59",
  "result": "ok",
- "commit": "6eb178578bbce491bf9d9f330680f59e5683ae39",
- "subject": "Library page: Upload button (pick section + folder, drop files; 8 MB pieces, continues after a broken connection; file gets the upload user's rights so WinSCP can manage it)",
+ "commit": "8dddf2e048ff768e685043395aafc69ab5eb4fa5",
+ "subject": "Recordings: own systemd units (an update/restart never stops them), saved in the library (Library -> Recordings tab, also in the panel); guests see a small on-air picture next to their camera (360p 'guestview' from the TV ladder); mobile header shows REC",
  "log": [
-  "22:37:04 update 2f6f813b \u2192 6eb17857 \u00b7 3 file(s): engine/engine.py, system/nginx-hype.conf, web/panel/library.html",
-  "22:37:04 restart hype-engine",
-  "22:37:49 installed OK \u00b7 restarted: hype-engine, nginx-reload"
+  "22:55:13 update 6eb17857 \u2192 8dddf2e0 \u00b7 10 file(s): engine/engine.py, engine/hype_auth.py, engine/live.py, tv/ladder.sh, web/guest/hype-rtc.js, web/guest/index.html, web/panel/header.js, web/panel/index.html, web/panel/library.html, web/panel/plan.html",
+  "22:55:13 restart hype-auth",
+  "22:55:13 restart hype-ladder",
+  "22:55:13 restart hype-engine",
+  "22:55:58 installed OK \u00b7 restarted: hype-engine, hype-auth, hype-ladder"
  ],
  "guard": {
   "song": "Club Hype \u2013 DJ Ricsz Liveset 8 Vuurlinie Events",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
