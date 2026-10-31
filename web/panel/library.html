@@ -40,9 +40,14 @@ h1{margin:0;font-size:20px;font-weight:900}h1 small{color:var(--mut);font-weight
 .ri:hover{background:var(--card2)}.ri.sel{background:var(--card2);border-color:var(--y)}
 .ri .tx{flex:1;min-width:0;display:flex;flex-direction:column}
 .ri .tx b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ri .tx span{font-size:11px;color:var(--mut)}
-.ri .del{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--mut);display:none;align-items:center;justify-content:center;cursor:pointer}
-.ri .del svg{width:17px;height:17px}.ri .del:hover{color:#FF8A97;border-color:#FF8A97}
-.ri:hover .del,.ri.sel .del{display:inline-flex}@media (hover:none){.ri:hover .del{display:none}.ri.sel .del{display:inline-flex}}
+.ri .racts{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;gap:4px;padding-left:28px;background:linear-gradient(90deg,transparent,var(--card2) 26px);opacity:0;pointer-events:none}
+.ri:hover .racts,.ri.sel .racts{opacity:1;pointer-events:auto}@media (hover:none){.ri:hover .racts{opacity:0;pointer-events:none}.ri.sel .racts{opacity:1;pointer-events:auto}}
+.ri .racts button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--soft);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.ri .racts svg{width:17px;height:17px}.ri .del:hover{color:#FF8A97;border-color:#FF8A97}.ri .addpl:hover{color:var(--y);border-color:var(--y)}
+.plmenu{position:fixed;z-index:50;width:260px;max-height:340px;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:8px;gap:6px}
+.plmenu input{min-height:34px;border-radius:8px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);padding:0 10px;font:inherit;font-size:13px}
+.plmenu .ls{overflow:auto;display:flex;flex-direction:column;gap:2px}.plmenu .ls button{text-align:left;padding:8px 10px;border-radius:8px;border:0;background:transparent;color:var(--txt);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.plmenu .ls button:hover{background:var(--card2);color:var(--y)}.plmenu .ls small{color:var(--mut);font-weight:600;margin-left:6px}
 .delq{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 8px;border-radius:10px;background:linear-gradient(90deg,rgba(15,43,68,.4),var(--card2) 30%);font-size:13px;font-weight:700}
 .btn.red{background:#C8283A;border-color:#C8283A;color:#fff}
 .ri .ed1{width:8px;height:8px;border-radius:50%;flex:none;background:transparent}.ri .ed1.on{background:var(--g)}
@@ -110,6 +115,15 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
 .chips .fc{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 6px 3px 10px;border-radius:999px;background:#2B2500;color:#FFE000;border:1px solid #5a4d00;cursor:pointer}
 .chips .fc b{font-size:13px;opacity:.8}
 #bProb{color:#FF8A97;border-color:#5a2230}
+
+.cdg,.cdg.novid{grid-template-columns:minmax(0,1fr)!important}
+.cues{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) auto minmax(0,1fr);gap:6px}
+.cues .cueset{display:flex;align-items:center;justify-content:center;min-height:38px;padding:0 10px;font-size:12px;font-weight:800;letter-spacing:.06em;text-align:center}
+.cues .auto{color:var(--y);padding:0 12px}
+.cdf .ovb{flex-direction:row;align-items:center;gap:6px;margin:0}.cdf .ovb .lab{white-space:nowrap}.cdf .ovb .sel{min-height:32px;max-width:230px;width:auto;background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);padding:0 8px;font:inherit;font-size:13px}
+#cueDlg .cues{margin-top:8px}
+@media (max-width:640px){.cdt{flex-wrap:wrap}.cdt .pos{margin-left:auto}.cues .cueset{font-size:11px;letter-spacing:.03em;padding:0 6px}}
+@media (hover:none) and (max-width:640px){.keys{display:none}}
 </style>
 </head>
 <body>
@@ -141,15 +155,6 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
         <div class="cdh"><div class="t"><b id="eTitle"></b><span id="eSub"></span><span id="eTv"></span></div><span class="chip" id="eBadge"></span></div>
         <div class="cdg" id="cdg">
           <video id="m" playsinline preload="metadata"></video>
-          <div class="cueside">
-            <div class="cuebox" style="color:var(--g)"><button class="cueset" data-set="s" title="Set START at the playhead (key S)"><span class="k">SET START</span></button>
-              <div class="nud"><button data-nud="s" data-d="-0.1" title="START 0.1 s earlier">−.1</button><input class="tin" data-k="s" id="vS" inputmode="decimal" aria-label="START time" title="Type a time, e.g. 0:12.35, then Enter"><button data-nud="s" data-d="0.1" title="START 0.1 s later">+.1</button></div></div>
-            <div class="cuebox" style="color:var(--y)"><button class="cueset" data-set="m" title="Set MIX at the playhead (key M) – the next song starts here"><span class="k">SET MIX</span></button>
-              <div class="nud"><button data-nud="m" data-d="-0.1" title="MIX 0.1 s earlier">−.1</button><input class="tin" data-k="m" id="vM" inputmode="decimal" aria-label="MIX time" title="Type a time, e.g. 2:51.9, then Enter"><button data-nud="m" data-d="0.1" title="MIX 0.1 s later">+.1</button><button class="auto" id="mixAuto" title="MIX back to AUTO: smart mix picks it from the song's loudness (your START and END stay)">AUTO</button></div></div>
-            <div class="cuebox" style="color:#FF8A97"><button class="cueset" data-set="e" title="Set END at the playhead (key E) – preview stops here"><span class="k">SET END</span></button>
-              <div class="nud"><button data-nud="e" data-d="-0.1" title="END 0.1 s earlier">−.1</button><input class="tin" data-k="e" id="vE" inputmode="decimal" aria-label="END time" title="Type a time, e.g. 2:54.0, then Enter"><button data-nud="e" data-d="0.1" title="END 0.1 s later">+.1</button></div></div>
-            <div id="ovBox" class="ovb"><span class="lab">Intro sweeper</span><select class="sel" id="ovSel" aria-label="Intro sweeper for this song"></select></div>
-          </div>
         </div>
         <canvas class="wave" id="wave" width="1600" height="140" style="height:72px" aria-label="Waveform: click to jump, drag the markers; zoomed in: drag sideways to move"></canvas>
         <div class="cdt">
@@ -161,8 +166,14 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
           <span class="zm" role="group" aria-label="Zoom"><button id="zOut" title="Zoom out (−)" aria-label="Zoom out">−</button><span id="zLv">song</span><button id="zIn" title="Zoom in (+)" aria-label="Zoom in">+</button></span>
           <span class="pos" id="pos">0:00.0</span>
         </div>
-        <div class="cdf"><button class="btn sm" id="bAuto" title="Back to the automatic cue points">Automatic cues</button><button class="btn sm" id="bNextUp" title="Play this song next on air">⏭ Play next on air</button><span style="flex:1"></span><button class="btn" id="bSave">Save</button><button class="btn yellow" id="bSaveNext" title="Enter">Save + next ▶</button></div>
-        <div class="keys"><kbd>↑</kbd><kbd>↓</kbd> song · <kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> 1 s (<kbd>Shift</kbd> 0.1 s) · <kbd>S</kbd><kbd>M</kbd><kbd>E</kbd> set cue · type a time in the box (e.g. 2:51.9) · <kbd>−.1</kbd><kbd>+.1</kbd> nudge · <kbd>+</kbd><kbd>−</kbd> zoom (drag sideways to move) · <kbd>1</kbd> from START · <kbd>2</kbd> into MIX · <kbd>Enter</kbd> save + next · <kbd>/</kbd> search</div>
+        <div class="cues" role="group" aria-label="Set cue points at the play line">
+          <button class="cueset" data-set="s" style="color:var(--g)" title="Set START at the play line (key S)">SET START</button>
+          <button class="cueset" data-set="m" style="color:var(--y)" title="Set MIX at the play line (key M) – the next song starts here">SET MIX</button>
+          <button class="cueset auto" id="mixAuto" title="MIX back to AUTO: smart mix picks it from the song's loudness (your START and END stay)">AUTO</button>
+          <button class="cueset" data-set="e" style="color:#FF8A97" title="Set END at the play line (key E) – nothing after it is heard">SET END</button>
+        </div>
+        <div class="cdf"><button class="btn sm" id="bAuto" title="Back to the automatic cue points">Automatic cues</button><button class="btn sm" id="bNextUp" title="Play this song next on air">⏭ Play next on air</button><div id="ovBox" class="ovb"><span class="lab">Intro sweeper</span><select class="sel" id="ovSel" aria-label="Intro sweeper for this song"></select></div><span style="flex:1"></span><button class="btn" id="bSave">Save</button><button class="btn yellow" id="bSaveNext" title="Enter">Save + next ▶</button></div>
+        <div class="keys"><kbd>↑</kbd><kbd>↓</kbd> song · <kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> 1 s (<kbd>Shift</kbd> 0.1 s) · <kbd>S</kbd><kbd>M</kbd><kbd>E</kbd> set cue · <kbd>+</kbd><kbd>−</kbd> zoom (drag sideways to move) · <kbd>1</kbd> from START · <kbd>2</kbd> into MIX · <kbd>Enter</kbd> save + next · <kbd>/</kbd> search</div>
       </div>
     </section>
   </div>
@@ -241,8 +252,9 @@ $('#bFilter').onclick = () => { const p = $('#fpanel'); p.hidden = !p.hidden; se
 function renderList() {
   const L = visible(); $('#cnt').textContent = L.length + ' items';
   $('#res').innerHTML = L.map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
-    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''}" role="option" data-p="${esc(it.path)}"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}</span></div><button class="del" data-del title="Delete this file" aria-label="Delete ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
-  $$('#res .ri').forEach(el => el.onclick = e => { if (e.target.closest('.del, .delq')) return; pick(LIB.items.find(x => x.path === el.dataset.p)); });
+    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''}" role="option" data-p="${esc(it.path)}"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}</span></div><span class="racts"><button class="addpl" data-addpl title="Add to a playlist" aria-label="Add ${esc(it.title || '')} to a playlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="del" data-del title="Delete this file" aria-label="Delete ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
+  $$('#res .ri').forEach(el => el.onclick = e => { if (e.target.closest('.racts, .delq')) return; pick(LIB.items.find(x => x.path === el.dataset.p)); });
+  $$('#res .addpl').forEach(b => b.onclick = e => { e.stopPropagation(); plMenu(b, b.closest('.ri').dataset.p); });
   $$('#res .del').forEach(b => b.onclick = e => { e.stopPropagation(); const row = b.closest('.ri'); if (row.querySelector('.delq')) return;
     const q = document.createElement('div'); q.className = 'delq';
     q.innerHTML = '<span>Delete this file?</span><button class="btn sm red" data-yes>Delete</button><button class="btn sm" data-no>Cancel</button>';
@@ -253,6 +265,21 @@ function renderList() {
         renderList(); toast('Deleted – kept in the bin for 30 days'); }); }; });
 }
 $('#m').addEventListener('loadedmetadata', () => fitRes());
+const fold = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+let PLS = null;
+function plMenu(btn, path) {
+  document.querySelectorAll('.plmenu').forEach(x => x.remove());
+  const m = document.createElement('div'); m.className = 'plmenu'; m.innerHTML = '<input placeholder="Search playlists…" aria-label="Search playlists"><div class="ls"><div class="empty">Loading…</div></div>';
+  document.body.appendChild(m); const r = btn.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(innerWidth - 268, r.right - 260)) + 'px'; m.style.top = (r.bottom + 350 > innerHeight ? Math.max(8, r.top - 346) : r.bottom + 6) + 'px';
+  const draw = () => { const q = fold(m.querySelector('input').value), L = (PLS || []).filter(p => !p.name.startsWith('@') && fold(p.name).includes(q));
+    m.querySelector('.ls').innerHTML = L.map(p => `<button data-id="${p.id}">${esc(p.name)}<small>${p.count ?? ''}</small></button>`).join('') || '<div class="empty">No playlist found.</div>';
+    m.querySelectorAll('.ls button').forEach(b => b.onclick = () => { m.remove(); api('plan/add_to_playlist', {id: +b.dataset.id, path}).then(x => toast(x && x.ok === false ? (x.error || 'Not added') : x && x.already ? 'Already in ' + b.firstChild.textContent : 'Added to ' + b.firstChild.textContent)); if (PLS) PLS = null; }); };
+  (PLS ? Promise.resolve(PLS) : api('playlists').then(p => (PLS = p))).then(draw);
+  m.querySelector('input').oninput = draw; m.querySelector('input').focus();
+  setTimeout(() => document.addEventListener('pointerdown', function off(ev) { if (!m.contains(ev.target)) { m.remove(); document.removeEventListener('pointerdown', off); } }), 0);
+  m.onkeydown = ev => { if (ev.key === 'Escape') m.remove(); ev.stopPropagation(); };
+}
 function pick(it) { setTimeout(fitRes, 0);
   if (!it) return; if (dirty && SEL) save();      // saves by itself: nothing gets lost when you go to the next song
   SEL = it; dirty = false; $$('#res .ri').forEach(r => { const on = r.dataset.p === it.path; r.classList.toggle('sel', on); if (on) r.scrollIntoView({block: 'nearest'}); });
@@ -274,8 +301,8 @@ let smT = null;
 function smartFetch() { if (!CUE || !CUE.auto || !SEL) return; const it = SEL; clearTimeout(smT);
   smT = setTimeout(() => api('smartmix?path=' + encodeURIComponent(it.path) + '&s=' + CUE.s + '&e=' + CUE.e).then(r => { if (SEL === it && CUE.auto && r && r.mix != null) { CUE.m = r.mix; fill(); draw(); } }), 150); }
 const fmtF = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), r = t - m * 60; return m + ':' + r.toFixed(2).padStart(5, '0'); };
-function fill() { ['s', 'm', 'e'].forEach(k => { const el = $('#v' + k.toUpperCase()); if (document.activeElement !== el) el.value = fmtF(CUE[k]); });
-  $('#vM').placeholder = ''; $('#mixAuto').style.opacity = CUE.auto ? 1 : .55; $('#mixAuto').textContent = CUE.auto ? 'AUTO ✓' : 'AUTO'; $('#bSave').textContent = dirty ? 'Save *' : 'Save'; }
+function fill() { ['s', 'm', 'e'].forEach(k => { const el = $('#v' + k.toUpperCase()); if (el && document.activeElement !== el) el.value = fmtF(CUE[k]); });
+  $('#mixAuto').style.opacity = CUE.auto ? 1 : .55; $('#mixAuto').textContent = CUE.auto ? 'AUTO ✓' : 'AUTO'; $('#bSave').textContent = dirty ? 'Save *' : 'Save'; }
 function parseT(v) { v = String(v).trim().replace(',', '.'); if (!v) return null; const p = v.split(':'); let t = 0;
   for (const x of p) { const n = parseFloat(x); if (isNaN(n)) return null; t = t * 60 + n; } return t; }
 const cw = CueWave($('#wave'), {cue: () => CUE, media: () => $('#m'), path: () => SEL && SEL.path, api, label: $('#zLv'),

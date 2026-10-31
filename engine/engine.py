@@ -1955,6 +1955,14 @@ class H(BaseHTTPRequestHandler):
                 with LOCK:
                     res = {"ok": True}
                     if a == "save_playlist": res["id"] = planner.api_save_playlist(c, d)
+                    elif a == "add_to_playlist":       # Library: one song to the end of a playlist (once)
+                        pid = int(d["id"]); path = str(d["path"])
+                        if not c.execute("SELECT 1 FROM items WHERE path=?", (path,)).fetchone(): res = {"ok": False, "error": "file not found"}
+                        elif c.execute("SELECT 1 FROM playlist_sources WHERE playlist_id=? AND kind='song' AND ref=?", (pid, path)).fetchone(): res = {"ok": True, "already": True}
+                        else:
+                            n = c.execute("SELECT COALESCE(MAX(pos), -1) + 1 FROM playlist_sources WHERE playlist_id=?", (pid,)).fetchone()[0]
+                            c.execute("INSERT INTO playlist_sources(playlist_id, pos, kind, ref, amount) VALUES(?,?,?,?,1)", (pid, n, "song", path))
+                            c.execute("UPDATE playlists SET updated=? WHERE id=?", (time.time(), pid)); c.commit()
                     elif a == "delete_playlist":
                         c.execute("DELETE FROM playlists WHERE id=?", (d["id"],)); c.execute("DELETE FROM playlist_sources WHERE playlist_id=?", (d["id"],))
                         c.execute("DELETE FROM playlist_state WHERE playlist_id=?", (d["id"],)); c.commit()
