@@ -26,6 +26,7 @@ def db():
     if "kf" not in cols: c.execute("ALTER TABLE items ADD COLUMN kf TEXT")
     if "lmap" not in cols: c.execute("ALTER TABLE items ADD COLUMN lmap TEXT")   # loudness map: the loudest moment of every 0.5 s (for the AGC intro lift)
     if "align" not in cols: c.execute("ALTER TABLE items ADD COLUMN align TEXT")   # clip only: where its song starts in the video, found by comparing the sound
+    if "fine" not in cols: c.execute("ALTER TABLE items ADD COLUMN fine TEXT")   # the same loudness measure every 0.1 s, for the first and last seconds (exact mix moments)
     if "added_at" not in cols:   # when the file first arrived (for "recently uploaded")
         c.execute("ALTER TABLE items ADD COLUMN added_at REAL"); c.execute("UPDATE items SET added_at=MIN(COALESCE(mtime, indexed_at), COALESCE(indexed_at, mtime))")
     c.execute("CREATE INDEX IF NOT EXISTS items_fp ON items(fp)")
@@ -87,7 +88,43 @@ def loudness_and_cues(path, duration):
             if cue_end and cue_end - mp > 20:   # long outro / spoken end: cap at 12 s before end
                 mp = cue_end - 12
             cue_mix = round(max(cue_start or 0, mp), 2)
-    return lufs, peak, cue_start, cue_mix, cue_end, loud_map(mom)
+    return lufs, peak, cue_start, cue_mix, cue_end, loud_map(mom), fine_map(mom, cue_start, duration)
+
+def fine_map(mom, cs=0.0, dur=None, t_off=0.0):
+    """The momentary loudness every 0.1 s (whole dB) for the start (up to START + 25 s) and the last 30 s:
+    {"h": [values from 0 s], "t0": start of the tail, "t": [values from t0]}. Value i = the 400 ms up to t0 + i/10."""
+    if not mom: return None
+    last = mom[-1][0] + t_off; dur = dur or last
+    hend = min(dur, (cs or 0) + 25.0); t0 = round(max(0.0, dur - 30.0), 1)
+    h = [-60] * (int(hend * 10) + 1); t = [-60] * (int((dur - t0) * 10) + 2)
+    for tt, v in mom:
+        tt += t_off; v = max(-60, int(round(v)))
+        i = int(round(tt * 10))
+        if i < len(h): h[i] = v
+        j = int(round((tt - t0) * 10))
+        if 0 <= j < len(t): t[j] = v
+    return json.dumps({"h": h, "t0": t0, "t": t}, separators=(",", ":"))
+
+def momentary(path, start, dur):
+    r = run(["nice", "-n", "15", "ffmpeg", "-hide_banner", "-nostats", "-ss", str(start), "-t", str(dur), "-i", path, "-map", "0:a:0",
+             "-af", "ebur128=framelog=info", "-f", "null", "-"], 120)
+    return [(float(m.group(1)), -120.0 if m.group(2) == "-inf" else float(m.group(2)))
+            for m in re.finditer(r"t:\s*([\d.]+)\s+TARGET:[^M]*M:\s*(-?[\d.]+|-inf)", r.stderr)]
+
+def make_fine(c, budget=40.0):
+    """Files measured before the 0.1 s map existed: read only their first and last seconds again (a fraction of a second each)."""
+    t_end = time.time() + budget
+    for p_, d_, cs in c.execute("""SELECT path, duration, COALESCE(cue_start, 0) FROM items WHERE section IN ('music','jingles','ads')
+                                   AND problem IS NULL AND has_audio=1 AND duration > 1 AND fine IS NULL ORDER BY added_at DESC LIMIT 400""").fetchall():
+        if time.time() > t_end: break
+        f_ = os.path.join(ROOT, p_)
+        try:
+            hend = min(d_, cs + 25.0); t0 = max(0.0, d_ - 30.0)
+            if t0 <= hend: mom = momentary(f_, 0, d_ + 1)
+            else: mom = momentary(f_, 0, hend + 0.5) + [(t + t0, v) for t, v in momentary(f_, t0, d_ - t0 + 1)]
+            fm = fine_map(mom, cs, d_)
+        except Exception as e: print("fine:", p_, e, flush=True); fm = None
+        c.execute("UPDATE items SET fine=? WHERE path=?", (fm or "-", p_)); c.commit()
 
 def loud_map(mom):
     """The loudest momentary level of every 0.5 s of the file, as whole dB ("-24,-23,...")."""
@@ -158,7 +195,7 @@ def index_file(c, path, st):
     ext = os.path.splitext(fn)[1].lower()
     row = dict(path=rel, section=section, folder=folder, filename=fn, size=st.st_size, mtime=st.st_mtime,
                artist="", title="", duration=None, has_video=0, has_audio=0, width=None, height=None,
-               lufs=None, peak=None, lmap=None, cue_start=None, cue_intro=None, cue_mix=None, cue_end=None,
+               lufs=None, peak=None, lmap=None, fine=None, cue_start=None, cue_intro=None, cue_mix=None, cue_end=None,
                mode=None, problem=None, indexed_at=time.time(), tv_path=None, genre=genre, cues_edited=0, align=None)
     fp = fingerprint(path, st.st_size); row["fp"] = fp
     if not c.execute("SELECT 1 FROM items WHERE path=?", (rel,)).fetchone() and follow_move(c, rel, fp):
@@ -192,8 +229,8 @@ def index_file(c, path, st):
         elif (row["duration"] or 0) < 1:
             row["problem"] = "too short / empty"
         elif section in ("music", "jingles", "ads") or (section == "clips"):
-            lufs, peak, cs, cm, ce, lm = loudness_and_cues(path, row["duration"])
-            row.update(lufs=lufs, peak=peak, cue_start=cs, cue_mix=cm, cue_end=ce, lmap=lm)
+            lufs, peak, cs, cm, ce, lm, fm = loudness_and_cues(path, row["duration"])
+            row.update(lufs=lufs, peak=peak, cue_start=cs, cue_mix=cm, cue_end=ce, lmap=lm, fine=fm)
         if section == "music" and not row["artist"] and not folder.upper().startswith("MIXES"):   # a mix needs no artist
             row["problem"] = row["problem"] or "no artist (name the file 'Artist - Title')"
     if section == "music" and not row["problem"]:
@@ -329,6 +366,8 @@ def scan(full=False):
     close_inbox(c)
     try: make_lmaps(c)
     except Exception as e: print("lmap error", e, flush=True)
+    try: make_fine(c)
+    except Exception as e: print("fine error", e, flush=True)
     try: align_pairs(c)
     except Exception as e: print("align error", e, flush=True)
     return n_new, len(gone)

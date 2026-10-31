@@ -137,7 +137,51 @@ def lm_info(path):
         v = ([int(x) for x in r[0].split(",")] if r and r[0] and r[0] != "-" else None, r[1] if r else None, bool(r and r[2]))
     except Exception: v = (None, None, False)
     if len(LM_CACHE) > 4000: LM_CACHE.clear()
-    LM_CACHE[path] = v; return v
+    LM_CACHE[path] = v; FINE_CACHE.pop(path, None); return v
+FINE_CACHE = {}
+def fine_info(path):
+    """The 0.1 s loudness map of the first and last seconds (see indexer.fine_map) as a lookup M(t), or None."""
+    if path in FINE_CACHE: return FINE_CACHE[path]
+    f = None
+    try:
+        r = dbc().execute("SELECT fine FROM items WHERE path=?", (path,)).fetchone()
+        if r and r[0] and r[0] != "-":
+            d = json.loads(r[0]); h, t0, t = d["h"], d["t0"], d["t"]
+            def f(x, h=h, t0=t0, t=t):
+                j = int(round((x - t0) * 10))
+                if 0 <= j < len(t): return t[j]
+                i = int(round(x * 10))
+                return h[i] if 0 <= i < len(h) else None
+    except Exception: f = None
+    if len(FINE_CACHE) > 4000: FINE_CACHE.clear()
+    FINE_CACHE[path] = f; return f
+M_LAG = 0.35   # the momentary loudness looks back 400 ms: a sound that stops at T has dropped 6-12 dB at about T + 0.3-0.4 s
+def fine_stop(f, frm, to, level):
+    """The real moment the sound falls under `level` (dB) for good between frm and to, or None (0.1 s accurate)."""
+    if not f: return None
+    t = round(frm, 1); last_loud = None
+    while t <= to + 0.45:
+        v = f(t)
+        if v is None: return None
+        if v >= level: last_loud = t
+        t = round(t + 0.1, 1)
+    if last_loud is None: return None
+    for k in range(1, 8):          # first frame after the last loud one that is under level - 6: the stop is ~0.35 s before it
+        v = f(round(last_loud + k / 10, 1))
+        if v is None or v < level - 6: return max(frm, last_loud + k / 10 - M_LAG)
+    return max(frm, last_loud + 0.1)
+
+def fine_first_below(f, frm, to, level):
+    """The real moment the sound first falls under `level` after frm (0.1 s accurate), or None."""
+    if not f: return None
+    t = round(frm, 1)
+    while t <= to + 0.45:
+        v = f(t)
+        if v is None: return None
+        if v < level: return max(frm, t - M_LAG)
+        t = round(t + 0.1, 1)
+    return None
+
 def intro_len(it):
     """Seconds from START until the song is at its full level (0 = starts hard)."""
     lm, L, _ = lm_info(it.get("path"))
@@ -171,19 +215,27 @@ def smart_mix(it, nxt=None):
     if jingle:
         voice = next((i for i in range(b - 1, a - 1, -1) if lm[i] >= L - 8), None)
         tv = (voice + 1) / 2 if voice is not None else end
+        fs = fine_stop(fine_info(it["path"]), max(cs, tv - 2.0), tv, L - 8)   # exact: where the voice really ends
+        if fs is not None: tv = fs - 0.1
         cm = min(max(cs, tv), end, tail_end - 0.3); cross = max(0.3, min(8.0, tail_end - cm))
-        return cm, cross, (min(cross, 1.5) if hard_next else cross)
+        return cm, cross, 0.0          # jingles are made with their own ending: no fade, the echo plays out under the song
     strong = next((i for i in range(b - 1, a - 1, -1) if lm[i] >= L - 6), None)
     ts = (strong + 1) / 2 if strong is not None else tail_end
     outro = tail_end - ts
+    fn = fine_info(it["path"])
+    loud_end = fine_stop(fn, max(cs, ts - 1.0), ts, L - 6)                    # exact end of the loud part (0.1 s)
+    drop12 = fine_first_below(fn, max(cs, (loud_end or ts) - 0.3), min(tail_end, ts + 3.0), L - 12)  # exact moment it has dropped ~12 dB
     if outro < 1.0:                                      # ends abruptly: tight change, no gap
         # a softer intro next starts a little earlier, so it is already there under the last loud second (no hole)
-        cm = tail_end - (0.4 if hard_next else min(2.0, max(0.8, nl)))
+        stop = loud_end + 0.15 if loud_end is not None else tail_end
+        cm = stop - (0.25 if hard_next else min(2.0, max(0.8, nl)))
     elif not hard_next:                                  # soft intro next: let it rise under the outro
         cm = max(ts, tail_end - min(outro, 6.0, nl + 1.5))
     else:                                                # hard start next: when the old song has dropped ~12 dB
-        drop = next((i for i in range(strong if strong is not None else a, b) if lm[i] < L - 12), None)
-        cm = min(max(ts, (drop / 2 if drop is not None else tail_end) - 0.3), tail_end - 0.5)
+        if drop12 is not None: cm = min(drop12 - 0.1, tail_end - 0.5)
+        else:
+            drop = next((i for i in range(strong if strong is not None else a, b) if lm[i] < L - 12), None)
+            cm = min(max(ts, (drop / 2 if drop is not None else tail_end) - 0.3), tail_end - 0.5)
     cm = max(cs, min(cm, end))
     cross = max(0.3, min(MIX_MAX, 4.0 if hard_next else 6.0, tail_end - cm))
     return cm, cross, cross
