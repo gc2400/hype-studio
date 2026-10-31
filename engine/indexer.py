@@ -367,6 +367,13 @@ def scan(full=False):
     close_inbox(c)
     try: make_lmaps(c)
     except Exception as e: print("lmap error", e, flush=True)
+    try:   # the Library bin: deleted files are kept 30 days, then really removed
+        import shutil
+        binp = "/srv/hype-data/deleted"
+        for dname in (os.listdir(binp) if os.path.isdir(binp) else []):
+            if re.match(r"\d{4}-\d{2}-\d{2}$", dname) and time.time() - time.mktime(time.strptime(dname, "%Y-%m-%d")) > 31 * 86400:
+                shutil.rmtree(os.path.join(binp, dname), ignore_errors=True); print("bin emptied:", dname, flush=True)
+    except Exception as e: print("bin:", e, flush=True)
     try: make_fine(c)
     except Exception as e: print("fine error", e, flush=True)
     try: align_pairs(c)

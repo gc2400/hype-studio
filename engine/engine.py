@@ -2,7 +2,7 @@
 """Hype Studio playout engine (phase 2).
 Keeps the upcoming plan (hour clock + your own picks), feeds Liquidsoap one song ahead,
 switches the TV in OBS on every song start, and serves the control panel API."""
-import os, re, json, time, random, sqlite3, socket, threading, logging, uuid, base64, hashlib, subprocess, array, urllib.request
+import shutil, os, re, json, time, random, sqlite3, socket, threading, logging, uuid, base64, hashlib, subprocess, array, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 import obsws_python as obs
@@ -1307,6 +1307,22 @@ class Engine:
                     if p_["path"] == d["path"]: p_.update(cue_start=cs, cue_mix=cm, cue_end=ce)
             elif action == "show_intro":
                 self.tv.first_show_seen = True; self.tv.show_changed(SHOW.get("title"))
+            elif action == "delete_item":      # Library: delete a file - it goes to the bin (/srv/hype-data/deleted, 30 days), never straight away
+                rel = os.path.normpath(str(d.get("path") or "")).lstrip("/")
+                if not rel or rel.startswith("..") or rel.split("/")[0] not in ("music", "clips", "jingles", "ads"): return {"ok": False, "error": "not a library file"}
+                if (self.now or {}).get("path") == rel: return {"ok": False, "error": "it is on air right now"}
+                if self.liq_next and self.liq_next.get("path") == rel: return {"ok": False, "error": "it is the next item (already queued) - try again in a minute"}
+                src = os.path.join(ROOT, rel)
+                if os.path.exists(src):
+                    dst = os.path.join("/srv/hype-data/deleted", time.strftime("%Y-%m-%d"), rel); os.makedirs(os.path.dirname(dst), exist_ok=True)
+                    shutil.move(src, dst)
+                c.execute("DELETE FROM items WHERE path=?", (rel,)); c.execute("UPDATE items SET clip_path=NULL, mode='audio' WHERE clip_path=?", (rel,)); c.commit()
+                self.plan = [p_ for p_ in self.plan if p_.get("path") != rel]
+                for k_ in list(self.aux): self.aux[k_] = [p_ for p_ in self.aux[k_] if p_.get("path") != rel]
+                try: self.aux_save_file()
+                except Exception: pass
+                LM_CACHE.pop(rel, None); log.info("deleted (to the bin): %s", rel)
+                self.refill(c)
             elif action == "reset_cues":
                 c.execute("UPDATE items SET cues_edited=0, mix_set=0, mtime=0 WHERE path=?", (d["path"],)); c.commit(); LM_CACHE.pop(d["path"], None)
             elif action == "set_overlay":

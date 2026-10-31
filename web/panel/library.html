@@ -40,6 +40,11 @@ h1{margin:0;font-size:20px;font-weight:900}h1 small{color:var(--mut);font-weight
 .ri:hover{background:var(--card2)}.ri.sel{background:var(--card2);border-color:var(--y)}
 .ri .tx{flex:1;min-width:0;display:flex;flex-direction:column}
 .ri .tx b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ri .tx span{font-size:11px;color:var(--mut)}
+.ri .del{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--mut);display:none;align-items:center;justify-content:center;cursor:pointer}
+.ri .del svg{width:17px;height:17px}.ri .del:hover{color:#FF8A97;border-color:#FF8A97}
+.ri:hover .del,.ri.sel .del{display:inline-flex}@media (hover:none){.ri:hover .del{display:none}.ri.sel .del{display:inline-flex}}
+.delq{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 8px;border-radius:10px;background:linear-gradient(90deg,rgba(15,43,68,.4),var(--card2) 30%);font-size:13px;font-weight:700}
+.btn.red{background:#C8283A;border-color:#C8283A;color:#fff}
 .ri .ed1{width:8px;height:8px;border-radius:50%;flex:none;background:transparent}.ri .ed1.on{background:var(--g)}
 video{width:100%;height:min(30vh,300px);object-fit:contain;background:#000;border-radius:12px;display:block}
 canvas.wave{width:100%;height:58px;background:var(--deep);border-radius:10px;display:block;cursor:pointer}
@@ -236,8 +241,16 @@ $('#bFilter').onclick = () => { const p = $('#fpanel'); p.hidden = !p.hidden; se
 function renderList() {
   const L = visible(); $('#cnt').textContent = L.length + ' items';
   $('#res').innerHTML = L.map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
-    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''}" role="option" data-p="${esc(it.path)}"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}</span></div></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
-  $$('#res .ri').forEach(el => el.onclick = () => pick(LIB.items.find(x => x.path === el.dataset.p)));
+    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''}" role="option" data-p="${esc(it.path)}"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}</span></div><button class="del" data-del title="Delete this file" aria-label="Delete ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
+  $$('#res .ri').forEach(el => el.onclick = e => { if (e.target.closest('.del, .delq')) return; pick(LIB.items.find(x => x.path === el.dataset.p)); });
+  $$('#res .del').forEach(b => b.onclick = e => { e.stopPropagation(); const row = b.closest('.ri'); if (row.querySelector('.delq')) return;
+    const q = document.createElement('div'); q.className = 'delq';
+    q.innerHTML = '<span>Delete this file?</span><button class="btn sm red" data-yes>Delete</button><button class="btn sm" data-no>Cancel</button>';
+    row.appendChild(q); q.querySelector('[data-no]').onclick = ev => { ev.stopPropagation(); q.remove(); };
+    q.querySelector('[data-yes]').onclick = ev => { ev.stopPropagation(); const path = row.dataset.p;
+      api('cmd/delete_item', {path}).then(r => { if (r && r.ok === false) { toast(r.error || 'Not deleted'); q.remove(); return; }
+        LIB.items = LIB.items.filter(x => x.path !== path); if (SEL && SEL.path === path) { SEL = null; CUE = null; $('#m').pause(); $('#m').removeAttribute('src'); $('#box').hidden = true; $('#none').hidden = false; }
+        renderList(); toast('Deleted – kept in the bin for 30 days'); }); }; });
 }
 $('#m').addEventListener('loadedmetadata', () => fitRes());
 function pick(it) { setTimeout(fitRes, 0);
@@ -281,6 +294,8 @@ $$('.tin').forEach(el => { el.onfocus = () => { cw.focus(el.dataset.k); el.selec
     setCue(el.dataset.k, t); const m = $('#m'); m.pause(); m.currentTime = CUE[el.dataset.k]; fill(); }; });
 $$('[data-set]').forEach(b => b.onclick = () => setCue(b.dataset.set, $('#m').currentTime));
 function playFrom(t, until) { const m = $('#m'); cw.follow(); clearTimeout(stopT); m.currentTime = Math.max(0, t); m.play(); if (until) { const chk = () => { if (m.currentTime >= until) m.pause(); else if (!m.paused) stopT = setTimeout(chk, 80); }; chk(); } }
+const PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg>', PAUSE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>';
+['play', 'pause', 'ended', 'emptied'].forEach(ev => $('#m').addEventListener(ev, () => { const on = !$('#m').paused; $('#bPlay').innerHTML = on ? PAUSE_SVG : PLAY_SVG; $('#bPlay').setAttribute('aria-label', on ? 'Pause' : 'Play'); }));
 $('#bPlay').onclick = () => { const m = $('#m'); if (m.paused) { cw.follow(); m.play(); } else m.pause(); };
 // preview always stops at END (when it started before END)
 $('#m').addEventListener('play', () => { $('#m')._lim = CUE && $('#m').currentTime < CUE.e - 0.05; });

@@ -111,7 +111,7 @@ body.dj .auxbtn,body.dj.is-auto .auxbtn{display:inline-flex}body.dj .auxbtn butt
 .ri .acts{display:flex;gap:4px;flex:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);opacity:0;pointer-events:none;
   padding-left:28px;background:linear-gradient(90deg,transparent,var(--card2) 26px);transition:opacity .12s}
 .ri:hover .acts,.ri.sel .acts,.ri:focus-within .acts{opacity:1;pointer-events:auto}
-@media (hover:none){.ri .acts{position:static;transform:none;opacity:1;pointer-events:auto;background:none;padding-left:0}}
+@media (hover:none){.ri .acts{display:none;position:static;transform:none;opacity:1;pointer-events:auto;background:none;padding-left:0}.ri.sel .acts{display:flex}}
 .ri .acts select{height:34px;background:#071A2B;color:var(--txt);border:1px solid var(--line2);border-radius:9px;padding:0 6px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 #padBanks [data-bank="-1"]{background:#2B2500;border-color:#FFE000;color:#FFE000}
 #padBanks [data-bank="-1"]:hover{background:#3a3200}#padBanks [data-bank="-1"].on{background:#FFE000;color:#061423}
@@ -913,6 +913,7 @@ $$('#cueDlg .tin').forEach(el => { el.onfocus = () => { cw.focus(el.dataset.k); 
   el.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') el.blur(); if (e.key === 'Escape') { e.preventDefault(); el.value = fmtF(CUE[el.dataset.k]); el.blur(); } };
   el.onblur = () => { if (!CUE) return; const t = parseT(el.value); if (t == null || Math.abs(t - CUE[el.dataset.k]) < 0.005) { fillCue(); return; } setCueAt(el.dataset.k, t); M().pause(); M().currentTime = CUE[el.dataset.k]; }; });
 function playFrom(t, until) { const m = M(); cw.follow(); clearTimeout(cueStop); m.currentTime = Math.max(0, t); m.play(); if (until) { const chk = () => { if (m.currentTime >= until) m.pause(); else if (!m.paused) cueStop = setTimeout(chk, 80); }; chk(); } }
+['play', 'pause', 'ended', 'emptied'].forEach(ev => M().addEventListener(ev, () => { const on = !M().paused; $('#pvPlay').innerHTML = on ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg>'; $('#pvPlay').setAttribute('aria-label', on ? 'Pause' : 'Play'); }));
 $('#pvPlay').onclick = () => { const m = M(); if (m.paused) { cw.follow(); m.play(); } else m.pause(); };
 // preview always stops at END (when it started before END)
 M().addEventListener('play', () => { M()._lim = CUE && M().currentTime < CUE.e - 0.05; });
