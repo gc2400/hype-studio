@@ -1,11 +1,12 @@
 {
- "time": "2026-10-31T22:29:53",
+ "time": "2026-10-31T22:37:49",
  "result": "ok",
- "commit": "2f6f813be0a3d4ab3950beb25a5e6aad2d0dce8b",
- "subject": "Cue editors: play controls above the waveform; the panel's cue box always fits the screen (video height follows)",
+ "commit": "6eb178578bbce491bf9d9f330680f59e5683ae39",
+ "subject": "Library page: Upload button (pick section + folder, drop files; 8 MB pieces, continues after a broken connection; file gets the upload user's rights so WinSCP can manage it)",
  "log": [
-  "22:29:53 update bb76cf15 \u2192 2f6f813b \u00b7 2 file(s): web/panel/index.html, web/panel/library.html",
-  "22:29:53 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "22:37:04 update 2f6f813b \u2192 6eb17857 \u00b7 3 file(s): engine/engine.py, system/nginx-hype.conf, web/panel/library.html",
+  "22:37:04 restart hype-engine",
+  "22:37:49 installed OK \u00b7 restarted: hype-engine, nginx-reload"
  ],
  "guard": {
   "song": "Club Hype \u2013 DJ Ricsz Liveset 8 Vuurlinie Events",

@@ -68,3 +68,4 @@
 2026-10-31T22:08:38 ok 3a659551 Top of the hour: songs after a planned TOH are picked with the new hour's clock right away, so they stay when the TOH goes on air
 2026-10-31T22:11:28 ok bb76cf15 Top of the hour: the planned songs stay up to the next hour's TOH; a later hour's TOH can never end up first in Up next (that made a filler song play after the 22:00 TOH)
 2026-10-31T22:29:53 ok 2f6f813b Cue editors: play controls above the waveform; the panel's cue box always fits the screen (video height follows)
+2026-10-31T22:37:49 ok 6eb17857 Library page: Upload button (pick section + folder, drop files; 8 MB pieces, continues after a broken connection; file gets the upload user's rights so WinSCP can manage it)
