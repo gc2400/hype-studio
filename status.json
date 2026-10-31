@@ -1,17 +1,17 @@
 {
- "time": "2026-10-31T02:33:36",
+ "time": "2026-10-31T02:38:44",
  "result": "ok",
- "commit": "63ec5fec2bdebc06ff093dddedef646b63477f0a",
- "subject": "DJ layout: deck A + pads left, library middle (full height), deck B + video/scenes right; no crossfader card or live card; tap the A / B tile to mix into that deck (MIX buttons removed)",
+ "commit": "460cebd660921a6ec1b731ab86c07ca439abfbfd",
+ "subject": "DJ: crossfader back under the library, without the MIX button: tap A or B (or slide) to mix into that deck; the deck on air lights up",
  "log": [
-  "02:33:36 update be51d843 \u2192 63ec5fec \u00b7 1 file(s): web/panel/index.html",
-  "02:33:36 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "02:38:44 update 63ec5fec \u2192 460cebd6 \u00b7 1 file(s): web/panel/index.html",
+  "02:38:44 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "HYPE RADIO \u2013 Custom ID_Non Stop",
+  "song": "Devi Dev x Rich Kalashh \u2013 Riba Chest",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
