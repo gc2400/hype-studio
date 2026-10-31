@@ -211,7 +211,7 @@ const badge = m => m === 'pair' ? ['PAIRED', 'b-pair'] : m === 'clip' ? ['CLIP',
 function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('show'), 2000); }
 function ago(t) { const m = Math.round((Date.now() / 1000 - t) / 60); return m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; }
 let SEC = 'music', GENRE = '', FOLDER = '', LIB = null, SEL = null, CUE = null, peaks = [], drag = null, stopT = null, PADS = [], dirty = false;
-const SECS = [['music', 'Music'], ['mixes', 'Mixes'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads']];
+const SECS = [['music', 'Music'], ['mixes', 'Mixes'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['recordings', 'Recordings']];
 const MUS = () => SEC === 'music' || SEC === 'mixes';
 let SORT = 'az', RECENT = 0;
 try { const st = JSON.parse(localStorage.getItem('hypeLib') || '{}'); SEC = st.sec || SEC; GENRE = st.genre || ''; FOLDER = st.folder || ''; SORT = st.sort || 'az'; RECENT = st.recent || 0; } catch (e) {}
@@ -390,7 +390,7 @@ api('pads').then(p => { PADS = p; }); lib();
 
 // ---------- upload (resumable, 8 MB pieces) ----------
 const UP_CHUNK = 8 * 1024 * 1024, UPQ = []; let upBusy = false;
-const UP_SECS = [['music', 'Music', 'music'], ['mixes', 'Mixes', 'music'], ['clips', 'Clips', 'clips'], ['jingles', 'Jingles', 'jingles'], ['ads', 'Ads', 'ads']];
+const UP_SECS = [['music', 'Music', 'music'], ['mixes', 'Mixes', 'music'], ['clips', 'Clips', 'clips'], ['jingles', 'Jingles', 'jingles'], ['ads', 'Ads', 'ads'], ['recordings', 'Recordings', 'music']];
 function upFolders() { const k = $('#upSec').value, real = UP_SECS.find(x => x[0] === k)[2];
   $('#upFolder').innerHTML = '<option value="">Loading…</option>';
   api('library?section=' + k + '&q=' + encodeURIComponent('\u2400none\u2400')).then(d => {

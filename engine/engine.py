@@ -1539,8 +1539,9 @@ KIND_SQL = {"audio": "COALESCE(mode, 'audio') IN ('audio', 'pair')", "pair": "mo
 def library(qs):
     c = dbc(); q = (qs.get("q", [""])[0]).strip(); sec = qs.get("section", ["music"])[0]; folder = qs.get("folder", [""])[0]
     sql = "SELECT path, artist, title, folder, mode, clip_path, clip_suggest, clip_score, duration, has_video, problem, overlay_mode, overlay_path, cue_start, cue_mix, cue_end, cues_edited, added_at, COALESCE(mix_set, 0) FROM items WHERE section=?"
-    mixes = sec == "mixes"
-    if sec in ("music", "mixes"): sec = "music"; sql += " AND folder " + ("" if mixes else "NOT ") + "LIKE 'MIXES%'"
+    mixes = sec == "mixes"; recs = sec == "recordings"
+    if recs: sec = "music"; sql += " AND folder LIKE 'MIXES/Recordings%'"           # recordings (REC / GO LIVE / auto): a Library tab of their own
+    elif sec in ("music", "mixes"): sec = "music"; sql += " AND folder " + ("" if mixes else "NOT ") + "LIKE 'MIXES%'" + (" AND folder NOT LIKE 'MIXES/Recordings%'" if mixes else "")
     args = [sec]; sort = qs.get("sort", ["az"])[0]; recent = int(qs.get("recent", ["0"])[0] or 0)
     if recent: sql += " AND added_at > ?"; args.append(time.time() - recent * 86400)   # uploaded in the last N days
     if folder: sql += " AND (folder=? OR folder LIKE ?)"; args += [folder, folder + "/%"]
@@ -1556,11 +1557,14 @@ def library(qs):
     for r in c.execute(sql, args):
         d = dict(zip(k, r)); d["last"] = last.get(d["path"]); out.append(d)
     folders = [r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section=? ORDER BY folder", (sec,))]
-    if sec == "music": folders = [f for f in folders if (f or "").upper().startswith("MIXES") == mixes]
+    if recs: folders = [f for f in folders if (f or "").startswith("MIXES/Recordings")]
+    elif sec == "music": folders = [f for f in folders if (f or "").upper().startswith("MIXES") == mixes and not (f or "").startswith("MIXES/Recordings")]
     all_folders = folders
     counts = dict(c.execute("SELECT section, COUNT(*) FROM items GROUP BY section").fetchall())
     counts["mixes"] = c.execute("SELECT COUNT(*) FROM items WHERE section='music' AND folder LIKE 'MIXES%'").fetchone()[0]
-    counts["music"] = counts.get("music", 0) - counts["mixes"]
+    counts["recordings"] = c.execute("SELECT COUNT(*) FROM items WHERE section='music' AND folder LIKE 'MIXES/Recordings%'").fetchone()[0]
+    counts["mixes"] -= counts["recordings"]
+    counts["music"] = counts.get("music", 0) - counts["mixes"] - counts["recordings"]
     psql = "SELECT COUNT(*) FROM items WHERE section=? AND problem IS NOT NULL" + ((" AND folder " + ("" if mixes else "NOT ") + "LIKE 'MIXES%'") if sec == "music" else "")
     return {"problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "counts": counts}
 

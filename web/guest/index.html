@@ -23,6 +23,13 @@ select{background:var(--deep);border:1px solid var(--line2);border-radius:10px;c
 .state{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px}
 .dot{width:12px;height:12px;border-radius:50%;background:var(--mut)}.dot.on{background:var(--g)}.dot.live{background:var(--r);animation:p 1.4s infinite}
 @keyframes p{50%{opacity:.35}}
+.screens{display:flex;flex-direction:column;gap:10px}
+.air{position:relative}.air video{transform:none;object-fit:contain}
+.air .tag{position:absolute;left:10px;top:10px;background:var(--r);color:#fff;font-size:11px;font-weight:900;letter-spacing:.08em;padding:3px 8px;border-radius:6px}
+.air .wait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:13px}
+body.incall .wrap{max-width:1100px}
+@media (min-width:760px){body.incall .screens{display:grid;grid-template-columns:2fr 1fr;align-items:start}}
+@media (max-width:759px){body.incall .screens{position:relative}body.incall #me:not([hidden]){position:absolute;right:8px;bottom:8px;width:32%;border:2px solid var(--bg);border-radius:10px;z-index:2}}
 .meter{height:8px;border-radius:5px;background:var(--deep);overflow:hidden}.meter i{display:block;height:100%;width:0;background:var(--g)}
 </style>
 </head>
@@ -32,7 +39,7 @@ select{background:var(--deep);border:1px solid var(--line2);border-radius:10px;c
   <div id="bad" hidden class="card"><p id="badMsg"></p></div>
   <div id="ok" hidden style="display:flex;flex-direction:column;gap:14px">
     <p>Hi <b id="gName" style="color:#fff"></b> – you're invited to <b id="gShow" style="color:#fff"></b>. <b style="color:#fff">Use headphones</b> (earbuds are fine), so we don't hear ourselves back.</p>
-    <video id="me" muted playsinline autoplay></video>
+    <div class="screens" id="screens"><div class="air" id="airBox" hidden><video id="air" muted playsinline autoplay></video><span class="tag">ON AIR</span><span class="wait" id="airWait">Loading the picture…</span></div><video id="me" muted playsinline autoplay></video></div>
     <div class="card" id="setup">
       <label>Camera<select id="cam"></select></label>
       <label>Microphone<select id="mic"></select></label>
@@ -51,7 +58,7 @@ select{background:var(--deep);border:1px solid var(--line2);border-radius:10px;c
 <script>
 const $ = s => document.querySelector(s);
 const T = new URLSearchParams(location.search).get('t') || '';
-let ME = null, stream = null, pub = null, ret = null, others = {}, muted = false;
+let ME = null, stream = null, pub = null, ret = null, air = null, others = {}, muted = false;
 function fail(m) { $('#bad').hidden = false; $('#ok').hidden = true; $('#badMsg').textContent = m; }
 async function info() { const r = await fetch('/api/guest_info?t=' + encodeURIComponent(T), {cache: 'no-store'}); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'not valid'); return j; }
 async function devices() {
@@ -79,6 +86,10 @@ async function join(video) {
   // what you hear: the studio (mix-minus) + the other guests
   ret = HypeRTC.keep('studio', async () => { const r = await HypeRTC.play('mixminus', {key: T}); $('#studio').srcObject = r.stream; $('#studio').play().catch(() => {}); return r; }, () => {});
   setInterval(listenOthers, 3000); listenOthers();
+  // what is on air: a small picture (it follows your connection), next to your own camera - no sound (you hear the studio)
+  document.body.classList.add('incall'); $('#airBox').hidden = false;
+  air = HypeRTC.keep('air', async () => { const r = await HypeRTC.play('guestview', {key: T, video: true, audio: false}); $('#air').srcObject = r.stream; $('#air').play().catch(() => {});
+    $('#air').onplaying = () => { $('#airWait').hidden = true; }; return r; }, () => {});
 }
 async function listenOthers() {
   let j; try { j = await info(); } catch (e) { return; }
@@ -89,7 +100,7 @@ async function listenOthers() {
 }
 $('#joinV').onclick = () => join(true); $('#joinA').onclick = () => join(false);
 $('#mute').onclick = () => { muted = !muted; stream.getAudioTracks().forEach(t => t.enabled = !muted); $('#mute').textContent = muted ? 'Unmute mic' : 'Mute mic'; $('#mute').className = 'btn ' + (muted ? 'y' : 'o'); };
-$('#leave').onclick = () => { pub && pub.close(); ret && ret.close(); Object.values(others).forEach(o => o.c.close()); stream && stream.getTracks().forEach(t => t.stop()); $('#inCall').hidden = true; $('#joinRow').hidden = false; $('#setup').hidden = false; $('#tip').textContent = ''; };
+$('#leave').onclick = () => { pub && pub.close(); ret && ret.close(); air && air.close(); air = null; $('#airBox').hidden = true; document.body.classList.remove('incall'); Object.values(others).forEach(o => o.c.close()); stream && stream.getTracks().forEach(t => t.stop()); $('#inCall').hidden = true; $('#joinRow').hidden = false; $('#setup').hidden = false; $('#tip').textContent = ''; };
 $('#cam').onchange = () => preview(true).catch(() => {}); $('#mic').onchange = () => preview(!(ME && ME.mode === 'audio')).catch(() => {});
 info().then(async j => { ME = j; $('#ok').hidden = false; $('#gName').textContent = j.name; $('#gShow').textContent = j.show || 'Hype Radio TV';
   const audioOnly = j.mode === 'audio';   // the host invited you as a phone-style (audio only) guest

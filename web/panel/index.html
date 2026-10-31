@@ -637,7 +637,7 @@ $('#lvGo').onclick = () => {
   if (!LV.studio_online) return toast('The studio is not connected – open the live studio page on the studio laptop', 1);
   api('live/on', {}).then(d => { LV = d; lvRender(); toast('LIVE: the studio is on air'); });
 };
-$('#lvRec').onclick = () => api(LV.rec ? 'live/rec_stop' : 'live/rec_start', {}).then(d => { LV = d; lvRender(); toast(LV.rec ? 'Recording to /recordings' : 'Recording saved in /recordings'); });
+$('#lvRec').onclick = () => api(LV.rec ? 'live/rec_stop' : 'live/rec_start', {}).then(d => { LV = d; lvRender(); toast(LV.rec ? 'Recording – Library → Recordings' : 'Recording saved in /recordings'); });
 lvLoad(); setInterval(lvLoad, 3000); setInterval(lvRender, 1000);
 // ---------- lower third ----------
 let LT = null;
@@ -778,7 +778,7 @@ $('#bDuck').onclick = () => { DUCK = !DUCK; try { localStorage.setItem('hypeDuck
 // ---------- library ----------
 let SEC = 'music', GENRE = '', FOLDER = '', SEL = null, LIB = null, LSORT = 'az';
 try { LSORT = localStorage.getItem('hypeLibSort') || 'az'; } catch (e) {}
-const SECS = [['music', 'Music'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['playlists', 'Playlists'], ['clocks', 'Clocks']];
+const SECS = [['music', 'Music'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['recordings', 'Recordings'], ['playlists', 'Playlists'], ['clocks', 'Clocks']];
 const nfx = t => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 let PLC = {pl: [], ck: []};
 // AUX buttons on library rows: in DJ mode they are the decks A / B (in the deck colours)

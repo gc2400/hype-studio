@@ -49,7 +49,7 @@ const HypeRTC = (() => {
   /* receive: play('return', {key, video: false}) -> {pc, stream} */
   async function play(path, o = {}) {
     const pc = new RTCPeerConnection({iceServers: ICE}), stream = new MediaStream();
-    pc.addTransceiver('audio', {direction: 'recvonly'}); if (o.video) pc.addTransceiver('video', {direction: 'recvonly'});
+    if (o.audio !== false) pc.addTransceiver('audio', {direction: 'recvonly'}); if (o.video) pc.addTransceiver('video', {direction: 'recvonly'});
     pc.ontrack = e => stream.addTrack(e.track);
     await pc.setLocalDescription(await pc.createOffer());
     await exchange(`/live/${path}/whep?key=${encodeURIComponent(o.key || '')}`, pc);

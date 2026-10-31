@@ -98,12 +98,13 @@ def mtx_ok(d):
     live = load(LIVE_CONF, {})
     if live.get("studio_key") and hmac.compare_digest(key, live["studio_key"]):
         if action == "read" and path in ("live/program", "preview"): return True     # the panel live preview
+        if path == "guestview": return action == "read"
         return action in ("publish", "read") and (path in STUDIO_PATHS or path.startswith("guest"))
     g = load(GUESTS, {}).get("guests", {})
     for slot, info in g.items():
         if info.get("token") and hmac.compare_digest(key, info["token"]) and info.get("exp", 0) > time.time():
             if action == "publish": return path == slot
-            if action == "read": return path == "mixminus" or (path.startswith("guest") and path != slot)
+            if action == "read": return path in ("mixminus", "guestview") or (path.startswith("guest") and path != slot and path != "guestview")
     return False
 
 class H(BaseHTTPRequestHandler):

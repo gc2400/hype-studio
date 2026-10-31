@@ -59,7 +59,7 @@
   #hhead .hnav{order:6;display:none;width:100%;flex-direction:column;align-items:stretch;padding:6px}
   #hhead.open .hnav{display:flex}#hhead .hnav a{padding:13px 12px;font-size:15px}#hhead .hnav .sep{display:none}
   #hhead #clock{font-size:18px}
-  #hhead .hrec b{display:none}#hhead .hrec{padding:0 9px}
+  #hhead .hrec{padding:0 9px}
   #hhead .hpop{position:fixed;top:64px;left:12px;right:12px;width:auto}
 }
 #hhead .hnav .sep{width:1px;height:20px;background:#1E3A56;margin:0 3px}`;
@@ -70,7 +70,7 @@
     <div class="hctl"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button>
       <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
     <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span></button><span class="chip" id="stClock">–</span><span id="clock">--:--:--</span>
-      <button class="hrec" id="hRec" title="Record the TV output (to /recordings)"><i></i><b>REC</b><span id="hRecT"></span></button>
+      <button class="hrec" id="hRec" title="Record the TV output (Library → Recordings)"><i></i><b>REC</b><span id="hRecT"></span></button>
       <div class="hpop" id="hPop" role="dialog" aria-label="Streams" hidden></div></div>
     <span class="sp"></span>
     <button class="menu" id="hMenu" aria-label="Pages" aria-expanded="false">☰</button>
@@ -120,7 +120,7 @@
     if (recAsk && Date.now() < recAsk) { rb.classList.add('ask'); rb.querySelector('b').textContent = 'STOP?'; }
     else { rb.classList.remove('ask'); rb.querySelector('b').textContent = 'REC'; recAsk = 0; }
     h.querySelector('#hRecT').textContent = on ? fmtT(Date.now() / 1000 - REC.since) : '';
-    rb.title = on ? 'Recording since ' + new Date(REC.since * 1000).toTimeString().slice(0, 5) + ' – click twice to stop' : 'Record the TV output (to /recordings)';
+    rb.title = on ? 'Recording since ' + new Date(REC.since * 1000).toTimeString().slice(0, 5) + ' – click twice to stop' : 'Record the TV output (Library → Recordings)';
   }
   function recLoad() { fetch('/api/live').then(r => r.json()).then(d => { REC = d.rec; recPaint(); }).catch(() => {}); }
   rb.onclick = () => {

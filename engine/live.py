@@ -7,7 +7,8 @@ LIVE_CONF = "/etc/hype/live.json"            # studio key + harbor password (600
 GUESTS = "/var/lib/hype/guests.json"          # guest links (read by the login service for MediaMTX)
 STATE = "/var/lib/hype/live_state.json"       # camera slots, recording/restream choices
 RESTREAM = "/etc/hype/restream.json"          # destinations with stream keys (600)
-REC_DIR = "/srv/hype/recordings"
+REC_DIR = "/srv/hype/music/MIXES/Recordings"   # in the library (Mixes → Recordings): watch again, schedule like a mix
+REC_STATE = "/var/lib/hype/rec_state.json"     # the recording that is running (survives an engine restart)
 PROGRAM = "rtmp://127.0.0.1:1935/live/program"
 RADIO = "http://127.0.0.1:8000/rec.mp3"     # the on-air sound at 256k, for the recordings (internal)
 SOURCES = ["cam1", "cam2", "cam3"] + [f"guest{i}" for i in range(1, 7)]
@@ -75,6 +76,7 @@ class Live:
         self.drops = 0; self.air = "automation"
         threading.Thread(target=self.watch_air, daemon=True).start()
         self.rec = None; self.rest = {}; self.live_since = None
+        self.rec_restore()
         self.live = self.liq_live()
     # ---------- LIVE on/off ----------
     def liq_live(self):
@@ -146,21 +148,43 @@ class Live:
         except Exception as e: log.warning("studio audio sync: %s", e)
     # ---------- recording ----------
     def start_rec(self, why="manual", name=None, what="both"):
-        """what: both (video .mp4 + radio .mp3) | audio | video"""
+        """what: both (video .mp4 + radio .mp3) | audio | video. Each file is written by its own systemd unit (hype-rec-*),
+        outside the engine: an engine restart (update) never stops a recording."""
         if self.rec: return
         os.makedirs(REC_DIR, exist_ok=True)
+        try:
+            import pwd, grp; os.chown(REC_DIR, pwd.getpwnam("upload").pw_uid, grp.getgrnam("hype").gr_gid); os.chmod(REC_DIR, 0o2775)
+        except Exception: pass
         base = os.path.join(REC_DIR, time.strftime("%Y-%m-%d %H%M ") + safe_name(name or self.show_title()))
-        procs = []
+        jobs = []
         if what in ("both", "video"):
-            procs.append(Proc("record video", ["-i", PROGRAM, "-c", "copy", "-f", "mp4", "-movflags", "+frag_keyframe+empty_moov+default_base_moof", base + ".mp4"], restart=False))
+            jobs.append(("hype-rec-video", ["-i", PROGRAM, "-c", "copy", "-f", "mp4", "-movflags", "+frag_keyframe+empty_moov+default_base_moof", base + ".mp4"]))
         if what in ("both", "audio"):
-            procs.append(Proc("record audio", ["-i", RADIO, "-c", "copy", "-f", "mp3", base + ".mp3"], restart=False))
-        self.rec = {"why": why, "start": time.time(), "file": os.path.basename(base), "procs": procs}
-        log.info("recording %s", base)
+            jobs.append(("hype-rec-audio", ["-i", RADIO, "-c", "copy", "-f", "mp3", base + ".mp3"]))
+        units = []
+        for unit, args in jobs:
+            subprocess.run(["systemctl", "stop", unit], capture_output=True); subprocess.run(["systemctl", "reset-failed", unit], capture_output=True)
+            r = subprocess.run(["systemd-run", "--unit=" + unit, "--collect", "--quiet", "-p", "Nice=5", "/usr/bin/ffmpeg", "-hide_banner", "-loglevel", "error",
+                                "-nostdin", "-y"] + args, capture_output=True, text=True)
+            if r.returncode == 0: units.append(unit)
+            else: log.warning("recording %s: %s", unit, r.stderr.strip()[-200:])
+        self.rec = {"why": why, "start": time.time(), "file": os.path.basename(base), "units": units}
+        save(REC_STATE, self.rec); log.info("recording %s", base)
+    def rec_alive(self):
+        if not self.rec: return False
+        try: return all(subprocess.run(["systemctl", "is-active", "--quiet", u]).returncode == 0 for u in self.rec.get("units", [])) and bool(self.rec.get("units"))
+        except Exception: return False
+    def rec_restore(self):
+        """After an engine restart: a recording that is still running is picked up again."""
+        r = load(REC_STATE, None)
+        if r and r.get("units"):
+            self.rec = r
+            if not self.rec_alive(): self.rec = None; save(REC_STATE, {})
+            else: log.info("recording still running: %s", r.get("file"))
     def stop_rec(self):
         if not self.rec: return
-        for p in self.rec["procs"]: p.stop()
-        log.info("recording stopped: %s", self.rec["file"]); self.rec = None
+        for u in self.rec.get("units", []): subprocess.run(["systemctl", "stop", u], capture_output=True)
+        log.info("recording stopped: %s", self.rec["file"]); self.rec = None; save(REC_STATE, {})
     # ---------- restream ----------
     def dests(self):
         return load(RESTREAM, {"dests": {}}).get("dests", {})
@@ -189,7 +213,7 @@ class Live:
             "sources": {s: {"online": on(s), "name": (g.get(s) or {}).get("name") if s.startswith("guest") else {"cam1": "Studio cam 1", "cam2": "Studio cam 2", "cam3": "Studio cam 3"}[s]} for s in SOURCES},
             "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "air": self.air, "drops": self.drops, "auto_record": self.st.get("auto_record", True),
             "guests": {s: {"name": i["name"], "token": i["token"], "exp": i["exp"], "online": on(s), "vol": i.get("vol", 1.0), "mode": i.get("mode", "video")} for s, i in g.items()},
-            "rec": {"since": self.rec["start"], "file": self.rec["file"], "ok": all(p.alive() for p in self.rec["procs"])} if self.rec else None,
+            "rec": {"since": self.rec["start"], "file": self.rec["file"], "ok": self.rec_alive()} if self.rec else None,
             "restream": {k: {"name": d["name"], "on": k in self.rest and not self.rest[k].stop_, "ok": k in self.rest and self.rest[k].alive(),
                              "with_live": d.get("with_live"), "url": d["url"], "key": ("•" * 8) if d.get("key") else ""} for k, d in self.dests().items()},
             "studio_key": c["studio_key"]}
