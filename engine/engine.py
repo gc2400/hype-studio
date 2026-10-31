@@ -144,7 +144,7 @@ def intro_len(it):
     if not lm or L is None: return None
     cs = it.get("cue_start") or 0.0
     for i in range(int(cs * 2), len(lm)):
-        if lm[i] >= L - 6: return max(0.0, i / 2 - cs)
+        if lm[i] >= L - 4: return max(0.0, i / 2 - cs)     # an intro 4+ dB under the song's level counts as soft
     return 0.0
 def smart_mix(it, nxt=None):
     """MIX + overlap from the loudness map: (cm, cross, fade) or None (map missing / MIX set by hand / switched off).
@@ -177,7 +177,8 @@ def smart_mix(it, nxt=None):
     ts = (strong + 1) / 2 if strong is not None else tail_end
     outro = tail_end - ts
     if outro < 1.0:                                      # ends abruptly: tight change, no gap
-        cm = tail_end - 0.4
+        # a softer intro next starts a little earlier, so it is already there under the last loud second (no hole)
+        cm = tail_end - (0.4 if hard_next else min(2.0, max(0.8, nl)))
     elif not hard_next:                                  # soft intro next: let it rise under the outro
         cm = max(ts, tail_end - min(outro, 6.0, nl + 1.5))
     else:                                                # hard start next: when the old song has dropped ~12 dB
@@ -1579,7 +1580,10 @@ def agc_loop():
             g = AGC["db"]; state = "ride"
             lift = AGC["lift"]
             lw = intro_lift(E.now, st) if (st > 0.01 and E.now and not E.stopped) else 0.0
-            lift = lw if lw < lift else min(lw, lift + 2.0 * DT)        # up max 2 dB/s, down at once (the look-ahead already started it early)
+            age_ = time.time() - ((E.now or {}).get("started") or 0)
+            # up max 2 dB/s, down at once (the look-ahead already started it early); at the very start of a song the lift
+            # is there at once, so a quiet first second after a loud song doesn't sound like a gap
+            lift = lw if (lw < lift or age_ < 1.5) else min(lw, lift + 2.0 * DT)
             if lift > 0.3: lift_t = time.time()
             if lift > 0.3 or time.time() - lift_t < 4.0:              # lifting (or just done): the song AGC keeps still, the 3 s meter still has the lift in it
                 state = "lift" if lift > 0.3 else "hold"
