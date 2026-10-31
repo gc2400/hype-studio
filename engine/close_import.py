@@ -43,19 +43,30 @@ def store(c, key, text):
     c.execute("INSERT OR REPLACE INTO close_cues VALUES(?,?,?,?,?,?,?)",
               (key, d["inicio"], d["fin"], d["pisador"], d["pisador_inicio"], d["pisador_fade"], time.time()))
 
+def norm(s):
+    """A file name without case, accents, 'ft.'/'x'/'&', (Official Video)-style tags and punctuation, for matching
+    files that were renamed a little (CLOSE AUTODOWNLOADS: 'ARCÁNGEL X PESO PLUMA - LA CHAMBA.mp4' = 'Arcangel x Peso Pluma - La Chamba.mp4')."""
+    import unicodedata
+    s = "".join(ch for ch in unicodedata.normalize("NFKD", s or "") if not unicodedata.combining(ch)).lower()
+    s = re.sub(r"\.(mp4|mp3|mov|mkv|m4v|webm|wav|m4a)$", "", s)
+    s = re.sub(r"\((official|video|music|clean|explicit|lyric|visuali)[^)]*\)|\[[^]]*\]", "", s)
+    s = re.sub(r"\b(ft|feat|featuring|x|and)\b\.?", " ", s).replace("&", " ")
+    return re.sub(r"[^a-z0-9]+", "", s)
+
 def apply(c, only_path=None):
-    """Match by file name: the CLOSE key ends with '_' + the song's file name."""
+    """Match by file name: the CLOSE key ends with '_' + the song's file name; else the same name written a little differently."""
     keys = c.execute("SELECT key, inicio, fin, pisador, pisador_inicio, pisador_fade FROM close_cues").fetchall()
-    by_name = {}
+    by_name = {}; by_norm = {}
     for k in keys:
         parts = k[0].split("_")
         for i in range(1, len(parts)):
             by_name.setdefault("_".join(parts[i:]).lower(), []).append(k)
+        for i in range(1, len(parts)): by_norm.setdefault(norm("_".join(parts[i:])), []).append(k)
     q = "SELECT path, filename, duration, cue_start, cue_mix, cue_end, cues_edited FROM items WHERE section IN ('music','jingles','ads','clips')"   # clips too: a music video starts at its CLOSE in-point
     rows = c.execute(q + (" AND path=?" if only_path else ""), ((only_path,) if only_path else ())).fetchall()
     out = []
     for path, fn, dur, cs, cm, ce, edited in rows:
-        hits = by_name.get(fn.lower(), [])
+        hits = by_name.get(fn.lower(), []) or by_norm.get(norm(fn), [])
         if not hits: out.append([path, "", "no CLOSE cue file", "", "", "", ""]); continue
         hits.sort(key=lambda k: (k[1] is None, -len(k[0])))   # prefer one with a start point
         key, ini, fin, pis, pis_i, pis_f = hits[0]

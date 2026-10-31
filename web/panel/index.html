@@ -67,6 +67,7 @@ body.dj #deckA{order:1;flex:1 1 360px}body.dj #col2{order:2;flex:1.1 1 380px}bod
 .auxbtn button:hover{background:var(--b);color:var(--bg)}
 @media (hover:none) and (pointer:coarse){.auxbtn .lbl{display:none}.auxbtn button{display:block}}
 body.is-auto .auxbtn{display:none}
+body.dj .auxbtn,body.dj.is-auto .auxbtn{display:inline-flex}body.dj .auxbtn button{display:block}   /* DJ: deck A / B always there (also while AUTO still plays) */
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .card.hi{border-color:#2A5577}
 .lab{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
@@ -758,6 +759,11 @@ try { LSORT = localStorage.getItem('hypeLibSort') || 'az'; } catch (e) {}
 const SECS = [['music', 'Music'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['playlists', 'Playlists'], ['clocks', 'Clocks']];
 const nfx = t => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 let PLC = {pl: [], ck: []};
+// AUX buttons on library rows: in DJ mode they are the decks A / B (in the deck colours)
+function auxBtns(attr) {
+  if (MODE === 'dj') return `<span class="auxbtn" title="Add to deck A or deck B"><button data-${attr}="aux" data-aux="1" aria-label="Add to deck A" style="color:var(--b);font-weight:900">A</button><button data-${attr}="aux" data-aux="2" aria-label="Add to deck B" style="color:#FF9D3D;font-weight:900">B</button></span>`;
+  return `<span class="auxbtn" title="Add to AUX 1 or AUX 2"><span class="lbl">AUX</span><button data-${attr}="aux" data-aux="1" aria-label="Add to AUX 1">1</button><button data-${attr}="aux" data-aux="2" aria-label="Add to AUX 2">2</button></span>`;
+}
 function libPlan() {     // the Playlists / Clocks tabs of the library card
   Promise.all([api('playlists'), api('clocks')]).then(([pl, ck]) => {
     PLC = {pl, ck}; const cnt = Object.assign({}, (LIB && LIB.counts) || {}, {playlists: pl.length, clocks: ck.length});
@@ -771,7 +777,7 @@ function libPlan() {     // the Playlists / Clocks tabs of the library card
           <div class="acts"><select data-n title="The whole playlist, or only the next songs" aria-label="How many">${[0, 1, 2, 3, 5, 10, 15, 20].map(v => `<option value="${v}" ${(all ? 0 : 5) === v ? 'selected' : ''}>${v ? 'Next ' + v : 'All ' + p.count}</option>`).join('')}</select>
           <button class="btn" data-pact="next" aria-label="Play next" title="Play next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
           <button class="btn" data-pact="end" aria-label="Add to the end" title="Add to the end (Up next / AUX)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
-          <span class="auxbtn" title="Add to AUX 1 or AUX 2"><span class="lbl">AUX</span><button data-pact="aux" data-aux="1" aria-label="Add to AUX 1">1</button><button data-pact="aux" data-aux="2" aria-label="Add to AUX 2">2</button></span></div></div>`; }).join('') || '<div class="muted" style="padding:10px">No playlists found.</div>';
+          ${auxBtns('pact')}</div></div>`; }).join('') || '<div class="muted" style="padding:10px">No playlists found.</div>';
       $('#res').querySelectorAll('[data-pl]').forEach(el => {
         const n = () => +el.querySelector('[data-n]').value;
         el.querySelector('[data-n]').onclick = e => e.stopPropagation();
@@ -811,7 +817,7 @@ function lib() {
       return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''}" draggable="true" data-p="${esc(it.path)}"><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${it.problem ? `<span style="color:#FF8A97">⚠ ${esc(it.problem)}</span> · ${esc(it.path.split('/').pop())}` : `${esc(it.folder)} · ${fmt(it.duration)} · ${last}`}</span></div>${SEC === 'clips' ? '' : `<div class="acts">
         <button class="btn" data-act="next" aria-label="Play next" title="Play next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
         <button class="btn" data-act="end" aria-label="Add to the end" title="Add to the end (Up next / AUX)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
-        <span class="auxbtn" title="Add to AUX 1 or AUX 2"><span class="lbl">AUX</span><button data-act="aux" data-aux="1" aria-label="Add to AUX 1">1</button><button data-act="aux" data-aux="2" aria-label="Add to AUX 2">2</button></span>
+        ${auxBtns('act')}
         <button class="btn" data-act="cue" aria-label="Cue points and settings" title="Cue points, video preview, sweeper"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.5" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="10" cy="17" r="2.5" stroke="currentColor" stroke-width="2" fill="none"/></svg></button></div>`}</div>`; }).join('') || '<span class="muted" style="padding:8px">Nothing found.</span>';
     $('#res').querySelectorAll('.ri').forEach(el => {
       el.onclick = e => {
@@ -954,6 +960,7 @@ function applyMode(m) {
   HIDE[m].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
   ['col1', 'col3', 'deckA', 'deckB'].forEach(c => { const el = document.getElementById(c); const cards = [...el.children].filter(x => x.classList.contains('card')); el.hidden = !cards.length || cards.every(x => x.hidden); });
   if (S) render();
+  if (typeof lib === 'function' && $('#res')) lib();       // library rows: AUX 1/2 ↔ deck A/B
 }
 $$('.modes [data-mode]').forEach(b => b.onclick = () => {
   const m = b.dataset.mode; if (m === MODE) return;
