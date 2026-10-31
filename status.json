@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T21:11:36",
+ "time": "2026-10-31T21:40:58",
  "result": "ok",
- "commit": "986ddb5956b486be1ff6587f5a1b6d52f3154008",
- "subject": "Zoomable cue waveform (song/30/10/4 s, follows play line or marker, drag to move) in Library + Panel; ID over soft intros (Settings: on/off, max per hour, minutes apart; fits the ID's START-MIX in the quiet intro, only song to song); Up next keeps its songs at the top of the hour",
+ "commit": "ec0d2ac6a4a1f66b03e2ccb162f6cb05ef6fb209",
+ "subject": "Nightly backup to the Hetzner Storage Box (settings 30 days + media mirror with 30 days of changed/deleted files); Status page shows the last good backup",
  "log": [
-  "21:10:51 update 932531a1 \u2192 986ddb59 \u00b7 5 file(s): engine/engine.py, web/panel/cuewave.js, web/panel/index.html, web/panel/library.html, web/panel/settings.html",
-  "21:10:51 restart hype-engine",
-  "21:11:36 installed OK \u00b7 restarted: hype-engine"
+  "21:40:13 update 986ddb59 \u2192 ec0d2ac6 \u00b7 5 file(s): engine/hype-stats.py, system/hype-backup.service, system/hype-backup.sh, system/hype-backup.timer, web/status/index.html",
+  "21:40:13 restart hype-stats",
+  "21:40:58 installed OK \u00b7 restarted: hype-stats"
  ],
  "guard": {
-  "song": "Macka Diamond x Dj Coss \u2013 Play Tune",
+  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
