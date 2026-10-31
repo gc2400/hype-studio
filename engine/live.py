@@ -13,6 +13,7 @@ PROGRAM = "rtmp://127.0.0.1:1935/live/program"
 RADIO = "http://127.0.0.1:8000/rec.mp3"     # the on-air sound at 256k, for the recordings (internal)
 SOURCES = ["cam1", "cam2", "cam3"] + [f"guest{i}" for i in range(1, 7)]
 CAMS = ("CAM 1", "CAM 2", "CAM 3", "CAM 4")
+FEED = "http://127.0.0.1:8095/feed.html"     # web/obs/feed.html: one live input for an OBS browser source
 
 def load(p, d):
     try: return json.load(open(p))
@@ -149,14 +150,20 @@ class Live:
         if cam not in CAMS or src not in SOURCES: raise ValueError("unknown camera or source")
         self.st["cams"][cam] = src; save(STATE, self.st); self.apply_cams()
     def apply_cams(self):
+        """The OBS inputs are browser sources that play WebRTC straight from MediaMTX (the VDO.Ninja way: ~0.2-0.4 s, steady).
+        Cameras / guests: picture only. Studio audio: sound only. A page is only reloaded when its address really changes."""
         with self.tv.olock:
             try:
                 cl = self.tv.client()
-                for cam, src in self.st["cams"].items():
-                    cl.set_input_settings(feed(cam), {"is_local_file": False, "input": f"rtsp://127.0.0.1:8554/{src}", "input_format": "rtsp",
-                                                "ffmpeg_options": "rtsp_transport=tcp", "reconnect_delay_sec": 2, "buffering_mb": 0,
-                                                "restart_on_activate": False, "close_when_inactive": False, "hw_decode": True, "clear_on_media_end": True}, True)
-                    self.cam_delay(cl, feed(cam))
+                want = {feed(cam): FEED + f"?path={src}&audio=0" for cam, src in self.st["cams"].items()}
+                want["Studio audio"] = FEED + "?path=studio&audio=1&video=0"
+                for name, url in want.items():
+                    try: cur = cl.get_input_settings(name).input_settings.get("url")
+                    except Exception as e: log.warning("input %s: %s", name, e); continue
+                    if cur != url:
+                        cl.set_input_settings(name, {"url": url, "is_local_file": False, "reroute_audio": True, "shutdown": False,
+                                                     "restart_when_active": False, "fps_custom": True, "fps": 25}, True)
+                for cam in self.st["cams"]: self.cam_delay(cl, feed(cam))
                 self.sync_audio(cl)
             except Exception as e: log.warning("cams: %s", e); self.tv.cl = None
     def cam_delay(self, cl, cam):

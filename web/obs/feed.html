@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>feed</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}video{width:100%;height:100%;object-fit:contain;background:transparent;display:block}</style>
+</head><body><video id="v" autoplay playsinline></video>
+<script>
+// Hype Studio – one live input for OBS (browser source), played the VDO.Ninja way: WebRTC straight from MediaMTX on this server.
+// ?path=cam1&audio=0  (a camera, picture only)   ?path=studio&audio=1&video=0  (the studio sound)
+// Low delay: no extra buffers (WebRTC keeps its own small, adaptive one); late pieces are dropped, never waited for.
+// Reconnects by itself (source not there yet, publisher reconnected, network blip).
+const q = new URLSearchParams(location.search), P = q.get('path') || 'cam1', A = q.get('audio') === '1', V = q.get('video') !== '0';
+const v = document.getElementById('v'); v.muted = !A; if (!V) v.style.display = 'none';
+let pc = null, timer = null, lastT = -1, still = 0;
+function retry(ms) { clearTimeout(timer); timer = setTimeout(start, ms); }
+function stop() { if (pc) { try { pc.close(); } catch (e) {} pc = null; } }
+async function start() {
+  stop(); lastT = -1; still = 0;
+  const me = pc = new RTCPeerConnection(), ms = new MediaStream();
+  if (A) me.addTransceiver('audio', {direction: 'recvonly'});
+  if (V) me.addTransceiver('video', {direction: 'recvonly'});
+  me.ontrack = e => { ms.addTrack(e.track); v.srcObject = ms; v.play().catch(() => {}); };
+  me.onconnectionstatechange = () => { if (pc !== me) return; const s = me.connectionState;
+    if (s === 'failed' || s === 'closed') retry(800); else if (s === 'disconnected') retry(2500); };
+  try {
+    const offer = await me.createOffer();
+    if (A) offer.sdp = offer.sdp.replace(/a=fmtp:111 ([^\r\n]*)/, (m, p) => 'a=fmtp:111 ' + p + ';stereo=1;sprop-stereo=1');   // studio sound in stereo
+    await me.setLocalDescription(offer);
+    await new Promise(ok => { if (me.iceGatheringState === 'complete') return ok(); const t = setTimeout(ok, 700);
+      me.onicegatheringstatechange = () => { if (me.iceGatheringState === 'complete') { clearTimeout(t); ok(); } }; });
+    const r = await fetch('http://127.0.0.1:8889/' + P + '/whep', {method: 'POST', headers: {'Content-Type': 'application/sdp'}, body: me.localDescription.sdp});
+    if (r.status !== 201) { retry(r.status === 404 ? 1500 : 3000); return; }       // not sending (yet): look again soon
+    await me.setRemoteDescription({type: 'answer', sdp: await r.text()});
+  } catch (e) { retry(3000); }
+}
+// watchdog: a picture that stands still for 6 s while connected (the sender came back on a new connection) -> fresh start
+setInterval(() => { if (!pc || pc.connectionState !== 'connected' || !V) return;
+  if (v.currentTime === lastT) { if (++still >= 6) start(); } else { still = 0; lastT = v.currentTime; } }, 1000);
+start();
+</script></body></html>
