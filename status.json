@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T01:46:31",
+ "time": "2026-10-31T02:01:36",
  "result": "ok",
- "commit": "e329b57adc528fb088c6514cab93cd5fc7c1afcd",
- "subject": "Auto recordings: per show (website schedule) or day + time, video+radio / radio / video, keep N days; never touches a recording you started; Settings \u2192 Auto recordings with the latest files",
+ "commit": "f8b226f770450068239392ac5cca4949fbc66c5e",
+ "subject": "Up next / DJ: the next song goes to Liquidsoap only in the last 15 s (it can't be pulled back once prepared) - no more double songs in AUX/decks, AUX songs stay in their list until needed, a taken-back prepared song is skipped; ducked pads: music back when the voice ends (smart mix point); Recordings moved to Planning",
  "log": [
-  "01:45:45 update 25c40ade \u2192 e329b57a \u00b7 3 file(s): engine/engine.py, engine/live.py, web/panel/settings.html",
-  "01:45:45 restart hype-engine",
-  "01:46:30 installed OK \u00b7 restarted: hype-engine"
+  "02:00:50 update e329b57a \u2192 f8b226f7 \u00b7 3 file(s): engine/engine.py, web/panel/plan.html, web/panel/settings.html",
+  "02:00:51 restart hype-engine",
+  "02:01:36 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Frenna x 3DDY \u2013 DJ",
-  "listeners": 0,
+  "song": "LA$$A x Cristian D x Frsh \u2013 Alles Is Ok\u00e9",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },

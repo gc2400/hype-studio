@@ -45,3 +45,4 @@
 2026-10-31T00:53:37 ok e80eb73e Phone: header buttons evenly sized and identical on every page; Planning tabs wrap cleanly, lists scroll in their box, opening a playlist/clock jumps to its editor
 2026-10-31T01:00:48 ok 25c40ade Library: the editor is as tall as the song list and the video fills the free room (about twice as big); Planning on phones: list box full width like the rest
 2026-10-31T01:46:31 ok e329b57a Auto recordings: per show (website schedule) or day + time, video+radio / radio / video, keep N days; never touches a recording you started; Settings → Auto recordings with the latest files
+2026-10-31T02:01:36 ok f8b226f7 Up next / DJ: the next song goes to Liquidsoap only in the last 15 s (it can't be pulled back once prepared) - no more double songs in AUX/decks, AUX songs stay in their list until needed, a taken-back prepared song is skipped; ducked pads: music back when the voice ends (smart mix point); Recordings moved to Planning
