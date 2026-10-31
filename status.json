@@ -1,17 +1,17 @@
 {
- "time": "2026-10-31T22:59:05",
+ "time": "2026-10-31T23:03:13",
  "result": "ok",
- "commit": "663c2be4ec16c182295f10995322d3cb0e8f06ef",
- "subject": "Broadcast page: Refresh devices button (and the lists update by themselves when you plug something in); while the studio is connected, other pages open in a new tab and leaving/closing asks first",
+ "commit": "393efbcd79d0357ae31f08c0cec6887c0556ee3e",
+ "subject": "Guest page: logo header; plugged-in headset/headphones/mic/camera is chosen by itself (also during the call, without reconnecting); output choice (headphones / speaker) where the browser allows it; device choices stay visible in the call",
  "log": [
-  "22:59:05 update 8dddf2e0 \u2192 663c2be4 \u00b7 1 file(s): web/panel/studio.html",
-  "22:59:05 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "23:03:12 update 663c2be4 \u2192 393efbcd \u00b7 2 file(s): web/guest/index.html, web/guest/logo.png",
+  "23:03:13 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Club Hype \u2013 DJ Ricsz Liveset 8 Vuurlinie Events",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
