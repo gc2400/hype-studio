@@ -25,6 +25,7 @@ def db():
     if "genre" not in cols: c.execute("ALTER TABLE items ADD COLUMN genre TEXT")
     if "kf" not in cols: c.execute("ALTER TABLE items ADD COLUMN kf TEXT")
     if "lmap" not in cols: c.execute("ALTER TABLE items ADD COLUMN lmap TEXT")   # loudness map: the loudest moment of every 0.5 s (for the AGC intro lift)
+    if "align" not in cols: c.execute("ALTER TABLE items ADD COLUMN align TEXT")   # clip only: where its song starts in the video, found by comparing the sound
     if "added_at" not in cols:   # when the file first arrived (for "recently uploaded")
         c.execute("ALTER TABLE items ADD COLUMN added_at REAL"); c.execute("UPDATE items SET added_at=MIN(COALESCE(mtime, indexed_at), COALESCE(indexed_at, mtime))")
     c.execute("CREATE INDEX IF NOT EXISTS items_fp ON items(fp)")
@@ -158,7 +159,7 @@ def index_file(c, path, st):
     row = dict(path=rel, section=section, folder=folder, filename=fn, size=st.st_size, mtime=st.st_mtime,
                artist="", title="", duration=None, has_video=0, has_audio=0, width=None, height=None,
                lufs=None, peak=None, lmap=None, cue_start=None, cue_intro=None, cue_mix=None, cue_end=None,
-               mode=None, problem=None, indexed_at=time.time(), tv_path=None, genre=genre, cues_edited=0)
+               mode=None, problem=None, indexed_at=time.time(), tv_path=None, genre=genre, cues_edited=0, align=None)
     fp = fingerprint(path, st.st_size); row["fp"] = fp
     if not c.execute("SELECT 1 FROM items WHERE path=?", (rel,)).fetchone() and follow_move(c, rel, fp):
         c.execute("UPDATE items SET section=?, folder=?, genre=?, filename=?, size=?, mtime=? WHERE path=?",
@@ -328,7 +329,80 @@ def scan(full=False):
     close_inbox(c)
     try: make_lmaps(c)
     except Exception as e: print("lmap error", e, flush=True)
+    try: align_pairs(c)
+    except Exception as e: print("align error", e, flush=True)
     return n_new, len(gone)
+
+ASR = 8000; AHOP = 80   # 10 ms frames
+def onset_env(path, start, dur):
+    """The rhythm of a piece of audio: how much louder every 10 ms gets (beats and hits stand out)."""
+    import numpy as np
+    r = subprocess.run(["nice", "-n", "15", "ffmpeg", "-v", "error", "-ss", str(max(0, start)), "-t", str(dur), "-i", path,
+                        "-vn", "-ac", "1", "-ar", str(ASR), "-f", "s16le", "-"], capture_output=True, timeout=180)
+    x = np.frombuffer(r.stdout, dtype=np.int16).astype(np.float32) / 32768
+    n = len(x) // AHOP
+    if n < 100: return None
+    e = np.log(np.sqrt((x[:n * AHOP].reshape(n, AHOP) ** 2).mean(1) + 1e-9) + 1e-4)
+    on = np.maximum(0, np.diff(e, prepend=e[0]))
+    return (on - on.mean()) / (on.std() + 1e-9)
+
+def best_lag(a, b):
+    import numpy as np
+    n = 1 << int(np.ceil(np.log2(len(a) + len(b))))
+    cc = np.fft.irfft(np.fft.rfft(b, n) * np.conj(np.fft.rfft(a, n)), n)[:len(b) - len(a) + 1] / len(a)
+    i = int(np.argmax(cc)); rest = np.delete(cc, range(max(0, i - 50), min(len(cc), i + 50)))
+    return i * AHOP / ASR, float((cc[i] - np.median(rest)) / (rest.std() + 1e-9))
+
+def find_song_in_clip(song, song_dur, clip):
+    """Where song time 0 is in the clip. Four 30 s pieces of the song are looked up in the clip's sound;
+    returns (offset, how many pieces agree, how many were found)."""
+    b = onset_env(clip, 0, 600)
+    if b is None: return None, 0, 0
+    offs = []
+    for k in range(4):
+        p = k * 30 + 5
+        if song_dur and p + 30 > song_dur: break
+        a = onset_env(song, p, 30)
+        if a is None or len(b) <= len(a): break
+        lag, z = best_lag(a, b)
+        if z > 7: offs.append(lag - p)
+    best = []
+    for o in offs:
+        g = [x for x in offs if abs(x - o) < 0.15]
+        if len(g) > len(best): best = g
+    if not best: return None, 0, len(offs)
+    best.sort(); return best[len(best) // 2], len(best), len(offs)
+
+def align_pairs(c, n=20):
+    """Paired clips start exactly where their song starts: the clip's start cue = the moment in the video where
+    the song's own start cue is. A clip start you set by hand is never touched. Changing the song's start cue later
+    moves the clip start along with it (no new measuring needed)."""
+    rows = c.execute("""SELECT m.path, COALESCE(m.cue_start, 0), m.duration, cl.path, cl.cue_start, cl.align FROM items m
+                        JOIN items cl ON cl.path = m.clip_path WHERE m.mode='pair' AND m.problem IS NULL AND cl.problem IS NULL
+                        AND COALESCE(cl.cues_edited, 0) <> 1 ORDER BY m.added_at DESC""").fetchall()
+    done = set(); measured = 0
+    for song, ms, sdur, clip, ccs, al in rows:
+        if clip in done: continue
+        done.add(clip)
+        try: al = json.loads(al) if al else None
+        except Exception: al = None
+        if al and al.get("song") == song:
+            if al.get("base") is not None:
+                want = round(max(0.0, al["base"] + ms), 2)
+                if ccs is None or abs(want - ccs) > 0.02: c.execute("UPDATE items SET cue_start=? WHERE path=?", (want, clip)); c.commit()
+            continue
+        if measured >= n: continue
+        measured += 1
+        try: base, agree, found = find_song_in_clip(os.path.join(ROOT, song), sdur, os.path.join(ROOT, clip))
+        except Exception as e: print("align:", clip, e, flush=True); base, agree, found = None, 0, 0
+        cur = ccs or 0
+        sure = base is not None and (agree >= 3 or (agree == 2 and abs(base + ms - cur) < 3))
+        info = {"song": song, "base": round(base, 3) if sure else None, "agree": agree, "found": found, "t": int(time.time())}
+        if base is not None and not sure: info["guess"] = round(base + ms, 2)
+        c.execute("UPDATE items SET align=? WHERE path=?", (json.dumps(info), clip))
+        if sure: c.execute("UPDATE items SET cue_start=? WHERE path=?", (round(max(0.0, base + ms), 2), clip))
+        c.commit()
+        print("align:", clip, "->", round(base + ms, 2) if sure else "unsure", f"{agree}/{found}", flush=True)
 
 CLOSE_SEEN = [0.0]
 def close_inbox(c):
