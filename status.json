@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T22:01:43",
+ "time": "2026-10-31T22:08:38",
  "result": "ok",
- "commit": "4cc5c3f60650829215db17203e17094cdd0832f4",
- "subject": "Library: add a song to a playlist from its row; row buttons float over the row (no more moving on hover); cue editors: one row of SET START / SET MIX / AUTO / SET END under the waveform (no time boxes), intro sweeper in the footer; phone layout wraps",
+ "commit": "3a6595515c319db7936f34277132d107782df396",
+ "subject": "Top of the hour: songs after a planned TOH are picked with the new hour's clock right away, so they stay when the TOH goes on air",
  "log": [
-  "22:00:58 update 44da6185 \u2192 4cc5c3f6 \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/library.html",
-  "22:00:58 restart hype-engine",
-  "22:01:43 installed OK \u00b7 restarted: hype-engine"
+  "22:07:53 update 4cc5c3f6 \u2192 3a659551 \u00b7 1 file(s): engine/engine.py",
+  "22:07:53 restart hype-engine",
+  "22:08:38 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Drake \u2013 Hold On, We\u2019re Going Home ft. Majid Jordan",
+  "song": "Club Hype \u2013 DJ Ricsz Liveset 8 Vuurlinie Events",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 2.5,
   "problems": [],
   "ok": true
  },
