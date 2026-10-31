@@ -1,18 +1,17 @@
 {
- "time": "2026-10-31T22:11:28",
+ "time": "2026-10-31T22:29:53",
  "result": "ok",
- "commit": "bb76cf152de9bb06975e5eee51381d1717f893f7",
- "subject": "Top of the hour: the planned songs stay up to the next hour's TOH; a later hour's TOH can never end up first in Up next (that made a filler song play after the 22:00 TOH)",
+ "commit": "2f6f813be0a3d4ab3950beb25a5e6aad2d0dce8b",
+ "subject": "Cue editors: play controls above the waveform; the panel's cue box always fits the screen (video height follows)",
  "log": [
-  "22:10:43 update 3a659551 \u2192 bb76cf15 \u00b7 1 file(s): engine/engine.py",
-  "22:10:43 restart hype-engine",
-  "22:11:28 installed OK \u00b7 restarted: hype-engine"
+  "22:29:53 update bb76cf15 \u2192 2f6f813b \u00b7 2 file(s): web/panel/index.html, web/panel/library.html",
+  "22:29:53 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Club Hype \u2013 DJ Ricsz Liveset 8 Vuurlinie Events",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
