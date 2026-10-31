@@ -1,17 +1,17 @@
 {
- "time": "2026-10-31T23:03:13",
+ "time": "2026-10-31T23:15:30",
  "result": "ok",
- "commit": "393efbcd79d0357ae31f08c0cec6887c0556ee3e",
- "subject": "Guest page: logo header; plugged-in headset/headphones/mic/camera is chosen by itself (also during the call, without reconnecting); output choice (headphones / speaker) where the browser allows it; device choices stay visible in the call",
+ "commit": "6d938d2dc0e5d259139a8670eddeec30f588832d",
+ "subject": "Library: cards fill the screen height (a short list no longer shrinks the video); guest page: on-air picture full width with a full-screen button, own camera under it (no PIP); Broadcast page warns when guests would hear themselves (no mix-minus input); Panel preview sound switches off when you go LIVE",
  "log": [
-  "23:03:12 update 663c2be4 \u2192 393efbcd \u00b7 2 file(s): web/guest/index.html, web/guest/logo.png",
-  "23:03:13 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "23:15:30 update 393efbcd \u2192 6d938d2d \u00b7 4 file(s): web/guest/index.html, web/panel/index.html, web/panel/library.html, web/panel/studio.html",
+  "23:15:30 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Club Hype \u2013 DJ Ricsz Liveset 8 Vuurlinie Events",
+  "song": "Kybba x Ryan Castro x Sean Paul x Busy Signal \u2013 Ba Ba Bad (Remix)",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
