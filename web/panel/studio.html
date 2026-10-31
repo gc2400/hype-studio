@@ -81,7 +81,7 @@ table.hl{width:100%;border-collapse:collapse;font-size:12px}table.hl th{text-ali
 
   <div class="grid2">
     <section class="card">
-      <span class="lab">Studio devices (this laptop)</span>
+      <div class="row" style="justify-content:space-between;align-items:center"><span class="lab">Studio devices (this laptop)</span><button class="btn sm" id="devRefresh" title="Look again for cameras, microphones and outputs (after plugging something in) – the page stays as it is">↻ Refresh devices</button></div>
       <div class="dev"><label><b>Studio mix → air</b><small>Mixcast 4 (USB recording)</small></label><select id="dMix"></select><div class="meter"><i id="mMix"></i></div></div>
       <div class="dev"><label><b>Music → Mixcast</b><small>plays on your USB fader</small></label><select id="dMusic"></select><div class="meter"><i id="mMusic"></i></div></div>
       <div class="dev"><label><b>Guests → Mixcast</b><small>TRRS fader (laptop headphone out)</small></label><select id="dGuests"></select><div class="meter"><i id="mGuests"></i></div></div>
@@ -139,16 +139,18 @@ function setState(name, st) { STATE[name] = st; const s = Object.values(STATE); 
 
 // ---------- devices ----------
 async function listDevices() {
-  try { const s = await navigator.mediaDevices.getUserMedia({audio: true, video: true}); s.getTracks().forEach(t => t.stop()); } catch (e) { toast('Allow camera and microphone to choose your devices'); }
-  const d = await navigator.mediaDevices.enumerateDevices();
+  let d = await navigator.mediaDevices.enumerateDevices();
+  if (!d.some(x => x.label)) {      // no names yet: ask permission once
+    try { const s = await navigator.mediaDevices.getUserMedia({audio: true, video: true}); s.getTracks().forEach(t => t.stop()); } catch (e) { toast('Allow camera and microphone to choose your devices'); }
+    d = await navigator.mediaDevices.enumerateDevices(); }
   const opt = (kind, none) => (none ? `<option value="">${none}</option>` : '') + d.filter(x => x.kind === kind).map(x => `<option value="${x.deviceId}">${esc(x.label || kind)}</option>`).join('');
   $('#dMix').innerHTML = opt('audioinput'); $('#dMinus').innerHTML = opt('audioinput', '– no mix-minus (guests hear the studio mix) –');
   $('#dMusic').innerHTML = opt('audiooutput'); $('#dGuests').innerHTML = opt('audiooutput', '– same as music –');
   $('#dCam1').innerHTML = opt('videoinput', '– no camera –'); $('#dCam2').innerHTML = opt('videoinput', '– no camera –');
-  ['dMix', 'dMinus', 'dMusic', 'dGuests', 'dCam1', 'dCam2'].forEach(id => { const v = store(id); if (v !== null && [...$('#' + id).options].some(o => o.value === v)) $('#' + id).value = v; $('#' + id).onchange = () => store(id, $('#' + id).value); });
-  $('#dCam1').addEventListener('change', () => camPreview(1)); $('#dCam2').addEventListener('change', () => camPreview(2));
+  ['dMix', 'dMinus', 'dMusic', 'dGuests', 'dCam1', 'dCam2'].forEach(id => { const v = store(id); if (v !== null && [...$('#' + id).options].some(o => o.value === v)) $('#' + id).value = v;
+    $('#' + id).onchange = () => { store(id, $('#' + id).value); if (id === 'dCam1') camPreview(1); if (id === 'dCam2') camPreview(2); }; });
   if (!$('#dCam1').value && $('#dCam1').options.length > 1 && store('dCam1') === null) $('#dCam1').selectedIndex = 1;
-  camPreview(1); camPreview(2);
+  if (!connected) { camPreview(1); camPreview(2); }      // while connected the cameras on air are never touched
   const mix = [...$('#dMix').options].find(o => /mixcast|tascam/i.test(o.text)); if (mix && store('dMix') === null) $('#dMix').value = mix.value;
   const mo = [...$('#dMusic').options].find(o => /mixcast|tascam/i.test(o.text)); if (mo && store('dMusic') === null) $('#dMusic').value = mo.value;
 }
@@ -187,6 +189,13 @@ async function connect() {
     toast('Studio connected – check the meters, then GO LIVE');
   } catch (e) { toast('Could not start: ' + e.message); disconnect(); }
 }
+// refresh the device lists without reloading the page (also by itself when something is plugged in / out)
+$('#devRefresh').onclick = () => listDevices().then(() => toast(connected ? 'Devices refreshed – a changed choice is used when you connect the studio again' : 'Devices refreshed'));
+let devT = null; navigator.mediaDevices.addEventListener('devicechange', () => { clearTimeout(devT); devT = setTimeout(() => listDevices().then(() => toast('A device was plugged in or out – lists updated')), 800); });
+// while the studio is connected this page must stay open: other pages open in a new tab, closing / leaving asks first
+document.addEventListener('click', e => { const a = e.target.closest('#hhead a[href]'); if (!a || !connected || a.classList.contains('out')) return;
+  e.preventDefault(); window.open(a.href, '_blank'); toast('Opened in a new tab – keep this tab open, the broadcast runs from here'); }, true);
+addEventListener('beforeunload', e => { if (connected) { e.preventDefault(); e.returnValue = ''; } });
 function disconnect() {
   Object.values(conns).forEach(c => c.close()); conns = {}; Object.keys(STATE).forEach(k => delete STATE[k]);
   Object.values(guestEls).forEach(g => g.conn && g.conn.close()); guestEls = {}; renderGuests(true);
