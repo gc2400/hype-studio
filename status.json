@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T03:32:28",
+ "time": "2026-10-31T20:45:13",
  "result": "ok",
- "commit": "a8da8de0449ef5dcfa39b0432ef42e7c0b5bcbf9",
- "subject": "END is the end: MIX back a few seconds before a CLOSE END; the old song fades out until END, never past it",
+ "commit": "4892520549d1ea6bb8fc49a9d3f098737f980a79",
+ "subject": "Cue editor: exact times - type a time, nudge 0.1 s per marker, a 6 s zoom with 10 ms detail; cues to 0.01 s; finer overview waveform",
  "log": [
-  "03:31:43 update d009f89f \u2192 a8da8de0 \u00b7 2 file(s): engine/close_import.py, engine/engine.py",
-  "03:31:43 restart hype-engine",
-  "03:32:28 installed OK \u00b7 restarted: hype-engine"
+  "20:44:27 update a8da8de0 \u2192 48925205 \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/library.html",
+  "20:44:28 restart hype-engine",
+  "20:45:13 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Frenna \u2013 NASA",
+  "song": "Tekno \u2013 Press Button",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },

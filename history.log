@@ -57,3 +57,4 @@
 2026-10-31T03:20:41 ok 66196cc5 Exact mix moments: the loudness measure every 0.1 s for the first and last seconds
 2026-10-31T03:28:37 ok d009f89f Fine loudness backfill: gentler (lowest priority, one thread, a pause between files)
 2026-10-31T03:32:28 ok a8da8de0 END is the end: MIX back a few seconds before a CLOSE END; the old song fades out until END, never past it
+2026-10-31T20:45:13 ok 48925205 Cue editor: exact times - type a time, nudge 0.1 s per marker, a 6 s zoom with 10 ms detail; cues to 0.01 s; finer overview waveform
