@@ -972,7 +972,16 @@ class Engine:
         T = self.plan[0].get("hour_T")
         if T and self.auto and self.now.get("path"):
             start = max(time.time(), self.now["started"] + self.length(self.now))
-            if start < T - 5:          # never before :00 – one more song first (picked to end just after :00)
+            if start < T - 900:        # a later hour's top of the hour at the front (should not happen): out, it comes back at its hour
+                log.warning("top of the hour for %s was first in Up next %d s early - taken out, planned again at its hour", time.strftime("%H:%M", time.localtime(T)), T - start)
+                hk_ = self.plan[0].get("event"); self.plan = [p_ for p_ in self.plan if not (hk_ and p_.get("event") == hk_)]; self.refill(c)
+                if not self.plan: return
+                if self.plan[0].get("hour_T"):          # still in front: play the first normal item before it
+                    j = next((j for j, p_ in enumerate(self.plan) if not p_.get("hour_T") and not p_.get("event")), None)
+                    if j is None: return
+                    self.plan.insert(0, self.plan.pop(j))
+                T = None
+            if T and start < T - 5:    # never before :00 – one more song first (picked to end just after :00)
                 f = self.filler(c, T - start)
                 if f: self.picker.note(f); self.plan.insert(0, f); log.info("top of the hour would start %d s early – %s – %s first", T - start, f["artist"], f["title"])
         it = self.plan.pop(0); warm(c, it)
@@ -984,14 +993,16 @@ class Engine:
                 k = 0
                 while k < len(self.plan) and self.plan[k].get("event") == it["event"]: k += 1
                 head = self.plan[:k]; nk = list(planner.runner_key(it["hour_T"] + 1))
-                clock_after = [p_ for p_ in self.plan[k:] if p_.get("src") == "clock"]
+                nxt_h = next((j for j in range(k, len(self.plan)) if self.plan[j].get("hour_T")), len(self.plan))   # up to the NEXT top of the hour
+                clock_after = [p_ for p_ in self.plan[k:nxt_h] if p_.get("src") == "clock"]
                 if clock_after and all(p_.get("hour_k") == nk for p_ in clock_after):
                     # already planned with the new hour's clock (from its slot 1): Up next stays exactly as you saw it
                     self.hour_floor = it["hour_T"]
                     log.info("new hour: top of the hour queued, the %d planned item(s) after it stay (new hour's clock)", len(clock_after))
                 else:
                     # (rare: planned before the new hour was known, e.g. right after a restart) plan them again from slot 1
-                    rest = [p_ for p_ in self.plan[k:] if p_.get("src") != "clock"]
+                    # (a later hour's top of the hour is dropped too: it is placed again when Up next reaches that hour)
+                    rest = [p_ for p_ in self.plan[k:] if p_.get("src") != "clock" and not p_.get("hour_T") and not (p_.get("event") and p_.get("event") != it["event"] and p_.get("src") == "fixed")]
                     dropped = len(self.plan) - len(head) - len(rest)
                     self.plan = head + rest; self.runner = planner.ClockRunner(); self.held = {}; self.hour_floor = it["hour_T"]
                     log.info("new hour: top of the hour queued, %d planned item(s) re-planned, clock from slot 1", dropped)
