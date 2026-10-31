@@ -1,18 +1,17 @@
 {
- "time": "2026-10-31T23:37:45",
+ "time": "2026-10-31T23:55:09",
  "result": "ok",
- "commit": "0cf95cf180f675419e7657191c7b01993f1f0702",
- "subject": "Cameras fit their box on black (a portrait phone shows upright, never stretched; black only while that camera sends); guest page asks phones to go horizontal; Broadcast page: lip sync wording fixed (it was the wrong way round)",
+ "commit": "e204f3055333c5789f08a7bb13de10e143967227",
+ "subject": "Cue waveform: mouse wheel zooms in/out around the mouse; Library filter buttons without symbols",
  "log": [
-  "23:37:00 update 62eab615 \u2192 0cf95cf1 \u00b7 3 file(s): engine/live.py, web/guest/index.html, web/panel/studio.html",
-  "23:37:00 restart hype-engine",
-  "23:37:45 installed OK \u00b7 restarted: hype-engine"
+  "23:55:09 update 0cf95cf1 \u2192 e204f305 \u00b7 2 file(s): web/panel/cuewave.js, web/panel/library.html",
+  "23:55:09 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Jay Wheeler \u2013 Fuga",
+  "song": "Davido \u2013 Be There Still",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },

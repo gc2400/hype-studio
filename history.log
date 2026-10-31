@@ -75,3 +75,4 @@
 2026-10-31T23:15:30 ok 6d938d2d Library: cards fill the screen height (a short list no longer shrinks the video); guest page: on-air picture full width with a full-screen button, own camera under it (no PIP); Broadcast page warns when guests would hear themselves (no mix-minus input); Panel preview sound switches off when you go LIVE
 2026-10-31T23:18:36 ok 62eab615 Broadcast page: camera bitrate from 1 to 15 Mbps in small steps, 540p for a weak line, fitting defaults set once (1080p25, 4 Mbps, 256k sound), live note of what you send
 2026-10-31T23:37:45 ok 0cf95cf1 Cameras fit their box on black (a portrait phone shows upright, never stretched; black only while that camera sends); guest page asks phones to go horizontal; Broadcast page: lip sync wording fixed (it was the wrong way round)
+2026-10-31T23:55:09 ok e204f305 Cue waveform: mouse wheel zooms in/out around the mouse; Library filter buttons without symbols
