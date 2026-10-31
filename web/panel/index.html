@@ -124,7 +124,8 @@ dialog#cueDlg::backdrop{background:rgba(2,8,16,.7)}
 .cdh .t span{display:block;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cdg{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:12px;margin-top:10px;align-items:start}
 .cdg.novid{grid-template-columns:minmax(0,1fr)}
-#cueMedia{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;display:block}
+#cueMedia{width:100%;aspect-ratio:16/9;max-height:calc(94vh - 380px);min-height:120px;object-fit:contain;background:#000;border-radius:10px;display:block}
+#cueDlg .cdt{margin-top:10px}#cueDlg #cueWave{margin-top:8px!important}
 .cueside{display:flex;flex-direction:column;gap:6px}
 .cueset{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;min-height:40px;padding:0 12px;border-radius:10px;background:var(--deep);border:1px solid var(--line2);color:var(--txt);font:inherit;cursor:pointer;text-align:left}
 .cueset:hover{border-color:currentColor}
@@ -411,7 +412,6 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         <div class="cdg" id="cdg">
           <video id="cueMedia" playsinline preload="metadata"></video>
         </div>
-        <canvas class="wave" id="cueWave" width="1600" height="140" style="height:72px;cursor:pointer;margin-top:10px" aria-label="Waveform: click to jump, drag the markers; zoomed in: drag sideways to move"></canvas>
         <div class="cdt">
           <button class="btn" id="pvBack" title="Back 1 s (←)">−1s</button>
           <button class="btn yellow" id="pvPlay" aria-label="Play or pause (space)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg></button>
@@ -421,6 +421,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <span class="zm" role="group" aria-label="Zoom"><button id="zOut" title="Zoom out (−)" aria-label="Zoom out">−</button><span id="zLv">song</span><button id="zIn" title="Zoom in (+)" aria-label="Zoom in">+</button></span>
           <span class="pos" id="pvPos">0:00.0</span>
         </div>
+        <canvas class="wave" id="cueWave" width="1600" height="140" style="height:72px;cursor:pointer;margin-top:10px" aria-label="Waveform: click to jump, drag the markers; zoomed in: drag sideways to move"></canvas>
         <div class="cues" role="group" aria-label="Set cue points at the play line">
           <button class="cueset" data-set="s" style="color:var(--g)" title="Set START at the play line (key S)">SET START</button>
           <button class="cueset" data-set="m" style="color:var(--y)" title="Set MIX at the play line (key M) – the next song starts here">SET MIX</button>

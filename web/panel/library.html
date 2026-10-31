@@ -156,7 +156,6 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
         <div class="cdg" id="cdg">
           <video id="m" playsinline preload="metadata"></video>
         </div>
-        <canvas class="wave" id="wave" width="1600" height="140" style="height:72px" aria-label="Waveform: click to jump, drag the markers; zoomed in: drag sideways to move"></canvas>
         <div class="cdt">
           <button class="btn" id="bBack" title="−1 s (←)">−1s</button>
           <button class="btn yellow" id="bPlay" title="Play / pause (Space)" aria-label="Play or pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg></button>
@@ -166,6 +165,7 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
           <span class="zm" role="group" aria-label="Zoom"><button id="zOut" title="Zoom out (−)" aria-label="Zoom out">−</button><span id="zLv">song</span><button id="zIn" title="Zoom in (+)" aria-label="Zoom in">+</button></span>
           <span class="pos" id="pos">0:00.0</span>
         </div>
+        <canvas class="wave" id="wave" width="1600" height="140" style="height:72px" aria-label="Waveform: click to jump, drag the markers; zoomed in: drag sideways to move"></canvas>
         <div class="cues" role="group" aria-label="Set cue points at the play line">
           <button class="cueset" data-set="s" style="color:var(--g)" title="Set START at the play line (key S)">SET START</button>
           <button class="cueset" data-set="m" style="color:var(--y)" title="Set MIX at the play line (key M) – the next song starts here">SET MIX</button>
