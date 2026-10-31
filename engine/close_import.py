@@ -78,9 +78,10 @@ def apply(c, only_path=None):
         new_cm, new_ce = cm, ce
         if fin is not None and (dur is None or fin <= dur + 0.5):
             # CLOSE 'Fin' = hard end of the song (nothing after it is heard, like in CLOSE).
-            # MIX = Fin, like in CLOSE.
+            # MIX: 0.5-3 s before it (the next song starts there at full volume, the old one fades out until END).
             new_ce = fin
-            new_cm = fin   # CLOSE has only an end: MIX = END (the smart mixer finds the exact moment, never after END)
+            new_cm = min(cm, fin - 0.5) if cm else fin - 1.0   # MIX a little before END: where the music starts to fade / go quiet
+            new_cm = max(new_cm, fin - 3.0)
         if new_cs is not None and new_cm is not None and new_cm <= new_cs:
             out.append([path, key, "skipped: start after end", ini, fin, cs, cm]); continue
         c.execute("""UPDATE items SET cue_start=?, cue_mix=?, cue_end=?, cues_edited=2, close_key=?,
