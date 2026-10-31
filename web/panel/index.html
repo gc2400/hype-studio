@@ -22,7 +22,7 @@ header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:s
 .col{display:flex;flex-direction:column;gap:14px;min-width:0}
 .c1{flex:1 1 380px}.c2{flex:1 1 420px}.c3{flex:1 1 420px}.cA,.cB{flex:1 1 380px}
 #bottom{display:flex;flex-direction:column;gap:14px}
-body.dj #cLib .res{max-height:calc(100vh - 290px);min-height:360px}
+body.dj #cLib .res{max-height:calc(100vh - 390px);min-height:320px}
 body.live #log,body.live #aux{max-height:300px;overflow:auto}body.live #cLib .res{max-height:420px}
 body.dj #deckA{order:1;flex:1 1 360px}body.dj #col2{order:2;flex:1.1 1 380px}body.dj #deckB{order:3;flex:1 1 360px}body.dj .cols{flex-wrap:nowrap}
 .deck .np .art{cursor:pointer;transition:transform .12s,box-shadow .12s}.deck .np .art:hover{transform:scale(1.06);box-shadow:0 0 0 3px currentColor}
@@ -34,7 +34,9 @@ body.dj #deckA{order:1;flex:1 1 360px}body.dj #col2{order:2;flex:1.1 1 380px}bod
 .modes .btn{border:0;background:transparent;color:var(--mut)}.modes .btn.on{background:var(--y);color:var(--bg)}
 .modes .btn[data-mode=live].on{background:var(--r);color:#fff}
 .gvol{display:flex;align-items:center;gap:8px}.gvol input{flex:1;accent-color:var(--y);min-width:0}.gvol span{font-size:11px;color:var(--y);width:40px;text-align:right}
-.xf{display:flex;align-items:center;gap:10px}.xl{font-weight:900;font-size:18px;width:16px;text-align:center}
+.xf{display:flex;align-items:center;gap:10px}
+.xl{font:900 18px Inter,system-ui,sans-serif;width:44px;height:44px;flex:none;border-radius:12px;border:2px solid currentColor;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,transform .12s}
+.xl:hover{transform:scale(1.06);background:rgba(255,255,255,.06)}.xl.air{background:currentColor}.xl.air{color:inherit}
 .xtrack{position:relative;flex:1;height:40px;border-radius:12px;background:var(--deep);border:1px solid var(--line2)}
 .xtrack::before{content:'';position:absolute;left:16px;right:16px;top:50%;height:4px;margin-top:-2px;border-radius:2px;background:linear-gradient(90deg,var(--b),#FF9D3D)}
 .xthumb{position:absolute;top:4px;width:40px;height:30px;border-radius:8px;background:#F2F6FA;box-shadow:0 4px 14px rgba(0,0,0,.5);left:6px;transition:left .5s ease;cursor:grab;touch-action:none}
@@ -356,10 +358,9 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
       </div>
       <div class="card" id="cXfade" hidden>
         <div class="xf">
-          <span class="xl" style="color:var(--b)">A</span>
+          <button class="xl" data-xto="1" style="color:var(--b)" title="Mix into deck A" aria-label="Mix into deck A">A</button>
           <div class="xtrack" id="xTrack"><div class="xthumb" id="xThumb" draggable="false"></div></div>
-          <span class="xl" style="color:#FF9D3D">B</span>
-          <button class="btn yellow" id="xMix" style="min-width:110px">MIX ▶ B</button>
+          <button class="xl" data-xto="2" style="color:#FF9D3D" title="Mix into deck B" aria-label="Mix into deck B">B</button>
         </div>
       </div>
       <div class="card" id="cGuests" hidden>
@@ -915,9 +916,9 @@ $('#ovSel').onchange = () => { const v = $('#ovSel').value; cmd('set_overlay', v
 let MODE = 'onair'; try { MODE = localStorage.getItem('hypeMode') || 'onair'; } catch (e) {}
 const LAYOUT = {
   onair: {col1: ['cPlayer', 'cLog', 'auxCard'], col2: ['cScenes', 'cPads'], col3: ['cLib', 'liveCard'], deckA: [], deckB: [], bottom: []},
-  dj:    {deckA: ['dkA', 'cPads'], col2: ['cLib'], deckB: ['dkB', 'cScenes'], col1: [], col3: [], bottom: []},
+  dj:    {deckA: ['dkA', 'cPads'], col2: ['cLib', 'cXfade'], deckB: ['dkB', 'cScenes'], col1: [], col3: [], bottom: []},
   live:  {col1: ['cScenes'], col2: ['liveCard', 'cGuests', 'cPads'], col3: ['cPlayer', 'cLog', 'auxCard', 'cLib'], deckA: [], deckB: [], bottom: []}};
-const HIDE = {onair: ['cXfade', 'cGuests', 'dkA', 'dkB'], dj: ['cGuests', 'cLog', 'auxCard', 'cPlayer', 'cXfade', 'liveCard'], live: ['cXfade', 'dkA', 'dkB']};
+const HIDE = {onair: ['cXfade', 'cGuests', 'dkA', 'dkB'], dj: ['cGuests', 'cLog', 'auxCard', 'cPlayer', 'liveCard'], live: ['cXfade', 'dkA', 'dkB']};
 const DECKS = {};
 function deckEl(k) {
   const id = k === '1' ? 'dkA' : 'dkB'; let el = DECKS[k]; if (el) return el;
@@ -985,9 +986,11 @@ function renderDecks() {
       L.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => cmd('aux_remove', {aux: k, id: b.dataset.rm})); }
   });
   const onB = n.deck === '2'; $('#xThumb').style.left = onB ? 'calc(100% - 46px)' : '6px';
-  $('#xMix').textContent = onB ? '◀ MIX TO A' : 'MIX TO B ▶';
+  $$('[data-xto]').forEach(b => { const on = n.deck === b.dataset.xto; b.style.background = on ? (b.dataset.xto === '1' ? 'var(--b)' : '#FF9D3D') : ''; b.style.color = on ? '#061423' : (b.dataset.xto === '1' ? 'var(--b)' : '#FF9D3D'); });
 }
-$('#xMix').onclick = () => { const to = S.now && S.now.deck === '2' ? '1' : '2'; cmd('dj_play', {deck: to, how: 'mix'}).then(r => r && r.ok === false ? toast(r.error, 1) : 0); };
+$$('[data-xto]').forEach(b => b.onclick = () => { const k = b.dataset.xto, K = k === '1' ? 'A' : 'B';
+  if (S.now && S.now.deck === k) return toast('Deck ' + K + ' is already on air');
+  cmd('dj_play', {deck: k, how: 'mix'}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('Mixing into deck ' + K)); });
 (() => { let drag = false; const tr = $('#xTrack'), th = $('#xThumb');
   th.onpointerdown = e => { drag = true; th.setPointerCapture(e.pointerId); th.style.transition = 'none'; };
   th.onpointermove = e => { if (!drag) return; const r = tr.getBoundingClientRect(); th.style.left = Math.max(6, Math.min(r.width - 46, e.clientX - r.left - 20)) + 'px'; };
