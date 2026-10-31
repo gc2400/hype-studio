@@ -1,17 +1,17 @@
 {
- "time": "2026-10-31T23:15:30",
+ "time": "2026-10-31T23:18:36",
  "result": "ok",
- "commit": "6d938d2dc0e5d259139a8670eddeec30f588832d",
- "subject": "Library: cards fill the screen height (a short list no longer shrinks the video); guest page: on-air picture full width with a full-screen button, own camera under it (no PIP); Broadcast page warns when guests would hear themselves (no mix-minus input); Panel preview sound switches off when you go LIVE",
+ "commit": "62eab615cb9b7b8c0a6f7345e2bf2fe62626dae7",
+ "subject": "Broadcast page: camera bitrate from 1 to 15 Mbps in small steps, 540p for a weak line, fitting defaults set once (1080p25, 4 Mbps, 256k sound), live note of what you send",
  "log": [
-  "23:15:30 update 393efbcd \u2192 6d938d2d \u00b7 4 file(s): web/guest/index.html, web/panel/index.html, web/panel/library.html, web/panel/studio.html",
-  "23:15:30 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "23:18:36 update 6d938d2d \u2192 62eab615 \u00b7 1 file(s): web/panel/studio.html",
+  "23:18:36 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Kybba x Ryan Castro x Sean Paul x Busy Signal \u2013 Ba Ba Bad (Remix)",
+  "song": "FloyyMenor x Midnvght \u2013 V\u00c9NGATE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
