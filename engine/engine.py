@@ -504,7 +504,21 @@ class TV:
                         if gen != self.gen: return          # a newer song already took over
                         try:
                             cl2 = self.client()
-                            if seek_k is not None: cl2.set_media_input_cursor(nxt, int(seek_k * 1000))
+                            if seek_k is not None:
+                                cl2.set_media_input_cursor(nxt, int(seek_k * 1000)); t_seek = time.time()
+                                def verify(nxt=nxt, k0=seek_k, t1=t_seek, g=gen):
+                                    # OBS sometimes ignores a seek (the picture then runs late/early for the whole song):
+                                    # check where the clip really is and put it right once more
+                                    with self.olock:
+                                        if g != self.gen: return
+                                        try:
+                                            cl4 = self.client(); want = k0 + (time.time() - t1)
+                                            cur = (cl4.get_media_input_status(nxt).media_cursor or 0) / 1000
+                                            if abs(cur - want) > 0.35:
+                                                cl4.set_media_input_cursor(nxt, int((want + 0.12) * 1000))
+                                                log.info("clip was %.1f s off – put back in sync", cur - want)
+                                        except Exception: pass
+                                threading.Timer(1.2, verify).start()
                             hides = []
                             for sc in ("Music video", "Clips window"):
                                 try:
