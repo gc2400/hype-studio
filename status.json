@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T02:15:39",
+ "time": "2026-10-31T02:21:33",
  "result": "ok",
- "commit": "85b8628ca3ca7b2c6ffc7babb2fd61bb988fc95c",
- "subject": "DJ view keeps AUTO running until MANUAL or a deck is started; back to AUTO: future fixed times (TOH) are placed again at their own time (never early), no jingle twice / two jingles in a row from the parked Up next",
+ "commit": "f648ee784c58197f71f73d58ca08f9b333043c86",
+ "subject": "Clips: 1.2 s after the start the engine checks where the picture really is and corrects it once if OBS ignored the seek (picture stays in sync)",
  "log": [
-  "02:14:54 update f8b226f7 \u2192 85b8628c \u00b7 1 file(s): engine/engine.py",
-  "02:14:54 restart hype-engine",
-  "02:15:39 installed OK \u00b7 restarted: hype-engine"
+  "02:20:48 update 85b8628c \u2192 f648ee78 \u00b7 1 file(s): engine/engine.py",
+  "02:20:48 restart hype-engine",
+  "02:21:33 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Wisin x Kapo \u2013 Luna",
+  "song": "EMMAW \u2013 Ninja",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
