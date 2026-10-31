@@ -1,20 +1,17 @@
 {
- "time": "2026-10-31T22:55:59",
+ "time": "2026-10-31T22:59:05",
  "result": "ok",
- "commit": "8dddf2e048ff768e685043395aafc69ab5eb4fa5",
- "subject": "Recordings: own systemd units (an update/restart never stops them), saved in the library (Library -> Recordings tab, also in the panel); guests see a small on-air picture next to their camera (360p 'guestview' from the TV ladder); mobile header shows REC",
+ "commit": "663c2be4ec16c182295f10995322d3cb0e8f06ef",
+ "subject": "Broadcast page: Refresh devices button (and the lists update by themselves when you plug something in); while the studio is connected, other pages open in a new tab and leaving/closing asks first",
  "log": [
-  "22:55:13 update 6eb17857 \u2192 8dddf2e0 \u00b7 10 file(s): engine/engine.py, engine/hype_auth.py, engine/live.py, tv/ladder.sh, web/guest/hype-rtc.js, web/guest/index.html, web/panel/header.js, web/panel/index.html, web/panel/library.html, web/panel/plan.html",
-  "22:55:13 restart hype-auth",
-  "22:55:13 restart hype-ladder",
-  "22:55:13 restart hype-engine",
-  "22:55:58 installed OK \u00b7 restarted: hype-engine, hype-auth, hype-ladder"
+  "22:59:05 update 8dddf2e0 \u2192 663c2be4 \u00b7 1 file(s): web/panel/studio.html",
+  "22:59:05 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Club Hype \u2013 DJ Ricsz Liveset 8 Vuurlinie Events",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },

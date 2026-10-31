@@ -70,3 +70,4 @@
 2026-10-31T22:29:53 ok 2f6f813b Cue editors: play controls above the waveform; the panel's cue box always fits the screen (video height follows)
 2026-10-31T22:37:49 ok 6eb17857 Library page: Upload button (pick section + folder, drop files; 8 MB pieces, continues after a broken connection; file gets the upload user's rights so WinSCP can manage it)
 2026-10-31T22:55:59 ok 8dddf2e0 Recordings: own systemd units (an update/restart never stops them), saved in the library (Library -> Recordings tab, also in the panel); guests see a small on-air picture next to their camera (360p 'guestview' from the TV ladder); mobile header shows REC
+2026-10-31T22:59:05 ok 663c2be4 Broadcast page: Refresh devices button (and the lists update by themselves when you plug something in); while the studio is connected, other pages open in a new tab and leaving/closing asks first
