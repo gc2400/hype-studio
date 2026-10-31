@@ -81,15 +81,6 @@ table{border-collapse:collapse;width:100%}
 .snav{position:sticky;top:14px;gap:4px;padding:10px}
 .snav .search input{width:100%;margin-bottom:6px}
 .sbtn{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid transparent;background:none;color:var(--txt);padding:9px 10px;border-radius:10px;cursor:pointer;font:inherit}
-.arrules{display:flex;flex-direction:column;gap:8px}
-.arr{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px;border:1px solid var(--line2);border-radius:12px;background:#071A2B}
-.arr input[type=text]{width:170px}.arr input[type=time]{width:120px;color-scheme:dark;background:#061423;color:var(--txt);border:1px solid var(--line2);border-radius:10px;padding:7px 8px;font:inherit}.arr select{min-width:120px}
-.arr .days{display:inline-flex;gap:3px}.arr .days button{min-width:34px;height:30px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--mut);font:inherit;font-size:11px;font-weight:800;cursor:pointer}
-.arr .days button.on{background:var(--y);border-color:var(--y);color:#061423}
-.arr .x{margin-left:auto}
-.arfiles{display:flex;flex-direction:column;gap:2px;font-size:13px;max-height:280px;overflow:auto}.arfiles div{display:flex;gap:10px;padding:5px 8px;border-radius:8px}.arfiles div:nth-child(odd){background:#071A2B}
-.arfiles span{color:var(--mut);margin-left:auto;white-space:nowrap}
-@media (max-width:600px){.arr input[type=text]{width:100%}.arr .x{margin-left:0}}
 .sbtn b{font-size:14px}.sbtn span{font-size:11px;color:var(--mut)}.sbtn:hover{background:var(--card2)}.sbtn.on{background:var(--card2);border-color:var(--y)}
 .scont{display:flex;flex-direction:column;gap:14px;max-width:980px}
 .hit{outline:2px solid var(--y);outline-offset:3px;border-radius:10px}
@@ -120,17 +111,8 @@ table{border-collapse:collapse;width:100%}
       <button class="sbtn" data-sec="tickers"><b>▤ Tickers</b><span>news · traffic · showbizz · agenda · weather</span></button>
       <button class="sbtn" data-sec="live"><b>🔴 Live &amp; restream</b><span>recording · lip sync · YouTube…</span></button>
       <button class="sbtn" data-sec="guard"><b>🛡 Alarm &amp; Hype Live</b><span>self-repair · phone alerts</span></button>
-      <button class="sbtn" data-sec="autorec"><b>Auto recordings</b><span>per show or day + time</span></button>
     </nav>
     <div class="scont">
-    <section class="card sec" data-sec="autorec">
-      <div class="row between"><span class="lab">Auto recordings · the show is recorded by itself</span><button class="btn sm yellow" id="arSave">Save</button></div>
-      <p class="muted" style="margin:0" data-find="auto recording record show schedule replay podcast">Recordings go to <b>/recordings</b> (FileZilla): the TV picture as .mp4 and the radio as .mp3, named <i>date time name</i>. <b>Show</b> = while that show is on air (website schedule). <b>Day + time</b> = your own window (an end before the start runs over midnight). A recording you start yourself (REC / GO LIVE) always wins, and if you stop an automatic one with REC it stays off until its window ends.</p>
-      <div id="arRules" class="arrules"></div>
-      <div class="row"><button class="btn sm" id="arAdd">+ Add recording</button><span class="muted" id="arNow" style="font-size:12px"></span></div>
-      <span class="lab" style="margin-top:8px">Latest recordings <span class="muted" id="arFree" style="text-transform:none;letter-spacing:0"></span></span>
-      <div id="arFiles" class="arfiles"></div>
-    </section>
     <section class="card sec" data-sec="sound">
       <div class="row between"><span class="lab">Sound · radio + TV · changes are live</span><span class="chip" id="sndState">–</span></div>
       <div class="row" id="sndMode" style="gap:6px"><span class="lab" style="width:auto">Sound</span><button class="btn sm" data-m="0">Classic (presets + sliders)</button><button class="btn sm" data-m="0.5" title="The Classic sliders, but bass, mids and highs are compressed on their own: a hard kick no longer turns the whole mix down">Classic + multiband</button><button class="btn sm" data-m="1">⚡ Hype Punch</button><span class="muted" style="font-size:12px" id="sndModeTip"></span></div>
@@ -309,34 +291,6 @@ $('#g_np').onchange = () => gPost({np: $('#g_np').checked});
 $('#g_np_spots').onchange = () => gPost({np_spots: $('#g_np_spots').checked});
 $('#g_save').onclick = () => { const d = {hl_url: $('#g_url').value.trim()}; if ($('#g_key').value.trim()) d.hl_key = $('#g_key').value.trim(); $('#g_key').value = ''; gPost(d); };
 gLoad(); setInterval(() => { if (SEC === 'guard' && !document.hidden) gLoad(); }, 5000);
-/* ---------- auto recordings ---------- */
-let AR = {rules: [], shows: []};
-const DN = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-function arLoad() { get('autorec').then(d => { AR = Object.assign({rules: [], shows: []}, d); arRender(); arFiles(AR); }); }
-function arFiles(d) {
-  $('#arFree').textContent = d.free_gb != null ? '· ' + d.free_gb + ' GB free on the server' : '';
-  $('#arNow').textContent = d.rec ? 'Recording now: ' + d.rec.file + (String(d.rec.why).startsWith('auto:') ? ' (automatic)' : '') : '';
-  $('#arFiles').innerHTML = (d.files || []).map(f => `<div><b>${esc(f.file)}</b><span>${f.mb >= 1000 ? (f.mb / 1000).toFixed(1) + ' GB' : f.mb + ' MB'}</span></div>`).join('') || '<span class="muted">No recordings yet.</span>';
-}
-function arRender() {
-  $('#arRules').innerHTML = AR.rules.map((r, i) => `<div class="arr">
-    <input type="checkbox" data-i="${i}" data-f="enabled" ${r.enabled !== false ? 'checked' : ''} title="On" style="width:20px;height:20px;accent-color:var(--y)">
-    <input type="text" data-i="${i}" data-f="name" value="${esc(r.name || '')}" placeholder="Name (e.g. Club Hype)">
-    <select data-i="${i}" data-f="kind"><option value="show" ${r.kind === 'show' ? 'selected' : ''}>Show</option><option value="time" ${r.kind !== 'show' ? 'selected' : ''}>Day + time</option></select>
-    ${r.kind === 'show' ? `<select data-i="${i}" data-f="show"><option value="">– choose a show –</option>${AR.shows.map(x => `<option ${r.show === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>`
-      : `<span class="days">${DN.map((n, d) => `<button type="button" data-i="${i}" data-day="${d}" class="${(r.days || '0123456').includes(String(d)) ? 'on' : ''}">${n}</button>`).join('')}</span>
-         <input type="time" data-i="${i}" data-f="start" value="${esc(r.start || '20:00')}" aria-label="Start"><span class="muted">–</span><input type="time" data-i="${i}" data-f="end" value="${esc(r.end || '22:00')}" aria-label="End">`}
-    <select data-i="${i}" data-f="what"><option value="both" ${!r.what || r.what === 'both' ? 'selected' : ''}>Video + radio</option><option value="audio" ${r.what === 'audio' ? 'selected' : ''}>Radio only (.mp3)</option><option value="video" ${r.what === 'video' ? 'selected' : ''}>Video only (.mp4)</option></select>
-    <select data-i="${i}" data-f="keep_days" title="Delete older recordings of this rule automatically">${[[0, 'Keep forever'], [7, 'Keep 7 days'], [14, 'Keep 14 days'], [30, 'Keep 30 days'], [90, 'Keep 90 days']].map(([v, l]) => `<option value="${v}" ${(+r.keep_days || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
-    <button class="btn sm red x" data-del="${i}" aria-label="Remove">×</button></div>`).join('') || '<span class="muted">No automatic recordings yet. Add one, e.g. Show · Club Hype · Video + radio · Keep 30 days.</span>';
-  $$('#arRules [data-f]').forEach(e => e.onchange = () => { const r = AR.rules[+e.dataset.i], f = e.dataset.f; r[f] = e.type === 'checkbox' ? e.checked : f === 'keep_days' ? +e.value : e.value; if (f === 'kind') arRender(); });
-  $$('#arRules [data-day]').forEach(b => b.onclick = () => { const r = AR.rules[+b.dataset.i], d = b.dataset.day; let ds = r.days ?? '0123456'; ds = ds.includes(d) ? ds.replace(d, '') : [...ds + d].sort().join(''); r.days = ds; arRender(); });
-  $$('#arRules [data-del]').forEach(b => b.onclick = () => { AR.rules.splice(+b.dataset.del, 1); arRender(); });
-}
-$('#arAdd').onclick = () => { AR.rules.push({enabled: true, name: '', kind: 'show', show: '', days: '0123456', start: '20:00', end: '22:00', what: 'both', keep_days: 30}); arRender(); };
-$('#arSave').onclick = () => { if (AR.rules.some(r => r.kind === 'show' && !r.show)) return toast('Choose the show in every "Show" recording', 1);
-  post('autorec', {rules: AR.rules}).then(d => { if (d.error) return toast(d.error, 1); AR = d; arRender(); arFiles(d); toast('Auto recordings saved'); }); };
-arLoad(); setInterval(() => { if (SEC === 'autorec') get('autorec').then(arFiles); }, 15000);
 function showSec(n) { SEC = n; try { localStorage.setItem('hypeSetSec', n); } catch (e) {} $$('.sec').forEach(x => x.hidden = x.dataset.sec !== n); $$('.sbtn').forEach(b => b.classList.toggle('on', b.dataset.sec === n)); }
 $$('.sbtn').forEach(b => b.onclick = () => { $('#sq').value = ''; $$('.hit').forEach(x => x.classList.remove('hit')); showSec(b.dataset.sec); });
 $('#sq').oninput = () => { const q = $('#sq').value.trim().toLowerCase(); $$('.hit').forEach(x => x.classList.remove('hit'));

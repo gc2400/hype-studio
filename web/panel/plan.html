@@ -28,6 +28,15 @@ h1{margin:0;font-size:20px;font-weight:900}
 .tabs{display:flex;background:var(--deep);border-radius:11px;padding:3px;gap:3px;max-width:960px;flex-wrap:wrap}
 .tab{cursor:pointer;flex:1;min-height:40px;border-radius:9px;border:0;background:transparent;color:var(--mut);font-weight:800;font-size:13px;letter-spacing:.06em}
 .tab.on{background:var(--b);color:var(--bg)}
+.arrules{display:flex;flex-direction:column;gap:8px}
+.arr{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px;border:1px solid var(--line2);border-radius:12px;background:#071A2B}
+.arr input[type=text]{width:170px}.arr input[type=time]{width:120px;color-scheme:dark;background:#061423;color:var(--txt);border:1px solid var(--line2);border-radius:10px;padding:7px 8px;font:inherit}.arr select{min-width:120px}
+.arr .days{display:inline-flex;gap:3px}.arr .days button{min-width:34px;height:30px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--mut);font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.arr .days button.on{background:var(--y);border-color:var(--y);color:#061423}
+.arr .x{margin-left:auto}
+.arfiles{display:flex;flex-direction:column;gap:2px;font-size:13px;max-height:280px;overflow:auto}.arfiles div{display:flex;gap:10px;padding:5px 8px;border-radius:8px}.arfiles div:nth-child(odd){background:#071A2B}
+.arfiles span{color:var(--mut);margin-left:auto;white-space:nowrap}
+@media (max-width:600px){.arr input[type=text]{width:100%}.arr .x{margin-left:0}}
 #plEdit,#ckEdit{scroll-margin-top:130px}
 @media (max-width:759px){.split > .side > .list{max-height:46vh;overflow-y:auto}.split > .side,.split > .main{max-width:none;flex:1 1 100%}}
 @media (max-width:700px){.tabs{gap:2px}.tab{flex:1 1 auto;min-height:36px;font-size:11px;letter-spacing:.03em;white-space:nowrap;padding:0 10px}}
@@ -102,6 +111,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
     <button class="tab" data-tab="ov" role="tab">INTRO SWEEPERS</button>
     <button class="tab" data-tab="os" role="tab">ON SCREEN</button>
     <button class="tab" data-tab="ad" role="tab">ADS</button>
+    <button class="tab" data-tab="rc" role="tab">RECORDINGS</button>
   </div>
 
   <!-- PLAYLISTS -->
@@ -203,6 +213,17 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
     <div class="order" id="pvList" style="max-height:480px"></div>
   </section>
   <!-- FIXED TIMES -->
+  <!-- RECORDINGS -->
+    <section id="tab-rc" hidden>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <div class="row between"><span class="lab">Recordings · the show is recorded by itself</span><button class="btn sm yellow" id="arSave">Save</button></div>
+      <p class="muted" style="margin:0" data-find="auto recording record show schedule replay podcast">Recordings go to <b>/recordings</b> (FileZilla): the TV picture as .mp4 and the radio as .mp3, named <i>date time name</i>. <b>Show</b> = while that show is on air (website schedule). <b>Day + time</b> = your own window (an end before the start runs over midnight). A recording you start yourself (REC / GO LIVE) always wins, and if you stop an automatic one with REC it stays off until its window ends.</p>
+      <div id="arRules" class="arrules"></div>
+      <div class="row"><button class="btn sm" id="arAdd">+ Add recording</button><span class="muted" id="arNow" style="font-size:12px"></span></div>
+      <span class="lab" style="margin-top:8px">Latest recordings <span class="muted" id="arFree" style="text-transform:none;letter-spacing:0"></span></span>
+      <div id="arFiles" class="arfiles"></div>
+        </div>
+  </section>
   <section id="tab-ad" hidden>
     <div class="card">
       <div class="row between"><span class="lab">Ads · sponsor spots (audio or video) · X plays per day</span><button class="btn yellow" id="adSave">Save ads</button></div>
@@ -259,12 +280,40 @@ const authed = r => { if (r.status === 401) { location.href = '/login?next=' + e
 const get = p => fetch('../api/' + p).then(authed).then(r => r.json());
 const post = (p, d) => fetch('../api/' + p, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d || {})}).then(authed).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); return j; });
 function toast(t, err) { const e = $('#toast'); e.textContent = t; e.className = 'toast show' + (err ? ' err' : ''); clearTimeout(e._t); e._t = setTimeout(() => e.className = 'toast', 2400); }
-$$('.tab').forEach(b => b.onclick = () => { $$('.tab').forEach(x => x.classList.toggle('on', x === b)); ['pl', 'ck', 'sc', 'fx', 'ov', 'os', 'ad'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab); if (b.dataset.tab === 'sc') loadSchedule(); if (b.dataset.tab === 'ov') loadOv(); if (b.dataset.tab === 'fx') loadFx(); if (b.dataset.tab === 'os') loadOs(); });
+$$('.tab').forEach(b => b.onclick = () => { $$('.tab').forEach(x => x.classList.toggle('on', x === b)); ['pl', 'ck', 'sc', 'fx', 'ov', 'os', 'ad', 'rc'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab); if (b.dataset.tab === 'rc') arLoad(); if (b.dataset.tab === 'sc') loadSchedule(); if (b.dataset.tab === 'ov') loadOv(); if (b.dataset.tab === 'fx') loadFx(); if (b.dataset.tab === 'os') loadOs(); });
 $$('.tab').forEach(b => b.addEventListener('click', () => { if (b.dataset.tab === 'ad') loadAds(); }));
 
 let PL = [], CK = [], FOLD = {music: [], counts: {}, jingles: []};
 const loadAll = () => Promise.all([get('playlists'), get('clocks'), get('folders')]).then(([p, c, f]) => { PL = p; CK = c; FOLD = f; renderPL(); renderCK(); });
 
+/* ---------- auto recordings ---------- */
+let AR = {rules: [], shows: []};
+const DN = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+function arLoad() { get('autorec').then(d => { AR = Object.assign({rules: [], shows: []}, d); arRender(); arFiles(AR); }); }
+function arFiles(d) {
+  $('#arFree').textContent = d.free_gb != null ? '· ' + d.free_gb + ' GB free on the server' : '';
+  $('#arNow').textContent = d.rec ? 'Recording now: ' + d.rec.file + (String(d.rec.why).startsWith('auto:') ? ' (automatic)' : '') : '';
+  $('#arFiles').innerHTML = (d.files || []).map(f => `<div><b>${esc(f.file)}</b><span>${f.mb >= 1000 ? (f.mb / 1000).toFixed(1) + ' GB' : f.mb + ' MB'}</span></div>`).join('') || '<span class="muted">No recordings yet.</span>';
+}
+function arRender() {
+  $('#arRules').innerHTML = AR.rules.map((r, i) => `<div class="arr">
+    <input type="checkbox" data-i="${i}" data-f="enabled" ${r.enabled !== false ? 'checked' : ''} title="On" style="width:20px;height:20px;accent-color:var(--y)">
+    <input type="text" data-i="${i}" data-f="name" value="${esc(r.name || '')}" placeholder="Name (e.g. Club Hype)">
+    <select data-i="${i}" data-f="kind"><option value="show" ${r.kind === 'show' ? 'selected' : ''}>Show</option><option value="time" ${r.kind !== 'show' ? 'selected' : ''}>Day + time</option></select>
+    ${r.kind === 'show' ? `<select data-i="${i}" data-f="show"><option value="">– choose a show –</option>${AR.shows.map(x => `<option ${r.show === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>`
+      : `<span class="days">${DN.map((n, d) => `<button type="button" data-i="${i}" data-day="${d}" class="${(r.days || '0123456').includes(String(d)) ? 'on' : ''}">${n}</button>`).join('')}</span>
+         <input type="time" data-i="${i}" data-f="start" value="${esc(r.start || '20:00')}" aria-label="Start"><span class="muted">–</span><input type="time" data-i="${i}" data-f="end" value="${esc(r.end || '22:00')}" aria-label="End">`}
+    <select data-i="${i}" data-f="what"><option value="both" ${!r.what || r.what === 'both' ? 'selected' : ''}>Video + radio</option><option value="audio" ${r.what === 'audio' ? 'selected' : ''}>Radio only (.mp3)</option><option value="video" ${r.what === 'video' ? 'selected' : ''}>Video only (.mp4)</option></select>
+    <select data-i="${i}" data-f="keep_days" title="Delete older recordings of this rule automatically">${[[0, 'Keep forever'], [7, 'Keep 7 days'], [14, 'Keep 14 days'], [30, 'Keep 30 days'], [90, 'Keep 90 days']].map(([v, l]) => `<option value="${v}" ${(+r.keep_days || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <button class="btn sm red x" data-del="${i}" aria-label="Remove">×</button></div>`).join('') || '<span class="muted">No automatic recordings yet. Add one, e.g. Show · Club Hype · Video + radio · Keep 30 days.</span>';
+  $$('#arRules [data-f]').forEach(e => e.onchange = () => { const r = AR.rules[+e.dataset.i], f = e.dataset.f; r[f] = e.type === 'checkbox' ? e.checked : f === 'keep_days' ? +e.value : e.value; if (f === 'kind') arRender(); });
+  $$('#arRules [data-day]').forEach(b => b.onclick = () => { const r = AR.rules[+b.dataset.i], d = b.dataset.day; let ds = r.days ?? '0123456'; ds = ds.includes(d) ? ds.replace(d, '') : [...ds + d].sort().join(''); r.days = ds; arRender(); });
+  $$('#arRules [data-del]').forEach(b => b.onclick = () => { AR.rules.splice(+b.dataset.del, 1); arRender(); });
+}
+$('#arAdd').onclick = () => { AR.rules.push({enabled: true, name: '', kind: 'show', show: '', days: '0123456', start: '20:00', end: '22:00', what: 'both', keep_days: 30}); arRender(); };
+$('#arSave').onclick = () => { if (AR.rules.some(r => r.kind === 'show' && !r.show)) return toast('Choose the show in every "Show" recording', 1);
+  post('autorec', {rules: AR.rules}).then(d => { AR = Object.assign({rules: [], shows: []}, d); arRender(); arFiles(AR); toast('Recordings saved'); }).catch(e => toast(e.message, 1)); };
+setInterval(() => { if (!$('#tab-rc').hidden) get('autorec').then(arFiles); }, 15000);
 /* ---------------- playlists ---------------- */
 let cur = null;
 function renderPL() {

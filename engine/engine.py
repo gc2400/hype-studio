@@ -125,6 +125,7 @@ JINGLE_FADE = 0.0   # Settings → Mixing → Jingles: fade-out (0 = plays out t
 MIX_OUT = 1.5     # Settings → Mixing → fade-out of the old song (= how long both songs play together)
 # ---------------- smart mix (from the loudness map) ----------------
 SMART_MIX = True     # Settings → Mixing → Smart mix
+PUSH_LEAD = 15.0      # the next item goes to Liquidsoap 15 s before the song on air ends (see push_next)
 SNAPS_FILE = "/var/lib/hype/plan_snaps.json"; MINE_FILE = "/var/lib/hype/upnext_mine.json"
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
 LM_CACHE = {}
@@ -185,6 +186,15 @@ def smart_mix(it, nxt=None):
     cm = max(cs, min(cm, end))
     cross = max(0.3, min(MIX_MAX, 4.0 if hard_next else 6.0, tail_end - cm))
     return cm, cross, cross
+def duck_len(it):
+    """How long the music stays down under a ducked pad / intro sweeper: until the voice ends (smart mix point), so the
+    music comes back right after it and the echo / silence at the end of the file plays over the music - like a mix."""
+    cs = it.get("cue_start") or 0
+    sm = smart_mix(dict(it, section="jingles"))
+    if sm: return max(0.5, sm[0] - cs)
+    cm = it.get("cue_mix")
+    if cm and cm > cs: return cm - cs
+    return max(0.5, (it.get("cue_end") or it.get("duration") or 5) - cs)
 def annotate(it, pad=False, nxt=None):
     cs = it["cue_start"] or 0.0; dur = it["duration"] or it["cue_end"] or 0; ce = it["cue_end"] or dur
     cm = it["cue_mix"] if it["cue_mix"] and it["cue_mix"] > cs else ce
@@ -690,7 +700,8 @@ class Engine:
         for p_ in ([self.liq_next] if self.liq_next else []) + self.plan:
             if p_.get("section") == "ads": planner.CTX["ad_planned"][p_["path"]] = planner.CTX["ad_planned"].get(p_["path"], 0) + 1
         if not self.auto:
-            if not self.plan:
+            left = ((self.now.get("started") or 0) + self.length(self.now) - time.time()) if self.now.get("path") else 0
+            if not self.plan and left <= PUSH_LEAD + 2:      # DJ / MANUAL: the AUX keeps its songs (visible, movable) until the next one is really needed
                 it = self.dj_take() if self.dj else self.aux_take()
                 if not it:   # nothing in the AUX/decks: the radio never stops – the clock keeps the music going
                     it = self.picker.next_planned(c, self.avoid(), self.cursor(), self.runner) or self.picker.next(c, self.avoid())
@@ -872,8 +883,14 @@ class Engine:
         """Clocks/schedule/playlists changed: rebuild the planned (clock) items, keep yours."""
         self.plan = [p for p in self.plan if p["src"] == "you"]; self.runner = planner.ClockRunner(); self.hour_floor = 0
         self.refill(dbc())
-    def push_next(self, c):
+    def push_next(self, c, force=False):
+        """Queue the next item in Liquidsoap - only in the last PUSH_LEAD seconds of the song on air (or right away with
+        force, for PLAY NOW / MIX / skip). Liquidsoap prepares a queued song at once and it can't be pulled back after
+        that, so until then Up next stays fully yours: change, move, remove, nothing plays twice."""
         if self.liq_next or self.stop_at_end or self.stopped: return
+        if not force and self.now.get("path") and self.plan:
+            left = (self.now.get("started") or 0) + self.length(self.now) - time.time()
+            if left > PUSH_LEAD: return                    # the tick (every second) queues it in time
         if getattr(self, "loop", False) and self.now.get("path"):   # LOOP: the song on air comes again
             it = {k: v for k, v in self.now.items() if k not in ("started", "scene")}; it.update(id=uuid.uuid4().hex[:10], src="loop")
             self.liq.cmd("q.push " + annotate(it)); self.liq_next = it; return
@@ -899,7 +916,7 @@ class Engine:
         if it.get("snap"):   # a resume clock goes on after the last item that really went out
             try: planner.save_clock_state(c, *it["snap"])
             except Exception as e: log.warning("clock state: %s", e)
-        res = self.liq.cmd("q.push " + annotate(it, nxt=self.plan[0] if self.plan else None)); self.liq_next = it
+        res = self.liq.cmd("q.push " + annotate(it, nxt=self.plan[0] if self.plan else None)); self.liq_next = it; it["pushed"] = time.time()
         ids = [s_[0] for s_ in self.snaps]
         if it.get("id") in ids: self.snaps = self.snaps[ids.index(it["id"]) + 1:]     # it goes on air: its songs are really used
         self.save_snaps()
@@ -928,6 +945,9 @@ class Engine:
         """Pull the already-queued song back out of Liquidsoap (it goes back to the top of the plan)."""
         if self.liq_next:
             self.liq.cmd("radio.clear")
+            if time.time() - self.liq_next.get("pushed", time.time()) > 1.0:
+                # Liquidsoap already prepared it (that can't be undone): when it starts it is skipped at once
+                self.revoked = getattr(self, "revoked", set()) | {self.liq_next.get("id")}
             if self.liq_next.get("event"):     # a fixed time that was queued but taken back is not done yet
                 try:
                     cc = dbc(); cc.execute("DELETE FROM events_done WHERE event_id=? AND day=?", tuple(self.liq_next["event"])); cc.commit()
@@ -990,7 +1010,7 @@ class Engine:
                 self.plan = keep + rest; self.runner = planner.ClockRunner(); self.held = {}; self.hour_floor = 0
                 self.refill(c)
                 log.info("new hour: %d planned item(s) of the old clock dropped, clock from slot 1", dropped)
-            self.push_next(c)
+            self.push_next(c, force=bool(e["hard"]))
             if e["hard"]: time.sleep(0.3); self.liq.cmd("radio.skip")
     def tick(self):
         with LOCK:
@@ -1012,6 +1032,13 @@ class Engine:
     def on_track(self, meta):
         path = meta.get("hype_path") or ""
         if not path: return
+        rv = getattr(self, "revoked", set())
+        if meta.get("hype_id") and meta["hype_id"] in rv:      # a song that was taken back after Liquidsoap prepared it
+            rv.discard(meta["hype_id"]); log.info("skipped %s – it was taken back from Up next", meta.get("title"))
+            with LOCK:
+                try: self.push_next(dbc(), force=True)
+                except Exception as e: log.warning("revoked: %s", e)
+            self.liq.cmd("radio.skip"); return
         with LOCK:
             if self.now.get("path") == path and time.time() - self.now.get("started", 0) < 15: return
             c = dbc()
@@ -1074,7 +1101,7 @@ class Engine:
         if not jr: return
         self.ov_last = time.time(); self.ov_recent.append(jingle)
         def go():
-            ji = row_item(jr, "intro"); self.liq.cmd("pads.push " + annotate(ji, True)); self.duck_for(((ji.get("cue_end") or ji.get("duration") or 5) - (ji.get("cue_start") or 0)), duck)
+            ji = row_item(jr, "intro"); self.liq.cmd("pads.push " + annotate(ji, True)); self.duck_for(duck_len(ji), duck)
             log.info("intro sweeper %s over %s", jingle, it["title"])
         threading.Timer(max(0.0, offset), go).start()
     # ---------- panel commands ----------
@@ -1085,12 +1112,14 @@ class Engine:
                 if getattr(self, "loop", False):   # NEXT ends a loop
                     self.loop = False
                     if self.liq_next and self.liq_next.get("src") == "loop": self.liq.cmd("radio.clear"); self.liq_next = None
-                self.stopped = False; self.stop_at_end = False; self.push_next(c); time.sleep(0.3); self.liq.cmd("radio.skip")
+                self.stopped = False; self.stop_at_end = False; self.push_next(c, force=True); time.sleep(0.3); self.liq.cmd("radio.skip")
             elif action == "play":
                 if not self.auto and not self.dj and not self.stopped:   # MANUAL → PLAY = back to the normal programming
                     return self.cmd_auto(c, True)
-                self.stopped = False; self.stop_at_end = False; self.push_next(c)
-                if not self.now or time.time() - self.now.get("started", 0) > (self.now.get("duration") or 0): self.liq.cmd("radio.skip")
+                self.stopped = False; self.stop_at_end = False
+                gone = not self.now or time.time() - self.now.get("started", 0) > (self.now.get("duration") or 0)
+                self.push_next(c, force=gone)
+                if gone: self.liq.cmd("radio.skip")
             elif action == "stop_at_end":
                 self.stop_at_end = not self.stop_at_end
                 if self.stop_at_end: self.take_back_next()
@@ -1154,7 +1183,7 @@ class Engine:
                 if r and d.get("loop"): self.pad_loop(r, bool(d.get("duck")), float(planner.get_setting(c, "pad_duck", 0.25)))
                 elif r:
                     if d.get("duck"):
-                        pi = row_item(r, "pad"); self.liq.cmd("pads.push " + annotate(pi, True)); self.duck_for(((pi.get("cue_end") or pi.get("duration") or 5) - (pi.get("cue_start") or 0)), float(planner.get_setting(c, "pad_duck", 0.25)))
+                        pi = row_item(r, "pad"); self.liq.cmd("pads.push " + annotate(pi, True)); self.duck_for(duck_len(pi), float(planner.get_setting(c, "pad_duck", 0.25)))
                     else: self.liq.cmd("pads.push " + annotate(row_item(r, "pad"), True))
             elif action == "set_cues":
                 cs, cm, ce = float(d["cue_start"]), float(d["cue_mix"]), float(d["cue_end"]); auto = bool(d.get("mix_auto"))
@@ -1196,7 +1225,7 @@ class Engine:
                 for back in reversed([p_ for p_ in self.plan if p_.get("src") in ("dj", "aux")]):   # songs that were lined up go back on their deck
                     self.aux.setdefault(back["deck"], []).insert(0, back)
                 self.plan = [p_ for p_ in self.plan if p_.get("src") not in ("dj", "aux")]
-                self.plan.insert(0, it); self.refill(c); self.push_next(c); self.aux_save_file()
+                self.plan.insert(0, it); self.refill(c); self.push_next(c, force=(action == "dj_play")); self.aux_save_file()
                 if action == "dj_play": time.sleep(0.3); self.liq.cmd("radio.cut" if how == "cut" else "radio.skip")
             elif action == "element":      # put a graphic on screen until you take it off (or toggle it off)
                 f = tickers.as_ticker(d.get("file") or "")
@@ -1294,7 +1323,7 @@ class Engine:
             if self.dj: new.update(src="dj", deck=a)          # in DJ mode it stays this deck's song
             if how == "end": self.plan.append(new)
             else:
-                self.take_back_next(); self.plan.insert(0, new); self.push_next(c)
+                self.take_back_next(); self.plan.insert(0, new); self.push_next(c, force=(how == "now"))
                 if how == "now": time.sleep(0.3); self.liq.cmd("radio.cut")      # play now = interrupt (quick cut)
             if d.get("remove"): self.aux[a] = [x for x in self.aux[a] if x["id"] != it["id"]]
         elif action == "aux_all":    # the whole AUX plays after the song on air
