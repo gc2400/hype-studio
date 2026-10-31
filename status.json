@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T02:48:29",
+ "time": "2026-10-31T02:54:23",
  "result": "ok",
- "commit": "c2988d580e6c1ae3f937a9cad22966292a27594c",
- "subject": "CLOSE import: the loose name match only matches the same file type (an mp3's cue file never goes to the mp4 clip)",
+ "commit": "542941e18e8031ec77a323fdafba34b21ad34494",
+ "subject": "Paired clips line up with their song automatically",
  "log": [
-  "02:47:44 update 72cad85c \u2192 c2988d58 \u00b7 1 file(s): engine/close_import.py",
-  "02:47:44 restart hype-engine",
-  "02:48:29 installed OK \u00b7 restarted: hype-engine"
+  "02:53:38 update c2988d58 \u2192 542941e1 \u00b7 1 file(s): engine/indexer.py",
+  "02:53:38 restart hype-indexer",
+  "02:54:23 installed OK \u00b7 restarted: hype-indexer"
  ],
  "guard": {
-  "song": "MAUVAIS DJO \u2013 Maladie",
+  "song": "Darkoo \u2013 Focus On Me (All The Sexy Girls In The Club)",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
