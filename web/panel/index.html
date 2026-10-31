@@ -622,8 +622,12 @@ $('#bLT').onclick = () => { if (LT && LT.visible) return ltSend('hide'); if (!$(
 // ---------- live ----------
 let LV = null;
 function lvLoad() { api('live').then(d => { LV = d; lvRender(); }).catch(() => {}); }
+let wasLive = null;
 function lvRender() {
   if (!LV) return;
+  // going LIVE: the preview's sound goes off - on this laptop it would play into the Mixcast (USB) and go on air a second time, ~1 s late
+  if (LV.live && wasLive === false && !$('#pvv').muted) { $('#pvv').muted = true; pvPaint(); toast('Preview sound off while LIVE – it would play into your Mixcast and go on air twice', 1); }
+  wasLive = !!LV.live;
   const g = $('#lvGo'); g.textContent = LV.live ? 'END LIVE' : 'GO LIVE'; g.className = 'btn ' + (LV.live ? 'red redon' : '');
   $('#lvStudio').textContent = LV.studio_online ? 'studio connected' : 'studio offline'; $('#lvStudio').className = 'chip ' + (LV.studio_online ? 'ok' : '');
   const go = Object.values(LV.guests || {}).filter(x => x.online).length; $('#lvGuests').textContent = 'guests ' + go + '/' + Object.keys(LV.guests || {}).length;

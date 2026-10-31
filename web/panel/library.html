@@ -260,7 +260,9 @@ function fitRes() { const r = $('#res'), ed = $('#ed'), m = $('#m'); if (!r) ret
   if (innerWidth <= 1000) { r.style.maxHeight = ''; if (ed) ed.style.height = ''; if (m) m.style.height = ''; $('#box').classList.remove('tight'); return; }
   r.style.maxHeight = Math.max(240, innerHeight - r.getBoundingClientRect().top - 30) + 'px';
   const left = r.closest('.card'); if (!ed || !left) return;
-  ed.style.height = left.getBoundingClientRect().height + 'px';
+  // both cards fill the screen height (also when the list is short, e.g. 2 recordings): the video gets the room
+  const full = Math.max(420, innerHeight - left.getBoundingClientRect().top - 16);
+  left.style.minHeight = full + 'px'; ed.style.height = Math.max(full, left.getBoundingClientRect().height) + 'px';
   if ($('#box').hidden) return;
   const spareOf = () => { const cs = getComputedStyle(ed); return ed.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - $('#box').getBoundingClientRect().height; };
   const fit = () => { if (!m || m.style.display === 'none') return spareOf();

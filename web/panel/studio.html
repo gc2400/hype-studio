@@ -40,6 +40,7 @@ select,input[type=text]{background:var(--deep);border:1px solid var(--line2);bor
 .guest{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;padding:8px;border-radius:12px;background:var(--deep)}
 .guest video{width:150px;aspect-ratio:16/9;background:#000;border-radius:8px;object-fit:cover}
 .muted{color:var(--mut);font-size:13px}
+.mmwarn{background:#3A0E18;border:1px solid #FF4D5E;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45;color:#FFD3D8}.mmwarn b{color:#fff}
 .q{display:grid;grid-template-columns:150px 1fr;gap:8px 10px;align-items:center}.q b{font-size:13px}
 table.hl{width:100%;border-collapse:collapse;font-size:12px}table.hl th{text-align:left;color:var(--mut);font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 6px}table.hl td{padding:6px;border-top:1px solid var(--line)}
 #airBox.on{border-color:var(--g);background:#0B2A22}#airBox.lost{border-color:var(--r);background:#2A0E16}
@@ -86,6 +87,7 @@ table.hl{width:100%;border-collapse:collapse;font-size:12px}table.hl th{text-ali
       <div class="dev"><label><b>Music → Mixcast</b><small>plays on your USB fader</small></label><select id="dMusic"></select><div class="meter"><i id="mMusic"></i></div></div>
       <div class="dev"><label><b>Guests → Mixcast</b><small>TRRS fader (laptop headphone out)</small></label><select id="dGuests"></select><div class="meter"><i id="mGuests"></i></div></div>
       <div class="dev"><label><b>Mix-minus ← Mixcast</b><small>what guests hear (TRRS, laptop mic in)</small></label><select id="dMinus"></select><div class="meter"><i id="mMinus"></i></div></div>
+      <div class="mmwarn" id="mmWarn" hidden><b>Guests will hear themselves.</b> Choose the input where the Mixcast's TRRS (mix-minus) comes in – e.g. the laptop's headset/mic jack with a TRRS cable. The Mixcast sends everything there <i>except</i> what comes in on that same TRRS fader, so guests hear you and the music, not themselves. (Guests hear each other directly on their page – never themselves.)</div>
       <div class="dev"><label><b>Camera 1</b><small>your USB cam</small></label><select id="dCam1"></select><span></span></div>
       <div class="dev"><label><b>Camera 2</b><small>optional</small></label><select id="dCam2"></select><span></span></div>
       <details class="how"><summary style="cursor:pointer;font-weight:700">How to cable the Mixcast</summary>
@@ -150,7 +152,8 @@ async function listDevices() {
   ['dMix', 'dMinus', 'dMusic', 'dGuests', 'dCam1', 'dCam2'].forEach(id => { const v = store(id); if (v !== null && [...$('#' + id).options].some(o => o.value === v)) $('#' + id).value = v;
     $('#' + id).onchange = () => { store(id, $('#' + id).value); if (id === 'dCam1') camPreview(1); if (id === 'dCam2') camPreview(2); }; });
   if (!$('#dCam1').value && $('#dCam1').options.length > 1 && store('dCam1') === null) $('#dCam1').selectedIndex = 1;
-  if (!connected) { camPreview(1); camPreview(2); }      // while connected the cameras on air are never touched
+  if (!connected) { camPreview(1); camPreview(2); }
+  mmCheck();      // while connected the cameras on air are never touched
   const mix = [...$('#dMix').options].find(o => /mixcast|tascam/i.test(o.text)); if (mix && store('dMix') === null) $('#dMix').value = mix.value;
   const mo = [...$('#dMusic').options].find(o => /mixcast|tascam/i.test(o.text)); if (mo && store('dMusic') === null) $('#dMusic').value = mo.value;
 }
@@ -189,6 +192,8 @@ async function connect() {
     toast('Studio connected – check the meters, then GO LIVE');
   } catch (e) { toast('Could not start: ' + e.message); disconnect(); }
 }
+function mmCheck() { const m = $('#dMinus').value; $('#mmWarn').hidden = !!(m && m !== $('#dMix').value); }
+['#dMinus', '#dMix'].forEach(id => $(id).addEventListener('change', mmCheck));
 // refresh the device lists without reloading the page (also by itself when something is plugged in / out)
 $('#devRefresh').onclick = () => listDevices().then(() => toast(connected ? 'Devices refreshed – a changed choice is used when you connect the studio again' : 'Devices refreshed'));
 let devT = null; navigator.mediaDevices.addEventListener('devicechange', () => { clearTimeout(devT); devT = setTimeout(() => listDevices().then(() => toast('A device was plugged in or out – lists updated')), 800); });
