@@ -1,17 +1,18 @@
 {
- "time": "2026-10-31T01:00:48",
+ "time": "2026-10-31T01:46:31",
  "result": "ok",
- "commit": "25c40ade0eee721d5545f404fd4ade9b9068b00d",
- "subject": "Library: the editor is as tall as the song list and the video fills the free room (about twice as big); Planning on phones: list box full width like the rest",
+ "commit": "e329b57adc528fb088c6514cab93cd5fc7c1afcd",
+ "subject": "Auto recordings: per show (website schedule) or day + time, video+radio / radio / video, keep N days; never touches a recording you started; Settings \u2192 Auto recordings with the latest files",
  "log": [
-  "01:00:48 update e80eb73e \u2192 25c40ade \u00b7 2 file(s): web/panel/library.html, web/panel/plan.html",
-  "01:00:48 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "01:45:45 update 25c40ade \u2192 e329b57a \u00b7 3 file(s): engine/engine.py, engine/live.py, web/panel/settings.html",
+  "01:45:45 restart hype-engine",
+  "01:46:30 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "GIMS \u2013 SOLEIL",
+  "song": "Frenna x 3DDY \u2013 DJ",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 2.0,
   "problems": [],
   "ok": true
  },
