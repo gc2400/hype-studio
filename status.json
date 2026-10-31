@@ -1,15 +1,15 @@
 {
- "time": "2026-10-31T02:43:37",
+ "time": "2026-10-31T02:48:29",
  "result": "ok",
- "commit": "72cad85c03effab91fd0ffda0d796c6d15a5e439",
- "subject": "DJ: library rows show deck A / B buttons (always, also while AUTO plays); CLOSE cue files also match slightly renamed files (accents, ft./x/&, Official Video tags) - clips from AUTODOWNLOADS get their CLOSE start",
+ "commit": "c2988d580e6c1ae3f937a9cad22966292a27594c",
+ "subject": "CLOSE import: the loose name match only matches the same file type (an mp3's cue file never goes to the mp4 clip)",
  "log": [
-  "02:42:52 update 460cebd6 \u2192 72cad85c \u00b7 2 file(s): engine/close_import.py, web/panel/index.html",
-  "02:42:52 restart hype-engine",
-  "02:43:37 installed OK \u00b7 restarted: hype-engine"
+  "02:47:44 update 72cad85c \u2192 c2988d58 \u00b7 1 file(s): engine/close_import.py",
+  "02:47:44 restart hype-engine",
+  "02:48:29 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Ryan Castro x Feid \u2013 MENTIRA",
+  "song": "MAUVAIS DJO \u2013 Maladie",
   "listeners": 2,
   "obs": true,
   "seg_age": 1.9,
