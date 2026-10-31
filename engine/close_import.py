@@ -61,12 +61,13 @@ def apply(c, only_path=None):
         parts = k[0].split("_")
         for i in range(1, len(parts)):
             by_name.setdefault("_".join(parts[i:]).lower(), []).append(k)
-        for i in range(1, len(parts)): by_norm.setdefault(norm("_".join(parts[i:])), []).append(k)
+        for i in range(1, len(parts)):   # same kind of file only: a song's .mp3 cues never go to its music video (.mp4)
+            nm = "_".join(parts[i:]); by_norm.setdefault(norm(nm) + "|" + os.path.splitext(nm)[1].lower(), []).append(k)
     q = "SELECT path, filename, duration, cue_start, cue_mix, cue_end, cues_edited FROM items WHERE section IN ('music','jingles','ads','clips')"   # clips too: a music video starts at its CLOSE in-point
     rows = c.execute(q + (" AND path=?" if only_path else ""), ((only_path,) if only_path else ())).fetchall()
     out = []
     for path, fn, dur, cs, cm, ce, edited in rows:
-        hits = by_name.get(fn.lower(), []) or by_norm.get(norm(fn), [])
+        hits = by_name.get(fn.lower(), []) or by_norm.get(norm(fn) + "|" + os.path.splitext(fn)[1].lower(), [])
         if not hits: out.append([path, "", "no CLOSE cue file", "", "", "", ""]); continue
         hits.sort(key=lambda k: (k[1] is None, -len(k[0])))   # prefer one with a start point
         key, ini, fin, pis, pis_i, pis_f = hits[0]
