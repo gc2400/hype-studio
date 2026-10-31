@@ -1,18 +1,19 @@
 {
- "time": "2026-10-31T21:51:58",
+ "time": "2026-10-31T21:53:47",
  "result": "ok",
- "commit": "8225225d86cde0af6fbf4a26259ec6c6e7b10daa",
- "subject": "Radio HLS from the internal on-air stream instead of a Pulse capture (no more small hiccups); piece numbers keep counting up after a restart",
+ "commit": "44da6185c0681ef1697583e7cf764e37b6c21904",
+ "subject": "Library page: delete a file (asks first; goes to a bin for 30 days); cue editors: play turns into pause; phone: library card buttons show after tapping a song",
  "log": [
-  "21:51:13 update ec0d2ac6 \u2192 8225225d \u00b7 1 file(s): tv/radio_hls.sh",
-  "21:51:13 restart hype-radio-hls",
-  "21:51:58 installed OK \u00b7 restarted: hype-radio-hls"
+  "21:53:02 update 8225225d \u2192 44da6185 \u00b7 4 file(s): engine/engine.py, engine/indexer.py, web/panel/index.html, web/panel/library.html",
+  "21:53:02 restart hype-indexer",
+  "21:53:02 restart hype-engine",
+  "21:53:47 installed OK \u00b7 restarted: hype-engine, hype-indexer"
  ],
  "guard": {
   "song": "Bad Bunny \u2013 NUEVAYoL",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 2.1,
   "problems": [],
   "ok": true
  },

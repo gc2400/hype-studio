@@ -63,3 +63,4 @@
 2026-10-31T21:11:36 ok 986ddb59 Zoomable cue waveform (song/30/10/4 s, follows play line or marker, drag to move) in Library + Panel; ID over soft intros (Settings: on/off, max per hour, minutes apart; fits the ID's START-MIX in the quiet intro, only song to song); Up next keeps its songs at the top of the hour
 2026-10-31T21:40:58 ok ec0d2ac6 Nightly backup to the Hetzner Storage Box (settings 30 days + media mirror with 30 days of changed/deleted files); Status page shows the last good backup
 2026-10-31T21:51:58 ok 8225225d Radio HLS from the internal on-air stream instead of a Pulse capture (no more small hiccups); piece numbers keep counting up after a restart
+2026-10-31T21:53:47 ok 44da6185 Library page: delete a file (asks first; goes to a bin for 30 days); cue editors: play turns into pause; phone: library card buttons show after tapping a song
