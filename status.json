@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T00:24:18",
+ "time": "2026-11-01T00:31:29",
  "result": "ok",
- "commit": "1ef3c377eeaa2a15aab9ec9a56da7ae66cb74b83",
- "subject": "OBS feed page on 127.0.0.1:8097 (8095 was taken)",
+ "commit": "bbca08d0b174b339643773b1e37ad4f28d076744",
+ "subject": "Broadcast page: music to the Mixcast with a 120 ms buffer instead of 300 ms (tighter talking over music)",
  "log": [
-  "00:23:33 update efead7f2 \u2192 1ef3c377 \u00b7 2 file(s): engine/live.py, system/nginx-hype.conf",
-  "00:23:33 restart hype-engine",
-  "00:24:18 installed OK \u00b7 restarted: hype-engine, nginx-reload"
+  "00:31:29 update 1ef3c377 \u2192 bbca08d0 \u00b7 1 file(s): web/panel/studio.html",
+  "00:31:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Wisin x Kapo \u2013 Mu\u00e9velo Pa' M\u00ed",
+  "song": "Sarz x Asake x Wizkid x Skillibeng \u2013 Getting Paid",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
