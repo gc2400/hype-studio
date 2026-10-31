@@ -79,6 +79,17 @@ function CueWave(cv, o) {
     draw();
   };
   cv.onpointercancel = () => { press = null; };
+  // the mouse wheel zooms (song · 30 s · 10 s · 4 s), keeping the spot under the mouse in place
+  let wheelT = 0;
+  cv.addEventListener('wheel', e => {
+    const c = C(); if (!c) return; e.preventDefault();
+    if (Date.now() - wheelT < 160) return; wheelT = Date.now();
+    const r = cv.getBoundingClientRect(), frac = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), t = tAt(e);
+    const d = e.deltaY < 0 ? 1 : -1, nl = Math.max(0, Math.min(LV.length - 1, lv + d)); if (nl === lv) return;
+    lv = nl;
+    if (lv) { const sp = span(); V0 = Math.max(0, Math.min(Math.max(0, c.d - sp), t - frac * sp)); mode = 'free'; } else mode = 'p';
+    draw();
+  }, {passive: false});
   return {
     draw,
     reset() { lv = lv || 0; V0 = 0; mode = 'p'; peaks = []; fine = null; draw(); },
