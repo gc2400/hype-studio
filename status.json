@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T02:01:36",
+ "time": "2026-10-31T02:15:39",
  "result": "ok",
- "commit": "f8b226f770450068239392ac5cca4949fbc66c5e",
- "subject": "Up next / DJ: the next song goes to Liquidsoap only in the last 15 s (it can't be pulled back once prepared) - no more double songs in AUX/decks, AUX songs stay in their list until needed, a taken-back prepared song is skipped; ducked pads: music back when the voice ends (smart mix point); Recordings moved to Planning",
+ "commit": "85b8628ca3ca7b2c6ffc7babb2fd61bb988fc95c",
+ "subject": "DJ view keeps AUTO running until MANUAL or a deck is started; back to AUTO: future fixed times (TOH) are placed again at their own time (never early), no jingle twice / two jingles in a row from the parked Up next",
  "log": [
-  "02:00:50 update e329b57a \u2192 f8b226f7 \u00b7 3 file(s): engine/engine.py, web/panel/plan.html, web/panel/settings.html",
-  "02:00:51 restart hype-engine",
-  "02:01:36 installed OK \u00b7 restarted: hype-engine"
+  "02:14:54 update f8b226f7 \u2192 85b8628c \u00b7 1 file(s): engine/engine.py",
+  "02:14:54 restart hype-engine",
+  "02:15:39 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "LA$$A x Cristian D x Frsh \u2013 Alles Is Ok\u00e9",
+  "song": "Wisin x Kapo \u2013 Luna",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
