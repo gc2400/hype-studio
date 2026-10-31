@@ -1,18 +1,18 @@
 {
- "time": "2026-10-31T22:08:38",
+ "time": "2026-10-31T22:11:28",
  "result": "ok",
- "commit": "3a6595515c319db7936f34277132d107782df396",
- "subject": "Top of the hour: songs after a planned TOH are picked with the new hour's clock right away, so they stay when the TOH goes on air",
+ "commit": "bb76cf152de9bb06975e5eee51381d1717f893f7",
+ "subject": "Top of the hour: the planned songs stay up to the next hour's TOH; a later hour's TOH can never end up first in Up next (that made a filler song play after the 22:00 TOH)",
  "log": [
-  "22:07:53 update 4cc5c3f6 \u2192 3a659551 \u00b7 1 file(s): engine/engine.py",
-  "22:07:53 restart hype-engine",
-  "22:08:38 installed OK \u00b7 restarted: hype-engine"
+  "22:10:43 update 3a659551 \u2192 bb76cf15 \u00b7 1 file(s): engine/engine.py",
+  "22:10:43 restart hype-engine",
+  "22:11:28 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
   "song": "Club Hype \u2013 DJ Ricsz Liveset 8 Vuurlinie Events",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.5,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
