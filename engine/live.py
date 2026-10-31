@@ -91,6 +91,29 @@ class Live:
                 self.air = a
             except Exception: pass
             time.sleep(0.5)
+            try: self.black_tick()
+            except Exception as e: log.warning("cam black: %s", e)
+    def black_tick(self):
+        """Behind every camera there is a black box: a portrait phone camera shows upright on black (never stretched).
+        It is only shown while that camera is sending - otherwise the CAM slate behind it shows, as before."""
+        now = time.time()
+        if now - getattr(self, "_bk_t", 0) < 3: return
+        self._bk_t = now
+        paths = mtx_paths()
+        with self.tv.olock:
+            cl = self.tv.client()
+            if now - getattr(self, "_bk_map_t", 0) > 120 or not getattr(self, "_bk_map", None):
+                m = []
+                for sc in cl.get_scene_list().scenes:
+                    items = sorted(cl.get_scene_item_list(sc["sceneName"]).scene_items, key=lambda i: i["sceneItemIndex"])
+                    for k, it in enumerate(items):
+                        if it["sourceName"] == "Cam black" and k + 1 < len(items) and items[k + 1]["sourceName"].endswith(" feed"):
+                            m.append((sc["sceneName"], it["sceneItemId"], items[k + 1]["sourceName"].replace("Cam", "CAM").replace(" feed", "")))
+                self._bk_map, self._bk_map_t, self._bk_on = m, now, {}
+            for scene, iid, cam in self._bk_map:
+                src = self.st["cams"].get(cam); on = bool(src and paths.get(src, {}).get("ready"))
+                if self._bk_on.get((scene, iid)) != on:
+                    cl.set_scene_item_enabled(scene, iid, on); self._bk_on[(scene, iid)] = on
     def set_live(self, on):
         self.liq.cmd(f"var.set live_on = {'true' if on else 'false'}"); self.live = on
         self.live_since = time.time() if on else None; self.drops = 0
