@@ -626,7 +626,7 @@ let wasLive = null;
 function lvRender() {
   if (!LV) return;
   // going LIVE: the preview's sound goes off - on this laptop it would play into the Mixcast (USB) and go on air a second time, ~1 s late
-  if (LV.live && wasLive === false && !$('#pvv').muted) { $('#pvv').muted = true; pvPaint(); toast('Preview sound off while LIVE – it would play into your Mixcast and go on air twice', 1); }
+  if (LV.live && wasLive === false && !$('#pvv').muted) { $('#pvv').muted = true; pvPaint(); if (PVC) { PVC.close(); PVC = null; pvLive(); } toast('Preview sound off while LIVE – it would play into your Mixcast and go on air twice', 1); }
   wasLive = !!LV.live;
   const g = $('#lvGo'); g.textContent = LV.live ? 'END LIVE' : 'GO LIVE'; g.className = 'btn ' + (LV.live ? 'red redon' : '');
   $('#lvStudio').textContent = LV.studio_online ? 'studio connected' : 'studio offline'; $('#lvStudio').className = 'chip ' + (LV.studio_online ? 'ok' : '');
@@ -662,7 +662,8 @@ ltLoad(); setInterval(ltLoad, 5000);
 let PVC = null, pvFails = 0;
 function pvLive() {
   if (!(typeof HypeRTC !== 'undefined') || !LV || !LV.studio_key) return setTimeout(pvLive, 1500);
-  PVC = HypeRTC.keep('program', async () => { const r = await HypeRTC.play('preview', {key: LV.studio_key, video: true}); $('#pvv').srcObject = r.stream; $('#pvv').play().catch(() => {}); return r; },
+  // light by default (360p, ~0.6 Mbps, no sound): it hardly uses your internet while you broadcast; sound on = the full preview (720p + sound)
+  PVC = HypeRTC.keep('program', async () => { const r = await HypeRTC.play($('#pvv').muted ? 'guestview' : 'preview', {key: LV.studio_key, video: true}); $('#pvv').srcObject = r.stream; $('#pvv').play().catch(() => {}); return r; },
     (n, st) => { if (st === 'connected') { pvFails = 0; $('#pvv').hidden = false; $('#pv').hidden = true; $('#pvv').volume = +$('#pvVol').value; }
       else if (/error|failed/.test(st) && ++pvFails === 3) { $('#pvv').hidden = true; $('#pv').hidden = false; $('#pvInfo').textContent = 'Preview: a picture every second'; pv(); } });
 }
@@ -678,7 +679,7 @@ function pvPaint() {
   $('#pvSt').textContent = PVSTOP ? 'stopped' : m ? 'muted' : 'sound on';
   $('#pvBox').classList.toggle('stopped', PVSTOP);
 }
-$('#pvMute').onclick = () => { const v = $('#pvv'); v.muted = !v.muted; v.volume = +$('#pvVol').value; if (!v.muted) v.play().catch(() => {}); pvPaint(); };
+$('#pvMute').onclick = () => { const v = $('#pvv'); v.muted = !v.muted; v.volume = +$('#pvVol').value; if (!v.muted) v.play().catch(() => {}); pvPaint(); if (PVC) { PVC.close(); PVC = null; pvLive(); } };
 $('#pvVol').oninput = () => { const v = $('#pvv'); v.volume = +$('#pvVol').value; if (v.muted && +$('#pvVol').value > 0) { v.muted = false; } try { localStorage.setItem('hypePvVol', $('#pvVol').value); } catch (e) {} pvPaint(); };
 $('#pvTog').onclick = () => {
   PVSTOP = !PVSTOP;

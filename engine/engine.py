@@ -2064,7 +2064,9 @@ class H(BaseHTTPRequestHandler):
             a = p[6:]; L = E.live
             try:
                 if a == "on": L.set_live(True)
-                elif a == "off": L.set_live(False)
+                elif a == "off":
+                    L.set_live(False)
+                    E.cmd("autoscene", {})        # END LIVE: the TV follows the music again (no camera left on screen)
                 elif a == "guest_add": slot, g = L.guest_add(d.get("name"), d.get("slot"), int(d.get("hours") or 12), d.get("mode") or "video"); return self.send(200, {"ok": True, "slot": slot, "token": g["token"]})
                 elif a == "guest_remove": L.guest_remove(d["slot"])
                 elif a == "cam": L.set_cam(d["cam"], d["src"])
