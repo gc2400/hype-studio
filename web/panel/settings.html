@@ -138,6 +138,9 @@ table{border-collapse:collapse;width:100%}
       <div class="sl" data-find="jingle sweeper id volume loud level"><label>Jingles volume<small>compared to the songs – jingles are short and dense, so they sound louder at the same loudness</small></label><input type="range" id="jingle_db" min="-10" max="3" step="0.5"><span class="v" id="jingle_db_v"></span></div>
       <div class="sl" data-find="jingle sweeper id fade out tail"><label>Jingles: fade-out<small>0 = a jingle/sweeper plays out to its END while the next song starts at its MIX (recommended)</small></label><input type="range" id="jingle_fade" min="0" max="3" step="0.1"><span class="v" id="jingle_fade_v"></span></div>
       <div class="sl" data-find="duck pads music level jingle over"><label>Music under ducked pads<small>how low the music goes while a pad plays with DUCK MUSIC on</small></label><input type="range" id="pad_duck" min="0.1" max="0.6" step="0.05"><span class="v" id="pad_duck_v"></span></div>
+      <label class="opt" data-find="id intro soft talk over jingle branding"><input type="checkbox" id="id_intro"><div><b>ID over soft intros</b><span>Between two songs (never right after a jingle, ID, sweeper, TOH or ad), an ID from jingles/IDS plays over the start of the next song when its soft intro is long enough: the ID's voice (its START → MIX) must be done over 1 s before the song reaches full level, so it never talks over the beat drop. The intro dips a little under the voice and comes back up at the ID's MIX. Never on mixes or on songs with their own sweeper. Up next shows "+ ID over intro" on the song.</span></div></label>
+      <div class="sl" data-find="id intro how often per hour"><label>ID over intros: max per hour</label><input type="range" id="id_intro_max" min="1" max="10" step="1"><span class="v" id="id_intro_max_v"></span></div>
+      <div class="sl" data-find="id intro minutes apart gap"><label>ID over intros: minutes apart<small>at least this long between two of them</small></label><input type="range" id="id_intro_gap" min="0" max="60" step="5"><span class="v" id="id_intro_gap_v"></span></div>
       <p class="muted" style="margin:0">"Play now" in the panel/DJ decks is always a quick cut (0.25 s).</p>
     </section>
     <section class="card sec" data-sec="rotation">
@@ -266,7 +269,7 @@ function render() {
     : mbm ? 'Your sliders (bass, treble, loudness …) with bass, mids and highs compressed on their own – the kick no longer pulls the vocals down. The Compression sliders are not used here.' : '';
   $$('#presets [data-p]').forEach(b => b.onclick = () => { const P_ = Object.assign({}, allPresets()[b.dataset.p]); delete P_.tip; pend = Object.assign({snd_punch: 0, snd_mid: 0}, P_); sendSound().then(() => { render(); toast('Preset: ' + b.dataset.p); }); });
   const ok = Object.values(ST.sound).every(v => v != null); $('#sndState').textContent = ok ? 'radio engine connected' : 'radio engine not reachable'; $('#sndState').style.color = ok ? 'var(--g)' : 'var(--r)';
-  ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always', 'smart_mix'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
+  ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always', 'smart_mix', 'id_intro'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
   $('#tv_clip_offset').value = ST.tv_clip_offset; $('#tv_clip_offset_v').textContent = fmtv(ST.tv_clip_offset, 'dB');
   $('#tv_clip_offset').oninput = () => $('#tv_clip_offset_v').textContent = fmtv(+$('#tv_clip_offset').value, 'dB');
   $('#tv_clip_offset').onchange = () => post('settings', {tv_clip_offset: +$('#tv_clip_offset').value}).then(d => { ST = d; toast('Saved – used from the next paired song'); });
@@ -311,6 +314,8 @@ function renderMix() {
   const jf = v => +v === 0 ? 'plays out' : (Math.round(v * 10) / 10) + ' s';
   $('#jingle_fade').value = ST.jingle_fade ?? 0; $('#jingle_fade_v').textContent = jf(ST.jingle_fade ?? 0); bindSlider('jingle_fade', 's', x => post('settings', {jingle_fade: x}).then(d => { ST = d; toast('Saved – from the next jingle that is queued'); }), jf);
   const dbf = v => Math.round(20 * Math.log10(v)) + ' dB (' + Math.round(v * 100) + ' %)';
+  $('#id_intro_max').value = ST.id_intro_max ?? 3; $('#id_intro_max_v').textContent = (ST.id_intro_max ?? 3) + ' per hour'; bindSlider('id_intro_max', '', x => post('settings', {id_intro_max: x}).then(d => { ST = d; toast('Saved'); }), v => v + ' per hour');
+  $('#id_intro_gap').value = ST.id_intro_gap ?? 15; $('#id_intro_gap_v').textContent = (ST.id_intro_gap ?? 15) + ' min'; bindSlider('id_intro_gap', '', x => post('settings', {id_intro_gap: x}).then(d => { ST = d; toast('Saved'); }), v => v + ' min');
   $('#pad_duck').value = ST.pad_duck ?? 0.25; $('#pad_duck_v').textContent = dbf(ST.pad_duck ?? 0.25); bindSlider('pad_duck', '', x => post('settings', {pad_duck: x}).then(d => { ST = d; toast('Saved – from the next pad'); }), dbf);
   const hm = v => v >= 60 ? Math.floor(v / 60) + ' h ' + (v % 60 ? (v % 60) + ' min' : '') : v + ' min';
   $('#artist_sep_min').value = ST.artist_sep_min ?? 75; $('#artist_sep_min_v').textContent = hm(ST.artist_sep_min ?? 75); bindSlider('artist_sep_min', 'min', x => post('settings', {artist_sep_min: x}).then(d => { ST = d; toast('Saved'); }), hm);

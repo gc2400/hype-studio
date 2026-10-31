@@ -125,6 +125,9 @@ JINGLE_FADE = 0.0   # Settings → Mixing → Jingles: fade-out (0 = plays out t
 MIX_OUT = 1.5     # Settings → Mixing → fade-out of the old song (= how long both songs play together)
 # ---------------- smart mix (from the loudness map) ----------------
 SMART_MIX = True     # Settings → Mixing → Smart mix
+ID_INTRO = {"on": True, "max": 3, "gap": 15}   # Settings → Mixing → ID over soft intros (max per hour, minutes apart)
+ID_FOLDER = "IDS"    # the IDs: /srv/hype/jingles/IDS
+ID_OFFSET, ID_DUCK = 0.4, 0.5   # the ID starts 0.4 s into the song; the (already soft) intro dips to 50 % under the voice
 PUSH_LEAD = 15.0      # the next item goes to Liquidsoap 15 s before the song on air ends (see push_next)
 SNAPS_FILE = "/var/lib/hype/plan_snaps.json"; MINE_FILE = "/var/lib/hype/upnext_mine.json"
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
@@ -682,6 +685,7 @@ class Engine:
         try: self.liq.cmd("var.set duck_lvl = 1.0")   # never start with the music dipped
         except Exception: pass
         self.ov_last = 0; self.ov_count = {}; self.ov_recent = []
+        self.idi_times = []; self.idi_used = {}      # IDs over soft intros: when they played (max per hour / minutes apart), which ID
         self.last_kind = None
         self.plan = []; self.liq_next = None; self.now = {}; self.auto = True; self.stop_at_end = False; self.stopped = False
         self.snaps = []      # (item id, playlist positions before it was planned) for the planned items not on air yet
@@ -790,6 +794,7 @@ class Engine:
             finally: touched = planner.CTX.pop("touched", None)
             if it and touched: self.snaps.append((it["id"], {str(k): v for k, v in touched.items()}))
             if it and self.runner.snap: it["snap"] = self.runner.snap
+            if it: it["hour_k"] = list(planner.runner_key(at))    # which clock run (hour / show) picked it - kept at the top of the hour
             if not it: it = self.picker.next(c, self.avoid())     # nothing in the clocks: built-in test clock
             if not it: break
             self.picker.note(it); self.place(it)
@@ -976,13 +981,25 @@ class Engine:
                 keep = [p_ for p_ in self.plan if p_.get("event") == it["event"] or p_.get("src") != "clock"]
                 k = 0
                 while k < len(self.plan) and self.plan[k].get("event") == it["event"]: k += 1
-                head = self.plan[:k]; rest = [p_ for p_ in self.plan[k:] if p_.get("src") != "clock"]
-                dropped = len(self.plan) - len(head) - len(rest)
-                self.plan = head + rest; self.runner = planner.ClockRunner(); self.held = {}; self.hour_floor = it["hour_T"]
-                log.info("new hour: top of the hour queued, %d planned item(s) re-planned, clock from slot 1", dropped)
+                head = self.plan[:k]; nk = list(planner.runner_key(it["hour_T"] + 1))
+                clock_after = [p_ for p_ in self.plan[k:] if p_.get("src") == "clock"]
+                if clock_after and all(p_.get("hour_k") == nk for p_ in clock_after):
+                    # already planned with the new hour's clock (from its slot 1): Up next stays exactly as you saw it
+                    self.hour_floor = it["hour_T"]
+                    log.info("new hour: top of the hour queued, the %d planned item(s) after it stay (new hour's clock)", len(clock_after))
+                else:
+                    # (rare: planned before the new hour was known, e.g. right after a restart) plan them again from slot 1
+                    rest = [p_ for p_ in self.plan[k:] if p_.get("src") != "clock"]
+                    dropped = len(self.plan) - len(head) - len(rest)
+                    self.plan = head + rest; self.runner = planner.ClockRunner(); self.held = {}; self.hour_floor = it["hour_T"]
+                    log.info("new hour: top of the hour queued, %d planned item(s) re-planned, clock from slot 1", dropped)
         if it.get("snap"):   # a resume clock goes on after the last item that really went out
             try: planner.save_clock_state(c, *it["snap"])
             except Exception as e: log.warning("clock state: %s", e)
+        try:
+            it.pop("id_over", None); idp = self.pick_intro_id(c, it)
+            if idp: it["id_over"] = idp; log.info("ID over the intro of %s: %s", it["title"], idp)
+        except Exception as e: log.warning("intro ID: %s", e)
         res = self.liq.cmd("q.push " + annotate(it, nxt=self.plan[0] if self.plan else None)); self.liq_next = it; it["pushed"] = time.time()
         ids = [s_[0] for s_ in self.snaps]
         if it.get("id") in ids: self.snaps = self.snaps[ids.index(it["id"]) + 1:]     # it goes on air: its songs are really used
@@ -1142,6 +1159,31 @@ class Engine:
             hl_send_np(c, it)
             if it["section"] != "music": self.last_kind = "jingle"
             self.push_next(c)
+    def pick_intro_id(self, c, it):
+        """An ID over the soft intro of the next song (AUTO): only song -> song (never after a jingle, ID, sweeper, TOH or ad),
+        never on a mix or a song with its own sweeper / "never", at most N per hour and M minutes apart, and only when the
+        ID's voice (its START -> MIX) is over 1 s before the intro reaches full level. The ID that has rested longest."""
+        if not ID_INTRO["on"] or not self.auto or self.dj or it.get("section") != "music": return None
+        if (it.get("folder") or "").upper().startswith("MIXES") or it.get("src") in ("aux", "dj"): return None
+        prev = self.now if self.now and self.now.get("path") else None
+        if not prev or prev.get("section") != "music" or (prev.get("folder") or "").upper().startswith("MIXES"): return None
+        r = c.execute("SELECT overlay_mode FROM items WHERE path=?", (it["path"],)).fetchone()
+        if r and r[0] in ("none", "song"): return None
+        now = time.time(); self.idi_times = [t for t in self.idi_times if now - t < 3600]
+        if len(self.idi_times) >= ID_INTRO["max"]: return None
+        if self.idi_times and now - self.idi_times[-1] < ID_INTRO["gap"] * 60: return None
+        if now - self.ov_last < 180: return None                         # an intro sweeper just played
+        nl = intro_len(it)
+        if not nl or nl < 2.5: return None
+        best = None
+        for row in c.execute(f"SELECT {COLS} FROM items WHERE section='jingles' AND folder=? AND problem IS NULL", (ID_FOLDER,)).fetchall():
+            ji = row_item(row, "intro"); voice = duck_len(ji)               # START -> MIX: the part with the voice
+            if voice + ID_OFFSET + 1.0 > nl: continue
+            la = c.execute("SELECT MAX(started) FROM asrun WHERE path=?", (ji["path"],)).fetchone()[0] or 0   # also played in the clock
+            rested = max(la, self.idi_used.get(ji["path"], 0))
+            if now - rested < 20 * 60: continue                            # the same ID not twice within 20 min
+            if best is None or rested < best[0]: best = (rested, ji["path"])
+        return best[1] if best else None
     def intro_sweeper(self, c, it):
         """Sweeper over the start of a song with the music ducked: the song's own choice, else the first rule that fits."""
         prev = self.last_kind
@@ -1150,7 +1192,10 @@ class Engine:
         mode, opath, oat, oduck = r if r else (None, None, None, None)
         if mode == "none": return
         jingle, offset, duck = None, 0.5, 0.35
-        if mode == "song" and opath:                            # chosen for this song (e.g. the Top 10 number 1)
+        if it.get("id_over") and mode != "song" and prev == "music":     # ID over the soft intro (decided when it was queued)
+            jingle, offset, duck = it["id_over"], ID_OFFSET, ID_DUCK
+            self.idi_times.append(time.time()); self.idi_used[jingle] = time.time()
+        elif mode == "song" and opath:                            # chosen for this song (e.g. the Top 10 number 1)
             jingle = planner.song_overlay_path(c, opath); offset = oat or 0.3
             if oduck: duck = max(0.1, min(0.9, 1 - oduck / 100)) if oduck > 1 else oduck
         elif prev == "jingle":
@@ -1492,7 +1537,7 @@ def library(qs):
 
 def wave_zoom(path, t0, dur=6.0):
     """Fine waveform for the cue editor zoom: the loudest sample of every 10 ms from t0, over dur seconds."""
-    t0 = max(0.0, t0); dur = max(1.0, min(12.0, dur))
+    t0 = max(0.0, t0); dur = max(1.0, min(60.0, dur))
     p = subprocess.run(["nice", "-n", "10", "ffmpeg", "-v", "error", "-ss", f"{t0:.3f}", "-t", f"{dur:.3f}", "-i", os.path.join(ROOT, path),
                         "-map", "0:a:0", "-ac", "1", "-ar", "8000", "-f", "s16le", "-"], capture_output=True, timeout=30)
     a = array.array("h"); a.frombytes(p.stdout[: len(p.stdout) // 2 * 2])
@@ -1582,6 +1627,7 @@ def load_rotation():
     """Artist / song separation and the longest overlap, from Settings."""
     global ARTIST_SEP, TITLE_SEP, MIX_MAX, JINGLE_FADE, JINGLE_DB, ADBOX_ALWAYS, SMART_MIX, AV_LAG
     c = dbc()
+    ID_INTRO.update(on=bool(planner.get_setting(c, "id_intro", True)), max=int(planner.get_setting(c, "id_intro_max", 3)), gap=float(planner.get_setting(c, "id_intro_gap", 15)))
     ARTIST_SEP = 60 * float(planner.get_setting(c, "artist_sep_min", 75)); TITLE_SEP = 3600 * float(planner.get_setting(c, "title_sep_h", 3))
     JINGLE_FADE = float(planner.get_setting(c, "jingle_fade", 0.0)); JINGLE_DB = float(planner.get_setting(c, "jingle_db", -3.0))
     ADBOX_ALWAYS = bool(planner.get_setting(c, "adbox_always", True))
@@ -1724,7 +1770,7 @@ def get_settings():
         except Exception: snd[v] = None
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
-            "artist_sep_min": ARTIST_SEP / 60, "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
+            "artist_sep_min": ARTIST_SEP / 60, "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd}
 def set_settings(d):
     global MIX_OUT
@@ -1741,6 +1787,9 @@ def set_settings(d):
         planner.set_setting(c, "sound_presets", clean)
     if "adbox_always" in d: planner.set_setting(c, "adbox_always", bool(d["adbox_always"]))
     if "smart_mix" in d: planner.set_setting(c, "smart_mix", bool(d["smart_mix"]))
+    if "id_intro" in d: planner.set_setting(c, "id_intro", bool(d["id_intro"]))
+    if "id_intro_max" in d: planner.set_setting(c, "id_intro_max", max(1, min(12, int(float(d["id_intro_max"])))))
+    if "id_intro_gap" in d: planner.set_setting(c, "id_intro_gap", max(0.0, min(60.0, float(d["id_intro_gap"]))))
     if "av_lag" in d: planner.set_setting(c, "av_lag", max(0.0, min(1.0, float(d["av_lag"]))))
     if "jingle_db" in d: planner.set_setting(c, "jingle_db", max(-12.0, min(3.0, float(d["jingle_db"]))))
     if "jingle_fade" in d: planner.set_setting(c, "jingle_fade", max(0.0, min(5.0, float(d["jingle_fade"]))))

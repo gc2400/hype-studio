@@ -135,6 +135,9 @@ dialog#cueDlg::backdrop{background:rgba(2,8,16,.7)}
 .nud button:hover{border-color:currentColor;color:var(--txt)}.nud .auto{color:var(--y);min-width:0;padding:0 8px}
 .tin{flex:1;min-width:0;width:0;min-height:30px;border-radius:8px;background:var(--deep);border:1px solid var(--line2);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;text-align:center;padding:0 4px}
 .tin:focus{outline:none;border-color:currentColor}
+.zm{display:inline-flex;align-items:center;gap:2px;margin-left:6px;background:var(--deep);border:1px solid var(--line2);border-radius:10px;padding:2px}
+.zm button{min-width:30px;min-height:28px;border:0;border-radius:8px;background:transparent;color:var(--txt);font:inherit;font-size:16px;font-weight:900;cursor:pointer}.zm button:hover{background:var(--card2)}
+.zm span{min-width:38px;text-align:center;font-size:11px;font-weight:800;color:var(--soft)}
 @media (max-width:640px){.cdg .cueside{display:flex!important;flex-direction:column}.cuebox{display:grid;grid-template-columns:104px minmax(0,1fr);gap:6px;align-items:center}.cuebox .cueset{padding:0 10px}.cdg .ovb{flex-direction:column!important;align-items:stretch!important}}
 .cueset .v{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--txt)}
 .cueset small{grid-column:1/-1;margin-top:-8px;font-size:10px;color:var(--mut);font-weight:600}
@@ -409,16 +412,17 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
             <select id="ovSel" class="sel" aria-label="Intro sweeper"></select></div>
           </div>
         </div>
-        <canvas class="wave" id="cueWave" width="1600" height="110" style="height:56px;cursor:pointer;margin-top:10px" aria-label="Waveform: click to jump, drag the markers"></canvas>
+        <canvas class="wave" id="cueWave" width="1600" height="140" style="height:72px;cursor:pointer;margin-top:10px" aria-label="Waveform: click to jump, drag the markers; zoomed in: drag sideways to move"></canvas>
         <div class="cdt">
           <button class="btn" id="pvBack" title="Back 1 s (←)">−1s</button>
           <button class="btn yellow" id="pvPlay" aria-label="Play or pause (space)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg></button>
           <button class="btn" id="pvFwd" title="Forward 1 s (→)">+1s</button>
           <button class="btn" id="pvStart" title="Play from START">▶ START</button>
           <button class="btn" id="pvMix" title="Play the last 8 s into the MIX, stops at END">▶ MIX</button>
+          <span class="zm" role="group" aria-label="Zoom"><button id="zOut" title="Zoom out (−)" aria-label="Zoom out">−</button><span id="zLv">song</span><button id="zIn" title="Zoom in (+)" aria-label="Zoom in">+</button></span>
           <span class="pos" id="pvPos">0:00.0</span>
         </div>
-        <div class="cdf"><button class="btn sm" id="cueReset" title="Back to the automatic cue points">Automatic cues</button><span class="muted" style="font-size:11px">Space play · ← → 1 s (Shift 0.1 s) · S M E set · type a time in the box</span><span style="flex:1"></span><button class="btn yellow" id="cueSave">Save</button></div>
+        <div class="cdf"><button class="btn sm" id="cueReset" title="Back to the automatic cue points">Automatic cues</button><span class="muted" style="font-size:11px">Space play · ← → 1 s (Shift 0.1 s) · S M E set · type a time in the box · + − zoom</span><span style="flex:1"></span><button class="btn yellow" id="cueSave">Save</button></div>
       </dialog>
     </section>
     <section class="col cB" id="deckB" hidden></section>
@@ -427,6 +431,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="hype-rtc.js"></script>
+<script src="cuewave.js"></script>
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const api = (p, body) => fetch('../api/' + p, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); } return r; }).then(r => r.json());
@@ -483,7 +488,7 @@ function renderLog() {
   S.upcoming.forEach((u, i) => {
     const start = new Date(t * 1000).toTimeString().slice(0, 5); t += (u.cue_mix || u.duration || 0) - (u.cue_start || 0);
     const [bt] = badge(u.mode), jg = (u.mode || '').startsWith('jingle');
-    html += `<div class="li ${jg ? 'jg' : ''}" draggable="true" data-id="${u.id}" data-i="${i}"><span class="tm mono">${start}</span><span class="ic">${jg ? '◆' : u.mode === 'audio' ? '♪' : '▶'}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)} · ${bt}${u.src === 'you' ? ' · added by you' : ''}${S.stop_at_end && i === 0 ? ' · waits (STOP AT END)' : ''}</span></div><span class="du mono">${fmt(u.duration)}</span><button class="x" title="Remove from Up next" aria-label="Remove ${esc(u.title)} from Up next" data-rm="${u.id}">×</button></div>`;
+    html += `<div class="li ${jg ? 'jg' : ''}" draggable="true" data-id="${u.id}" data-i="${i}"><span class="tm mono">${start}</span><span class="ic">${jg ? '◆' : u.mode === 'audio' ? '♪' : '▶'}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)} · ${bt}${u.src === 'you' ? ' · added by you' : ''}${u.id_over ? ' · <span style="color:var(--y);font-weight:800">+ ID over intro</span>' : ''}${S.stop_at_end && i === 0 ? ' · waits (STOP AT END)' : ''}</span></div><span class="du mono">${fmt(u.duration)}</span><button class="x" title="Remove from Up next" aria-label="Remove ${esc(u.title)} from Up next" data-rm="${u.id}">×</button></div>`;
   });
   L.innerHTML = html; const lt = S.upcoming.reduce((n, u) => n + ((u.cue_mix || u.duration || 0) - (u.cue_start || 0)), 0); $('#logInfo').textContent = S.upcoming.length + ' · ' + fmt(lt);
   L.querySelectorAll('[data-rm]').forEach(b => b.onclick = e => { e.stopPropagation(); cmd('remove', {id: b.dataset.rm}); });
@@ -877,8 +882,8 @@ function openCueDlg(it) {
   const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode); $('#dBadge').textContent = bt; $('#dBadge').className = 'chip ' + bc;
   $('#tvInfo').textContent = SEC !== 'music' ? '' : it.mode === 'pair' ? 'TV plays the clip "' + (it.clip_path || '').replace(/^clips\//, '') + '" with its own sound (found by name).' : it.mode === 'clip' ? 'TV plays this video – radio and TV the same sound.' : 'No clip with the same name in /clips → TV shows the Hype Screen.';
   CUE = {s: it.cue_start || 0, m: it.cue_mix || it.duration || 0, e: it.cue_end || it.duration || 0, d: it.duration || 1, auto: !it.mix_set};
-  cuePeaks = []; fillCue(); drawCue(); smartFetch();
-  api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { cuePeaks = p; drawCue(); } });
+  cuePeaks = []; cw.reset(); fillCue(); drawCue(); smartFetch();
+  api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { cuePeaks = p; cw.setPeaks(p); } });
   const m = M(); m.pause(); m.src = '../media/' + it.path.split('/').map(encodeURIComponent).join('/');
   m.style.display = it.has_video ? 'block' : 'none'; $('#cdg').classList.toggle('novid', !it.has_video); m.currentTime = CUE.s;
   openOverlay(it); if (!D.open) D.showModal();
@@ -893,38 +898,31 @@ const fmtF = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), r = t
 function fillCue() { ['s', 'm', 'e'].forEach(k => { const el = $('#v' + k.toUpperCase()); if (document.activeElement !== el) el.value = fmtF(CUE[k]); });
   $('#mixAuto').style.opacity = CUE.auto ? 1 : .55; $('#mixAuto').textContent = CUE.auto ? 'AUTO ✓' : 'AUTO'; }
 function parseT(v) { v = String(v).trim().replace(',', '.'); if (!v) return null; let t = 0; for (const x of v.split(':')) { const n = parseFloat(x); if (isNaN(n)) return null; t = t * 60 + n; } return t; }
-function setCueAt(k, t) { CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false; else smartFetch(); if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; fillCue(); drawCue(); cueSaveSoon(); }
-function drawCue() {
-  const c = $('#cueWave'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H); if (!CUE) return;
-  const n = cuePeaks.length || 1, bw = W / n;
-  for (let i = 0; i < cuePeaks.length; i++) { const f = i / n * CUE.d, h = Math.max(2, cuePeaks[i] * (H - 14)); x.fillStyle = f < CUE.s || f > CUE.e ? '#1A3550' : '#05A9C6'; x.fillRect(i * bw, (H - h) / 2, Math.max(1, bw - 1), h); }
-  [['s', '#3DDC97', 'START'], ['m', '#FFE000', 'MIX'], ['e', '#FF8A97', 'END']].forEach(([k, col, l]) => { const X = CUE[k] / CUE.d * W; x.fillStyle = col; x.fillRect(X - 2, 0, 4, H); x.font = 'bold 20px Inter'; if (k === 'm' && CUE.auto) l = 'MIX AUTO'; x.fillText(l, k === 's' ? X + 6 : X - x.measureText(l).width - 6, k === 'm' ? H - 8 : 22); });
-  const pos = M().currentTime || 0; x.fillStyle = '#fff'; x.fillRect(pos / CUE.d * W - 1, 0, 3, H);
-}
-function cueX(e) { const r = $('#cueWave').getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * CUE.d; }
-let pressC = null, cueSaveT = null;
+function setCueAt(k, t) { cw.focus(k); CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false; else smartFetch(); if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; fillCue(); drawCue(); cueSaveSoon(); }
+const cw = CueWave($('#cueWave'), {cue: () => CUE, media: () => M(), path: () => SEL && SEL.path, api, label: $('#zLv'),
+  set: (k, t, done) => { if (done) setCueAt(k, t); else { CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false; M().currentTime = CUE[k]; fillCue(); drawCue(); } },
+  seek: t => { M().currentTime = t; drawCue(); }});
+function drawCue() { if (CUE) cw.draw(); }
+$('#zIn').onclick = () => cw.zoom(1); $('#zOut').onclick = () => cw.zoom(-1);
+let cueSaveT = null;
 function cueSaveSoon() { clearTimeout(cueSaveT); cueSaveT = setTimeout(() => $('#cueSave').click(), 900); }     // auto-save
-$('#cueWave').onpointerdown = e => { if (!CUE) return; const t = cueX(e), near = ['s', 'm', 'e'].reduce((a, k) => Math.abs(CUE[k] - t) < Math.abs(CUE[a] - t) ? k : a, 's');
-  pressC = {x: e.clientX, t, k: Math.abs(CUE[near] - t) / CUE.d < 0.015 ? near : null}; dragM = null; $('#cueWave').setPointerCapture(e.pointerId); };
-$('#cueWave').onpointermove = e => { if (pressC && !dragM && pressC.k && Math.abs(e.clientX - pressC.x) > 5) dragM = pressC.k; if (!dragM) return; cueSaveSoon(); CUE[dragM] = Math.round(cueX(e) * 100) / 100; if (dragM === 'm') CUE.auto = false; else smartFetch(); if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; fillCue(); drawCue(); M().currentTime = CUE[dragM]; };
-$('#cueWave').onpointerup = () => { if (pressC && !dragM) { M().currentTime = pressC.t; drawCue(); } pressC = null; dragM = null; };
-$('#mixAuto').onclick = () => { if (!CUE) return; CUE.auto = true; fillCue(); drawCue(); smartFetch(); cueSaveSoon(); };
+$('#mixAuto').onclick = () => { if (!CUE) return; CUE.auto = true; cw.focus('m'); fillCue(); drawCue(); smartFetch(); cueSaveSoon(); };
 $$('#cueDlg [data-set]').forEach(b => b.onclick = () => setCueAt(b.dataset.set, M().currentTime));
 $$('#cueDlg [data-nud]').forEach(b => b.onclick = () => { if (!CUE) return; const k = b.dataset.nud; setCueAt(k, CUE[k] + parseFloat(b.dataset.d)); M().pause(); M().currentTime = CUE[k]; });
-$$('#cueDlg .tin').forEach(el => { el.onfocus = () => el.select();
+$$('#cueDlg .tin').forEach(el => { el.onfocus = () => { cw.focus(el.dataset.k); el.select(); };
   el.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') el.blur(); if (e.key === 'Escape') { e.preventDefault(); el.value = fmtF(CUE[el.dataset.k]); el.blur(); } };
   el.onblur = () => { if (!CUE) return; const t = parseT(el.value); if (t == null || Math.abs(t - CUE[el.dataset.k]) < 0.005) { fillCue(); return; } setCueAt(el.dataset.k, t); M().pause(); M().currentTime = CUE[el.dataset.k]; }; });
-function playFrom(t, until) { const m = M(); clearTimeout(cueStop); m.currentTime = Math.max(0, t); m.play(); if (until) { const chk = () => { if (m.currentTime >= until) m.pause(); else if (!m.paused) cueStop = setTimeout(chk, 80); }; chk(); } }
-$('#pvPlay').onclick = () => { const m = M(); m.paused ? m.play() : m.pause(); };
+function playFrom(t, until) { const m = M(); cw.follow(); clearTimeout(cueStop); m.currentTime = Math.max(0, t); m.play(); if (until) { const chk = () => { if (m.currentTime >= until) m.pause(); else if (!m.paused) cueStop = setTimeout(chk, 80); }; chk(); } }
+$('#pvPlay').onclick = () => { const m = M(); if (m.paused) { cw.follow(); m.play(); } else m.pause(); };
 // preview always stops at END (when it started before END)
 M().addEventListener('play', () => { M()._lim = CUE && M().currentTime < CUE.e - 0.05; });
 function cueTick() { const m = M(); if (CUE && $('#cueDlg').open && !m.paused && m._lim && m.currentTime >= CUE.e) { m.pause(); m.currentTime = CUE.e; drawCue(); } requestAnimationFrame(cueTick); }
 requestAnimationFrame(cueTick);
-$('#pvBack').onclick = () => { M().currentTime = Math.max(0, M().currentTime - 1); drawCue(); };
-$('#pvFwd').onclick = () => { M().currentTime = Math.min(CUE.d, M().currentTime + 1); drawCue(); };
+$('#pvBack').onclick = () => { cw.follow(); M().currentTime = Math.max(0, M().currentTime - 1); drawCue(); };
+$('#pvFwd').onclick = () => { cw.follow(); M().currentTime = Math.min(CUE.d, M().currentTime + 1); drawCue(); };
 $('#pvStart').onclick = () => playFrom(CUE.s); $('#pvMix').onclick = () => playFrom(CUE.m - 8, CUE.e);
 setInterval(() => { if (!CUE || !$('#cueDlg').open) return; const t = M().currentTime || 0; $('#pvPos').textContent = fmtC(t); drawCue(); }, 100);
-document.addEventListener('keydown', e => { if (!$('#cueDlg').open || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return; if (e.key === ' ') { e.preventDefault(); $('#pvPlay').click(); } if (e.key === 'ArrowLeft') M().currentTime -= e.shiftKey ? 0.1 : 1; if (e.key === 'ArrowRight') M().currentTime += e.shiftKey ? 0.1 : 1;
+document.addEventListener('keydown', e => { if (!$('#cueDlg').open || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return; if (e.key === ' ') { e.preventDefault(); $('#pvPlay').click(); } if (e.key === 'ArrowLeft') { cw.follow(); M().currentTime -= e.shiftKey ? 0.1 : 1; } if (e.key === 'ArrowRight') { cw.follow(); M().currentTime += e.shiftKey ? 0.1 : 1; } if (e.key === '+' || e.key === '=') cw.zoom(1); if (e.key === '-' || e.key === '_') cw.zoom(-1);
   const k = {s: 's', m: 'm', e: 'e'}[e.key.toLowerCase()]; if (k && !e.ctrlKey && !e.metaKey) { e.preventDefault(); document.querySelector('#cueDlg [data-set="' + k + '"]').click(); } });
 $('#cueSave').onclick = () => cmd('set_cues', {path: SEL.path, cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, mix_auto: !!CUE.auto}).then(r => { if (r.ok) { Object.assign(SEL, {cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, mix_set: CUE.auto ? 0 : 1}); toast('Saved ✓'); } else toast(r.error || 'Not saved', 1); });
 $('#cueReset').onclick = () => { clearTimeout(cueSaveT); cmd('reset_cues', {path: SEL.path}).then(() => toast('Automatic cue points – measured again in a minute')); };
