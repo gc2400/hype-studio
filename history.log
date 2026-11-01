@@ -142,3 +142,4 @@
 2026-11-01T19:18:17 ok 1f0a83a2 Hype Live page: load the clock font like the other pages
 2026-11-01T19:20:21 ok 07ea8042 Bump header.js version
 2026-11-01T19:21:25 ok 27114a3d Hype Live page: header and tabs never squeezed
+2026-11-01T19:23:30 ok 63c9929e Hype Live page: frame fits the window under the header

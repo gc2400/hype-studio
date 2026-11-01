@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T19:21:25",
+ "time": "2026-11-01T19:23:30",
  "result": "ok",
- "commit": "27114a3d3b133c5ddec72854293b18307d3a8461",
- "subject": "Hype Live page: header and tabs never squeezed",
+ "commit": "63c9929ed8a9362fa9acaef4aea5e8135475997e",
+ "subject": "Hype Live page: frame fits the window under the header",
  "log": [
-  "19:21:25 update 07ea8042 \u2192 27114a3d \u00b7 1 file(s): web/panel/hypelive.html",
-  "19:21:25 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:23:30 update 27114a3d \u2192 63c9929e \u00b7 1 file(s): web/panel/hypelive.html",
+  "19:23:30 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Tyla \u2013 CHANEL",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
