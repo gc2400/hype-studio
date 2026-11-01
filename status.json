@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T17:12:58",
+ "time": "2026-11-01T17:16:04",
  "result": "ok",
- "commit": "018fd6a7f95503ed2983428b14ed60af58857ba0",
- "subject": "Settings text: recording type follows the Record choice",
+ "commit": "55f80661a7592bdbbd1b90f96c1b61c0f336066d",
+ "subject": "Broadcast page reorganised: 1 Connect \u2192 2 GO LIVE \u2192 what is on air (one bar), then your cameras + guests side by side, setup (devices, quality & lip sync, connection) in foldable sections remembered on the laptop",
  "log": [
-  "17:12:58 update 1cea3efc \u2192 018fd6a7 \u00b7 1 file(s): web/panel/settings.html",
-  "17:12:58 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "17:16:04 update 018fd6a7 \u2192 55f80661 \u00b7 1 file(s): web/panel/studio.html",
+  "17:16:04 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "CLUB HYPE \u2013 DJ Ricsz Liveset 9 MID2025SEASON Mojo's Alkmaar",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },

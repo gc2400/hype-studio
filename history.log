@@ -118,3 +118,4 @@
 2026-11-01T17:10:05 ok 0f5db228 Restream error text never shows the stream key
 2026-11-01T17:11:54 ok 1cea3efc Header buttons without empty space on the right; Settings → Live: record video + audio / video / audio (GO LIVE and REC)
 2026-11-01T17:12:58 ok 018fd6a7 Settings text: recording type follows the Record choice
+2026-11-01T17:16:04 ok 55f80661 Broadcast page reorganised: 1 Connect → 2 GO LIVE → what is on air (one bar), then your cameras + guests side by side, setup (devices, quality & lip sync, connection) in foldable sections remembered on the laptop
