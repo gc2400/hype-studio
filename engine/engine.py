@@ -1693,6 +1693,8 @@ class Engine:
         with LOCK:
             n = dict(self.now); el = time.time() - n["started"] if n else 0
             upcoming = ([dict(self.liq_next, locked=True)] if self.liq_next else []) + self.plan
+            upcoming = [dict(u, air=round(self.length(u), 1)) for u in upcoming]      # air = START → (smart) MIX: what is really heard
+            if n.get("path"): n["air"] = round(self.length(n), 1)
             c = dbc()
             hist = [dict(zip(["started", "artist", "title", "folder", "mode", "scene"], r)) for r in
                     c.execute("SELECT started, artist, title, folder, mode, scene FROM asrun ORDER BY id DESC LIMIT 8")]
