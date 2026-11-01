@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T04:09:50",
+ "time": "2026-11-01T04:12:40",
  "result": "ok",
- "commit": "bcb04336350824c0417c0f04255a9aa02c1dafa4",
- "subject": "Clock goes on where it was after a restart; clocks-back hour + 00:00 events; stream keys in a header; new studio key button; expired guest links disconnect",
+ "commit": "79df9e44a93a2ba719f752b41a83b2fd05353e8f",
+ "subject": "Clock position saved when an item really goes on air (a restart re-plans the queued one instead of skipping its slot)",
  "log": [
-  "04:09:05 update 04b0aae6 \u2192 bcb04336 \u00b7 6 file(s): engine/engine.py, engine/live.py, engine/planner.py, web/guest/hype-rtc.js, web/panel/hype-rtc.js, web/panel/settings.html",
-  "04:09:05 restart hype-engine",
-  "04:09:50 installed OK \u00b7 restarted: hype-engine"
+  "04:11:55 update bcb04336 \u2192 79df9e44 \u00b7 1 file(s): engine/engine.py",
+  "04:11:55 restart hype-engine",
+  "04:12:40 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Ayra Starr x Theodora \u2013 Ms. Paper",
+  "song": "Ryan Castro \u2013 que te vaya bien",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
