@@ -98,3 +98,4 @@
 2026-11-01T14:47:34 ok 83eede78 Up next shows the time each item is really heard (START → smart MIX) instead of the full file length
 2026-11-01T14:55:46 ok cacfc907 Up next: durations line up; on hover (tap on phones) ↑ ↓ × buttons instead of the hidden ×; start times use the real heard length
 2026-11-01T15:00:39 ok afbd0cdd Fix: Up next restored after a restart kept fixed-time items as lists – the top of the hour was not recognised and added a second time
+2026-11-01T15:03:28 ok fb71aa2f Safety: a fixed-time item (e.g. the top of the hour) can never go out twice – a copy left in Up next is removed when it is queued
