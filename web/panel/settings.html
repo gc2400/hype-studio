@@ -391,7 +391,7 @@ function lvRender() {
       <label class="dfl">Server (RTMP address)<input type="text" data-f="url" value="${esc(d.url)}" placeholder="rtmp://…" spellcheck="false"></label>
       <label class="dfl">Stream key<span class="row" style="gap:6px;flex-wrap:nowrap"><input type="password" data-f="key" value="${esc(d.key)}" placeholder="${d.key ? '' : 'paste the stream key here'}" spellcheck="false" autocomplete="off" style="flex:1"><button class="btn sm" data-eye title="Show / hide the key" type="button">👁</button></span></label>
       ${hp ? `<span class="muted" style="font-size:12px">Where to find it: ${hp}</span>` : ''}
-      <div class="row" style="gap:8px"><button class="btn sm ${d.on ? 'red' : ''}" data-test="${esc(k)}" type="button">${d.on ? '■ Stop test' : '▶ Test'}</button><span class="dst ${d.on ? (d.ok ? 'ok' : 'bad') : ''}">${d.on ? (d.ok ? '● Sending the TV to ' + esc(d.name) + ' – check the preview there' : '● Not reaching ' + esc(d.name) + ' – check the server and stream key') : 'Test: sends the TV now, without going live – you see it in the preview of ' + esc(d.name)}</span></div></div>`; }).join('') || '<span class="muted">No platforms yet – press + YouTube, + Facebook, + Twitch or + Other.</span>';
+      <div class="row" style="gap:8px"><button class="btn sm ${d.on ? 'red' : ''}" data-test="${esc(k)}" type="button">${d.on ? '■ Stop test' : '▶ Test'}</button><span class="dst ${d.on ? (d.ok ? 'ok' : 'bad') : ''}">${d.on ? (d.ok ? '● Sending the TV to ' + esc(d.name) + ' – check the preview there' : (d.err ? '● Not reaching ' + esc(d.name) + ' – check the server and stream key (' + esc(d.err.slice(-90)) + ')' : '● Connecting to ' + esc(d.name) + ' …')) : 'Test: sends the TV now, without going live – you see it in the preview of ' + esc(d.name)}</span></div></div>`; }).join('') || '<span class="muted">No platforms yet – press + YouTube, + Facebook, + Twitch or + Other.</span>';
   $$('#dests [data-del]').forEach(b => b.onclick = () => { delete LV.restream[b.dataset.del]; lvRender(); });
   $$('#dests [data-test]').forEach(b => b.onclick = () => { const k = b.dataset.test, d = LV.restream[k], on = !(d && d.on);
     const go = () => post('live/restream', {key: k, on}).then(x => { if (x.error) return toast(x.error); LV = x; lvRender(); toast(on ? 'Sending to ' + d.name + ' – it can take ~10 s before the preview shows' : 'Test stopped'); testPoll(); });
@@ -410,8 +410,8 @@ $('#destSave').onclick = () => saveDests().then(() => { lvRender(); toast('Restr
 // while a test runs: its status (sending / not reaching) every 3 s
 let tpT = null;
 function testPoll() { clearTimeout(tpT); if (!Object.values(LV.restream || {}).some(d => d.on)) return;
-  tpT = setTimeout(() => get('live').then(d => { const was = JSON.stringify(Object.values(LV.restream).map(x => [x.on, x.ok])); LV = d;
-    if (JSON.stringify(Object.values(LV.restream).map(x => [x.on, x.ok])) !== was) lvRender(); testPoll(); }), 3000); }
+  tpT = setTimeout(() => get('live').then(d => { const was = JSON.stringify(Object.values(LV.restream).map(x => [x.on, x.ok, !!x.err])); LV = d;
+    if (JSON.stringify(Object.values(LV.restream).map(x => [x.on, x.ok, !!x.err])) !== was) lvRender(); testPoll(); }), 3000); }
 $('#newKey').onclick = () => { const b = $('#newKey');
   if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Sure? Click again'; b.classList.add('yellow'); setTimeout(() => { delete b.dataset.sure; b.textContent = 'New studio key'; b.classList.remove('yellow'); }, 4000); return; }
   delete b.dataset.sure; b.textContent = 'New studio key'; b.classList.remove('yellow');
