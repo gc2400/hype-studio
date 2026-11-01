@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T16:54:11",
+ "time": "2026-11-01T17:01:22",
  "result": "ok",
- "commit": "09913d66348685f0dc7da4dc297f7386b89f947c",
- "subject": "Guest card: CAM 1 | 2 | 3 | 4 as one long box on the same line as 'Show name' and 'Copy link'",
+ "commit": "94dba2f79953f88416d44ed8e649abe450bdc2b4",
+ "subject": "Header: GO LIVE / END LIVE button (click twice) before REC; guest card: Copy link as a link icon; Settings: clear restream setup (platform buttons, labelled server + stream key, where to find the key)",
  "log": [
-  "16:54:11 update f809b582 \u2192 09913d66 \u00b7 1 file(s): web/panel/index.html",
-  "16:54:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "17:01:22 update 09913d66 \u2192 94dba2f7 \u00b7 4 file(s): web/panel/header.js, web/panel/index.html, web/panel/settings.html, web/panel/studio.html",
+  "17:01:22 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "ISSAIRO X FRNKIE X D OPSS \u2013 SAKUDI",
+  "song": "CLUB HYPE \u2013 DJ Ricsz Liveset 9 MID2025SEASON Mojo's Alkmaar",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
