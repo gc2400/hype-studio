@@ -290,6 +290,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
             <span class="mono" id="tMix" style="font-size:11px;color:var(--b)"></span>
           </div>
         </div>
+        <canvas class="wave" id="wave" width="800" height="96" style="height:46px" aria-label="Waveform of the song on air"></canvas>
         <div class="tp">
           <button class="btn ib" id="bPlay" aria-label="Play" title="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg></button>
           <button class="btn ib" id="bSae" aria-label="Stop at end of this song" title="Stop at end"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h3v14H5zM11 5l9 7-9 7z" fill="currentColor"/></svg><small>END</small></button>
@@ -298,7 +299,6 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <button class="btn ib" id="bNext" aria-label="Next song" title="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
           <span class="mono muted" id="tEl" style="margin-left:auto;font-size:12px">0:00</span>
         </div>
-        <canvas class="wave" id="wave" width="800" height="96" style="height:46px" aria-label="Waveform of the song on air"></canvas>
         <div class="meter" aria-label="On-air level (left and right)" role="img">
           <div class="mrow"><span>L</span><div class="mb"><i id="mL"></i><b id="pL"></b></div></div>
           <div class="mrow"><span>R</span><div class="mb"><i id="mR"></i><b id="pR"></b></div></div>
@@ -315,13 +315,13 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <span class="lab" id="auxInfo" style="color:var(--b)"></span>
         </div>
         <div id="auxNext" style="padding:0 6px"></div>
-        <div class="row" style="gap:5px;padding:0 6px 6px;flex-wrap:wrap">
+        <div class="log aux ulist" id="aux"></div>
+        <span class="muted" style="font-size:11px;padding:0 6px 4px">AUX 1 plays top to bottom, then AUX 2. Both empty → the clock keeps the music going. Press ▶ PLAY or AUTO to go back to the programming.</span>
+        <div class="row" style="gap:5px;padding:6px 6px 2px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:2px">
           <select id="auxLoad" hidden aria-label="Load a playlist into this AUX" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 6px;max-width:170px"><option value="">Load playlist…</option></select>
           <button class="btn sm" id="auxSave">Save as playlist</button>
           <button class="btn sm red" id="auxClear">Clear</button>
         </div>
-        <div class="log aux ulist" id="aux"></div>
-        <span class="muted" style="font-size:11px;padding:0 6px 4px">AUX 1 plays top to bottom, then AUX 2. Both empty → the clock keeps the music going. Press ▶ PLAY or AUTO to go back to the programming.</span>
       </div>
     </section>
 
