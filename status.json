@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T18:05:55",
+ "time": "2026-11-01T18:17:55",
  "result": "ok",
- "commit": "46105275b2f30d54f970abc4bacfed7538313cfb",
- "subject": "Hype Live page inside Studio (embed frame, Studio sub-tabs, fallback to WordPress)",
+ "commit": "1532601e5b188af132fbf8682248135d02be6a0d",
+ "subject": "Planning: Week view (shows per day, mix hours, warnings for 7 days, hour panel with clock + what plays); Hype Live frame uses www (login cookie)",
  "log": [
-  "18:05:54 update c673adb9 \u2192 46105275 \u00b7 9 file(s): web/panel/header.js, web/panel/history.html, web/panel/hypelive.html, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/status/index.html",
-  "18:05:55 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "18:17:10 update 46105275 \u2192 1532601e \u00b7 4 file(s): engine/engine.py, engine/planner.py, web/panel/hypelive.html, web/panel/plan.html",
+  "18:17:10 restart hype-engine",
+  "18:17:55 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "CLUB HYPE \u2013 DJ Ricsz Liveset 9 MID2025SEASON Mojo's Alkmaar",
+  "song": "Diquenza x Equalz x JayKoppig \u2013 Duracell",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
