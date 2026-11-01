@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T16:17:56",
+ "time": "2026-11-01T16:31:01",
  "result": "ok",
- "commit": "b275ecebe026768cada6d55cef1ce39048decaaa",
- "subject": "Show jingles: in WEEKEND clock hours the folder 'SHOWS/<show> Weekend' is used when it exists (e.g. Hype Non-Stop Weekend's own custom ID)",
+ "commit": "7e74217af9a8a1468fc18691e04aef1b6e541a84",
+ "subject": "TV stream: players start at 720p (listed first), unique segment names, video pieces cacheable (max-age 600)",
  "log": [
-  "16:17:11 update a3db5840 \u2192 b275eceb \u00b7 1 file(s): engine/planner.py",
-  "16:17:11 restart hype-engine",
-  "16:17:56 installed OK \u00b7 restarted: hype-engine"
+  "16:30:15 update b275eceb \u2192 7e74217a \u00b7 2 file(s): system/nginx-hype.conf, tv/ladder.sh",
+  "16:30:16 restart hype-ladder",
+  "16:31:01 installed OK \u00b7 restarted: nginx-reload, hype-ladder"
  ],
  "guard": {
-  "song": "Vybz Kartel \u2013 WIFEY For LIFEY",
+  "song": "Frenna \u2013 CHAMPION FLOW",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
