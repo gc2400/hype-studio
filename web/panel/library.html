@@ -101,7 +101,8 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
 .cdt .pos{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--y)}
 .cdf{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 @media (max-width:1250px){.cdg{grid-template-columns:minmax(0,1fr)}.cueside{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.ovb{grid-column:1/-1;flex-direction:row;align-items:center}.ovb .sel{flex:1}}
-.tb0{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.tbr{display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:nowrap}   /* ⚠ · Upload · Filter: always together in the right corner */
+.tb0{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.srow{display:flex;gap:8px;align-items:center}.srow .search{flex:1;min-width:0}.tbr{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}.tbr .btn{min-height:46px}   /* search · ⚠ · Upload · Filter on one line */
+@media (max-width:520px){.tbr .bl{display:none}}
 .chipwrap{display:flex;flex-wrap:wrap;gap:5px}.chipwrap .btn{white-space:nowrap}
 @media (max-width:480px){.seg button{padding:6px 7px;font-size:11px}.seg button span{display:none}}
 .seg{display:inline-flex;gap:2px;background:#071A2B;border:1px solid var(--line2,#23496B);border-radius:12px;padding:3px;flex-wrap:wrap;max-width:100%}
@@ -147,14 +148,15 @@ dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
     <section class="card">
       <div class="tb0">
         <div class="seg" id="secs" role="tablist" aria-label="Section"></div>
+      </div>
+      <div class="srow"><label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input id="q" type="search" placeholder="Search artist or title…  ( / )" autocomplete="off" aria-label="Search the library"></label>
         <div class="tbr">
         <button class="btn sm" id="bProb" hidden title="Files with a problem (e.g. an upload that did not finish) first, with the reason">⚠</button>
-        <button class="btn sm" id="bUpload" title="Upload files into a library folder (for big batches WinSCP stays quicker)">⬆ Upload</button>
-        <button class="btn sm" id="bFilter" aria-expanded="false" title="Type, cue points, recently uploaded, sort">⚙ Filter</button>
+        <button class="btn sm" id="bUpload" title="Upload files into a library folder (for big batches WinSCP stays quicker)" aria-label="Upload">⬆<span class="bl"> Upload</span></button>
+        <button class="btn sm" id="bFilter" aria-expanded="false" title="Type, cue points, recently uploaded, sort" aria-label="Filter">⚙<span class="bl"> Filter</span></button>
         </div>
       </div>
-      <label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-        <input id="q" type="search" placeholder="Search artist or title…  ( / )" autocomplete="off" aria-label="Search the library"></label>
       <div class="chipwrap" id="folders" aria-label="Genre"></div>
       <div class="chipwrap" id="subfolders" hidden></div>
       <div class="fpanel" id="fpanel" hidden>
@@ -254,7 +256,7 @@ function renderChips() {
   $$('#chips .fc').forEach(e => e.remove());
   $('#chips').insertAdjacentHTML('afterbegin', on.map(([k, l]) => `<button class="fc" data-off="${k}" title="Switch off">${esc(l)} <b>×</b></button>`).join(''));
   $$('#chips [data-off]').forEach(b => b.onclick = () => { const k = b.dataset.off; if (k === 'kind') KIND = ''; if (k === 'recent') RECENT = 0; if (k === 'auto') AUTOC = 0; if (k === 'sort') SORT = 'az'; lib(); });
-  $('#bFilter').innerHTML = '⚙ Filter' + (on.length ? ` <b style="color:#FFE000">${on.length}</b>` : '');
+  $('#bFilter').innerHTML = '⚙<span class="bl"> Filter</span>' + (on.length ? ` <b style="color:#FFE000">${on.length}</b>` : '');
 }
 // the song list ends at the bottom of the window: only the list scrolls, not the page.
 // The editor on the right is as tall as the list card; the video takes the room that is left (bigger picture).
