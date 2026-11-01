@@ -1903,6 +1903,9 @@ def lower_cmd(d):
         rec = {k: LOWER[k] for k in ("style", "size", "name", "role", "handle")}
         LOWER["recent"] = [rec] + [r for r in LOWER.get("recent", []) if r.get("name") != rec["name"]][:11]
     elif act == "hide": LOWER["visible"] = False
+    elif act == "forget":      # remove a saved name from the quick buttons
+        nm = str(d.get("forget") or "")
+        LOWER["recent"] = [r for r in LOWER.get("recent", []) if r.get("name") != nm]
     LOWER["rev"] = LOWER.get("rev", 0) + 1
     os.makedirs(os.path.dirname(LOWER_FILE), exist_ok=True); json.dump(LOWER, open(LOWER_FILE, "w"))
     return {"ok": True, "lower": LOWER}

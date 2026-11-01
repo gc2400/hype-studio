@@ -236,6 +236,8 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .lt-form{display:grid;grid-template-columns:1fr 1fr 150px;gap:6px}
 .lt-form input,.lt-form select{width:100%;min-width:0}
 .lt-recent{display:flex;gap:5px;flex-wrap:wrap}
+.ltr{position:relative;display:inline-flex}.ltr .ltx{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);background:var(--card2);color:var(--mut);font-size:12px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0}
+.ltr:hover .ltx{display:inline-flex}.ltr .ltx:hover{color:#fff;background:#C8283A;border-color:#C8283A}@media (hover:none){.ltr .ltx{display:inline-flex}}
 @media (max-width:640px){.camgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.lt-form{grid-template-columns:1fr}}
 
 /* slim scrollbars in the Hype colours */
@@ -374,7 +376,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <button class="btn sm red" id="mStop">STOP MEDIA</button>
         </div>
         <div class="grid4 pads" id="pads"></div>
-        <label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">Pads vol</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label>
+        <label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label>
         <div class="row"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK: OFF</button><button class="btn sm" id="bPVid" aria-pressed="false" title="When on, pads with a video (▶) also show their video full screen over what's on air">▶ VIDEO: OFF</button><button class="btn sm" id="bPLoop" aria-pressed="false" title="When on, a pad you start repeats until you click it again (or STOP PADS)">⟳ LOOP: OFF</button><span style="flex:1"></span><button class="btn sm red" id="bPadStop">STOP PADS</button></div>
       </div>
       <div class="card" id="cXfade" hidden>
@@ -650,7 +652,8 @@ function ltRender() {
   if (!LT) return;
   $('#bLT').classList.toggle('redon', !!LT.visible); $('#bLT').textContent = LT.visible ? '● LOWER THIRD' : 'LOWER THIRD';
   if (!LT.visible && !$('#ltName').value && LT.name && document.activeElement.tagName !== 'INPUT') { $('#ltName').value = LT.name; $('#ltRole').value = LT.role || ''; }
-  $('#ltRecent').innerHTML = (LT.recent || []).slice(0, 8).map((r, i) => `<button class="btn sm" data-lr="${i}" title="${esc(r.role)}">${esc(r.name)}</button>`).join('');
+  $('#ltRecent').innerHTML = (LT.recent || []).slice(0, 8).map((r, i) => `<span class="ltr"><button class="btn sm" data-lr="${i}" title="${esc(r.role)}">${esc(r.name)}</button><button class="ltx" data-lx="${i}" title="Remove ${esc(r.name)} from the saved names" aria-label="Remove ${esc(r.name)}">×</button></span>`).join('');
+  $$('#ltRecent [data-lx]').forEach(b => b.onclick = e => { e.stopPropagation(); const r = LT.recent[+b.dataset.lx]; api('cmd/lower', {action: 'forget', forget: r.name}).then(d => { if (d && d.lower) { LT = d.lower; } else LT.recent = LT.recent.filter(x => x.name !== r.name); ltRender(); }).catch(() => {}); });
   $$('#ltRecent [data-lr]').forEach(b => b.onclick = () => { const r = LT.recent[+b.dataset.lr]; $('#ltName').value = r.name; $('#ltRole').value = r.role; $('#ltStyle').value = (r.style || 'A') + '|' + (r.size || 'auto'); });
 }
 function ltSend(action) { const [style, size] = $('#ltStyle').value.split('|');
@@ -708,7 +711,7 @@ function renderPads() {
     + (PEDIT ? '<button class="padadd" id="padDrop">drop here</button>' : '') || '<span class="muted">This bank is empty. Press ✎ EDIT and drag jingles from the library onto it.</span>';
   $$('#pads [data-pad]').forEach(b => {
     const p = B.items[+b.dataset.pad];
-    if (p.has_video && !b.querySelector('.pvm')) b.insertAdjacentHTML('beforeend', '<span class="pvm" title="This pad has a video" style="position:absolute;right:6px;bottom:4px;font-size:10px;opacity:.8">▶</span>');
+
     b.onclick = e => {
       if (PEDIT) { if (e.target.dataset.rmpad) { B.items.splice(+e.target.dataset.rmpad, 1); renderPads(); } return; }
       b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit');
