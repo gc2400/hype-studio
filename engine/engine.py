@@ -1232,10 +1232,11 @@ class Engine:
             if self.now.get("path") == path and time.time() - self.now.get("started", 0) < 15 and not id_next: return   # (same metadata twice; a short LOOP copy still counts)
             c = dbc()
             it = self.liq_next if is_next else None
-            if it: self.liq_next = None; path = it["path"]     # (the real path, not the quoted copy from the metadata)
-            if it and it.get("pos"):    # where the hour clock is, by what is really on air (read back after an engine restart)
-                try: jdump(it["pos"], CLOCK_POS)
-                except Exception as e: log.warning("clock pos: %s", e)
+            if it:
+                self.liq_next = None; path = it["path"]     # (the real path, not the quoted copy from the metadata)
+                if it.get("pos"):    # where the hour clock is, by what is really on air (read back after an engine restart)
+                    try: jdump(it["pos"], CLOCK_POS)
+                    except Exception as e: log.warning("clock pos: %s", e)
             else:
                 r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (path,)).fetchone()
                 if not r: log.info("not in library: %s", path); return
