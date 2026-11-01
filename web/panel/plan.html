@@ -48,9 +48,10 @@ h1{margin:0;font-size:20px;font-weight:900}
   .split > .side{position:sticky;top:72px;display:flex;flex-direction:column}
   .split > .side > .list{flex:1;min-height:0;overflow-y:auto;padding-right:4px}
 }
-.li{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid transparent;cursor:pointer;background:none;color:inherit;text-align:left;width:100%}
-.li:hover{background:var(--card2)}.li.sel{background:var(--card2);border-color:var(--line2)}
-.li b{font-size:14px}.li span{font-size:12px;color:var(--mut)}
+.li{display:flex;align-items:center;gap:10px;min-height:50px;padding:7px 10px;border-radius:12px;border:1px solid var(--line);cursor:pointer;background:none;color:inherit;text-align:left;width:100%;font-family:inherit}
+.li:hover{border-color:var(--line2)}.li.sel{background:var(--card2);border:2px solid var(--y);padding:6px 9px}
+.li b{font-size:13px;font-weight:800}.li span{font-size:11px;color:var(--mut)}
+.list{gap:6px!important}
 .dot{width:12px;height:12px;border-radius:4px;flex:none}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 9px;border-radius:999px;background:var(--card2);color:var(--soft);border:1px solid var(--line2)}
 .chip button{border:0;background:none;color:var(--mut);cursor:pointer;font-size:15px;line-height:1;padding:0}
@@ -63,8 +64,8 @@ label.tg input{width:20px;height:20px;accent-color:var(--y)}
 .pick{max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:2px;background:var(--deep);border-radius:10px;padding:6px}
 .pick button{display:flex;justify-content:space-between;gap:10px;border:0;background:none;color:var(--txt);padding:8px;border-radius:8px;cursor:pointer;text-align:left;font-size:13px}
 .pick button:hover{background:var(--card2)}.pick button span{color:var(--mut)}
-.srcs{display:flex;flex-direction:column;gap:4px;max-height:420px;overflow:auto;padding-right:2px}
-.src{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:var(--card2);border:1px solid var(--line2);font-size:13px}
+.srcs{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto;padding-right:2px}
+.src{display:flex;align-items:center;gap:8px;min-height:42px;padding:4px 8px;border-radius:10px;background:var(--deep);border:1px solid var(--line);font-size:13px}
 .src .h{cursor:grab;color:var(--mut);font-size:16px;line-height:1;user-select:none;padding:0 2px}
 .src.drag{opacity:.35}.src.over{border-color:var(--y);box-shadow:0 -2px 0 var(--y)}
 .src .n{width:24px;color:var(--mut);font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right}
@@ -287,13 +288,15 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
   <!-- PLAYLISTS -->
   <section id="tab-pl" class="split" hidden>
     <div class="card side">
-      <div class="row between"><span class="lab">Playlists</span><button class="btn sm yellow" id="plNew">+ New</button></div>
+      <div class="row between"><span class="lab">Playlists</span><button class="btn sm ghosty" id="plNew">+ New playlist</button></div>
       <input type="search" id="plQ" placeholder="Search playlists…" style="width:100%">
       <div class="list" id="plList"></div>
     </div>
     <div class="card main" id="plEdit" hidden>
-      <div class="row between"><span class="lab">Playlist</span><span class="muted" id="plInfo"></span></div>
-      <label class="muted" style="display:flex;flex-direction:column;gap:6px">Name<input type="text" id="plName" placeholder="e.g. HEAVY"></label>
+      <div class="row" style="gap:10px;align-items:center">
+        <span class="lab" style="flex:1 1 260px">Playlist · <input id="plName" class="shname" placeholder="e.g. HEAVY" aria-label="Playlist name"> <span class="muted" id="plInfo" style="text-transform:none;letter-spacing:0;font-weight:600"></span></span>
+        <div class="row" style="gap:6px"><button class="btn yellow" id="plSave">Save</button><button class="btn" id="plReset" title="The next time it plays from 'where it left off', it starts at the top again">Start from the top</button><button class="btn sm red" id="plDel">Delete</button></div>
+      </div>
       <div class="row" style="gap:20px">
         <label class="tg"><input type="checkbox" id="plLoop"> Loop (start again at the end)</label>
         <label class="tg"><input type="checkbox" id="plShuffle"> Randomize (every song once per round)</label>
@@ -306,15 +309,11 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
         <button class="btn sm" id="addSong">+ Song</button>
         <button class="btn sm" id="addJingle">+ Jingles</button>
         <button class="btn sm" id="addList">+ Playlist</button>
-        <span class="muted" style="font-size:12px">Drag ⠿ (or ▲▼) to change the order</span>
+        <span class="muted" style="font-size:12px">Drag ⠿ to change the order</span>
       </div>
       <div id="picker" hidden>
         <input type="search" id="pickQ" placeholder="Search…" style="width:100%;margin-bottom:6px">
         <div class="pick" id="pickRes"></div>
-      </div>
-      <div class="row between">
-        <div class="row"><button class="btn yellow" id="plSave">Save</button><button class="btn" id="plReset" title="The next time it plays from 'where it left off', it starts at the top again">Start from the top</button></div>
-        <button class="btn red" id="plDel">Delete</button>
       </div>
       <span class="lab">Play order now <span class="muted" style="text-transform:none;letter-spacing:0" id="plPos"></span></span>
       <div class="order" id="plOrder"></div>
