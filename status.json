@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T16:50:18",
+ "time": "2026-11-01T16:52:06",
  "result": "ok",
- "commit": "9403f64c53a2b2c4fe90c4bde9001ea0e968a064",
- "subject": "Branding loop: a show intro uploaded again under the same name is reloaded in OBS (new length/content shows)",
+ "commit": "f809b582034829fae90975742d6cc14b5a7eed3f",
+ "subject": "Branding loop reload: OBS only reopens a file when the path text changes \u2013 use the same file under another spelling",
  "log": [
-  "16:49:32 update c386141e \u2192 9403f64c \u00b7 1 file(s): engine/engine.py",
-  "16:49:32 restart hype-engine",
-  "16:50:18 installed OK \u00b7 restarted: hype-engine"
+  "16:51:21 update 9403f64c \u2192 f809b582 \u00b7 1 file(s): engine/engine.py",
+  "16:51:21 restart hype-engine",
+  "16:52:06 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
   "song": "Yung Bredda \u2013 The Greatest Bend Over",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },

@@ -111,3 +111,4 @@
 2026-11-01T16:45:23 ok b2844b05 LIVE page: player column exactly as wide as on ON AIR
 2026-11-01T16:46:26 ok c386141e Guest card: CAM 1 2 3 4 on one line; Name on screen / Copy link stay together on the right
 2026-11-01T16:50:18 ok 9403f64c Branding loop: a show intro uploaded again under the same name is reloaded in OBS (new length/content shows)
+2026-11-01T16:52:06 ok f809b582 Branding loop reload: OBS only reopens a file when the path text changes – use the same file under another spelling
