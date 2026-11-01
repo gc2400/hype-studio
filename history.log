@@ -128,3 +128,4 @@
 2026-11-01T17:40:17 ok f546e728 SLOT instead of CAM for the 1|2|3|4 boxes (Broadcast + LIVE panel)
 2026-11-01T17:44:24 ok 1c2743e8 Header: buttons fully styled by the header itself – identical on every page
 2026-11-01T17:46:29 ok c673adb9 Header: mode switch at the same place on every page (the panel's own margin no longer applies)
+2026-11-01T18:05:55 ok 46105275 Hype Live page inside Studio (embed frame, Studio sub-tabs, fallback to WordPress)
