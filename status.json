@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T03:41:29",
+ "time": "2026-11-01T04:09:50",
  "result": "ok",
- "commit": "04b0aae6400804aa77f2d9b0079fe2b443cabbc6",
- "subject": "Guest page: a removed or expired guest sees 'your link has ended' instead of reconnecting forever",
+ "commit": "bcb04336350824c0417c0f04255a9aa02c1dafa4",
+ "subject": "Clock goes on where it was after a restart; clocks-back hour + 00:00 events; stream keys in a header; new studio key button; expired guest links disconnect",
  "log": [
-  "03:41:29 update ad590381 \u2192 04b0aae6 \u00b7 1 file(s): web/guest/index.html",
-  "03:41:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "04:09:05 update 04b0aae6 \u2192 bcb04336 \u00b7 6 file(s): engine/engine.py, engine/live.py, engine/planner.py, web/guest/hype-rtc.js, web/panel/hype-rtc.js, web/panel/settings.html",
+  "04:09:05 restart hype-engine",
+  "04:09:50 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Seyi Vibez \u2013 Back 2 U",
+  "song": "Ayra Starr x Theodora \u2013 Ms. Paper",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
