@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T22:32:26",
+ "time": "2026-11-01T22:49:50",
  "result": "ok",
- "commit": "4babd2eaa6b6b08ff73ca7dc8c1fabec6d7206ed",
- "subject": "TV: 360p (650 kbps + 96k audio) as a 4th quality for slow connections",
+ "commit": "c3222c3c3880557d50a5e1e554d4af58e9e466d6",
+ "subject": "Schedule: MIXTAPE tag on hours that play a mixtape from MIXES/Mixtapes",
  "log": [
-  "22:31:41 update 299b8688 \u2192 4babd2ea \u00b7 3 file(s): system/nginx-hype.conf, tv/ladder.sh, web/status/index.html",
-  "22:31:41 restart hype-ladder",
-  "22:32:26 installed OK \u00b7 restarted: nginx-reload, hype-ladder"
+  "22:49:50 update 4babd2ea \u2192 c3222c3c \u00b7 2 file(s): web/panel/help.html, web/panel/plan.html",
+  "22:49:50 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Tyla \u2013 Water",
+  "song": "Karol G x Judeline x rusowsky \u2013 BbY WOW",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
