@@ -651,8 +651,9 @@ def preview_hour(c, day=None, hour=None, clock=None):
     def akey(a):
         o = [x.strip().lower() for x in re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|vs\.?|&|en|,)\s+|,", a or "", flags=re.I) if x.strip()]
         return [x for x in o if x not in ("club hype", "hype radio", "hype radio tv", "hype")] or o
+    HELD = [set()]
     def ok(p_):
-        if p_ in recent[-40:]: return False
+        if p_ in recent[-40:] or p_ in HELD[0]: return False
         a = mem.execute("SELECT artist FROM items WHERE path=?", (p_,)).fetchone()
         return not (a and set(akey(a[0])) & set(arts[-12:]))
     def pj(c_, folder):
@@ -677,6 +678,7 @@ def preview_hour(c, day=None, hour=None, clock=None):
                 n_ = e["amount"] if e["amount"] and e["amount"] > 0 else len(playlist_songs(mem, pid))
                 queue += [take_from_playlist(mem, pid, "start" if i == 0 else "continue", lambda x: True) for i in range(n_)]
             queue = [x for x in queue if x]
+        HELD[0] = held_songs(mem, t)
         p_ = queue.pop(0) if queue else r.next(mem, t, ok, pj)
         if not p_: warn.append("Nothing to play from %s on – the clock's slots are empty." % time.strftime("%H:%M", time.localtime(t))); break
         row = mem.execute("SELECT artist, title, folder, section, COALESCE(cue_mix, cue_end, duration, 180) - COALESCE(cue_start, 0), has_video, mode FROM items WHERE path=?", (p_,)).fetchone()
@@ -992,3 +994,39 @@ def api_set_schedule_date(c, d):
         else: c.execute("DELETE FROM schedule_date WHERE date=? AND hour=?", (dt, int(cell["hour"])))
     c.execute("DELETE FROM schedule_date WHERE date < ?", (time.strftime("%Y-%m-%d", time.localtime(time.time() - 14 * 86400)),))
     c.commit()
+
+
+# ---------------- hold back the songs of a "play exactly as listed" playlist (Top 10) around the hour it plays ----------------
+_HOLD = {}
+def strict_runs(c, t0, t1):
+    """Hour-plan runs starting between t0 and t1 that contain a 'play exactly as listed' playlist: [(start, music paths, seconds)]."""
+    out = []; b = int(t0 // 1800) * 1800
+    while b <= t1:
+        if b % 3600 == 0 or runner_key(b) != runner_key(b - 1):
+            cid = clock_for(c, b)
+            for kind, ref, amount, start in (slots(c, cid) if cid else []):
+                if kind != "playlist" or not str(ref).isdigit(): continue
+                r = c.execute("SELECT strict FROM playlists WHERE id=?", (int(ref),)).fetchone()
+                if not (r and r[0]): continue
+                ps = playlist_songs(c, int(ref))
+                music = {p_ for p_ in ps if c.execute("SELECT 1 FROM items WHERE path=? AND section='music'", (p_,)).fetchone()}
+                out.append((b, music, sum(song_lens(c, ps).values())))
+        b += 1800
+    return out
+
+def held_songs(c, at):
+    """Songs that the normal rotation leaves alone at time 'at': from X min before such a playlist's hour until Y min after it ended
+    (Settings → Rotation: 'Countdown songs held back')."""
+    try:
+        before = float(get_setting(c, "strict_hold_before", 60)) * 60; after = float(get_setting(c, "strict_hold_after", 60)) * 60
+        if before <= 0 and after <= 0: return set()
+        key = (int(at // 300), before, after)
+        if key in _HOLD: return _HOLD[key]
+        held = set()
+        for b, music, dur in strict_runs(c, at - after - 7200, at + before):
+            if b - before <= at <= b + dur + after: held |= music
+        if len(_HOLD) > 200: _HOLD.clear()
+        _HOLD[key] = held
+        return held
+    except Exception as e:
+        log.warning("held songs: %s", e); return set()

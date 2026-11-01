@@ -106,8 +106,9 @@ class Picker:
         now = time.time()
         paths = {r[1] for r in self.recent} | avoid["paths"]
         arts = {a for t, p, aa in self.recent if now - t < ARTIST_SEP for a in aa} | avoid["artists"]
+        held = planner.held_songs(c, at)          # Top 10 songs etc.: not in the normal rotation around the hour they play
         def ok(path):
-            if path in paths: return False
+            if path in paths or path in held: return False
             r = c.execute("SELECT artist FROM items WHERE path=?", (path,)).fetchone()
             return not (r and set(artist_key(r[0])) & arts)
         def pick_jingle(c_, folder):
@@ -2091,7 +2092,7 @@ def get_settings():
         except Exception: snd[v] = None
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
-            "artist_sep_min": ARTIST_SEP / 60, "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
+            "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd}
 def set_settings(d):
     global MIX_OUT
@@ -2100,6 +2101,8 @@ def set_settings(d):
         if k in d: planner.set_setting(c, k, bool(d[k]))
     if "tv_clip_offset" in d: planner.set_setting(c, "tv_clip_offset", max(-10.0, min(10.0, float(d["tv_clip_offset"]))))
     if "artist_sep_min" in d: planner.set_setting(c, "artist_sep_min", max(0.0, min(360.0, float(d["artist_sep_min"]))))
+    for k in ("strict_hold_before", "strict_hold_after"):
+        if k in d: planner.set_setting(c, k, max(0.0, min(240.0, float(d[k])))); planner._HOLD.clear()
     if "title_sep_h" in d: planner.set_setting(c, "title_sep_h", max(0.5, min(48.0, float(d["title_sep_h"]))))
     if "sound_presets" in d and isinstance(d["sound_presets"], dict):   # your own sound presets (Settings → Sound)
         clean = {}

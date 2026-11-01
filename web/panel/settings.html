@@ -161,6 +161,9 @@ table{border-collapse:collapse;width:100%}
       <span class="lab">Rotation · repeats</span>
       <div class="sl" data-find="artist repeat separation"><label>Same artist again after<small>an artist is not played twice within this time</small></label><input type="range" id="artist_sep_min" min="0" max="240" step="5"><span class="v" id="artist_sep_min_v"></span></div>
       <div class="sl" data-find="song repeat separation title"><label>Same song again after<small>a song is not repeated within this time</small></label><input type="range" id="title_sep_h" min="0.5" max="24" step="0.5"><span class="v" id="title_sep_h_v"></span></div>
+      <span class="lab" style="margin-top:6px">Countdown songs (playlists set to "Play exactly as listed", like the Top 10)</span>
+      <div class="sl" data-find="top 10 countdown hold back before"><label>Held back before<small>the normal rotation skips these songs from this long before the hour they play in</small></label><input type="range" id="strict_hold_before" min="0" max="240" step="15"><span class="v" id="strict_hold_before_v"></span></div>
+      <div class="sl" data-find="top 10 countdown hold back after"><label>Held back after<small>… and until this long after that playlist has ended</small></label><input type="range" id="strict_hold_after" min="0" max="240" step="15"><span class="v" id="strict_hold_after_v"></span></div>
       <span class="lab" style="margin-top:6px">Planning</span>
       <label class="opt" data-find="smart picking rested yesterday"><input type="checkbox" id="smart_pick"><div><b>Smart song picking</b><span>Picks the song that rested longest, keeps artists apart, and avoids the song that played yesterday around this time. Off = random order, each song once per round.</span></div></label>
       <label class="opt" data-find="hit the hour top of the hour"><input type="checkbox" id="hit_hour"><div><b>Hit the hour</b><span>Near the top of the hour it picks a song whose length ends close to :00, so the top-of-the-hour sweeper and the next clock start on time. Every hour starts with its :00 items (Top of the hour), then the clock from its first slot.</span></div></label>
@@ -342,6 +345,7 @@ function renderMix() {
   $('#pad_duck').value = ST.pad_duck ?? 0.25; $('#pad_duck_v').textContent = dbf(ST.pad_duck ?? 0.25); bindSlider('pad_duck', '', x => post('settings', {pad_duck: x}).then(d => { ST = d; toast('Saved – from the next pad'); }), dbf);
   const hm = v => v >= 60 ? Math.floor(v / 60) + ' h ' + (v % 60 ? (v % 60) + ' min' : '') : v + ' min';
   $('#artist_sep_min').value = ST.artist_sep_min ?? 75; $('#artist_sep_min_v').textContent = hm(ST.artist_sep_min ?? 75); bindSlider('artist_sep_min', 'min', x => post('settings', {artist_sep_min: x}).then(d => { ST = d; toast('Saved'); }), hm);
+  ['strict_hold_before', 'strict_hold_after'].forEach(k => { $('#' + k).value = ST[k] ?? 60; $('#' + k + '_v').textContent = (ST[k] ?? 60) ? hm(ST[k] ?? 60) : 'off'; bindSlider(k, 'min', x => post('settings', {[k]: x}).then(d => { ST = d; toast('Saved'); }), x => +x ? hm(x) : 'off'); });
   $('#title_sep_h').value = ST.title_sep_h ?? 3; $('#title_sep_h_v').textContent = (ST.title_sep_h ?? 3) + ' h'; bindSlider('title_sep_h', 'h', x => post('settings', {title_sep_h: x}).then(d => { ST = d; toast('Saved'); }));
 }
 // ---------- tickers ----------
