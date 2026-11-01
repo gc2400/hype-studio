@@ -32,6 +32,7 @@
 #hhead .hlive:hover{background:#2A1420;color:#fff}#hhead .hlive.ask{background:#FFE000;border-color:#FFE000;color:#061423}
 #hhead .hlive.on{background:#FF4D5E;color:#fff}#hhead .hlive.on:hover{background:#FF6676}#hhead .hlive.on.ask{background:#FFE000;border-color:#FFE000;color:#061423}
 #hhead .hlive .t{font:700 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#hhead #hRecT:empty,#hhead #hLiveT:empty{display:none}   /* no time shown = no empty space on the right */
 #hhead #hRecT{font:700 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 @keyframes hrecp{50%{opacity:.25}}
 #hhead .hpop{position:absolute;top:calc(100% + 8px);left:0;width:330px;max-width:calc(100vw - 24px);background:#0B2236;border:1px solid #23496B;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.45);padding:12px;z-index:70;font-size:13px}

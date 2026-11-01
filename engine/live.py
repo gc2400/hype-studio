@@ -210,11 +210,12 @@ class Live:
         try: cl.set_input_audio_sync_offset("Studio audio", max(0, min(1500, int(self.st.get("lip_sync", 0)))))
         except Exception as e: log.warning("studio audio sync: %s", e)
     # ---------- recording ----------
-    def start_rec(self, why="manual", name=None, what="both"):
+    def start_rec(self, why="manual", name=None, what=None):
         """what: both (video .mp4 + radio .mp3) | audio | video. Each file is written by its own systemd unit (hype-rec-*),
         outside the engine: an engine restart (update) never stops a recording."""
         if self.rec and self.rec_alive(): return
         self.rec = None
+        what = what or self.st.get("rec_what", "both")     # Settings → Live: video + audio / video / audio
         os.makedirs(REC_DIR, exist_ok=True)
         try:
             import pwd, grp; os.chown(REC_DIR, pwd.getpwnam("upload").pw_uid, grp.getgrnam("hype").gr_gid); os.chmod(REC_DIR, 0o2775)
@@ -280,7 +281,7 @@ class Live:
         return {
             "live": self.live, "live_since": self.live_since, "studio_online": on("studio"), "return_online": on("return"),
             "sources": {s: {"online": on(s), "name": (g.get(s) or {}).get("name") if s.startswith("guest") else {"cam1": "Studio cam 1", "cam2": "Studio cam 2", "cam3": "Studio cam 3"}[s]} for s in SOURCES},
-            "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "air": self.air, "drops": self.drops, "auto_record": self.st.get("auto_record", True),
+            "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "air": self.air, "drops": self.drops, "auto_record": self.st.get("auto_record", True), "rec_what": self.st.get("rec_what", "both"),
             "guests": {s: {"name": i["name"], "token": i["token"], "exp": i["exp"], "online": on(s), "vol": i.get("vol", 1.0), "mode": i.get("mode", "video")} for s, i in g.items()},
             "rec": {"since": self.rec["start"], "file": self.rec["file"], "ok": self.rec_alive()} if self.rec else None,
             "restream": {k: {"name": d["name"], "on": k in self.rest and not self.rest[k].stop_, "ok": k in self.rest and self.rest[k].healthy(),
@@ -289,6 +290,7 @@ class Live:
             "studio_key": c["studio_key"]}
     def settings(self, d):
         if "auto_record" in d: self.st["auto_record"] = bool(d["auto_record"])
+        if d.get("rec_what") in ("both", "video", "audio"): self.st["rec_what"] = d["rec_what"]
         if "lip_sync" in d:
             self.st["lip_sync"] = max(-500, min(1500, int(d["lip_sync"])))
             with self.tv.olock:
