@@ -177,14 +177,15 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .sl .tg{font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:999px;width:70px;text-align:center;flex:none}
 .sl select,.sl input{background:transparent;border:1px solid transparent;color:var(--txt);font:600 13px Inter,sans-serif;border-radius:8px;min-height:32px;padding:0 6px}
 .sl select:hover,.sl select:focus,.sl input:hover,.sl input:focus{border-color:var(--line2);background:var(--card2)}
-.sl .wh{flex:1;min-width:0;max-width:100%}
+.sl{flex-wrap:wrap}.sl .wh{flex:1 1 150px;min-width:0;max-width:100%}
 .sl .am{width:auto;color:var(--mut)}.sl .st{color:var(--mut);font-size:12px}
 .sl .rx{opacity:0;min-width:32px;min-height:32px;border-radius:8px;border:1px solid var(--r);background:#3A0E18;color:#FF8A97;cursor:pointer;font-weight:800}
 .sl:hover .rx,.sl:focus-within .rx{opacity:1}
 .shadd{flex:1 1 220px;max-width:290px;display:flex;flex-direction:column;gap:8px}
 .adb{width:100%;text-align:left;min-height:50px;padding:7px 12px;border-radius:12px;border:1px dashed var(--line2);background:var(--card);color:var(--txt);font-family:inherit;cursor:pointer}
 .adb:hover{border-color:var(--y)}.adb b{display:block;font-size:13px}.adb small{display:block;font-size:11px;color:var(--mut);margin-top:2px}
-@media (max-width:700px){.shhead{grid-template-columns:1fr}.wkctl b{min-width:0}}
+@media (hover:none){.sl .rx{opacity:1}}
+@media (max-width:700px){.shhead{grid-template-columns:1fr}.shname{min-width:0;width:100%}.shadd{max-width:none}.shlist{max-width:none}.wkctl b{min-width:0}}
 </style>
 </head>
 <body>
