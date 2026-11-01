@@ -1,18 +1,19 @@
 {
- "time": "2026-11-01T04:20:36",
+ "time": "2026-11-01T13:12:12",
  "result": "ok",
- "commit": "2021d1470ed173c56fd3b0dcdfea5a8420c59c38",
- "subject": "Sound presets: \u00d7 on every preset like the lower-third names (own = deleted, built-in = hidden, 'Show removed' brings them back)",
+ "commit": "c97172699eb65bf8774e54a610706a0d1425495e",
+ "subject": "Rename in the Library; History shows '+ ID' / '+ Sweeper' over the intro; paired clips wait at their cue point before showing",
  "log": [
-  "04:19:51 update 79df9e44 \u2192 2021d147 \u00b7 2 file(s): engine/engine.py, web/panel/settings.html",
-  "04:19:51 restart hype-engine",
-  "04:20:36 installed OK \u00b7 restarted: hype-engine"
+  "13:11:27 update 2021d147 \u2192 c9717269 \u00b7 4 file(s): engine/engine.py, engine/indexer.py, web/panel/history.html, web/panel/library.html",
+  "13:11:27 restart hype-indexer",
+  "13:11:27 restart hype-engine",
+  "13:12:12 installed OK \u00b7 restarted: hype-engine, hype-indexer"
  ],
  "guard": {
-  "song": "Bryan Mg x Dylisa x Bokoesam \u2013 Nobody Body",
+  "song": "Broederliefde \u2013 Proost",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
