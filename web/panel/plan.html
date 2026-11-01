@@ -239,7 +239,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
       <span class="seg sm" id="wsScope" role="group" aria-label="What you change"><button type="button" data-sc="week" class="on">Normal week</button><button type="button" data-sc="date">Only this week</button></span>
     </div>
     <div class="wkwarn" id="wkWarn"></div>
-    <div class="muted wklegend">Click an hour or drag over hours · <b style="color:var(--y)">MIX</b> own mix folder · <b style="color:var(--b)">1×</b> only that date · show names and times come from your website · every hour: <span id="wkEv"></span></div>
+    <div class="muted wklegend">Click an hour or drag over hours · <b style="color:var(--y)">MIX</b> own mix folder · <b style="color:var(--y)">MIXTAPE</b> a mixtape from MIXES/Mixtapes · <b style="color:var(--b)">1×</b> only that date · show names and times come from your website · every hour: <span id="wkEv"></span></div>
     <div class="wkmain">
       <div class="card wkgrid"><div class="wkg" id="wkGrid"></div></div>
       <aside class="card wkside" id="wkSide" hidden>
@@ -877,7 +877,8 @@ function wkRender() {
     });
     d.hours.forEach(x => {
       const ck = wkClock(x.clock_id), b_ = bad[d.date + ' ' + x.h];
-      if (ck && ck.mix && !/mixtapes/i.test(ck.mix)) col += `<span class="wkm ${b_ ? 'bad' : ''}" style="top:${x.h * WKPX + 7}px;color:var(--y)" title="${esc(ck.mix)}">${b_ ? 'NO MIX' : 'MIX'}</span>`;
+      if (ck && ck.mix) col += /mixtapes/i.test(ck.mix) ? `<span class="wkm" style="top:${x.h * WKPX + 7}px;color:var(--y)" title="A mixtape from ${esc(ck.mix)}">MIXTAPE</span>`
+        : `<span class="wkm ${b_ ? 'bad' : ''}" style="top:${x.h * WKPX + 7}px;color:var(--y)" title="${esc(ck.mix)}">${b_ ? 'NO MIX' : 'MIX'}</span>`;
       WK.events.filter(e => e.at[0] !== '*' && e.days.includes(String(di)) && +e.at.split(':')[0] === x.h).forEach(e => { col += `<span class="wkm fxd" style="top:${x.h * WKPX + 7 + (+e.at.split(':')[1]) / 60 * WKPX * 0}px" title="Fixed time ${esc(e.at)}: ${esc(e.name)}">${esc((e.name || 'FIXED').toUpperCase().slice(0, 12))} ${esc(e.at)}</span>`; });
       if (x.via === 'date') col += `<span class="wkm one" style="top:${x.h * WKPX + 7}px" title="Only on this date: ${esc(ck ? ck.name : '')}">1×</span>`;
     });
