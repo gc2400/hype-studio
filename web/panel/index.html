@@ -666,7 +666,7 @@ let PVC = null, pvFails = 0;
 function pvLive() {
   if (!(typeof HypeRTC !== 'undefined') || !LV || !LV.studio_key) return setTimeout(pvLive, 1500);
   // light by default (360p, ~0.6 Mbps, no sound): it hardly uses your internet while you broadcast; sound on = the full preview (720p + sound)
-  PVC = HypeRTC.keep('program', async () => { const r = await HypeRTC.play($('#pvv').muted ? 'guestview' : 'preview', {key: LV.studio_key, video: true}); $('#pvv').srcObject = r.stream; $('#pvv').play().catch(() => {}); return r; },
+  PVC = HypeRTC.keep('program', async () => { const r = await HypeRTC.play($('#pvv').muted ? 'guestview' : 'preview', {key: LV.studio_key, video: true, videoBufferMs: 150}); $('#pvv').srcObject = r.stream; $('#pvv').play().catch(() => {}); return r; },
     (n, st) => { if (st === 'connected') { pvFails = 0; $('#pvv').hidden = false; $('#pv').hidden = true; $('#pvv').volume = +$('#pvVol').value; }
       else if (/error|failed/.test(st) && ++pvFails === 3) { $('#pvv').hidden = true; $('#pv').hidden = false; $('#pvInfo').textContent = 'Preview: a picture every second'; pv(); } });
 }

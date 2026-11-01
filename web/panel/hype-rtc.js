@@ -56,6 +56,8 @@ const HypeRTC = (() => {
       // (that is what sounds "under water"); a few hundred ms extra delay does not matter for the return feed
       if (e.track.kind === 'audio' && e.receiver) { const ms = o.bufferMs ?? 300;
         try { if ('jitterBufferTarget' in e.receiver) e.receiver.jitterBufferTarget = ms; else e.receiver.playoutDelayHint = ms / 1000; } catch (_) {} }
+      // a video that should play smoothly through small network bumps (the panel preview): a slightly bigger picture buffer
+      if (e.track.kind === 'video' && e.receiver && o.videoBufferMs) { try { if ('jitterBufferTarget' in e.receiver) e.receiver.jitterBufferTarget = o.videoBufferMs; else e.receiver.playoutDelayHint = o.videoBufferMs / 1000; } catch (_) {} }
     };
     const offer = await pc.createOffer();
     offer.sdp = opusSdp(offer.sdp, 256, true);        // receive in STEREO (without stereo=1 Chrome folds Opus down to mono)
