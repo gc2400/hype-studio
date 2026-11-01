@@ -103,7 +103,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 #tab-wk{display:flex;flex-direction:column;gap:12px}#tab-wk[hidden]{display:none}
 .wkbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .wkwarn{display:flex;flex-wrap:wrap;gap:8px}
-.wkw{display:flex;align-items:center;gap:10px;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600;background:var(--card2);color:var(--soft);border:0;cursor:pointer;text-align:left;font-family:inherit}
+.wkw{display:flex;flex:1 1 320px;max-width:560px;align-items:center;gap:10px;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600;background:var(--card2);color:var(--soft);border:0;cursor:pointer;text-align:left;font-family:inherit}
 .wkw b{color:var(--txt)}.wkw .i{font-weight:900;color:var(--b);width:14px;text-align:center}
 .wkw.bad{background:#3A1018;color:#FFC2C8}.wkw.bad .i{color:var(--r)}
 .wkw.warn{background:#3A2A00;color:#FFDFA6}.wkw.warn .i{color:var(--o)}
@@ -118,7 +118,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .wkd.today{background-color:#0A1D30}
 .wkb{position:absolute;left:1px;right:1px;border-radius:9px;padding:4px 7px;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;gap:1px;pointer-events:none}
 .wkb .n{font-weight:800;font-size:12px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wkb .tm{font:500 10px 'JetBrains Mono',monospace;opacity:.85}
+.wkb .tm{font:500 10px "JetBrains Mono",monospace;color:#C9D7E3;opacity:.8}
 .wkb.bad{outline:2px dashed var(--r);outline-offset:-2px}
 .wkm{position:absolute;right:3px;font-size:9px;font-weight:900;letter-spacing:.05em;padding:1px 5px;border-radius:999px;background:var(--bg);pointer-events:none}
 .wkm.bad{background:var(--r);color:var(--bg)}
@@ -675,7 +675,7 @@ $('#osSave').onclick = () => { if (OS.some(r => !r.file)) return toast('Choose a
 loadAll();
 
 /* ---------------- week ---------------- */
-let WK = null, WKW = 0, WKSEL = null;
+let WK = null, WKW = 0, WKSEL = null, WKALL = false;
 const WKPX = 26, WFULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hh = h => String(h).padStart(2, '0') + ':00';
 const toMin = s => { const [a, b] = s.split(':').map(Number); return a * 60 + b; };
@@ -686,8 +686,10 @@ function wkRender() {
   const d0 = WK.days[0].date, d6 = WK.days[6].date, today = new Date().toLocaleDateString('sv');
   $('#wkLbl').textContent = fmtD(d0) + ' – ' + fmtD(d6) + (WKW === 0 ? ' · this week' : WKW === 1 ? ' · next week' : '');
   $('#wkEv').textContent = WK.events.map(e => (e.name || '') + ' ' + (e.at[0] === '*' ? 'every hour ' + e.at.slice(1) : e.at)).join(' · ') || 'none';
-  $('#wkWarn').innerHTML = WK.warnings.length ? WK.warnings.map((w, i) => `<button class="wkw ${w.level}" data-w="${i}"><span class="i">${w.level === 'bad' ? '!' : w.level === 'warn' ? '!' : 'i'}</span><span><b>${esc(w.when)} · ${fmtD(w.date)}</b> – ${esc(w.text)}${w.n > 1 ? ` <span style="opacity:.7">(${w.n} hours)</span>` : ''}</span></button>`).join('')
+  const WMAX = WKALL ? 99 : 3;
+  $('#wkWarn').innerHTML = WK.warnings.length ? WK.warnings.slice(0, WMAX).map((w, i) => `<button class="wkw ${w.level}" data-w="${i}"><span class="i">${w.level === 'bad' ? '!' : w.level === 'warn' ? '!' : 'i'}</span><span><b>${esc(w.when)} · ${fmtD(w.date)}</b> – ${esc(w.text)}${w.n > 1 ? ` <span style="opacity:.7">(${w.n} hours)</span>` : ''}</span></button>`).join('') + (WK.warnings.length > 3 ? `<button class="wkw" id="wkMore"><span class="i">${WKALL ? '−' : '+'}</span><span>${WKALL ? 'Show less' : (WK.warnings.length - 3) + ' more'}</span></button>` : '')
     : '<div class="wkw" style="cursor:default"><span class="i" style="color:var(--g)">✓</span><span>No problems found in the coming 7 days.</span></div>';
+  if ($('#wkMore')) $('#wkMore').onclick = () => { WKALL = !WKALL; wkRender(); };
   $$('#wkWarn [data-w]').forEach(b => b.onclick = () => { const w = WK.warnings[+b.dataset.w]; const off = Math.round((new Date(w.date + 'T12:00') - new Date(WK.monday + 'T12:00')) / 864e5 / 7); const go = () => wkOpen(w.day, w.hour); if (off !== WKW) { WKW = off; wkLoad().then(go); } else go(); });
   const bad = {}; WK.warnings.forEach(w => { if (w.level === 'bad') bad[w.date + ' ' + w.hour] = 1; });
   let g = '<div></div>' + WK.days.map((d, i) => `<div class="wkh ${d.date === today ? 'today' : ''}">${DAYS[i]}<small>${fmtD(d.date)}</small></div>`).join('');
