@@ -131,3 +131,4 @@
 2026-11-01T18:05:55 ok 46105275 Hype Live page inside Studio (embed frame, Studio sub-tabs, fallback to WordPress)
 2026-11-01T18:17:55 ok 1532601e Planning: Week view (shows per day, mix hours, warnings for 7 days, hour panel with clock + what plays); Hype Live frame uses www (login cookie)
 2026-11-01T18:18:59 ok 41a936ff Week: compact warnings (3 + more), readable times
+2026-11-01T18:26:55 ok 052a60f6 Planning Week replaces Schedule: drag to select hours, set clock every week or only one date (schedule_date), whole-show clock, copy a day, undo

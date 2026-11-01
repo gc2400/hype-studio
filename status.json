@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T18:18:59",
+ "time": "2026-11-01T18:26:55",
  "result": "ok",
- "commit": "41a936ff59206194939fae3d6e9ad2c0492bff85",
- "subject": "Week: compact warnings (3 + more), readable times",
+ "commit": "052a60f66375685fd335b18abea06559e71beb9d",
+ "subject": "Planning Week replaces Schedule: drag to select hours, set clock every week or only one date (schedule_date), whole-show clock, copy a day, undo",
  "log": [
-  "18:18:59 update 1532601e \u2192 41a936ff \u00b7 1 file(s): web/panel/plan.html",
-  "18:18:59 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "18:26:10 update 41a936ff \u2192 052a60f6 \u00b7 3 file(s): engine/engine.py, engine/planner.py, web/panel/plan.html",
+  "18:26:10 restart hype-engine",
+  "18:26:55 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Be\u00e9le \u2013 si te pillara",
+  "song": "Myke Towers \u2013 CARITA FELIZ",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
