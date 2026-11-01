@@ -102,3 +102,4 @@
 2026-11-01T15:25:58 ok 7610961c DJ mode: waveform + smooth countdown per deck, MIX A/B and END buttons on the decks, the cued song stays on top of its deck list, deck lists with time and hover ▶ ↑ ↓ ×, library rows only A/B
 2026-11-01T15:36:58 ok 918a3b2f DJ mode: the decks give one song at a time (a second song no longer left its deck early); everything queued for a deck shows on top of it; NEXT button per deck (takes the deck's next song)
 2026-11-01T15:43:53 ok 30a74ad4 Library: all songs – 300 more load as you scroll down ('x of y items'); row buttons only on hover on a computer (no longer hanging on a clicked row)
+2026-11-01T15:52:51 ok 5b295107 MANUAL AUX looks like a deck list (time, hover ▶ ↑ ↓ ×; no 'Load playlist'); DJ page shows the programming's song on air + time left until the decks take over; after a restart the song on air keeps its deck

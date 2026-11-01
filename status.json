@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T15:43:53",
+ "time": "2026-11-01T15:52:51",
  "result": "ok",
- "commit": "30a74ad49ff9f63209223fb701d3c83d52d77e2d",
- "subject": "Library: all songs \u2013 300 more load as you scroll down ('x of y items'); row buttons only on hover on a computer (no longer hanging on a clicked row)",
+ "commit": "5b2951070d7fdb987bb3964d3d4c1f63ec5d3f12",
+ "subject": "MANUAL AUX looks like a deck list (time, hover \u25b6 \u2191 \u2193 \u00d7; no 'Load playlist'); DJ page shows the programming's song on air + time left until the decks take over; after a restart the song on air keeps its deck",
  "log": [
-  "15:43:08 update 918a3b2f \u2192 30a74ad4 \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/library.html",
-  "15:43:08 restart hype-engine",
-  "15:43:53 installed OK \u00b7 restarted: hype-engine"
+  "15:52:06 update 30a74ad4 \u2192 5b295107 \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "15:52:06 restart hype-engine",
+  "15:52:51 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Yandel x Feid \u2013 Yandel 150",
+  "song": "AVENTURA X BAD BUNNY \u2013 VOLV\u00cd",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
