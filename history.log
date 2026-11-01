@@ -94,3 +94,4 @@
 2026-11-01T14:04:19 ok f77e785e Red buttons (STOP MEDIA, STOP PADS …) light up on hover; Library: Upload + Filter stay together in the right corner
 2026-11-01T14:08:26 ok b06ee6d6 Library: Upload + Filter next to the search bar (icons only on phones)
 2026-11-01T14:18:25 ok 277b5e62 Fix: a queued item without a clock position kept its own data at song start (ID over intro, source) – the clock-position change had taken its else branch
+2026-11-01T14:27:22 ok 1e8d55f5 Up next survives an engine restart exactly (same songs, same order); ID over intros gets its own level (default -4 dB, Settings → Mixing)

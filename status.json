@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T14:18:25",
+ "time": "2026-11-01T14:27:22",
  "result": "ok",
- "commit": "277b5e62051b1ea49c04406dde0de0d30d441b8d",
- "subject": "Fix: a queued item without a clock position kept its own data at song start (ID over intro, source) \u2013 the clock-position change had taken its else branch",
+ "commit": "1e8d55f5443e7b350961d47a47e2f4e84b8e65a6",
+ "subject": "Up next survives an engine restart exactly (same songs, same order); ID over intros gets its own level (default -4 dB, Settings \u2192 Mixing)",
  "log": [
-  "14:17:39 update b06ee6d6 \u2192 277b5e62 \u00b7 1 file(s): engine/engine.py",
-  "14:17:39 restart hype-engine",
-  "14:18:25 installed OK \u00b7 restarted: hype-engine"
+  "14:26:37 update 277b5e62 \u2192 1e8d55f5 \u00b7 2 file(s): engine/engine.py, web/panel/settings.html",
+  "14:26:37 restart hype-engine",
+  "14:27:22 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Dongo x Jeon \u2013 Marido Y Mujer",
+  "song": "KAROL G \u2013 OKI DOKI",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
