@@ -2313,6 +2313,7 @@ class H(BaseHTTPRequestHandler):
                 elif a == "guest_remove": L.guest_remove(d["slot"])
                 elif a == "cam": L.set_cam(d["cam"], d["src"])
                 elif a == "guest_vol": L.guest_vol(d["slot"], float(d.get("vol", 1)))
+                elif a == "guest_mute": L.guest_mute(d["slot"], bool(d.get("on")))
                 elif a == "rec_start": L.start_rec("manual")
                 elif a == "rec_stop": L.stop_rec()
                 elif a == "new_key": L.new_studio_key()

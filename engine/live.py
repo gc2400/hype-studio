@@ -174,6 +174,11 @@ class Live:
         g = self.guests()
         if slot not in g: raise ValueError("no such guest")
         g[slot]["vol"] = max(0.0, min(2.0, vol)); save(GUESTS, {"guests": g}, 0o600)
+    def guest_mute(self, slot, on):
+        """Mute a guest on the Mixcast (their VOL stays as it was – unmute brings it back)."""
+        g = self.guests()
+        if slot not in g: raise ValueError("no such guest")
+        g[slot]["muted"] = bool(on); save(GUESTS, {"guests": g}, 0o600)
     def guest_by_token(self, token):
         for slot, info in self.guests().items():
             if token and info.get("token") == token and info.get("exp", 0) > time.time(): return slot, info
@@ -285,7 +290,7 @@ class Live:
             "live": self.live, "live_since": self.live_since, "studio_online": on("studio"), "return_online": on("return"),
             "sources": {s: {"online": on(s), "name": (g.get(s) or {}).get("name") if s.startswith("guest") else {"cam1": "Studio cam 1", "cam2": "Studio cam 2", "cam3": "Studio cam 3"}[s]} for s in SOURCES},
             "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "air": self.air, "drops": self.drops, "auto_record": self.st.get("auto_record", True), "rec_what": self.st.get("rec_what", "both"),
-            "guests": {s: {"name": i["name"], "token": i["token"], "exp": i["exp"], "online": on(s), "vol": i.get("vol", 1.0), "mode": i.get("mode", "video")} for s, i in g.items()},
+            "guests": {s: {"name": i["name"], "token": i["token"], "exp": i["exp"], "online": on(s), "vol": i.get("vol", 1.0), "muted": bool(i.get("muted")), "mode": i.get("mode", "video")} for s, i in g.items()},
             "rec": {"since": self.rec["start"], "file": self.rec["file"], "ok": self.rec_alive()} if self.rec else None,
             "restream": {k: {"name": d["name"], "on": k in self.rest and not self.rest[k].stop_, "ok": k in self.rest and self.rest[k].healthy(),
                              "err": ((self.rest[k].err.replace(d["key"], "•••") if d.get("key") else self.rest[k].err)[-160:] if k in self.rest and not self.rest[k].healthy() else ""),   # (never the stream key)

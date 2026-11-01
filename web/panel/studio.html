@@ -70,7 +70,7 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
 .camseg{display:inline-flex;flex:none;height:32px;border:1px solid var(--line2);border-radius:9px;overflow:hidden;background:var(--card2)}
 .camseg button{width:36px;border:0;background:transparent;color:var(--soft);font:inherit;font-size:13px;font-weight:800;cursor:pointer;padding:0}
 .camseg button+button{border-left:1px solid var(--line2)}.camseg button:hover:not(.on){background:var(--line2);color:#fff}.camseg button.on{background:var(--y);color:#061423}
-.btn.ic{width:34px;padding:0;justify-content:center;font-size:16px}.btn.wa{color:#25D366}.btn.wa:hover{border-color:#25D366}
+.btn.ic{width:34px;height:32px;min-height:32px;padding:0;justify-content:center;font-size:16px;flex:none}.btn.mute.on{background:#3A0E18;color:#FF8A97;border-color:var(--r)}.btn.wa{color:#25D366}.btn.wa:hover{border-color:#25D366}
 </style>
 </head>
 <body>
@@ -88,7 +88,7 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
         <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:900" id="airTitle">On air: the automation</div><div class="muted" id="airSub" style="font-size:12px">When you are LIVE this turns green: only your studio mix is on the radio and the TV (no clip sound).</div>
           <div class="row" style="margin-top:6px;gap:6px"><span class="chip" id="stStudio">Studio: not connected</span><span class="chip" id="stOnAir">On air: automation</span><span class="chip" id="stRec">REC off</span><span class="chip" id="airDrops" hidden></span></div></div></div>
     </div>
-    <span class="muted" id="stHint" style="font-size:12px">Connect the studio below, then press GO LIVE. Your Mixcast mix goes on air; END LIVE goes back to the automation (music never stops).</span>
+    <span class="muted" id="stHint" hidden style="font-size:12px">Connect the studio below, then press GO LIVE. Your Mixcast mix goes on air; END LIVE goes back to the automation (music never stops).</span>
   </section>
 
   <!-- 2 · DURING THE SHOW: your cameras · your guests -->
@@ -96,8 +96,8 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
     <section class="card">
       <span class="lab">Your cameras</span>
       <div class="cams">
-        <div class="camcol"><div class="vbox"><video id="vCam1" muted playsinline autoplay></video><span class="ph" id="phCam1">Camera 1: choose your USB cam below</span></div><label class="camsel"><b>Camera 1</b><select id="dCam1"></select></label><div class="row camrow"><span class="lab">On TV in</span><div class="camseg" data-src="cam1" role="group" aria-label="Studio cam 1 on TV in"></div></div></div>
-        <div class="camcol"><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div><label class="camsel"><b>Camera 2</b><select id="dCam2"></select></label><div class="row camrow"><span class="lab">On TV in</span><div class="camseg" data-src="cam2" role="group" aria-label="Studio cam 2 on TV in"></div></div></div></div>
+        <div class="camcol"><div class="vbox"><video id="vCam1" muted playsinline autoplay></video><span class="ph" id="phCam1">Camera 1: choose your USB cam below</span></div><label class="camsel"><b>Camera 1</b><select id="dCam1"></select></label><div class="row camrow"><span class="lab">CAM</span><div class="camseg" data-src="cam1" role="group" aria-label="Studio cam 1 on TV in"></div></div></div>
+        <div class="camcol"><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div><label class="camsel"><b>Camera 2</b><select id="dCam2"></select></label><div class="row camrow"><span class="lab">CAM</span><div class="camseg" data-src="cam2" role="group" aria-label="Studio cam 2 on TV in"></div></div></div></div>
     </section>
   <section class="card">
     <div class="row between"><span class="lab">Guests <span class="muted" style="text-transform:none;letter-spacing:0">· max. 6 · they join with a link (no app)</span></span>
@@ -110,7 +110,7 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
   <!-- 3 · SETUP (open what you need – remembered on this laptop) -->
   <section class="card">
     <span class="lab">Setup</span>
-    <details class="sec" data-sec="dev" open><summary><b>Studio devices</b><span class="muted">microphone, music, guests, mix-minus</span><button class="btn sm" id="devRefresh" title="Look again for cameras, microphones and outputs (after plugging something in) – the page stays as it is">↻ Refresh devices</button></summary>
+    <details class="sec" data-sec="dev" open><summary><b>Audio devices</b><span class="muted">studio mix, music, guests, mix-minus</span><button class="btn sm" id="devRefresh" title="Look again for cameras, microphones and outputs (after plugging something in) – the page stays as it is">↻ Refresh devices</button></summary>
       <div class="secb">
       <div class="dev"><label><b>Studio mix → air</b><small>Mixcast 4 (USB recording)</small></label><select id="dMix"></select><div class="meter"><i id="mMix"></i></div></div>
       <div class="dev"><label><b>Music → Mixcast</b><small>plays on your USB fader</small></label><select id="dMusic"></select><div class="meter"><i id="mMusic"></i></div></div>
@@ -257,7 +257,7 @@ function guestLink(g) { return location.origin + '/guest/?t=' + encodeURICompone
 function renderGuests(force) {
   if (!L) return;
   const G = L.guests || {}, box = $('#guests');
-  const sig = JSON.stringify(Object.entries(G).map(([s, g]) => [s, g.name, g.online])) + JSON.stringify(L.cams);
+  const sig = JSON.stringify(Object.entries(G).map(([s, g]) => [s, g.name, g.online, !!g.muted])) + JSON.stringify(L.cams);
   if (sig !== box.dataset.sig || force) {
     box.dataset.sig = sig;
     const ICL = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></svg>';
@@ -265,12 +265,13 @@ function renderGuests(force) {
     box.innerHTML = Object.entries(G).map(([s, g]) => { const cam = Object.entries(L.cams || {}).find(([c, src]) => src === s);
       return `<div class="guest" data-slot="${s}"><div class="vbox"><video muted playsinline autoplay></video><span class="ph">${g.online ? (connected ? 'connecting…' : 'press Connect studio to see and hear') : 'not joined yet'}</span></div>
       <div style="min-width:0;display:flex;flex-direction:column;gap:7px">
-        <div class="row" style="gap:6px;flex-wrap:nowrap"><b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px">${esc(g.name)}</b><span class="chip ${g.online ? 'ok' : ''}">${g.online ? 'online' : 'not joined'}</span><span class="chip">${g.mode === 'audio' ? '☎ audio' : '🎥 video'}</span>
+        <div class="row" style="gap:6px;flex-wrap:nowrap"><b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px">${esc(g.name)}</b><span class="chip ${g.online ? 'ok' : ''}">${g.online ? 'online' : 'not joined'}</span><span class="chip">${g.mode === 'audio' ? 'audio' : 'video'}</span>
           <span class="row" style="gap:5px;margin-left:auto;flex-wrap:nowrap"><button class="btn sm ic" data-copy="${s}" title="Copy the guest link" aria-label="Copy the link of ${esc(g.name)}">${ICL}</button><a class="btn sm ic wa" target="_blank" rel="noopener" title="Send the link by WhatsApp" aria-label="Send the link of ${esc(g.name)} by WhatsApp" href="https://wa.me/?text=${encodeURIComponent('Join Hype Radio TV live: ' + guestLink(g) + ' (use headphones)')}">${IWA}</a><button class="btn sm red ic" data-rm="${s}" title="Remove guest" aria-label="Remove ${esc(g.name)}">×</button></span></div>
-        <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="lab" style="color:var(--mut)">On TV in</span><div class="camseg" data-src="${s}" role="group" aria-label="${esc(g.name)} on TV in"></div></div>
-        <label class="gvol"><span class="lab" style="width:auto;color:var(--mut)">VOL</span><input type="range" min="0" max="2" step="0.01" value="${g.vol == null ? 1 : g.vol}" data-gvol="${s}" aria-label="Volume of ${esc(g.name)}"><span class="mono" data-gvl="${s}">${Math.round(100 * (g.vol == null ? 1 : g.vol))}%</span></label></div></div>`; }).join('')
+        <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="lab" style="color:var(--mut)">CAM</span><div class="camseg" data-src="${s}" role="group" aria-label="${esc(g.name)} on TV in"></div></div>
+        <div class="row" style="gap:8px;flex-wrap:nowrap"><button class="btn sm ic mute ${g.muted ? 'on' : ''}" data-mute="${s}" title="${g.muted ? 'Unmute' : 'Mute'} ${esc(g.name)}" aria-label="${g.muted ? 'Unmute' : 'Mute'} ${esc(g.name)}" aria-pressed="${!!g.muted}">${g.muted ? '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>'}</button><label class="gvol" style="flex:1"><span class="lab" style="width:auto;color:var(--mut)">VOL</span><input type="range" min="0" max="2" step="0.01" value="${g.vol == null ? 1 : g.vol}" data-gvol="${s}" aria-label="Volume of ${esc(g.name)}"><span class="mono" data-gvl="${s}">${Math.round(100 * (g.vol == null ? 1 : g.vol))}%</span></label></div></div></div>`; }).join('')
       || '<span class="muted">No guests yet. Type a name and press + Invite guest – you get a link to send (WhatsApp). Audio-only guests can also call in by phone over the Mixcast Bluetooth.</span>';
     $$('[data-gvol]').forEach(i => { let t; i.oninput = () => { const s = i.dataset.gvol; $(`[data-gvl="${s}"]`).textContent = Math.round(i.value * 100) + '%'; GV_LOCAL[s] = {v: +i.value, t: Date.now()}; applyVol(); clearTimeout(t); t = setTimeout(() => post('live/guest_vol', {slot: s, vol: +i.value}), 150); }; i.ondblclick = () => { i.value = 1; i.oninput(); }; });
+    $$('[data-mute]').forEach(b => b.onclick = () => { const s = b.dataset.mute; post('live/guest_mute', {slot: s, on: !(G[s] || {}).muted}).then(d => { L = d; renderGuests(true); applyVol(); }); });
     $$('[data-copy]').forEach(b => b.onclick = () => { navigator.clipboard.writeText(guestLink(G[b.dataset.copy])).then(() => toast('Link copied')); });
     $$('[data-rm]').forEach(b => b.onclick = () => { if (confirm('Remove this guest? Their link stops working.')) post('live/guest_remove', {slot: b.dataset.rm}).then(refresh); });
     Object.keys(guestEls).forEach(s => { if (!G[s] || !G[s].online) dropGuest(s); });
@@ -304,7 +305,7 @@ const GV_LOCAL = {};
 function applyVol() {
   const G = (L && L.guests) || {};
   Object.entries(guestEls).forEach(([s, E]) => { if (!E.gain) return; const loc = GV_LOCAL[s], v = loc && Date.now() - loc.t < 4000 ? loc.v : ((G[s] || {}).vol ?? 1);
-    E.gain.gain.setTargetAtTime(Math.max(0, Math.min(2, v)), E.ac.currentTime, 0.05);
+    E.gain.gain.setTargetAtTime((G[s] || {}).muted ? 0 : Math.max(0, Math.min(2, v)), E.ac.currentTime, 0.05);     // muted: silent, VOL kept
     const inp = document.querySelector(`[data-gvol="${s}"]`); if (inp && !(loc && Date.now() - loc.t < 4000) && document.activeElement !== inp) { inp.value = v; const l = document.querySelector(`[data-gvl="${s}"]`); if (l) l.textContent = Math.round(v * 100) + '%'; } });
 }
 // ---------- camera slots ----------
