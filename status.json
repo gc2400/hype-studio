@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T22:10:22",
+ "time": "2026-11-01T22:12:27",
  "result": "ok",
- "commit": "71e81d27816e67604ceb5935cd56913e8d7c6869",
- "subject": "Help page in Studio: the whole manual with contents, search and Print / PDF; Help in the menu",
+ "commit": "22f5eb6bc726982fa9b0d93c8a6ee113b0939d34",
+ "subject": "Help moved from the menu bar to Settings \u2192 Help",
  "log": [
-  "22:10:22 update 3806c4d0 \u2192 71e81d27 \u00b7 10 file(s): web/panel/header.js, web/panel/help.html, web/panel/history.html, web/panel/hypelive.html, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/status/index.html",
-  "22:10:22 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "22:12:27 update 71e81d27 \u2192 22f5eb6b \u00b7 10 file(s): web/panel/header.js, web/panel/help.html, web/panel/history.html, web/panel/hypelive.html, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/status/index.html",
+  "22:12:27 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Rich Kalashh \u2013 Taurus",
+  "song": "Ryan Castro \u2013 BOTAPAFO",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
