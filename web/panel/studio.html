@@ -330,7 +330,7 @@ function render() {
 }
 $('#qSync').oninput = () => { const v = +$('#qSync').value; $('#qSyncV').textContent = (v > 0 ? '+' : '') + v + ' ms'; };
 $('#qSync').onchange = () => post('live/settings', {lip_sync: +$('#qSync').value}).then(d => { L = d; toast('Lip sync set'); });
-function refresh() { return get('live').then(d => { L = d; KEY = d.studio_key; render(); window.hypeRec && hypeRec(d.rec); }).catch(() => {}); }      // also feeds the header's REC button (no second poll)
+function refresh() { return get('live').then(d => { L = d; KEY = d.studio_key; render(); window.hypeRec && hypeRec(d.rec, d); }).catch(() => {}); }      // also feeds the header's REC button (no second poll)
 refresh().then(listDevices); setInterval(refresh, 2000);
 </script>
 </body>

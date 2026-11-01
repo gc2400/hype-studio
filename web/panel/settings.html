@@ -98,6 +98,11 @@ table{border-collapse:collapse;width:100%}
 #g_key,#g_url{background:#071A2B;color:#F2F6FA;border:1px solid #23496B;border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;min-height:36px}
 .ltr{position:relative;display:inline-flex}.ltr .ltx{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);background:var(--card2);color:var(--mut);font-size:12px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0}
 .ltr:hover .ltx{display:inline-flex}.ltr .ltx:hover{color:#fff;background:#C8283A;border-color:#C8283A}@media (hover:none){.ltr .ltx{display:inline-flex}}
+.dcard{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--deep);border:1px solid var(--line2)}
+.dcard input[type=text],.dcard input[type=password]{height:38px;background:var(--card);border:1px solid var(--line2);border-radius:9px;color:var(--txt);padding:0 10px;font:inherit;font-size:14px}
+.dfl{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.dfl input{text-transform:none;letter-spacing:0;font-weight:500}
+.dlogo{flex:none;font-size:11px;font-weight:900;padding:5px 9px;border-radius:7px;background:var(--line2);color:#fff}.dlogo.youtube{background:#FF0033}.dlogo.facebook{background:#1877F2}.dlogo.twitch{background:#9146FF}
 </style>
 </head>
 <body>
@@ -184,8 +189,8 @@ table{border-collapse:collapse;width:100%}
       <div class="sl" data-find="lip sync camera delay"><label>Lip sync (TV)<small>right = sound later, left = picture later</small></label><input type="range" id="cam_delay" min="-500" max="800" step="20"><span class="v" id="cam_delay_v"></span></div>
       <span class="lab" style="margin-top:6px">Restream to</span>
       <div id="dests" style="display:flex;flex-direction:column;gap:8px"></div>
-      <div class="row"><button class="btn sm" id="destAdd">+ Add</button><button class="btn sm yellow" id="destSave">Save restream</button></div>
-      <p class="muted" style="margin:0">Use the RTMP address and stream key from YouTube Studio (Go live → Stream), Facebook Live Producer, Twitch, … Turn each one on or off in the panel; "with GO LIVE" starts it together with GO LIVE. The stream is sent as it is (no extra load on the server).</p>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><span class="muted" style="font-size:12px">Add:</span><button class="btn sm" data-dadd="youtube">+ YouTube</button><button class="btn sm" data-dadd="facebook">+ Facebook</button><button class="btn sm" data-dadd="twitch">+ Twitch</button><button class="btn sm" data-dadd="other">+ Other</button><span style="flex:1"></span><button class="btn sm yellow" id="destSave">Save restream</button></div>
+      <p class="muted" style="margin:0;font-size:12px">Restream sends your TV picture + sound to YouTube / Facebook / Twitch at the same time. Add a platform, paste its <b>stream key</b>, press <b>Save restream</b>. Then turn it on in the panel (LIVE page), or tick <b>Start with GO LIVE</b>. No extra load on the server (the stream is sent as it is).</p>
       <span class="lab" style="margin-top:6px">Studio key</span>
       <div class="row" data-find="studio key security new key"><button class="btn sm" id="newKey">New studio key</button><span class="muted" id="newKeyT">The secret key the panel and Broadcast page use for the live streams. Make a new one if you think it leaked: running connections keep working, open pages use the new key when they reconnect.</span></div>
     </section>
@@ -378,11 +383,21 @@ function lvRender() {
   $('#cam_delay').value = LV.lip_sync || 0; $('#cam_delay_v').textContent = (LV.lip_sync || 0) + ' ms';
   $('#cam_delay').oninput = () => $('#cam_delay_v').textContent = $('#cam_delay').value + ' ms';
   $('#cam_delay').onchange = () => post('live/settings', {lip_sync: +$('#cam_delay').value}).then(d => { LV = d; toast('Saved'); });
-  $('#dests').innerHTML = Object.entries(LV.restream).map(([k, d]) => `<div class="opt" data-k="${esc(k)}" style="flex-wrap:wrap;gap:8px"><input type="text" data-f="name" value="${esc(d.name)}" placeholder="Name" style="max-width:140px"><input type="text" data-f="url" value="${esc(d.url)}" placeholder="rtmp://…" style="flex:1;min-width:200px"><input type="text" data-f="key" value="${esc(d.key)}" placeholder="stream key" style="max-width:180px"><label class="tg" style="font-size:13px"><input type="checkbox" data-f="with_live" ${d.with_live ? 'checked' : ''} style="width:18px;height:18px">with GO LIVE</label><button class="btn sm red" data-del="${esc(k)}">×</button></div>`).join('') || '<span class="muted">No destinations yet.</span>';
+  $('#dests').innerHTML = Object.entries(LV.restream).map(([k, d]) => { const pf = platformOf(d.url), hp = DHELP[pf];
+    return `<div class="dcard" data-k="${esc(k)}">
+      <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="dlogo ${pf}">${esc(DPRESET[pf] ? DPRESET[pf][0] : 'RTMP')}</span><input type="text" data-f="name" value="${esc(d.name)}" placeholder="Name (e.g. YouTube)" aria-label="Name" style="flex:1;min-width:0">
+        <label class="tg" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-f="with_live" ${d.with_live ? 'checked' : ''} style="width:18px;height:18px">Start with GO LIVE</label><button class="btn sm red" data-del="${esc(k)}" title="Remove" aria-label="Remove ${esc(d.name)}">×</button></div>
+      <label class="dfl">Server (RTMP address)<input type="text" data-f="url" value="${esc(d.url)}" placeholder="rtmp://…" spellcheck="false"></label>
+      <label class="dfl">Stream key<span class="row" style="gap:6px;flex-wrap:nowrap"><input type="password" data-f="key" value="${esc(d.key)}" placeholder="${d.key ? '' : 'paste the stream key here'}" spellcheck="false" autocomplete="off" style="flex:1"><button class="btn sm" data-eye title="Show / hide the key" type="button">👁</button></span></label>
+      ${hp ? `<span class="muted" style="font-size:12px">Where to find it: ${hp}</span>` : ''}</div>`; }).join('') || '<span class="muted">No platforms yet – press + YouTube, + Facebook, + Twitch or + Other.</span>';
   $$('#dests [data-del]').forEach(b => b.onclick = () => { delete LV.restream[b.dataset.del]; lvRender(); });
+  $$('#dests [data-eye]').forEach(b => b.onclick = e => { e.preventDefault(); const i = b.previousElementSibling; i.type = i.type === 'password' ? 'text' : 'password'; });
 }
-$('#destAdd').onclick = () => { const p = prompt('Which one? youtube, facebook, twitch or other', 'youtube'); if (!p) return; const k = p.toLowerCase().replace(/[^a-z0-9]/g, '') + (LV.restream[p] ? Object.keys(LV.restream).length : ''); const pr = DPRESET[p.toLowerCase()] || [p, ''];
-  LV.restream[k] = {name: pr[0], url: pr[1], key: '', with_live: false}; lvRender(); };
+const DHELP = {youtube: 'YouTube Studio → Create → Go live → Stream → copy the "Stream key".', facebook: 'Facebook → Live Producer → "Streaming software" → copy the "Stream key".', twitch: 'Twitch → Creator Dashboard → Settings → Stream → "Primary stream key".'};
+function platformOf(u) { u = (u || '').toLowerCase(); return u.includes('youtube') ? 'youtube' : u.includes('facebook') ? 'facebook' : u.includes('twitch') ? 'twitch' : 'other'; }
+$$('[data-dadd]').forEach(b => b.onclick = () => { const p = b.dataset.dadd, pr = DPRESET[p] || ['Other', ''];
+  let k = p, n = 2; while (LV.restream[k]) k = p + n++;
+  LV.restream[k] = {name: pr[0], url: pr[1], key: '', with_live: false}; lvRender(); toast('Paste the stream key, then Save restream'); });
 $('#destSave').onclick = () => { const dests = {};
   $$('#dests [data-k]').forEach(r => { const g = f => r.querySelector(`[data-f="${f}"]`); dests[r.dataset.k] = {name: g('name').value, url: g('url').value, key: g('key').value, with_live: g('with_live').checked}; });
   post('live/settings', {dests}).then(d => { LV = d; lvRender(); toast('Restream saved'); }); };

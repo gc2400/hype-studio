@@ -28,6 +28,10 @@
 #hhead .hrec i{width:9px;height:9px;border-radius:50%;background:#FF4D5E}
 #hhead .hrec.on{background:#FF4D5E;border-color:#FF4D5E;color:#fff}#hhead .hrec.on i{background:#fff;animation:hrecp 1.2s infinite}
 #hhead .hrec.ask{background:#3A0E18;border-color:#FF4D5E}
+#hhead .hlive{display:inline-flex;align-items:center;gap:6px;border:1px solid #FF4D5E;background:transparent;color:#FF8A97;border-radius:10px;padding:0 11px;height:32px;cursor:pointer;font:800 11px Inter,system-ui,sans-serif;letter-spacing:.06em;white-space:nowrap}
+#hhead .hlive:hover{background:#2A1420;color:#fff}#hhead .hlive.ask{background:#FFE000;border-color:#FFE000;color:#061423}
+#hhead .hlive.on{background:#FF4D5E;color:#fff}#hhead .hlive.on:hover{background:#FF6676}#hhead .hlive.on.ask{background:#FFE000;border-color:#FFE000;color:#061423}
+#hhead .hlive .t{font:700 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 #hhead #hRecT{font:700 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 @keyframes hrecp{50%{opacity:.25}}
 #hhead .hpop{position:absolute;top:calc(100% + 8px);left:0;width:330px;max-width:calc(100vw - 24px);background:#0B2236;border:1px solid #23496B;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.45);padding:12px;z-index:70;font-size:13px}
@@ -70,6 +74,7 @@
     <div class="hctl"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button>
       <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
     <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span></button><span class="chip" id="stClock">–</span><span id="clock">--:--:--</span>
+      <button class="hlive" id="hLive" title="GO LIVE: your studio mix goes on air (click twice)"><b>GO LIVE</b><span class="t" id="hLiveT"></span></button>
       <button class="hrec" id="hRec" title="Record the TV output (Library → Recordings)"><i></i><b>REC</b><span id="hRecT"></span></button>
       <div class="hpop" id="hPop" role="dialog" aria-label="Streams" hidden></div></div>
     <span class="sp"></span>
@@ -123,7 +128,22 @@
     h.querySelector('#hRecT').textContent = on ? fmtT(Date.now() / 1000 - REC.since) : '';
     rb.title = on ? 'Recording since ' + new Date(REC.since * 1000).toTimeString().slice(0, 5) + ' – click twice to stop' : 'Record the TV output (Library → Recordings)';
   }
-  function recLoad() { fetch('/api/live').then(r => r.json()).then(d => { REC = d.rec; recPaint(); }).catch(() => {}); }
+  function recLoad() { fetch('/api/live').then(r => r.json()).then(d => { REC = d.rec; LVH = d; recPaint(); livePaint(); }).catch(() => {}); }
+  // ---- GO LIVE / END LIVE: always a second click (going live or ending by accident would be worse than one extra click) ----
+  const lb = h.querySelector('#hLive'); let LVH = null, liveAsk = 0;
+  function livePaint() {
+    const on = !!(LVH && LVH.live), ask = liveAsk && Date.now() < liveAsk; if (!ask) liveAsk = 0;
+    lb.classList.toggle('on', on); lb.classList.toggle('ask', !!ask);
+    lb.querySelector('b').textContent = ask ? (on ? 'END LIVE?' : (LVH && !LVH.studio_online ? 'STUDIO OFFLINE – GO?' : 'GO LIVE?')) : (on ? '● LIVE' : 'GO LIVE');
+    h.querySelector('#hLiveT').textContent = on && LVH.live_since && !ask ? fmtT(Date.now() / 1000 - LVH.live_since) : '';
+    lb.title = on ? 'You are LIVE – click twice to END LIVE (back to the automation)' : (LVH && !LVH.studio_online ? 'The studio is not connected (Broadcast page) – going live now puts the automation on until it connects' : 'GO LIVE: your studio mix goes on air (click twice)');
+  }
+  lb.onclick = () => {
+    if (!(liveAsk && Date.now() < liveAsk)) { liveAsk = Date.now() + 3000; livePaint(); return; }
+    const on = !!(LVH && LVH.live); liveAsk = 0;
+    fetch('/api/live/' + (on ? 'off' : 'on'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'}).then(r => r.json()).then(d => { LVH = d; REC = d.rec; livePaint(); recPaint(); if (window.hypeLiveChanged) hypeLiveChanged(d); }).catch(() => {});
+  };
+  setInterval(livePaint, 1000);
   rb.onclick = () => {
     const on = !!(REC && REC.since);
     if (on && !(recAsk && Date.now() < recAsk)) { recAsk = Date.now() + 3000; recPaint(); return; }
@@ -131,7 +151,7 @@
     fetch('/api/live/' + (on ? 'rec_stop' : 'rec_start'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'}).then(r => r.json()).then(d => { REC = d.rec; recPaint(); }).catch(() => {});
   };
   // On Air and Broadcast already poll /api/live: they hand REC over (window.hypeRec), so no second poll here
-  window.hypeRec = rec => { REC = rec; recPaint(); };
+  window.hypeRec = (rec, d) => { REC = rec; recPaint(); if (d) { LVH = d; livePaint(); } };
   recLoad(); if (!home && cur !== 'studio') setInterval(recLoad, 5000); setInterval(recPaint, 1000);
   addEventListener('keydown', e => { if (e.altKey && !e.ctrlKey && e.key >= '1' && e.key <= '7') { e.preventDefault(); location.href = P[+e.key - 1][0]; } });
   if (home) return;                                                    // On Air updates all of this itself
