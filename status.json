@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T04:12:40",
+ "time": "2026-11-01T04:20:36",
  "result": "ok",
- "commit": "79df9e44a93a2ba719f752b41a83b2fd05353e8f",
- "subject": "Clock position saved when an item really goes on air (a restart re-plans the queued one instead of skipping its slot)",
+ "commit": "2021d1470ed173c56fd3b0dcdfea5a8420c59c38",
+ "subject": "Sound presets: \u00d7 on every preset like the lower-third names (own = deleted, built-in = hidden, 'Show removed' brings them back)",
  "log": [
-  "04:11:55 update bcb04336 \u2192 79df9e44 \u00b7 1 file(s): engine/engine.py",
-  "04:11:55 restart hype-engine",
-  "04:12:40 installed OK \u00b7 restarted: hype-engine"
+  "04:19:51 update 79df9e44 \u2192 2021d147 \u00b7 2 file(s): engine/engine.py, web/panel/settings.html",
+  "04:19:51 restart hype-engine",
+  "04:20:36 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Ryan Castro \u2013 que te vaya bien",
+  "song": "Bryan Mg x Dylisa x Bokoesam \u2013 Nobody Body",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
