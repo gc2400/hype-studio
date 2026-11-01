@@ -1,14 +1,15 @@
 {
- "time": "2026-11-01T15:25:58",
+ "time": "2026-11-01T15:36:58",
  "result": "ok",
- "commit": "7610961c3f2ab3401bed29f96dc05336330b0362",
- "subject": "DJ mode: waveform + smooth countdown per deck, MIX A/B and END buttons on the decks, the cued song stays on top of its deck list, deck lists with time and hover \u25b6 \u2191 \u2193 \u00d7, library rows only A/B",
+ "commit": "918a3b2fd4f377f37e3b2191fc729132e92112f1",
+ "subject": "DJ mode: the decks give one song at a time (a second song no longer left its deck early); everything queued for a deck shows on top of it; NEXT button per deck (takes the deck's next song)",
  "log": [
-  "15:25:58 update fb71aa2f \u2192 7610961c \u00b7 1 file(s): web/panel/index.html",
-  "15:25:58 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:36:13 update 7610961c \u2192 918a3b2f \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "15:36:13 restart hype-engine",
+  "15:36:58 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Usher \u2013 You Make Me Wanna...",
+  "song": "BAD BUNNY X ROSALIA \u2013 LA NOCHE DE ANOCHE",
   "listeners": 0,
   "obs": true,
   "seg_age": 0.1,
