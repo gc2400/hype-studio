@@ -1018,9 +1018,10 @@ function deckEl(k) {
     <canvas class="wave" data-w width="800" height="96" aria-label="Waveform of deck ${K}"></canvas>
     <div class="tp"><button class="btn ib" data-dj="cut" title="Play now: the next song of this deck interrupts (quick cut)" style="background:${col};border-color:${col};color:var(--bg)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg><small>NOW</small></button>
       <button class="btn ib" data-dj="mix" title="Mix into deck ${K}: its next song comes in with a crossfade" style="color:${col};border-color:${col}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10l-3-3M20 17H10l3 3" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><small>MIX ${K}</small></button>
-      <button class="btn ib" data-dj="next" title="Next: skip to the next song now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
       <button class="btn ib" data-dj="end" title="Stop at the end of this song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h3v14H5zM11 5l9 7-9 7z" fill="currentColor"/></svg><small>END</small></button>
+      <button class="btn ib red" data-dj="stop" title="Stop now: the radio goes silent until you press NOW or PLAY"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button>
       <button class="btn ib loop" data-dj="loop" title="Loop the song on air"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="btn ib" data-dj="next" title="Next: skip to the next song now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
       <span class="muted" style="margin-left:auto;font-size:11px" data-info></span></div>
     <div class="lab" style="color:var(--mut)">AUX ${k} · plays in this order · drag songs here</div><div class="dlist ulist" data-list></div>`;
   const other = k === '1' ? '2' : '1';
@@ -1030,6 +1031,7 @@ function deckEl(k) {
     cmd('dj_play', {deck: k, how: 'mix'}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('Mixing into deck ' + K)); };
   el.querySelector('[data-dj=end]').onclick = () => cmd('stop_at_end');
   el.querySelector('[data-dj=next]').onclick = () => cmd('next');
+  el.querySelector('[data-dj=stop]').onclick = () => { if (confirm('Stop the music now? The radio goes silent until you press NOW or PLAY.')) cmd('stop'); };
   const art = el.querySelector('[data-art]'); art.textContent = K;
   art.onclick = () => { if (S.now && S.now.deck === k) return toast('Deck ' + K + ' is already on air');
     cmd('dj_play', {deck: k, how: 'mix'}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('Mixing into deck ' + K)); };
@@ -1091,7 +1093,7 @@ function renderDecks() {
     if (!it) DW[k] = null;
     deckTime(k);
     const lb = el.querySelector('[data-dj=loop]'); lb.disabled = !onair; lb.classList.toggle('on', onair && !!S.loop);
-    el.querySelector('[data-dj=next]').disabled = !onair;
+    el.querySelector('[data-dj=next]').disabled = !onair; el.querySelector('[data-dj=stop]').disabled = !onair;
     const eb = el.querySelector('[data-dj=end]'); eb.disabled = !onair; eb.classList.toggle('redon', onair && !!S.stop_at_end);
     el.querySelector('[data-dj=mix]').disabled = onair || !it;
     const list_ = ((S.aux || {})[k] || []); el.querySelector('[data-info]').textContent = list_.length ? list_.length + ' next · ' + fmt(list_.reduce((a, u) => a + ((u.cue_mix || u.duration || 0) - (u.cue_start || 0)), 0)) : '';
