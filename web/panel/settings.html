@@ -96,6 +96,8 @@ table{border-collapse:collapse;width:100%}
 .dm b{font-family:'JetBrains Mono',ui-monospace,monospace;color:#F2F6FA;text-align:right}
 .db{height:10px;background:#0B2236;border-radius:5px;overflow:hidden}.db i{display:block;height:100%;width:0;border-radius:5px;transition:width .15s,background .3s}
 #g_key,#g_url{background:#071A2B;color:#F2F6FA;border:1px solid #23496B;border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;min-height:36px}
+.ltr{position:relative;display:inline-flex}.ltr .ltx{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);background:var(--card2);color:var(--mut);font-size:12px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0}
+.ltr:hover .ltx{display:inline-flex}.ltr .ltx:hover{color:#fff;background:#C8283A;border-color:#C8283A}@media (hover:none){.ltr .ltx{display:inline-flex}}
 </style>
 </head>
 <body>
@@ -244,7 +246,8 @@ const PRESETS = {   // all on the Classic chain; target: loud enough to keep the
   'Weekend Party': {tip: 'Friday / Saturday night: loud and driving, multiband keeps it clean', snd_punch: 0.5, snd_drive: 5.5, snd_bass: 4, snd_bass_f: 70, snd_mid: -0.5, snd_treble: 0, snd_ratio: 2.8, snd_thresh: -19, snd_attack: 20, snd_release: 170, snd_ceiling: -0.8}};
 const PKEYS = ['snd_drive', 'snd_bass', 'snd_bass_f', 'snd_mid', 'snd_treble', 'snd_ratio', 'snd_thresh', 'snd_attack', 'snd_release', 'snd_ceiling'];
 const MINE = () => (ST && ST.sound_presets) || {};
-function allPresets() { const o = Object.assign({}, PRESETS); Object.entries(MINE()).forEach(([n, v]) => { o['★ ' + n] = Object.assign({tip: 'your own preset'}, v); }); return o; }
+const HIDDEN = () => (ST && ST.sound_presets_hidden) || [];
+function allPresets() { const o = Object.assign({}, PRESETS); HIDDEN().forEach(n => delete o[n]); Object.entries(MINE()).forEach(([n, v]) => { o['★ ' + n] = Object.assign({tip: 'your own preset'}, v); }); return o; }
 function presetNow() { const S_ = (ST && ST.sound) || {}, P = allPresets();
   const same = n => Math.abs((P[n].snd_punch || 0) - (S_.snd_punch || 0)) < 0.2 && PKEYS.every(k => P[n][k] === undefined || Math.abs((S_[k] ?? 1e9) - P[n][k]) < 0.06);
   return Object.keys(P).find(same) || null; }
@@ -256,14 +259,18 @@ function render() {
   SL.forEach(([k, , , , , , u]) => { const e = $('#' + k); e.oninput = () => { $('#' + k + '_v').textContent = fmtv(+e.value, u); pend[k] = +e.value; clearTimeout(sT); sT = setTimeout(sendSound, 250); }; });
   const cur = presetNow();
   const AP = allPresets();
-  $('#presets').innerHTML = '<span class="lab" style="width:auto">Presets</span>' + Object.keys(AP).map(n => `<span class="row" style="gap:0"><button class="btn sm${n === cur ? ' on' : ''}" data-p="${esc(n)}" title="${esc(AP[n].tip)}">${esc(n)}</button>${n.startsWith('★ ') ? `<button class="btn sm" data-pdel="${esc(n.slice(2))}" title="Delete this preset" style="padding:0 7px">×</button>` : ''}</span>`).join('') +
+  $('#presets').innerHTML = '<span class="lab" style="width:auto">Presets</span>' + Object.keys(AP).map(n => `<span class="ltr"><button class="btn sm${n === cur ? ' on' : ''}" data-p="${esc(n)}" title="${esc(AP[n].tip)}">${esc(n)}</button><button class="ltx" data-pdel="${esc(n)}" title="Remove ${esc(n)}" aria-label="Remove ${esc(n)}">×</button></span>`).join('') +
     `<button class="btn sm yellow" id="pSave" title="Keep the sliders as they are now as your own preset">＋ Save as my preset</button>` +
+    (HIDDEN().length ? `<button class="btn sm" id="pBack" title="Show the built-in presets you removed again">Show removed (${HIDDEN().length})</button>` : '') +
     `<span class="muted" style="font-size:12px;flex-basis:100%">${cur ? '▶ ' + esc(cur) + ': ' + esc(AP[cur].tip) : (ST.sound && ST.sound.snd_punch > 0.75 ? 'Hype Punch is on – a preset switches back to the Classic chain.' : 'Own settings (sliders moved) – ＋ Save as my preset keeps them.')}</span>`;
   $('#pSave').onclick = () => { const n = (prompt('Name for this preset (e.g. "Warm no pump")', cur && cur.startsWith('★ ') ? cur.slice(2) : '') || '').trim().slice(0, 40); if (!n) return;
     const v = {}; [...PKEYS, 'snd_punch'].forEach(k => { if (ST.sound[k] != null) v[k] = ST.sound[k]; });
     post('settings', {sound_presets: Object.assign({}, MINE(), {[n]: v})}).then(d => { ST = d; render(); toast('Preset "' + n + '" saved'); }); };
-  $$('#presets [data-pdel]').forEach(b => b.onclick = () => { const n = b.dataset.pdel; if (!confirm('Delete preset "' + n + '"?')) return; const m = Object.assign({}, MINE()); delete m[n];
-    post('settings', {sound_presets: m}).then(d => { ST = d; render(); toast('Deleted'); }); });
+  // × on a preset (like the saved lower-third names): your own preset is deleted, a built-in one is hidden ("Show removed" brings it back)
+  $$('#presets [data-pdel]').forEach(b => b.onclick = e => { e.stopPropagation(); const n = b.dataset.pdel;
+    const req = n.startsWith('★ ') ? (m => { delete m[n.slice(2)]; return {sound_presets: m}; })(Object.assign({}, MINE())) : {sound_presets_hidden: [...new Set([...HIDDEN(), n])]};
+    post('settings', req).then(d => { ST = d; render(); toast('Removed ' + n); }); });
+  if ($('#pBack')) $('#pBack').onclick = () => post('settings', {sound_presets_hidden: []}).then(d => { ST = d; render(); toast('Built-in presets back'); });
   const sp = (ST && ST.sound && ST.sound.snd_punch) || 0, pm = sp > 0.75, mbm = sp > 0.25 && !pm;
   $$('#sndMode [data-m]').forEach(b => { const m = +b.dataset.m; b.classList.toggle('on', m === 1 ? pm : m === 0.5 ? mbm : !pm && !mbm);
     b.onclick = () => { pend = {snd_punch: m}; sendSound().then(() => { render(); toast(m === 1 ? 'Hype Punch on – listen, switch back any time' : m === 0.5 ? 'Classic + multiband on' : 'Classic sound'); }); }; });

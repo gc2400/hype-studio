@@ -1959,7 +1959,7 @@ def get_settings():
         except Exception: snd[v] = None
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
-            "artist_sep_min": ARTIST_SEP / 60, "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
+            "artist_sep_min": ARTIST_SEP / 60, "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd}
 def set_settings(d):
     global MIX_OUT
@@ -1974,6 +1974,8 @@ def set_settings(d):
         for n, v in list(d["sound_presets"].items())[:30]:
             if isinstance(v, dict): clean[str(n)[:40]] = {k: float(x) for k, x in v.items() if k in SOUND_VARS and isinstance(x, (int, float))}
         planner.set_setting(c, "sound_presets", clean)
+    if "sound_presets_hidden" in d and isinstance(d["sound_presets_hidden"], list):   # built-in presets you removed (Settings → Sound)
+        planner.set_setting(c, "sound_presets_hidden", [str(n)[:40] for n in d["sound_presets_hidden"][:30]])
     if "adbox_always" in d: planner.set_setting(c, "adbox_always", bool(d["adbox_always"]))
     if "smart_mix" in d: planner.set_setting(c, "smart_mix", bool(d["smart_mix"]))
     if "id_intro" in d: planner.set_setting(c, "id_intro", bool(d["id_intro"]))
