@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T14:27:22",
+ "time": "2026-11-01T14:47:34",
  "result": "ok",
- "commit": "1e8d55f5443e7b350961d47a47e2f4e84b8e65a6",
- "subject": "Up next survives an engine restart exactly (same songs, same order); ID over intros gets its own level (default -4 dB, Settings \u2192 Mixing)",
+ "commit": "83eede78069b1fa3ffaa710aa41d8f56ee0950f9",
+ "subject": "Up next shows the time each item is really heard (START \u2192 smart MIX) instead of the full file length",
  "log": [
-  "14:26:37 update 277b5e62 \u2192 1e8d55f5 \u00b7 2 file(s): engine/engine.py, web/panel/settings.html",
-  "14:26:37 restart hype-engine",
-  "14:27:22 installed OK \u00b7 restarted: hype-engine"
+  "14:46:48 update 1e8d55f5 \u2192 83eede78 \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "14:46:48 restart hype-engine",
+  "14:47:34 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "KAROL G \u2013 OKI DOKI",
+  "song": "Akon \u2013 Don't Matter",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
