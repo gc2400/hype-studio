@@ -155,3 +155,4 @@
 2026-11-01T20:12:34 ok 52213636 Playlist options without outlines, Randomize explains in-order; hour plan checkbox never shows a stale tick
 2026-11-01T20:20:30 ok ec91b7f7 Playlists: own option 'Play exactly as listed' (skips the separation rules, e.g. Top 10) instead of every in-order playlist; empty state on Playlists
 2026-11-01T20:21:34 ok 937b3914 Shows: half-hour shows (Fresh Out, Rewind Radio) show their hour plan
+2026-11-01T21:52:11 ok 39d79fb4 Countdown songs held back: songs of a 'play exactly as listed' playlist stay out of the normal rotation from X min before its hour until Y min after it ended (Settings → Rotation, default 60/60)

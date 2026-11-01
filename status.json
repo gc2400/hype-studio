@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T20:21:34",
+ "time": "2026-11-01T21:52:11",
  "result": "ok",
- "commit": "937b3914789e983656ad30f217a46e1d03e189e5",
- "subject": "Shows: half-hour shows (Fresh Out, Rewind Radio) show their hour plan",
+ "commit": "39d79fb4079ea489a9d70452ea2d5f40576a83bc",
+ "subject": "Countdown songs held back: songs of a 'play exactly as listed' playlist stay out of the normal rotation from X min before its hour until Y min after it ended (Settings \u2192 Rotation, default 60/60)",
  "log": [
-  "20:21:33 update ec91b7f7 \u2192 937b3914 \u00b7 1 file(s): web/panel/plan.html",
-  "20:21:34 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "21:51:26 update 937b3914 \u2192 39d79fb4 \u00b7 3 file(s): engine/engine.py, engine/planner.py, web/panel/settings.html",
+  "21:51:26 restart hype-engine",
+  "21:52:11 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Mr. P \u2013 I Can't Look Away",
+  "song": "ROA x Anuel AA \u2013 Vamo a Vel",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
