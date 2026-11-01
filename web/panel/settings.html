@@ -77,14 +77,15 @@ table{border-collapse:collapse;width:100%}
 .toast.show{opacity:1}
 @media (max-width:640px){.grid2{grid-template-columns:1fr}.sl{grid-template-columns:1fr 60px}.sl label{grid-column:1/-1}}
 
-.setwrap{display:grid;grid-template-columns:260px 1fr;gap:14px;align-items:start}
-.snav{position:sticky;top:14px;gap:4px;padding:10px}
-.snav .search input{width:100%;margin-bottom:6px}
-.sbtn{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid transparent;background:none;color:var(--txt);padding:9px 10px;border-radius:10px;cursor:pointer;font:inherit}
-.sbtn b{font-size:14px}.sbtn span{font-size:11px;color:var(--mut)}.sbtn:hover{background:var(--card2)}.sbtn.on{background:var(--card2);border-color:var(--y)}
+.setwrap{display:flex;flex-direction:column;gap:14px}
+.snav{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:10px 16px;margin:-14px 0 0;border-bottom:1px solid var(--line)}
+.sbtn{cursor:pointer;flex:none;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--mut);font:700 13px Inter,system-ui,sans-serif;padding:8px 12px;white-space:nowrap}
+.sbtn:hover{color:var(--txt);border-color:var(--line2)}.sbtn.on{background:var(--b);color:var(--bg);border-color:var(--b)}
+.snav .search input{width:240px;min-height:36px;font-size:13px}
+@media (max-width:700px){.snav .search{flex:1 1 100%}.snav .search input{width:100%}}
 .scont{display:flex;flex-direction:column;gap:14px;max-width:980px}
 .hit{outline:2px solid var(--y);outline-offset:3px;border-radius:10px}
-@media (max-width:800px){.setwrap{grid-template-columns:1fr}.snav{position:static}}
+
 /* slim scrollbars in the Hype colours */
 *{scrollbar-width:thin;scrollbar-color:#23496B transparent}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}
@@ -113,15 +114,16 @@ table{border-collapse:collapse;width:100%}
 <div class="wrap">
   <header id="hhead"></header><script src="/panel/header.js?v=1793552703"></script>
   <div class="setwrap">
-    <nav class="snav card" aria-label="Settings sections">
+    <nav class="snav" aria-label="Settings sections">
+      <button class="sbtn" data-sec="sound">Sound</button>
+      <button class="sbtn" data-sec="mixing">Mixing</button>
+      <button class="sbtn" data-sec="rotation">Rotation &amp; planning</button>
+      <button class="sbtn" data-sec="tv">TV</button>
+      <button class="sbtn" data-sec="tickers">Tickers</button>
+      <button class="sbtn" data-sec="live">Live &amp; restream</button>
+      <button class="sbtn" data-sec="guard">Alarm &amp; Hype Live</button>
+      <span style="flex:1"></span>
       <label class="search"><input type="search" id="sq" placeholder="Find a setting…" aria-label="Find a setting"></label>
-      <button class="sbtn" data-sec="sound"><b>🎚 Sound</b><span>processing · presets</span></button>
-      <button class="sbtn" data-sec="mixing"><b>⇄ Mixing</b><span>how songs go into each other</span></button>
-      <button class="sbtn" data-sec="rotation"><b>♻ Rotation &amp; planning</b><span>repeats · hit the hour</span></button>
-      <button class="sbtn" data-sec="tv"><b>📺 TV</b><span>clip sound</span></button>
-      <button class="sbtn" data-sec="tickers"><b>▤ Tickers</b><span>news · traffic · showbizz · agenda · weather</span></button>
-      <button class="sbtn" data-sec="live"><b>🔴 Live &amp; restream</b><span>recording · lip sync · YouTube…</span></button>
-      <button class="sbtn" data-sec="guard"><b>🛡 Alarm &amp; Hype Live</b><span>self-repair · phone alerts</span></button>
     </nav>
     <div class="scont">
     <section class="card sec" data-sec="sound">

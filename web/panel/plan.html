@@ -142,7 +142,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .wkpl .l{font:500 11px 'JetBrains Mono',monospace;color:var(--mut)}
 
 /* ---- page tabs (concept style) ---- */
-.ptabs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:10px 16px;margin:-10px 0 0;border-bottom:1px solid var(--line)}
+.ptabs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:10px 16px;margin:-14px 0 0;border-bottom:1px solid var(--line)}
 .ptabs .tab{cursor:pointer;flex:none;min-height:0;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--mut);font:700 13px Inter,system-ui,sans-serif;letter-spacing:0;padding:8px 12px;white-space:nowrap}
 .ptabs .tab:hover{color:var(--txt);border-color:var(--line2)}
 .ptabs .tab.on{background:var(--b);color:var(--bg);border-color:var(--b)}
@@ -177,7 +177,10 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .shname{background:transparent;border:0;border-bottom:1px dashed var(--line2);color:var(--txt);font:800 13px Inter,sans-serif;letter-spacing:0;text-transform:none;padding:2px 2px;min-width:200px}
 .shslots{display:flex;flex-direction:column;gap:6px}
 .sl{display:flex;align-items:center;gap:8px;min-height:42px;padding:4px 8px;border-radius:10px;border:1px solid var(--line);background:var(--deep);position:relative}
-.sl.fx{border-color:#4A4200;background:#1A1A08}.sl.drag{opacity:.4}.sl.over{border-color:var(--y)}
+.sl.fx{border-color:#4A4200;background:#1A1A08}.sl.drag{opacity:.4}
+.sl.ib::before,.sl.ia::after{content:'';position:absolute;left:-4px;right:-4px;height:3px;border-radius:3px;background:var(--y);box-shadow:0 0 8px rgba(255,224,0,.6);pointer-events:none}
+.sl.ib::before{top:-5px}.sl.ia::after{bottom:-5px}
+.btn.yellow:hover{background:#FFEA4D;border-color:#FFEA4D;box-shadow:0 0 0 3px rgba(255,224,0,.25)}
 .sl .hd{color:#4B6B88;cursor:grab;font-size:14px;width:16px;user-select:none}
 .sl .tg{font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:999px;width:70px;text-align:center;flex:none}
 .sl select,.sl input{background:transparent;border:1px solid transparent;color:var(--txt);font:600 13px Inter,sans-serif;border-radius:8px;min-height:32px;padding:0 6px}
@@ -788,14 +791,15 @@ function tabChanged(b) { b.scrollIntoView({block: 'nearest', inline: 'nearest'})
 const SLK = {playlist: ['SONG', '#062F38', '#05A9C6'], folder: ['SONG', '#062F38', '#05A9C6'], mix: ['MIX', '#3A3300', '#FFE000'], showjingle: ['SHOW ID', '#1E1438', '#B9A2FF'],
   jingle: ['SWEEP', '#1E1438', '#B9A2FF'], id: ['STATION ID', '#1E1438', '#B9A2FF'], song: ['SONG', '#062F38', '#05A9C6'], file: ['FILE', '#062F38', '#05A9C6'], adbreak: ['ADS', '#3A2A00', '#FFB54D'], fixed: ['FIXED', '#3A3300', '#FFE000']};
 const isMix = s => s.kind === 'folder' && /^MIXES\//i.test(s.ref || '');
-const tagOf = s => SLK[isMix(s) ? 'mix' : s.kind] || ['?', '#0F2B44', '#A9BCCD'];
+const JTAG = {LINERS: 'LINER', SWEEPERS: 'SWEEP', 'NEW MUSIC': 'NEW MUSIC', THROWBACK: 'THROWBACK', IDS: 'STATION ID', SWP: 'SWEEP'};
+const tagOf = s => { const t = SLK[isMix(s) ? 'mix' : s.kind] || ['?', '#0F2B44', '#A9BCCD']; return s.kind === 'jingle' ? [JTAG[(s.ref || '').toUpperCase()] || 'JINGLE', t[1], t[2]] : t; };
 const tagHtml = s => { const t = tagOf(s); return `<span class="tg" style="background:${t[1]};color:${t[2]}">${t[0]}</span>`; };
 function slotText(s) {
   const n = s.amount >= 999 ? 'fill to the hour' : !s.amount ? 'all' : s.amount > 1 ? s.amount + '×' : '';
   if (s.kind === 'playlist') { const p = PL.find(x => String(x.id) === String(s.ref)); return (p ? p.name : 'playlist?') + (n ? ' · ' + n : ''); }
   if (s.kind === 'folder') return s.ref + (n ? ' · ' + n : '');
   if (s.kind === 'showjingle') return 'Show ID / sweeper (else ' + (s.ref || 'SWEEPERS') + ')';
-  if (s.kind === 'jingle') return 'Jingle from ' + s.ref; if (s.kind === 'id') return 'Station ID from ' + s.ref;
+  if (s.kind === 'jingle') return (JTAG[(s.ref || '').toUpperCase()] === 'LINER' ? 'Liner' : JTAG[(s.ref || '').toUpperCase()] === 'SWEEP' ? 'Sweeper' : 'Jingle') + ' from ' + s.ref; if (s.kind === 'id') return 'Station ID from ' + s.ref;
   if (s.kind === 'song') return (s.ref || '').split('/').pop(); if (s.kind === 'file') return 'File ' + s.ref;
   if (s.kind === 'adbreak') return 'Ad break · ' + (s.amount || 1) + ' spots'; return s.ref || '';
 }
@@ -1019,11 +1023,13 @@ function shSlots() {
   $$('#shSlots [data-song]').forEach(b => b.onclick = () => { const q = prompt('Search a song (artist or title):'); if (!q) return; get('library?section=music&q=' + encodeURIComponent(q)).then(d => { if (!d.items.length) return toast('Nothing found', 1); SHC.slots[+b.dataset.song].ref = d.items[0].path; toast('Chosen: ' + d.items[0].artist + ' – ' + d.items[0].title); shSlots(); }); });
   $$('#shSlots [data-row]').forEach(r => {
     r.ondragstart = e => { SHDRAG = +r.dataset.row; r.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; };
-    r.ondragend = () => { SHDRAG = null; $$('#shSlots .sl').forEach(x => x.classList.remove('drag', 'over')); };
-    r.ondragover = e => { if (SHDRAG === null) return; e.preventDefault(); e.stopPropagation(); $('#shSlots').classList.remove('dropend'); $$('#shSlots .sl').forEach(x => x.classList.toggle('over', x === r)); };
-    r.ondrop = e => { e.preventDefault(); e.stopPropagation(); const to = +r.dataset.row; if (SHDRAG === null) return;
+    r.ondragend = () => { SHDRAG = null; $$('#shSlots .sl').forEach(x => x.classList.remove('drag', 'ib', 'ia')); };
+    const after = e => { const b = r.getBoundingClientRect(); return e.clientY > b.top + b.height / 2; };
+    r.ondragover = e => { if (SHDRAG === null) return; e.preventDefault(); e.stopPropagation(); $('#shSlots').classList.remove('dropend'); const af = after(e);
+      $$('#shSlots .sl').forEach(x => x.classList.remove('ib', 'ia')); r.classList.add(af ? 'ia' : 'ib'); };
+    r.ondrop = e => { e.preventDefault(); e.stopPropagation(); if (SHDRAG === null) return; let to = +r.dataset.row + (after(e) ? 1 : 0);
       if (typeof SHDRAG === 'string') { SHC.slots.splice(to, 0, shAddSlot(SHDRAG)); SHDRAG = null; shSlots(); return; }
-      if (to === SHDRAG) return; const [m] = SHC.slots.splice(SHDRAG, 1); SHC.slots.splice(to, 0, m); SHDRAG = null; shSlots(); };
+      const from = SHDRAG; SHDRAG = null; if (from < to) to--; if (to === from) { shSlots(); return; } const [m] = SHC.slots.splice(from, 1); SHC.slots.splice(to, 0, m); shSlots(); };
   });
   shEst();
 }
@@ -1032,15 +1038,15 @@ function shEst() {
   $('#shEst').textContent = `${SHC.slots.length} rows · ${SHC.slots.some(s => s.amount >= 999) ? 'fills the hour' : SHC.slots.some(s => ['playlist', 'folder'].includes(s.kind) && !s.amount) ? 'has an "all" row' : '≈ ' + n + ' songs per round'} · Preview hour shows the real fill`;
 }
 const ADDS = [['playlist', 'Song from a playlist', 'POWER, CURRENT, GOLD …'], ['folder', 'Song from a folder', 'a music folder'], ['showjingle', 'Show ID / sweeper', 'from the show folder'],
-  ['jingle', 'Jingle / sweeper', 'from a jingles folder'], ['id', 'Station ID', 'from IDS'], ['adbreak', 'Ad break', 'spots picked by Ads'], ['mix', 'Mix / liveset', 'one file from a MIXES folder'], ['song', 'One song', 'always this song'], ['fixed', 'Fixed time', 'news, TOH – at an exact minute']];
+  ['jingle', 'Jingle / liner / sweeper', 'LINERS, SWEEPERS, NEW MUSIC, THROWBACK …'], ['id', 'Station ID', 'from IDS'], ['adbreak', 'Ad break', 'spots picked by Ads'], ['mix', 'Mix / liveset', 'one file from a MIXES folder'], ['song', 'One song', 'always this song'], ['fixed', 'Fixed time', 'news, TOH – at an exact minute']];
 $('#shAdd').innerHTML = ADDS.map(([k, t, d]) => `<button type="button" class="adb" data-add="${k}" ${k === 'fixed' ? '' : 'draggable="true"'}><b>+ ${t}</b><small>${d}</small></button>`).join('');
 $$('#shAdd [data-add]').forEach(b => {
   b.onclick = () => { const k = b.dataset.add; if (k === 'fixed') { $('.tab[data-tab="fx"]').click(); return; } if (!SHC) return toast('Choose a show or hour plan first', 1);
     SHC.slots.push(shAddSlot(k)); shSlots(); const rows = $$('#shSlots .sl'); rows[rows.length - 1].scrollIntoView({block: 'nearest'}); };
   b.ondragstart = e => { if (!SHC) { e.preventDefault(); return; } SHDRAG = b.dataset.add; e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', b.dataset.add); };
-  b.ondragend = () => { SHDRAG = null; $('#shSlots').classList.remove('dropend'); $$('#shSlots .sl').forEach(x => x.classList.remove('over')); };
+  b.ondragend = () => { SHDRAG = null; $('#shSlots').classList.remove('dropend'); $$('#shSlots .sl').forEach(x => x.classList.remove('ib', 'ia')); };
 });
-$('#shSlots').ondragover = e => { if (typeof SHDRAG !== 'string') return; e.preventDefault(); $$('#shSlots .sl').forEach(x => x.classList.remove('over')); $('#shSlots').classList.add('dropend'); };
+$('#shSlots').ondragover = e => { if (typeof SHDRAG !== 'string') return; e.preventDefault(); $$('#shSlots .sl').forEach(x => x.classList.remove('ib', 'ia')); $('#shSlots').classList.add('dropend'); };
 $('#shSlots').ondragleave = e => { if (e.target === $('#shSlots')) $('#shSlots').classList.remove('dropend'); };
 $('#shSlots').ondrop = e => { if (typeof SHDRAG !== 'string') return; e.preventDefault(); SHC.slots.push(shAddSlot(SHDRAG)); SHDRAG = null; $('#shSlots').classList.remove('dropend'); shSlots(); };
 $('#shSave').onclick = () => { if (!SHC) return; SHC.name = $('#shName').value.trim(); SHC.resume = $('#shResume').checked;
