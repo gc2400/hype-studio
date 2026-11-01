@@ -1,19 +1,17 @@
 {
- "time": "2026-11-01T02:02:36",
+ "time": "2026-11-01T02:47:33",
  "result": "ok",
- "commit": "b15ccfb376a64116ca4999272f3186d4550b1216",
- "subject": "Return feed (music to the studio's Mixcast) straight from Liquidsoap to MediaMTX instead of a Pulse capture: no more hiccups / speeding up / slowing down; studio player buffer back to 250 ms",
+ "commit": "a016de0cc78fb5151617f02e504e117cec5d77c7",
+ "subject": "Guest page: full-screen button bottom-right with an icon (no longer over the logo)",
  "log": [
-  "02:00:58 update 1f619ecc \u2192 b15ccfb3 \u00b7 2 file(s): radio/radio.liq, web/panel/studio.html",
-  "02:01:35 lab: PASS (6/6 good readings)",
-  "02:01:36 restart hype-radio",
-  "02:02:36 installed OK \u00b7 restarted: hype-radio"
+  "02:47:33 update b15ccfb3 \u2192 a016de0c \u00b7 1 file(s): web/guest/index.html",
+  "02:47:33 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "HYPE RADIO \u2013 TOH",
+  "song": "DJHAMIDAOFFICIEL \u2013 Joba Owo",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
