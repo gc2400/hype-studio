@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T18:52:33",
+ "time": "2026-11-01T18:53:37",
  "result": "ok",
- "commit": "7923c5038496decd5a1bb56196b7fac977af2376",
- "subject": "Shows: hour plan rows wrap on phones",
+ "commit": "fc0b39d4ef4d494f2ebced061a64124116d7e5d9",
+ "subject": "Broadcast: guest cards stack on phones",
  "log": [
-  "18:52:33 update a378f8a2 \u2192 7923c503 \u00b7 1 file(s): web/panel/plan.html",
-  "18:52:33 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "18:53:37 update 7923c503 \u2192 fc0b39d4 \u00b7 1 file(s): web/panel/studio.html",
+  "18:53:37 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Bayanni x Jason Derulo \u2013 Ta Ta Ta",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },

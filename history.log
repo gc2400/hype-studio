@@ -135,3 +135,4 @@
 2026-11-01T18:40:14 ok 76a46e7b Planning like the concept: Week/Shows/Playlists/Ads/More tabs, week controls in the tab row, side panel What plays/Hour plan + hour filled; new Shows page (show list, hour plan rows with drag, add palette, preview)
 2026-11-01T18:50:29 ok a378f8a2 Planning nav like Hype Live (all pages, no More), week controls in the Week page, save buttons above Add; no CLOSE wording; Broadcast guest volume fits on phones
 2026-11-01T18:52:33 ok 7923c503 Shows: hour plan rows wrap on phones
+2026-11-01T18:53:37 ok fc0b39d4 Broadcast: guest cards stack on phones
