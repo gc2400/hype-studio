@@ -181,6 +181,9 @@ class Live:
     # ---------- camera slots (OBS CAM 1/2/3 read a stream from MediaMTX) ----------
     def set_cam(self, cam, src):
         if cam not in CAMS or src not in SOURCES: raise ValueError("unknown camera or source")
+        prev = self.st["cams"].get(cam)
+        for c_, s_ in list(self.st["cams"].items()):      # it was in another CAM already: that CAM gets this CAM's old source (a swap)
+            if c_ != cam and s_ == src: self.st["cams"][c_] = prev
         self.st["cams"][cam] = src; save(STATE, self.st); self.apply_cams()
     def apply_cams(self):
         """The OBS inputs are browser sources that play WebRTC straight from MediaMTX (the VDO.Ninja way: ~0.2-0.4 s, steady).
