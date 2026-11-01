@@ -107,3 +107,4 @@
 2026-11-01T15:58:47 ok a3db5840 Main player: controls under the waveform (like the decks); MANUAL AUX: Save as playlist + Clear at the bottom
 2026-11-01T16:17:56 ok b275eceb Show jingles: in WEEKEND clock hours the folder 'SHOWS/<show> Weekend' is used when it exists (e.g. Hype Non-Stop Weekend's own custom ID)
 2026-11-01T16:31:01 ok 7e74217a TV stream: players start at 720p (listed first), unique segment names, video pieces cacheable (max-age 600)
+2026-11-01T16:43:18 ok cd0c4b7b LIVE page: player column narrower (like ON AIR), scenes and guests wider

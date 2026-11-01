@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T16:31:01",
+ "time": "2026-11-01T16:43:18",
  "result": "ok",
- "commit": "7e74217af9a8a1468fc18691e04aef1b6e541a84",
- "subject": "TV stream: players start at 720p (listed first), unique segment names, video pieces cacheable (max-age 600)",
+ "commit": "cd0c4b7bfacebf0c1ec6c49521009f2982a0a6e4",
+ "subject": "LIVE page: player column narrower (like ON AIR), scenes and guests wider",
  "log": [
-  "16:30:15 update b275eceb \u2192 7e74217a \u00b7 2 file(s): system/nginx-hype.conf, tv/ladder.sh",
-  "16:30:16 restart hype-ladder",
-  "16:31:01 installed OK \u00b7 restarted: nginx-reload, hype-ladder"
+  "16:43:18 update 7e74217a \u2192 cd0c4b7b \u00b7 1 file(s): web/panel/index.html",
+  "16:43:18 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Frenna \u2013 CHAMPION FLOW",
+  "song": "Tekno \u2013 Press Button",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
