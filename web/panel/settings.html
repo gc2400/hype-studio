@@ -103,6 +103,7 @@ table{border-collapse:collapse;width:100%}
 .dfl{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
 .dfl input{text-transform:none;letter-spacing:0;font-weight:500}
 .dlogo{flex:none;font-size:11px;font-weight:900;padding:5px 9px;border-radius:7px;background:var(--line2);color:#fff}.dlogo.youtube{background:#FF0033}.dlogo.facebook{background:#1877F2}.dlogo.twitch{background:#9146FF}
+.dst{font-size:12px;color:var(--mut)}.dst.ok{color:var(--g);font-weight:700}.dst.bad{color:#FF8A97;font-weight:700}
 </style>
 </head>
 <body>
@@ -389,23 +390,33 @@ function lvRender() {
         <label class="tg" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-f="with_live" ${d.with_live ? 'checked' : ''} style="width:18px;height:18px">Start with GO LIVE</label><button class="btn sm red" data-del="${esc(k)}" title="Remove" aria-label="Remove ${esc(d.name)}">×</button></div>
       <label class="dfl">Server (RTMP address)<input type="text" data-f="url" value="${esc(d.url)}" placeholder="rtmp://…" spellcheck="false"></label>
       <label class="dfl">Stream key<span class="row" style="gap:6px;flex-wrap:nowrap"><input type="password" data-f="key" value="${esc(d.key)}" placeholder="${d.key ? '' : 'paste the stream key here'}" spellcheck="false" autocomplete="off" style="flex:1"><button class="btn sm" data-eye title="Show / hide the key" type="button">👁</button></span></label>
-      ${hp ? `<span class="muted" style="font-size:12px">Where to find it: ${hp}</span>` : ''}</div>`; }).join('') || '<span class="muted">No platforms yet – press + YouTube, + Facebook, + Twitch or + Other.</span>';
+      ${hp ? `<span class="muted" style="font-size:12px">Where to find it: ${hp}</span>` : ''}
+      <div class="row" style="gap:8px"><button class="btn sm ${d.on ? 'red' : ''}" data-test="${esc(k)}" type="button">${d.on ? '■ Stop test' : '▶ Test'}</button><span class="dst ${d.on ? (d.ok ? 'ok' : 'bad') : ''}">${d.on ? (d.ok ? '● Sending the TV to ' + esc(d.name) + ' – check the preview there' : '● Not reaching ' + esc(d.name) + ' – check the server and stream key') : 'Test: sends the TV now, without going live – you see it in the preview of ' + esc(d.name)}</span></div></div>`; }).join('') || '<span class="muted">No platforms yet – press + YouTube, + Facebook, + Twitch or + Other.</span>';
   $$('#dests [data-del]').forEach(b => b.onclick = () => { delete LV.restream[b.dataset.del]; lvRender(); });
+  $$('#dests [data-test]').forEach(b => b.onclick = () => { const k = b.dataset.test, d = LV.restream[k], on = !(d && d.on);
+    const go = () => post('live/restream', {key: k, on}).then(x => { if (x.error) return toast(x.error); LV = x; lvRender(); toast(on ? 'Sending to ' + d.name + ' – it can take ~10 s before the preview shows' : 'Test stopped'); testPoll(); });
+    if (on) saveDests().then(go); else go(); });
   $$('#dests [data-eye]').forEach(b => b.onclick = e => { e.preventDefault(); const i = b.previousElementSibling; i.type = i.type === 'password' ? 'text' : 'password'; });
 }
-const DHELP = {youtube: 'YouTube Studio → Create → Go live → Stream → copy the "Stream key".', facebook: 'Facebook → Live Producer → "Streaming software" → copy the "Stream key".', twitch: 'Twitch → Creator Dashboard → Settings → Stream → "Primary stream key".'};
+const DHELP = {youtube: 'YouTube Studio → Create → Go live → Stream → copy the "Stream key". For a test: switch off "Auto-start" there, else YouTube goes public by itself.', facebook: 'Facebook → Live Producer → "Streaming software" → copy the "Stream key". A test only shows in the preview there – viewers see nothing until you press "Go live" in Facebook.', twitch: 'Twitch → Creator Dashboard → Settings → Stream → "Primary stream key".'};
 function platformOf(u) { u = (u || '').toLowerCase(); return u.includes('youtube') ? 'youtube' : u.includes('facebook') ? 'facebook' : u.includes('twitch') ? 'twitch' : 'other'; }
 $$('[data-dadd]').forEach(b => b.onclick = () => { const p = b.dataset.dadd, pr = DPRESET[p] || ['Other', ''];
   let k = p, n = 2; while (LV.restream[k]) k = p + n++;
   LV.restream[k] = {name: pr[0], url: pr[1], key: '', with_live: false}; lvRender(); toast('Paste the stream key, then Save restream'); });
-$('#destSave').onclick = () => { const dests = {};
+function saveDests() { const dests = {};
   $$('#dests [data-k]').forEach(r => { const g = f => r.querySelector(`[data-f="${f}"]`); dests[r.dataset.k] = {name: g('name').value, url: g('url').value, key: g('key').value, with_live: g('with_live').checked}; });
-  post('live/settings', {dests}).then(d => { LV = d; lvRender(); toast('Restream saved'); }); };
+  return post('live/settings', {dests}).then(d => { LV = d; return d; }); }
+$('#destSave').onclick = () => saveDests().then(() => { lvRender(); toast('Restream saved'); });
+// while a test runs: its status (sending / not reaching) every 3 s
+let tpT = null;
+function testPoll() { clearTimeout(tpT); if (!Object.values(LV.restream || {}).some(d => d.on)) return;
+  tpT = setTimeout(() => get('live').then(d => { const was = JSON.stringify(Object.values(LV.restream).map(x => [x.on, x.ok])); LV = d;
+    if (JSON.stringify(Object.values(LV.restream).map(x => [x.on, x.ok])) !== was) lvRender(); testPoll(); }), 3000); }
 $('#newKey').onclick = () => { const b = $('#newKey');
   if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Sure? Click again'; b.classList.add('yellow'); setTimeout(() => { delete b.dataset.sure; b.textContent = 'New studio key'; b.classList.remove('yellow'); }, 4000); return; }
   delete b.dataset.sure; b.textContent = 'New studio key'; b.classList.remove('yellow');
   post('live/new_key', {}).then(d => { if (d.error) return toast(d.error); LV = d; toast('New studio key made'); }); };
-get('live').then(d => { LV = d; lvRender(); });
+get('live').then(d => { LV = d; lvRender(); testPoll(); });
 </script>
 </body>
 </html>
