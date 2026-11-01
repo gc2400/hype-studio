@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hype Studio · Hype Live</title>
+<link rel="icon" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--mut:#A9BCCD;--y:#FFE000;--b:#05A9C6}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;height:100%}
+body{display:flex;flex-direction:column}
+.sub{display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
+.sub a{color:var(--mut);text-decoration:none;font-weight:700;font-size:13px;padding:8px 12px;border-radius:10px;border:1px solid transparent}
+.sub a:hover{color:var(--txt);border-color:var(--line2)}
+.sub a.cur{background:var(--b);color:var(--bg)}
+.sub .sp{flex:1}
+.sub .ext{border-color:var(--line2);font-size:12px}
+.box{flex:1;position:relative;min-height:0}
+iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+.note{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px}
+.note div{max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.5}
+.note b{font-size:16px}.note p{margin:0;color:var(--mut)}
+.btn{align-self:flex-start;cursor:pointer;border-radius:10px;border:1px solid var(--b);background:var(--b);color:var(--bg);font-weight:800;font-size:13px;min-height:36px;padding:0 14px;display:inline-flex;align-items:center;text-decoration:none}
+</style>
+</head>
+<body>
+<header id="hhead"></header><script src="/panel/header.js?v=1793552703"></script>
+<nav class="sub" id="sub" aria-label="Hype Live"></nav>
+<div class="box">
+  <iframe id="fr" title="Hype Live" allow="clipboard-write; autoplay"></iframe>
+  <div class="note" id="note" hidden><div>
+    <b>Hype Live doesn't open here yet</b>
+    <p id="why">Log in to WordPress first, then come back. If you are logged in, the Hype Live update for Studio isn't installed yet.</p>
+    <a class="btn" id="ext2" target="_blank" rel="noopener">Open Hype Live in WordPress</a>
+  </div></div>
+</div>
+<script>
+(() => {
+  const WP = 'https://hyperadio.nl/wp-admin/admin.php';
+  const V = [['home', 'Home'], ['messages', 'Messages'], ['photos', 'Photos & voice'], ['games', 'Games'], ['sponsors', 'Sponsors'],
+             ['notifications', 'Notifications'], ['reports', 'Reports'], ['settings', 'Settings']];
+  const url = (v, embed) => `${WP}?page=hype-live&hl_view=${v}` + (embed ? '&hype_embed=1' : '');
+  const sub = document.getElementById('sub'), fr = document.getElementById('fr'), note = document.getElementById('note');
+  let view = (location.hash.slice(1) || localStorage.getItem('hypeHL') || 'home'), ok = false, timer;
+  if (!V.some(x => x[0] === view)) view = 'home';
+  sub.innerHTML = V.map(([k, t]) => `<a href="#${k}" data-v="${k}">${t}</a>`).join('') +
+    `<span class="sp"></span><a class="ext" id="ext" target="_blank" rel="noopener" title="Open this page in WordPress">Open in WordPress ↗</a>`;
+  const mark = v => {
+    view = v; try { localStorage.setItem('hypeHL', v); } catch (e) {}
+    sub.querySelectorAll('[data-v]').forEach(a => a.classList.toggle('cur', a.dataset.v === v));
+    document.getElementById('ext').href = document.getElementById('ext2').href = url(v, false);
+    if (location.hash.slice(1) !== v) history.replaceState(null, '', '#' + v);
+  };
+  const go = v => {
+    mark(v); ok = false; note.hidden = true; fr.src = url(v, true);
+    clearTimeout(timer); timer = setTimeout(() => { if (!ok) note.hidden = false; }, 8000);
+  };
+  sub.addEventListener('click', e => { const a = e.target.closest('[data-v]'); if (!a) return; e.preventDefault(); go(a.dataset.v); });
+  addEventListener('hashchange', () => { const v = location.hash.slice(1); if (v !== view && V.some(x => x[0] === v)) go(v); });
+  // The plugin says hello from inside the frame: {hypeLive:'ready', view:'messages'} – keeps the tab in step when you click links inside.
+  addEventListener('message', e => {
+    if (e.origin !== 'https://hyperadio.nl' || !e.data || e.data.hypeLive !== 'ready') return;
+    ok = true; note.hidden = true; if (e.data.view && e.data.view !== view && V.some(x => x[0] === e.data.view)) mark(e.data.view);
+  });
+  go(view);
+})();
+</script>
+</body>
+</html>

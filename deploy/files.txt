@@ -22,6 +22,7 @@ web/panel/plan.html|/var/www/studio/panel/plan.html|644|-
 web/panel/settings.html|/var/www/studio/panel/settings.html|644|-
 web/panel/history.html|/var/www/studio/panel/history.html|644|-
 web/panel/studio.html|/var/www/studio/panel/studio.html|644|-
+web/panel/hypelive.html|/var/www/studio/panel/hypelive.html|644|-
 web/panel/header.js|/var/www/studio/panel/header.js|644|-
 web/panel/hype-rtc.js|/var/www/studio/panel/hype-rtc.js|644|-
 web/panel/logo.png|/var/www/studio/panel/logo.png|644|-
