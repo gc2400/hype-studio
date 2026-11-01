@@ -830,7 +830,7 @@ function lighten(hex, k) { const m = /^#?([0-9a-f]{6})/i.exec(hex || ''); if (!m
   return '#' + [f(n >> 16), f((n >> 8) & 255), f(n & 255)].map(v => v.toString(16).padStart(2, '0')).join(''); }
 
 /* ---------------- week ---------------- */
-let WK = null, WKW = 0, WKSEL = null, WKALL = false, WKDRAG = null, WKSC = 'week', WKUNDO = null, WKVIEW = 'plays', WKPV = null;
+let WKHALF = false, WK = null, WKW = 0, WKSEL = null, WKALL = false, WKDRAG = null, WKSC = 'week', WKUNDO = null, WKVIEW = 'plays', WKPV = null;
 const WKPX = 34, WFULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hh = h => String(h % 24).padStart(2, '0') + ':00';
 const toMin = s => { const [a, b] = s.split(':').map(Number); return a * 60 + b; };
@@ -872,20 +872,20 @@ function wkRender() {
       WK.events.filter(e => e.at[0] !== '*' && e.days.includes(String(di)) && +e.at.split(':')[0] === x.h).forEach(e => { col += `<span class="wkm fxd" style="top:${x.h * WKPX + 7 + (+e.at.split(':')[1]) / 60 * WKPX * 0}px" title="Fixed time ${esc(e.at)}: ${esc(e.name)}">${esc((e.name || 'FIXED').toUpperCase().slice(0, 12))} ${esc(e.at)}</span>`; });
       if (x.via === 'date') col += `<span class="wkm one" style="top:${x.h * WKPX + 7}px" title="Only on this date: ${esc(ck ? ck.name : '')}">1×</span>`;
     });
-    if (WKSEL && WKSEL[0] === di) col += `<div class="wksel" style="top:${WKSEL[1] * WKPX}px;height:${(WKSEL[2] - WKSEL[1] + 1) * WKPX}px"></div>`;
+    if (WKSEL && WKSEL[0] === di) col += WKHALF ? `<div class="wksel" style="top:${WKSEL[1] * WKPX + WKPX / 2}px;height:${WKPX / 2}px"></div>` : `<div class="wksel" style="top:${WKSEL[1] * WKPX}px;height:${(WKSEL[2] - WKSEL[1] + 1) * WKPX}px"></div>`;
     if (d.date === today) { const n = new Date(); col += `<div class="wknow" style="top:${(n.getHours() + n.getMinutes() / 60) * WKPX}px"></div>`; }
     g += `<div class="wkd ${d.date === today ? 'today' : ''}" data-d="${di}" style="--px:${WKPX}px;height:${24 * WKPX}px">${col}</div>`;
   });
   $('#wkGrid').innerHTML = g;
   const hourAt = (el, e) => Math.max(0, Math.min(23, Math.floor((e.clientY - el.getBoundingClientRect().top) / WKPX)));
   $$('#wkGrid .wkd').forEach(el => {
-    el.onmousedown = e => { if (e.button) return; e.preventDefault(); const h = hourAt(el, e); WKDRAG = {el, di: +el.dataset.d, a: h, b: h}; dragBox(); };
+    el.onmousedown = e => { if (e.button) return; e.preventDefault(); const h = hourAt(el, e), fr = ((e.clientY - el.getBoundingClientRect().top) % WKPX) / WKPX; WKDRAG = {el, di: +el.dataset.d, a: h, b: h, half: fr >= .5}; dragBox(); };
     el.onmousemove = e => { if (!WKDRAG || WKDRAG.el !== el) return; const h = hourAt(el, e); if (h !== WKDRAG.b) { WKDRAG.b = h; dragBox(); } };
   });
 }
 function dragBox() { $$('.wkdrag').forEach(x => x.remove()); const {el, a, b} = WKDRAG, lo = Math.min(a, b), hi = Math.max(a, b);
   el.insertAdjacentHTML('beforeend', `<div class="wkdrag" style="top:${lo * WKPX}px;height:${(hi - lo + 1) * WKPX}px"></div>`); }
-document.addEventListener('mouseup', () => { if (!WKDRAG) return; const {di, a, b} = WKDRAG; WKDRAG = null; wkOpen(di, Math.min(a, b), Math.max(a, b)); });
+document.addEventListener('mouseup', () => { if (!WKDRAG) return; const {di, a, b, half} = WKDRAG; WKDRAG = null; WKHALF = a === b && half && !!WK.days[di].hours[a].h30; wkOpen(di, Math.min(a, b), Math.max(a, b)); });
 function wkScope() {
   const sc = $$('#wsScope button'); if (WKSEL) { const past = WK.days[WKSEL[0]].date < todayIso(); sc[1].disabled = past; if (past && WKSC === 'date') WKSC = 'week'; }
   sc.forEach(b => b.classList.toggle('on', b.dataset.sc === WKSC));
@@ -895,9 +895,12 @@ function wkScope() {
 function wkOpen(di, h1, h2, keep) {
   if (h2 === undefined || h2 === true) { keep = h2 === true || keep; h2 = h1; }
   WKSEL = [di, h1, h2]; if (!keep) wkRender();
-  const d = WK.days[di], hrs = d.hours.slice(h1, h2 + 1), x = hrs[0], ck = wkClock(x.clock_id), s = wkShowAt(d, h1), n = h2 - h1 + 1;
+  if (h1 !== h2 || !WK.days[di].hours[h1].h30) WKHALF = false;
+  const d = WK.days[di], hrs0 = d.hours.slice(h1, h2 + 1), H30 = WKHALF ? hrs0[0].h30 : null;
+  const hrs = H30 ? [{...hrs0[0], clock_id: H30.clock_id, via: H30.via, show_clock: H30.show_clock}] : hrs0, x = hrs[0], ck = wkClock(x.clock_id), n = h2 - h1 + 1;
+  const s = H30 ? d.shows.find(z => z.title === H30.show && +z.start.slice(0, 2) === h1) : wkShowAt(d, h1);
   $('#wkSide').hidden = false;
-  $('#wsWhen').textContent = `${WFULL[di].toUpperCase()} ${fmtD(d.date).toUpperCase()} · ${hh(h1)} – ${hh(h2 + 1)}${n > 1 ? ` · ${n} HOURS` : ''}`;
+  $('#wsWhen').textContent = H30 ? `${WFULL[di].toUpperCase()} ${fmtD(d.date).toUpperCase()} · ${s ? s.start + ' – ' + s.end : ''}` : `${WFULL[di].toUpperCase()} ${fmtD(d.date).toUpperCase()} · ${hh(h1)} – ${hh(h2 + 1)}${n > 1 ? ` · ${n} HOURS` : ''}`;
   $('#wsShow').textContent = s ? s.title : (ck ? ck.name : 'No hour plan'); $('#wsShow').style.color = ck ? lighten(ck.color, .3) : '';
   let sel = '';
   if (s) { const a = Math.floor(toMin(s.start) / 60), b = Math.ceil((toMin(s.end) || 1440) / 60) - 1; if (a !== h1 || b !== h2) sel += `<button class="btn sm" data-qs="${a}-${b}">Whole show ${s.start}–${s.end}</button>`; }
@@ -910,7 +913,7 @@ function wkOpen(di, h1, h2, keep) {
   const ones = hrs.filter(y => y.via === 'date'), shows = hrs.filter(y => y.via === 'show');
   $('#wsNormal').hidden = !ones.length;
   const normal = ones.length ? wkClock(ones[0].grid) : null;
-  $('#wsVia').innerHTML = ones.length ? `Only on ${fmtD(d.date)}: <b>${esc(ck ? ck.name : '')}</b>${normal ? ` – normally ${esc(normal.name)}` : ''}.`
+  $('#wsVia').innerHTML = H30 ? `"${esc(H30.show)}" starts on the half hour, so it has one hour plan for the whole show (every day it is on).` : ones.length ? `Only on ${fmtD(d.date)}: <b>${esc(ck ? ck.name : '')}</b>${normal ? ` – normally ${esc(normal.name)}` : ''}.`
     : shows.length ? `"${esc(s ? s.title : '')}" uses one hour plan for all its hours (Whole show, below).` : '';
   if (ones.length || shows.length) $('#wsChgBox').hidden = false;
   const shc = s ? x.show_clock : null;
@@ -953,6 +956,8 @@ $('#wsChg').onclick = () => { $('#wsChgBox').hidden = !$('#wsChgBox').hidden; };
 $('#wsApply').onclick = () => {
   const v = +$('#wsClock').value; if (!v) return toast('Choose an hour plan first', 1);
   const [di, h1, h2] = WKSEL, d = WK.days[di], hrs = d.hours.slice(h1, h2 + 1), when = `${hh(h1)}–${hh(h2 + 1)}`;
+  if (WKHALF && hrs[0].h30) { const t = hrs[0].h30.show, prev = hrs[0].h30.show_clock;
+    post('plan/save_show_clocks', {map: {[t]: v}}).then(() => { WKUNDO = ['save_show_clocks', {[t]: prev}]; wkUndoToast(`${t}: ${wkClock(v).name}`); wkLoad(); }).catch(e => toast(e.message, 1)); return; }
   if (WKSC === 'date') wkSave('set_schedule_date', hrs.map(x => ({date: d.date, hour: x.h, clock_id: v})), ['set_schedule_date', hrs.map(x => ({date: d.date, hour: x.h, clock_id: x.via === 'date' ? x.clock_id : null}))], `Only ${DAYS[di]} ${fmtD(d.date)} ${when}: ${wkClock(v).name}`);
   else wkSave('set_schedule', hrs.map(x => ({day: di, hour: x.h, clock_id: v})), ['set_schedule', hrs.map(x => ({day: di, hour: x.h, clock_id: x.grid}))], `Every ${WFULL[di]} ${when}: ${wkClock(v).name}`);
 };

@@ -911,7 +911,13 @@ def api_week(c, w=0):
             sc_ = None
             if s_ := show_at(t):
                 r2 = c.execute("SELECT clock_id FROM show_clocks WHERE title=?", (s_["title"],)).fetchone(); sc_ = r2[0] if r2 else None
-            hrs.append(dict(h=h, clock_id=cid, via=via, grid=r[0] if r else None, show_clock=sc_))
+            h30 = None
+            s30 = show_at(t + 1800)
+            if s30 and s30["start"].endswith(":30") and int(s30["start"][:2]) == h:     # a show that starts on the half hour (Fresh Out 20:30)
+                c30, v30 = _clock_of(c, t + 1800)
+                r3 = c.execute("SELECT clock_id FROM show_clocks WHERE title=?", (s30["title"],)).fetchone()
+                h30 = dict(clock_id=c30, via=v30, show=s30["title"], show_clock=r3[0] if r3 else None)
+            hrs.append(dict(h=h, clock_id=cid, via=via, grid=r[0] if r else None, show_clock=sc_, h30=h30))
         days.append(dict(date=time.strftime("%Y-%m-%d", time.localtime(t0)), hours=hrs,
                          shows=[dict(start=s["start"], end=s["end"], title=s["title"]) for s in WEEK if s["day"] == d]))
     clocks = {}
