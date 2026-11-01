@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T17:30:12",
+ "time": "2026-11-01T17:32:17",
  "result": "ok",
- "commit": "ee3905c5a81fe5c46374e5485550cafa0d61084f",
- "subject": "LIVE panel guest card: 'On TV in' on one line",
+ "commit": "644f6064b6c8b3a6e9f7f801a54b43d822a09995",
+ "subject": "LIVE panel guest card: link / WhatsApp / \u00d7 together at the top right, CAM box + Show name below (no overflow)",
  "log": [
-  "17:30:12 update 78d96993 \u2192 ee3905c5 \u00b7 1 file(s): web/panel/index.html",
-  "17:30:12 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "17:32:16 update ee3905c5 \u2192 644f6064 \u00b7 1 file(s): web/panel/index.html",
+  "17:32:17 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "CLUB HYPE \u2013 DJ Ricsz Liveset 9 MID2025SEASON Mojo's Alkmaar",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
