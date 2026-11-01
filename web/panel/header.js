@@ -1,8 +1,8 @@
 /* Hype Studio – one header for every page. Computer: logo · AUTO/MANUAL · modes · radio/tv · clock ……… pages (right).
-   Phone: logo · radio/tv · clock · ☰ (pages) / second row: the buttons. Keys: Alt+1 … Alt+8 */
+   Phone: logo · radio/tv · clock · ☰ (pages) / second row: the buttons. Keys: Alt+1 … Alt+9 */
 (function () {
   const P = [['/panel/', 'Panel', 'onair'], ['/panel/library.html', 'Library', 'library'], ['/panel/plan.html', 'Planning', 'plan'],
-             ['/panel/history.html', 'History', 'history'], ['/panel/studio.html', 'Broadcast', 'studio'], ['/panel/hypelive.html', 'Hype Live', 'hypelive'], ['/panel/settings.html', 'Settings', 'settings'], ['/', 'Status', 'status']];
+             ['/panel/history.html', 'History', 'history'], ['/panel/studio.html', 'Broadcast', 'studio'], ['/panel/hypelive.html', 'Hype Live', 'hypelive'], ['/panel/settings.html', 'Settings', 'settings'], ['/panel/help.html', 'Help', 'help'], ['/', 'Status', 'status']];
   const f = location.pathname.split('/').pop().replace('.html', '') || 'index';
   const cur = !location.pathname.startsWith('/panel') ? 'status' : f === 'index' ? 'onair' : f, home = cur === 'onair';
   const A = home ? 'bAuto' : 'hAuto', M = home ? 'bManual' : 'hManual';     // On Air binds its own buttons
@@ -156,7 +156,7 @@ html{scrollbar-gutter:stable}
   // On Air and Broadcast already poll /api/live: they hand REC over (window.hypeRec), so no second poll here
   window.hypeRec = (rec, d) => { REC = rec; recPaint(); if (d) { LVH = d; livePaint(); } };
   recLoad(); if (!home && cur !== 'studio') setInterval(recLoad, 5000); setInterval(recPaint, 1000);
-  addEventListener('keydown', e => { if (e.altKey && !e.ctrlKey && e.key >= '1' && e.key <= '8') { e.preventDefault(); location.href = P[+e.key - 1][0]; } });
+  addEventListener('keydown', e => { if (e.altKey && !e.ctrlKey && e.key >= '1' && e.key <= '9') { e.preventDefault(); location.href = P[+e.key - 1][0]; } });
   if (home) return;                                                    // On Air updates all of this itself
   const q = s => h.querySelector(s); let S = null, skew = 0;
   const api = (p, body) => fetch('/api/' + p, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => r.json());

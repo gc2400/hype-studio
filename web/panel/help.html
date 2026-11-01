@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hype Studio · Help</title>
+<link rel="icon" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--mut:#A9BCCD;--soft:#C9D7E3;--y:#FFE000;--b:#05A9C6;--g:#3DDC97;--r:#FF4D5E;--o:#FFB547}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
+.wrap{padding:14px;display:flex;flex-direction:column;gap:14px;max-width:1500px;margin:0 auto}
+.hbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 16px;margin:-14px 0 0;border-bottom:1px solid var(--line)}
+.hbar h1{margin:0;font-size:15px;font-weight:800;flex:1}
+.hbar input{background:var(--deep);border:1px solid var(--line2);border-radius:10px;color:var(--txt);min-height:36px;padding:0 12px;font:inherit;font-size:13px;width:280px}
+.btn{cursor:pointer;border-radius:10px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);font-weight:700;font-size:13px;min-height:36px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;font-family:inherit}
+.btn:hover{border-color:var(--b)}
+.lay{display:flex;gap:16px;align-items:flex-start}
+.toc{flex:none;width:250px;position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+.toc a{display:block;color:var(--mut);text-decoration:none;font-size:13px;font-weight:600;padding:5px 8px;border-radius:8px}
+.toc a.l1{color:var(--txt);font-weight:800;margin-top:6px}
+.toc a.l2{padding-left:18px;font-size:12.5px}
+.toc a:hover,.toc a.cur{background:var(--card2);color:var(--txt)}
+.doc{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;max-width:980px}
+section.h{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 24px;scroll-margin-top:80px}
+section.h h2{margin:0 0 6px;font-size:22px;font-weight:900}
+section.h h3{margin:22px 0 6px;font-size:16px;font-weight:800;color:var(--y);scroll-margin-top:80px}
+section.h h4{margin:14px 0 4px;font-size:14px;font-weight:800}
+section.h p,section.h li{font-size:14px;line-height:1.6;color:var(--soft)}
+section.h p{margin:6px 0}
+section.h ul,section.h ol{margin:6px 0;padding-left:22px}
+section.h li{margin:3px 0}
+b,strong{color:var(--txt)}
+.k{display:inline-block;font:700 11px 'JetBrains Mono',monospace;padding:1px 6px;border-radius:6px;border:1px solid var(--line2);background:var(--deep);color:var(--txt)}
+.tip{background:#062F38;border-radius:12px;padding:10px 14px;margin:10px 0;font-size:13.5px;line-height:1.55;color:#BFEFF8}
+.warn{background:#3A2A00;border-radius:12px;padding:10px 14px;margin:10px 0;font-size:13.5px;line-height:1.55;color:#FFDFA6}
+.lead{font-size:15px!important;color:var(--txt)!important}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:13.5px}
+th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);padding:6px 8px;border-bottom:1px solid var(--line2)}
+td{padding:7px 8px;border-bottom:1px solid var(--line);color:var(--soft);vertical-align:top}
+td:first-child{color:var(--txt);font-weight:700;white-space:nowrap}
+mark{background:var(--y);color:var(--bg);border-radius:3px;padding:0 2px}
+.none{color:var(--mut);padding:20px}
+@media (max-width:860px){.lay{flex-direction:column}.toc{position:static;width:100%;max-height:none}.hbar input{width:100%}}
+@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:#23496B transparent}}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#23496B;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-button{display:none;width:0;height:0}
+/* print = a clean PDF */
+@media print{
+  @page{margin:16mm 14mm}
+  html,body{background:#fff;color:#111}
+  #hhead,.hbar,.toc{display:none!important}
+  .wrap{padding:0;max-width:none}.lay{display:block}.doc{max-width:none}
+  section.h{background:#fff;border:0;border-radius:0;padding:0;margin:0 0 10mm;break-before:page}
+  section.h:first-child{break-before:auto}
+  section.h h2{color:#000;font-size:20pt}section.h h3{color:#0a6b80;break-after:avoid}section.h h4{color:#000}
+  section.h p,section.h li,td{color:#222;font-size:10.5pt}b,strong{color:#000}
+  .tip{background:#E6F6F9;color:#0a4d5c}.warn{background:#FFF4D6;color:#5c4200}
+  .k{background:#f2f2f2;color:#000;border-color:#bbb}th{color:#555;border-color:#999}td{border-color:#ddd}td:first-child{color:#000}
+  .printtitle{display:block!important;font-size:26pt;font-weight:900;margin:0 0 4mm}
+}
+.printtitle{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="hhead"></header><script src="/panel/header.js?v=1793567373"></script>
+  <div class="hbar">
+    <h1>Help · how Hype Studio works</h1>
+    <input type="search" id="q" placeholder="Search the help…" aria-label="Search the help">
+    <button class="btn" id="pdf" title="Print, or choose “Save as PDF”">⎙ Print / PDF</button>
+  </div>
+  <div class="lay">
+    <nav class="toc" id="toc" aria-label="Contents"></nav>
+    <main class="doc" id="doc">
+<div class="printtitle">Hype Studio – Manual</div>
+
+<!-- =============================== 1 =============================== -->
+<section class="h" id="start" data-t="Getting started">
+<h2>1. Getting started</h2>
+<p class="lead">Hype Studio is Hype Radio TV's own playout: it plays the radio and the TV 24/7 from our server, mixes songs, shows music videos in sync, and lets you go live with cameras and guests – all from the browser.</p>
+<h3 id="login">Logging in</h3>
+<ul>
+<li>Open <b>studio.hyperadio.nl</b> and log in with your Studio account. The panel is at <b>studio.hyperadio.nl/panel/</b>.</li>
+<li>You stay logged in on that browser. Log out with <span class="k">⇥</span> at the end of the page menu.</li>
+<li>Works on a computer, tablet and phone. On a phone the page menu sits under <span class="k">☰</span>.</li>
+</ul>
+<h3 id="header">The header (same on every page)</h3>
+<table>
+<tr><th>Part</th><th>What it does</th></tr>
+<tr><td>AUTO / MANUAL</td><td><b>AUTO</b>: Studio plays the schedule by itself. <b>MANUAL</b>: you decide – your own list (AUX) plays, and the schedule waits. Switching back to AUTO continues the planning.</td></tr>
+<tr><td>ON AIR · DJ · LIVE</td><td>The three views of the Panel: the normal player, the two DJ decks, and the live view with cameras and guests.</td></tr>
+<tr><td>Green dots</td><td>Radio and TV are on air. Red = something is wrong (the alarm also tells you).</td></tr>
+<tr><td>Clock</td><td>The studio time (Amsterdam).</td></tr>
+<tr><td>GO LIVE / END LIVE</td><td>Start or stop a live show (cameras on TV, recording if switched on). Needs two clicks so it never happens by accident. Shows a timer while live.</td></tr>
+<tr><td>REC</td><td>Start/stop a recording by hand, also when you are not live.</td></tr>
+<tr><td>Page menu</td><td>Panel · Library · Planning · History · Broadcast · Hype Live · Settings · Help · Status. Keys: <span class="k">Alt</span>+<span class="k">1</span> … <span class="k">9</span>.</td></tr>
+</table>
+<h3 id="words">Words used in Studio</h3>
+<table>
+<tr><td>Show</td><td>A program from the website schedule (name + times), e.g. Lunchtime Party 12:00–14:00.</td></tr>
+<tr><td>Hour plan</td><td>What plays inside an hour: rows like “song from POWER”, “liner”, “ad break”, “fill to the hour”. (Older name: clock.)</td></tr>
+<tr><td>Playlist</td><td>A list of folders, songs, jingles or other playlists, played in order, randomized or in rotation.</td></tr>
+<tr><td>Fixed time</td><td>Something that always plays at a set time, e.g. the Top of the hour (TOH) at :00.</td></tr>
+<tr><td>Up next</td><td>The songs and jingles that will play next, already decided by Studio.</td></tr>
+<tr><td>Cue points</td><td>START (where a song begins), MIX (where the next one comes in), END (nothing after it is heard).</td></tr>
+<tr><td>Paired clip</td><td>An audio song that has a music video: the radio plays the audio, the TV shows the video in sync.</td></tr>
+</table>
+</section>
+
+<!-- =============================== 2 =============================== -->
+<section class="h" id="panel" data-t="Panel">
+<h2>2. Panel</h2>
+<h3 id="onair">On Air</h3>
+<ul>
+<li><b>Player</b>: the song on air with its waveform, time left and the controls under it: <b>Next</b> (skip now), <b>Stop at end</b>, <b>Loop</b>, and back/forward 1 s.</li>
+<li><b>Up next</b>: what plays next with the real (heard) length. Hover a row for <span class="k">↑</span> <span class="k">↓</span> <span class="k">×</span>: move it or remove it. Drag songs from the Library to put them in.</li>
+<li><b>Library</b> (right side): search with <span class="k">/</span>. Per song: <b>Play now</b>, <b>Play next</b>, <b>Add to the end</b>.</li>
+<li><b>Hour plan for the rest of the hour</b>: pick another hour plan to take over until the next hour; then the schedule continues.</li>
+</ul>
+<h3 id="pads">Pads</h3>
+<ul>
+<li>Click a pad to play a jingle, effect or video over the music. <b>STOP PADS</b> stops them all.</li>
+<li>Switches: <b>Duck</b> (music dips while a pad plays), <b>Repeat</b> (pad loops until you click it again), <b>Video</b> (pads with ▶ also show their video full screen on TV).</li>
+<li>Banks: make your own pages of pads with the edit button. Folders in jingles become banks by themselves.</li>
+</ul>
+<h3 id="tvctl">TV on screen</h3>
+<ul>
+<li><b>Scenes</b>: switch what the TV shows (music video, Hype Screen, branding, cameras). Make groups of scenes for a show.</li>
+<li><b>Elements</b>: click to put a graphic on screen or take it off.</li>
+<li><b>Lower third</b>: type a name/role and show or hide it. Recent names are saved for one tap.</li>
+</ul>
+<h3 id="manual">MANUAL and AUX</h3>
+<p>In <b>MANUAL</b> you play your own lists. <b>AUX 1</b> and <b>AUX 2</b> work like DJ decks: drag songs in, they play in that order, with the same buttons (play, mix, remove, arrows on hover). <b>Save as playlist</b> and <b>Clear</b> sit at the bottom. When you switch to MANUAL, the DJ page shows how much time is left of the song that is still playing in AUTO.</p>
+<h3 id="dj">DJ mode</h3>
+<ul>
+<li>Two decks, <b>A</b> and <b>B</b>, each with a waveform, countdown and its own list of songs.</li>
+<li>Buttons per deck: <b>NOW</b> (cut in), <b>MIX</b> (crossfade into this deck), <b>NEXT</b>, <b>END</b>, <b>LOOP</b>.</li>
+<li>Add songs from the library with <b>Add to deck A / B</b>. The song on air stays visible in its deck, also after a restart.</li>
+</ul>
+<h3 id="livepanel">LIVE (in the Panel)</h3>
+<p>The live view while you are on air: the program picture, your cameras and the guests. Every camera and guest has a <b>SLOT 1 | 2 | 3 | 4</b> control: it decides which TV camera slot it fills. A slot is never used twice – choosing a slot that is taken swaps them. The same control is on the Broadcast page; both stay in step.</p>
+</section>
+
+<!-- =============================== 3 =============================== -->
+<section class="h" id="library" data-t="Library and History">
+<h2>3. Library and History</h2>
+<h3 id="lib">Library</h3>
+<ul>
+<li><b>Search</b> on artist or title. <b>Filter</b>: type (songs, jingles, ads), cue points, uploaded in the last 7 days, sort A–Z or newest.</li>
+<li><b>Upload</b>: choose the folder, drop the files. For big batches WinSCP/FileZilla is quicker – put files in the same folders on the server.</li>
+<li><b>Folders</b>: music is sorted by genre and type (e.g. AFRO/AFRO-POWER, CLASSICS/CLASSICS, NEW/NEW MUSIC, MIXES/SATURDAY 13). Jingles: IDS, LINERS, SWEEPERS, NEW MUSIC, THROWBACK, TOH, TOP 10, SHOWS/&lt;show&gt; (show IDs and sweepers; a “&lt;show&gt; Weekend” folder is used in weekend hours).</li>
+<li><b>Cue points</b>: open a song to set START, MIX and END on the waveform (keys <span class="k">S</span> <span class="k">M</span> <span class="k">E</span>), preview the video and choose its sound. <b>Back to automatic</b> resets them.</li>
+<li><b>Rename</b> with the pencil, <b>delete</b> next to it (deleted files are kept for a while on the server, they can be put back).</li>
+<li><b>Music videos</b>: an .mp4 with the same name as the song becomes its video (paired clip). The video's sound can play, dip the music, or stay silent.</li>
+</ul>
+<h3 id="history">History</h3>
+<ul>
+<li>Everything that played, per day, with the exact time. Search, filter songs/jingles/ads.</li>
+<li>A <b>“+ ID …”</b> chip shows when a station ID played over the intro of that song.</li>
+<li><b>CSV</b> downloads the day (proof of play for sponsors).</li>
+</ul>
+</section>
+
+<!-- =============================== 4 =============================== -->
+<section class="h" id="planning" data-t="Planning">
+<h2>4. Planning</h2>
+<p class="lead">How it fits together: <b>shows and their times come from the website</b>. Studio decides <b>what plays</b> inside them with <b>hour plans</b>. The <b>Schedule</b> shows which hour plan plays in which hour.</p>
+<h3 id="schedule">Schedule</h3>
+<ul>
+<li>The week (Mon–Sun, 00–24). Blocks are the website shows, coloured by their hour plan. <span class="k">◀</span> <span class="k">▶</span> other weeks, <b>Today</b> back.</li>
+<li><b>Warnings</b> for the coming 7 days on top: no mix uploaded, the same mix as last week, an empty folder or playlist, an hour without hour plan. Click a warning to jump to that hour.</li>
+<li><b>Tags</b>: <b>MIX</b> = this hour has its own mix folder (red <b>NO MIX</b> = nothing uploaded). <b>1×</b> = changed only for that date. Yellow tag = a fixed time.</li>
+<li><b>Select</b>: click an hour, or drag over several hours. An hour with two half-hour shows (Top 10 / Fresh Out): click the <b>top half</b> or the <b>bottom half</b>.</li>
+<li>The side panel shows <b>What plays</b> (an example of the real hour, with “hour filled”) or the <b>Hour plan</b> rows. <b>Edit</b> opens that hour plan.</li>
+<li><b>Change hour plan</b>: pick one and <b>Apply</b>. At the top choose <b>Normal week</b> (every week) or <b>Only this week</b> (that date only, e.g. a special; “Back to normal” undoes it).</li>
+<li><b>Whole show</b>: one hour plan for every hour of a show, all days. <b>Copy this day</b>: copy all hour plans of a day to other days.</li>
+<li><b>Undo</b>: the Undo button or <span class="k">Ctrl</span>+<span class="k">Z</span>.</li>
+</ul>
+<h3 id="shows">Shows (hour plans)</h3>
+<ul>
+<li>Left: the shows (with search) and the other hour plans. Right: the show (folder, colour, air times) and its <b>hour plan</b>. A show that uses different plans on some hours shows them as buttons above the plan.</li>
+<li><b>Rows</b>: a coloured tag (SONG, MIX, SHOW ID, LINER, SWEEP, NEW MUSIC, THROWBACK, ADS), what it plays, how many (1–5, <b>all</b>, <b>fill to the hour</b>) and where to start (where it left off, from the start, random).</li>
+<li><b>Add to the hour</b>: drag a block to the place you want (a yellow line shows where) or click it to add at the end. Drag <span class="k">⋮⋮</span> to reorder, hover a row for <span class="k">×</span>.</li>
+<li>Yellow <b>FIXED</b> rows are fixed times (like the TOH): they come into every hour by themselves.</li>
+<li><b>Save</b> · <b>Preview hour</b> (a real example with “hour filled”) · <b>Duplicate</b> · <b>Delete</b> (it tells you where the plan is used).</li>
+<li><b>Continue where it left off</b>: the next hour goes on at the next row instead of starting at the top (for long show plans).</li>
+</ul>
+<div class="tip"><b>Fill to the hour</b> on the last song row keeps playing that playlist until the hour (or the show) ends. Studio aims the last song to end close to :00 – or :30 when a show ends on the half hour.</div>
+<h3 id="playlists">Playlists</h3>
+<ul>
+<li><b>Add to the playlist</b> (right): choose Folder · Song · Jingles · Playlist, search, then drag an item to its place or click it.</li>
+<li><b>Options</b>:
+  <ul>
+  <li><b>Loop</b> – start again at the end.</li>
+  <li><b>Randomize</b> – on: mixed, every song once per round; off: in the order of the list.</li>
+  <li><b>Rotation</b> – take turns: the amount from each source, then the next (e.g. one from AFRO, then LAT, then CARIB). The number before each row is that amount.</li>
+  <li><b>Play exactly as listed</b> – never skip or move an item, also when that song or artist just played. For countdowns like the Top 10.</li>
+  </ul></li>
+<li><b>Play order now</b> shows what comes next. <b>Start from the top</b> resets it.</li>
+<li>Rotation playlists with a jingle (ROTATION-NEW, ROTATION-CLASSICS) are set to start <b>from the start</b> in the hour plans, so the jingle always comes before the song.</li>
+</ul>
+<h3 id="top10">Example: Monday / Thursday 20:00</h3>
+<ol>
+<li>20:00 – Top of the hour, then the hour plan <b>HYPE TOP 10</b>: the whole Top 10 playlist (all, from the start, exactly as listed).</li>
+<li>After the Top 10: a liner, then CURRENT until about 20:30.</li>
+<li>20:30 – <b>Fresh Out</b> (Mon) or <b>Rewind Radio</b> (Thu) starts with its own hour plan, filled to 21:00 with new music or classics.</li>
+</ol>
+<p>The Top 10 songs are kept out of the normal rotation from 1 hour before until 1 hour after (Settings → Rotation → Countdown songs).</p>
+<h3 id="fixed">Fixed times</h3>
+<ul>
+<li>Something at a set time on chosen days: a jingle, song, playlist, folder or ad break. <b>*:00</b> = every hour (the TOH).</li>
+<li><b>After the song</b>: it plays right after the song that is on air (smooth). <b>Exactly on time</b>: fades the song out at the minute.</li>
+<li><b>all</b> plays the whole playlist or folder.</li>
+</ul>
+<h3 id="ads">Ads</h3>
+<p>Sponsor spots (audio or video) with how many times per day and between which hours. Ad break rows in hour plans pick the spots that are due, never the same brand twice in one break. Every spot that plays is logged (History CSV, and in Hype Live's sponsor report when switched on).</p>
+<h3 id="sweepers">Intro sweepers</h3>
+<p>Rules for an ID or sweeper over the start of a song (the music dips while it plays): which songs, how often, from which jingles folder. The level is set in Settings → Mixing.</p>
+<h3 id="onscreen">On screen</h3>
+<p>Show your own graphics on TV when something plays (a song from a folder, a show, a time). Upload 1920×1080 PNG (transparent) or WebM to <b>branding/screen</b>; choose when, for how long and how often.</p>
+<h3 id="recordings">Recordings</h3>
+<p>Shows that are recorded by themselves (e.g. every Friday 18:00–21:00), with how many days to keep them. Recordings are in Library → Recordings. Long recordings are cut into parts so nothing is lost.</p>
+</section>
+
+<!-- =============================== 5 =============================== -->
+<section class="h" id="broadcast" data-t="Broadcast (going live)">
+<h2>5. Broadcast – going live</h2>
+<h3 id="steps">The steps</h3>
+<ol>
+<li><b>Connect the studio</b>: the page sends your studio sound (Mixcast) and your cameras to the server. You see and hear yourself in the previews.</li>
+<li><b>GO LIVE</b> (here or in the header): the TV switches to the cameras, the radio carries your studio mix, recording starts if “Record every live show” is on.</li>
+<li><b>END LIVE</b>: back to the music, the TV follows the music again.</li>
+</ol>
+<h3 id="cams">Your cameras</h3>
+<p>Under each preview: the camera dropdown (which camera of this computer) and the <b>SLOT</b> control. Quality is set under Setup (bitrate, picture size, frames per second). Advice for Wi-Fi: 2.5 Mbps, 720p, 25 fps.</p>
+<h3 id="guests">Guests (max 6)</h3>
+<ul>
+<li><b>Invite</b>: type the name, choose video or audio-only and how long the link works, then send it with the <b>link</b> or <b>WhatsApp</b> icon.</li>
+<li>The guest opens the link on a phone or computer, allows camera and microphone, and wears <b>headphones</b>. They hear the studio and the other guests, and see what's on air.</li>
+<li>Per guest: <b>SLOT</b>, <b>VOL</b>, <b>mute</b> (muted guests are off air and the other guests don't hear them either), <b>×</b> removes them (their link stops).</li>
+<li>Expired links stop by themselves.</li>
+</ul>
+<h3 id="mixminus">Audio and mix-minus</h3>
+<table>
+<tr><td>Studio mix → air</td><td>The Mixcast's USB output: everything that goes on air.</td></tr>
+<tr><td>Guests → Mixcast</td><td>The guests come into the Mixcast on the <b>TRRS fader</b> (laptop headset jack ↔ Mixcast TRRS).</td></tr>
+<tr><td>Mix-minus ← Mixcast</td><td>The Mixcast sends back everything except the TRRS channel – that is what guests hear (plus each other), so nobody hears themselves.</td></tr>
+<tr><td>Audio-only by phone</td><td>Pair the phone with the Mixcast <b>Bluetooth</b> and call – the Mixcast does the mix-minus.</td></tr>
+</table>
+<div class="warn">If the page says <b>“Guests will hear themselves”</b>, choose the input where the Mixcast's TRRS mix-minus comes in under <b>Audio devices</b>.</div>
+<h3 id="lipsync">Lip sync</h3>
+<p>Settings → Live → <b>Lip sync (TV)</b> moves the sound against the picture if they don't match (do a clap test: picture and sound of the clap should be together).</p>
+<h3 id="restream">Restream</h3>
+<p>Settings → Live & restream: add YouTube, Facebook, Twitch or another platform (server + stream key). <b>▶ Test</b> sends the TV without going live – check it in the platform's preview. <b>Start with GO LIVE</b> sends it automatically when you go live.</p>
+</section>
+
+<!-- =============================== 6 =============================== -->
+<section class="h" id="more" data-t="Hype Live, Settings, Status">
+<h2>6. Hype Live, Settings and Status</h2>
+<h3 id="hypelive">Hype Live</h3>
+<p>The Hype Live dashboard (WordPress) inside Studio: Home · Messages · Photos & voice · Games · Sponsors · Notifications · Reports · Settings. Log in once with <b>Remember me</b> (stays 30 days). <b>Open in WordPress</b> opens the same page in a new tab.</p>
+<h3 id="settings">Settings</h3>
+<table>
+<tr><th>Section</th><th>What you set there</th></tr>
+<tr><td>Sound</td><td>The processing for radio + TV: presets, sliders, compressor/limiter meters. Changes are live.</td></tr>
+<tr><td>Mixing</td><td>How one song goes into the next (MIX point, smart mix), jingle volume and fade, ID over intros (level, how often).</td></tr>
+<tr><td>Rotation & planning</td><td>Same artist / same song again after…, countdown songs held back before/after, smart song picking, hit the hour, hour preview.</td></tr>
+<tr><td>TV</td><td>Paired songs: how loud music videos are on TV compared to the radio.</td></tr>
+<tr><td>Tickers</td><td>The scrolling bar at the bottom of the TV: news, traffic, showbizz, agenda, weather.</td></tr>
+<tr><td>Live & restream</td><td>Record every live show and what (video+audio, video, audio), lip sync, restream, the studio key.</td></tr>
+<tr><td>Alarm & Hype Live</td><td>Self-repair, phone alerts, now playing and sponsor spots to Hype Live.</td></tr>
+</table>
+<p>Use <b>Find a setting…</b> (top right) to jump to any setting.</p>
+<h3 id="status">Status</h3>
+<p>The Status page shows if everything runs: radio, TV, streams, the services on the server and the last events.</p>
+</section>
+
+<!-- =============================== 7 =============================== -->
+<section class="h" id="trouble" data-t="Behind the scenes and problems">
+<h2>7. Behind the scenes – and when something goes wrong</h2>
+<h3 id="server">How it runs</h3>
+<ul>
+<li>Everything runs on our own server: the radio stream, the TV (OBS), the HD/HLS TV streams, the live server for cameras and guests, and the engine that plans and plays.</li>
+<li><b>Updates</b> install by themselves within about a minute. They <b>wait while you are live or recording</b>, and roll back by themselves if something fails.</li>
+<li><b>Restart-proof</b>: after a restart Up next, AUTO/MANUAL/DJ and the place in the hour plan come back.</li>
+<li><b>Backups</b> of the library and settings are made every night to the Storage Box.</li>
+<li><b>Self-repair</b>: the guard checks radio, TV and streams all the time and repairs what stops; if it can't, you get a phone alert via Hype Live.</li>
+</ul>
+<h3 id="weekly">Every week</h3>
+<ul>
+<li>Upload the weekend mixes to their MIXES folders (e.g. MIXES/SATURDAY 13). The Schedule warns when a folder is empty or still has last week's mix.</li>
+<li>Update the HYPE TOP 10 playlist (Playlists) – the order is the countdown.</li>
+<li>Check the warnings on the Schedule page.</li>
+</ul>
+<h3 id="problems">Quick fixes</h3>
+<table>
+<tr><th>Problem</th><th>What to do</th></tr>
+<tr><td>Silence or a stuck song</td><td>Panel → <b>Next</b>. If it doesn't help, wait 30 s: the guard restarts what is stuck and you get an alert.</td></tr>
+<tr><td>Wrong music in an hour</td><td>Schedule → click the hour → check the hour plan and the warnings.</td></tr>
+<tr><td>A show plays the wrong plan</td><td>Schedule → the show's hour → Change hour plan (Normal week or Only this week).</td></tr>
+<tr><td>Guest hears themselves</td><td>Broadcast → Audio devices → choose the TRRS mix-minus input; guest wears headphones.</td></tr>
+<tr><td>Picture and sound not together</td><td>Settings → Live → Lip sync (clap test).</td></tr>
+<tr><td>Hype Live page doesn't open</td><td>Log in to WordPress (www.hyperadio.nl) and press Try again.</td></tr>
+<tr><td>A page looks old after an update</td><td>Press <span class="k">Ctrl</span>+<span class="k">F5</span>.</td></tr>
+</table>
+</section>
+<div class="none" id="none" hidden>Nothing found.</div>
+    </main>
+  </div>
+</div>
+<script>
+(() => {
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  // contents from the headings
+  $('#toc').innerHTML = $$('section.h').map(s => `<a class="l1" href="#${s.id}">${s.querySelector('h2').textContent}</a>` +
+    [...s.querySelectorAll('h3[id]')].map(h => `<a class="l2" href="#${h.id}">${h.textContent}</a>`).join('')).join('');
+  // current section in the contents
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) $$('.toc a').forEach(a => a.classList.toggle('cur', a.getAttribute('href') === '#' + e.target.id)); }), {rootMargin: '-80px 0px -70% 0px'});
+  $$('section.h, section.h h3[id]').forEach(x => io.observe(x));
+  // search: show only the parts that match, mark the words
+  const orig = new Map($$('section.h').map(s => [s, s.innerHTML]));
+  let t;
+  $('#q').oninput = () => { clearTimeout(t); t = setTimeout(() => {
+    const q = $('#q').value.trim().toLowerCase(); let any = false;
+    $$('section.h').forEach(s => {
+      s.innerHTML = orig.get(s);
+      if (!q) { s.hidden = false; return; }
+      const hit = s.textContent.toLowerCase().includes(q); s.hidden = !hit; any = any || hit;
+      if (!hit) return;
+      [...s.querySelectorAll('li, p, td, h3, h4')].forEach(el => { if (el.children.length > 3) return;
+        if (el.textContent.toLowerCase().includes(q)) el.innerHTML = el.innerHTML.replace(new RegExp('(?![^<]*>)(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>'); });
+    });
+    $('#none').hidden = !q || any;
+  }, 150); };
+  $('#pdf').onclick = () => { $('#q').value = ''; $('#q').oninput(); setTimeout(() => print(), 250); };
+  if (location.hash) setTimeout(() => { const e = document.querySelector(location.hash); if (e) e.scrollIntoView(); }, 100);
+})();
+</script>
+</body>
+</html>
