@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T18:26:55",
+ "time": "2026-11-01T18:40:14",
  "result": "ok",
- "commit": "052a60f66375685fd335b18abea06559e71beb9d",
- "subject": "Planning Week replaces Schedule: drag to select hours, set clock every week or only one date (schedule_date), whole-show clock, copy a day, undo",
+ "commit": "76a46e7b34161ca370edac2905a889a1f4de0b2e",
+ "subject": "Planning like the concept: Week/Shows/Playlists/Ads/More tabs, week controls in the tab row, side panel What plays/Hour plan + hour filled; new Shows page (show list, hour plan rows with drag, add palette, preview)",
  "log": [
-  "18:26:10 update 41a936ff \u2192 052a60f6 \u00b7 3 file(s): engine/engine.py, engine/planner.py, web/panel/plan.html",
-  "18:26:10 restart hype-engine",
-  "18:26:55 installed OK \u00b7 restarted: hype-engine"
+  "18:40:14 update 052a60f6 \u2192 76a46e7b \u00b7 1 file(s): web/panel/plan.html",
+  "18:40:14 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Myke Towers \u2013 CARITA FELIZ",
+  "song": "Shallipopi x Burna Boy \u2013 Laho II",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },

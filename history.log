@@ -132,3 +132,4 @@
 2026-11-01T18:17:55 ok 1532601e Planning: Week view (shows per day, mix hours, warnings for 7 days, hour panel with clock + what plays); Hype Live frame uses www (login cookie)
 2026-11-01T18:18:59 ok 41a936ff Week: compact warnings (3 + more), readable times
 2026-11-01T18:26:55 ok 052a60f6 Planning Week replaces Schedule: drag to select hours, set clock every week or only one date (schedule_date), whole-show clock, copy a day, undo
+2026-11-01T18:40:14 ok 76a46e7b Planning like the concept: Week/Shows/Playlists/Ads/More tabs, week controls in the tab row, side panel What plays/Hour plan + hour filled; new Shows page (show list, hour plan rows with drag, add palette, preview)
