@@ -20,7 +20,7 @@ def db():
     c.execute("""CREATE TABLE IF NOT EXISTS close_cues(key TEXT PRIMARY KEY, inicio REAL, fin REAL, pisador TEXT,
                  pisador_inicio REAL, pisador_fade REAL, imported_at REAL)""")
     cols = [r[1] for r in c.execute("PRAGMA table_info(items)")]
-    for col, typ in [("overlay_path", "TEXT"), ("overlay_at", "REAL"), ("overlay_duck", "REAL"), ("close_key", "TEXT")]:
+    for col, typ in [("overlay_path", "TEXT"), ("overlay_at", "REAL"), ("overlay_duck", "REAL"), ("overlay_mode", "TEXT"), ("close_key", "TEXT")]:
         if col not in cols: c.execute(f"ALTER TABLE items ADD COLUMN {col} {typ}")
     return c
 
@@ -63,10 +63,10 @@ def apply(c, only_path=None):
             by_name.setdefault("_".join(parts[i:]).lower(), []).append(k)
         for i in range(1, len(parts)):   # same kind of file only: a song's .mp3 cues never go to its music video (.mp4)
             nm = "_".join(parts[i:]); by_norm.setdefault(norm(nm) + "|" + os.path.splitext(nm)[1].lower(), []).append(k)
-    q = "SELECT path, filename, duration, cue_start, cue_mix, cue_end, cues_edited FROM items WHERE section IN ('music','jingles','ads','clips')"   # clips too: a music video starts at its CLOSE in-point
+    q = "SELECT path, filename, duration, cue_start, cue_mix, cue_end, cues_edited, overlay_mode FROM items WHERE section IN ('music','jingles','ads','clips')"   # clips too: a music video starts at its CLOSE in-point
     rows = c.execute(q + (" AND path=?" if only_path else ""), ((only_path,) if only_path else ())).fetchall()
     out = []
-    for path, fn, dur, cs, cm, ce, edited in rows:
+    for path, fn, dur, cs, cm, ce, edited, ov_mode in rows:
         hits = by_name.get(fn.lower(), []) or by_norm.get(norm(fn) + "|" + os.path.splitext(fn)[1].lower(), [])
         if not hits: out.append([path, "", "no CLOSE cue file", "", "", "", ""]); continue
         hits.sort(key=lambda k: (k[1] is None, -len(k[0])))   # prefer one with a start point
@@ -84,9 +84,9 @@ def apply(c, only_path=None):
             new_cm = max(new_cm, fin - 3.0)
         if new_cs is not None and new_cm is not None and new_cm <= new_cs:
             out.append([path, key, "skipped: start after end", ini, fin, cs, cm]); continue
-        c.execute("""UPDATE items SET cue_start=?, cue_mix=?, cue_end=?, cues_edited=2, close_key=?,
-                     overlay_path=?, overlay_at=?, overlay_duck=? WHERE path=?""",
-                  (new_cs, new_cm, new_ce, key, pis, pis_i, pis_f, path))
+        c.execute("UPDATE items SET cue_start=?, cue_mix=?, cue_end=?, cues_edited=2, close_key=? WHERE path=?", (new_cs, new_cm, new_ce, key, path))
+        if pis and ov_mode not in ("song", "none"):    # CLOSE's own sweeper - never over one you chose in Hype Studio (or "never"), never wiped when CLOSE has none
+            c.execute("UPDATE items SET overlay_path=?, overlay_at=?, overlay_duck=? WHERE path=?", (pis, pis_i, pis_f, path))
         out.append([path, key, note, ini, fin, cs, cm])
     c.commit(); return out
 

@@ -211,7 +211,7 @@ function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('s
         document.getElementById('dvA').textContent = d.agc_on === false ? 'off' : (a >= 0 ? '+' : '−') + Math.abs(a).toFixed(1) + ' dB' + ({hold:' · hold', gate:' · quiet part', catch:' · catch', lift:' · intro lift'}[d.agc_state] || ''); }
       const u = d.lufs; if (u != null && isFinite(u) && u > -60) set('U', Math.max(0, u + 30), 26, u > -9 ? '#FF4D5E' : u > -11 ? '#FFE000' : '#05A9C6', u.toFixed(1) + ' LUFS');
     }).catch(() => {});
-  }, 200);
+  }, 250);      // 4 a second, like the On Air meter
 })();
 const SL = [
   ['snd_drive', 'Loudness', 'how hard it hits the limiter', 0, 10, 0.5, 'dB'],

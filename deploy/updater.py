@@ -10,7 +10,7 @@ Every 60 s: fetch main. A new commit →
   5. the result is written to the branch "status" (status.json + log), so it can be read from anywhere.
 Commit message "[night]" = wait until 04:00–05:00 before installing (a radio restart = ~10 s silence).
 """
-import os, sys, json, time, shutil, subprocess, datetime, traceback
+import os, sys, json, time, shutil, subprocess, datetime, traceback, urllib.request
 sys.path.insert(0, "/srv/hype-repo/deploy")
 REPO = "/srv/hype-repo"; STATUS_WT = "/srv/hype-status"
 DEPLOYED = "/var/lib/hype/deployed_commit"; PAUSE = "/run/hype/guard_pause"
@@ -62,6 +62,14 @@ def deploy(cur, new):
             r = subprocess.run(["git", "show", f"{cur}:{f['repo']}"], cwd=REPO, capture_output=True)
             if r.returncode == 0 and __import__("hashlib").sha256(r.stdout).hexdigest() != sha(f["live"]):
                 log("CONFLICT:", f["live"], "was changed on the server – run deploy/export.py + push first"); return "conflict"
+    # never restart services during a live show or a recording (pages-only updates still go through)
+    svc = [u for f in files for u in f["units"] if u not in ("daemon-reload", "nginx-reload")]
+    if svc:
+        try:
+            lv = json.loads(urllib.request.urlopen("http://127.0.0.1:8090/live", timeout=5).read())
+            if lv.get("live") or lv.get("air") == "studio" or lv.get("rec"):
+                log("waits: LIVE or recording is on – restarts", ", ".join(sorted(set(svc))), "after the show"); return "waiting"
+        except Exception as e: log("live check failed (", e, ") – installing anyway")
     git("checkout", "-q", "--detach", new)
     # 2. the radio in the lab first
     if any(f["repo"] == "radio/radio.liq" for f in files):
@@ -108,6 +116,12 @@ def deploy(cur, new):
         if bad:
             log("PROBLEM after install:", bad, "→ rolling back"); install(files, None); restart(files); git("checkout", "-q", "--detach", cur)
             return "rolled-back"
+    except Exception as e:      # a copy, nginx -t or a restart failed: put the old files back so the server stays as it was
+        log("PROBLEM during install:", e, "→ rolling back")
+        try: install(files, None); restart(files)
+        except Exception as e2: log("rollback problem:", e2)
+        git("checkout", "-q", "--detach", cur, check=False)
+        return "rolled-back"
     finally:
         try: os.remove(PAUSE)
         except OSError: pass

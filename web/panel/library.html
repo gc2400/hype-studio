@@ -231,11 +231,11 @@ function lib(keepSel) {
     renderChips();
     $$('#secs [data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];
-    $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g || 'All'}</button>`).join('');
+    $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g ? esc(g) : 'All'}</button>`).join('');
     $$('#folders [data-g]').forEach(b => b.onclick = () => { GENRE = b.dataset.g; FOLDER = ''; lib(); });
     const subs = GENRE ? [...new Set(d.all_folders.filter(f => f.startsWith(GENRE + '/')).map(f => f.split('/').slice(0, 2).join('/')))] : [];
     $('#subfolders').hidden = !subs.length;
-    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? f.split('/').slice(1).join('/') : 'All ' + esc(GENRE)}</button>`).join('');
+    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(1).join('/')) : 'All ' + esc(GENRE)}</button>`).join('');
     $$('#subfolders [data-f]').forEach(b => b.onclick = () => { FOLDER = b.dataset.f; lib(); });
     renderList(); if (keepSel && SEL) { const n = LIB.items.find(x => x.path === SEL.path); if (n) Object.assign(SEL, n); }
   });
@@ -336,7 +336,9 @@ function draw() { if (CUE) cw.draw(); }
 $('#zIn').onclick = () => cw.zoom(1); $('#zOut').onclick = () => cw.zoom(-1);
 let saveT = null;
 function saveSoon() { dirty = true; fill(); clearTimeout(saveT); saveT = setTimeout(() => { if (dirty && SEL) save(); }, 900); }   // auto-save
-function setCue(k, t) { cw.focus(k); CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false; if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; draw(); if (k !== 'm') smartFetch(); saveSoon(); }
+function setCue(k, t) { cw.focus(k); CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false;
+  if (k === 'e') { if (CUE.m > CUE.e) CUE.m = CUE.e; if (CUE.s > CUE.e) CUE.s = CUE.e; }      // END earlier: MIX / START move back with it (END stays where you put it)
+  if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; draw(); if (k !== 'm') smartFetch(); saveSoon(); }
 $('#mixAuto').onclick = () => { if (!CUE) return; CUE.auto = true; cw.focus('m'); smartFetch(); saveSoon(); };
 $$('[data-nud]').forEach(b => b.onclick = () => { if (!CUE) return; const k = b.dataset.nud; setCue(k, CUE[k] + parseFloat(b.dataset.d)); const m = $('#m'); m.pause(); m.currentTime = CUE[k]; });
 $$('.tin').forEach(el => { el.onfocus = () => { cw.focus(el.dataset.k); el.select(); };
@@ -419,7 +421,8 @@ async function upOne({f, folder, el}) {
   const st = el.querySelector('.st'), bar = el.querySelector('.bar i'), id = await upId(f, folder);
   const q = '&id=' + id + '&name=' + encodeURIComponent(f.name) + '&folder=' + encodeURIComponent(folder) + '&total=' + f.size;
   let off = 0, tries = 0;
-  try { const r = await api('upload/status?id=' + id); off = r.have || 0; } catch (e) {}
+  const done = r => { bar.style.width = '100%'; el.classList.add('ok'); st.textContent = 'done'; toast('Uploaded: ' + f.name); };
+  try { const r = await api('upload/status?id=' + id); if (r && r.done) return done(r); off = r.have || 0; } catch (e) {}      // already in (e.g. the last answer got lost)
   while (true) {
     const pct = f.size ? Math.floor(off / f.size * 100) : 0; bar.style.width = pct + '%'; st.textContent = pct + ' %' + (tries ? ' · retrying' : '');
     let r;
@@ -432,8 +435,11 @@ async function upOne({f, folder, el}) {
       await new Promise(ok => setTimeout(ok, Math.min(15000, 1000 * tries))); continue; }      // connection broke: wait, then go on where it was
     if (r.ok === false) { el.classList.add('bad'); st.textContent = r.error || 'failed'; return; }
     tries = 0;
-    if (r.done) { bar.style.width = '100%'; el.classList.add('ok'); st.textContent = 'done'; toast('Uploaded: ' + f.name); return; }
-    off = r.have;
+    if (r.done) return done(r);
+    let have = +r.have || 0;
+    if (have < off) {      // the server has less than we sent: ask first - the file may be finished already (answer to the last piece lost)
+      try { const x = await api('upload/status?id=' + id); if (x && x.done) return done(x); if (x && x.have != null) have = +x.have || 0; } catch (e) {} }
+    off = have;
   }
 }
 </script>

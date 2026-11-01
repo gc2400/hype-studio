@@ -16,13 +16,15 @@ trap 'rm -rf "$TMP"' EXIT
 # 1. settings
 mkdir -p "$TMP/s"
 python3 -c 'import sqlite3,sys; s=sqlite3.connect(sys.argv[1]); d=sqlite3.connect(sys.argv[2]); s.backup(d); d.close()' /srv/hype-data/library.db "$TMP/s/library.db" || fail "library copy"
-tar -C / -czf "$TMP/$DAY.tar.gz" --ignore-failed-read -C "$TMP" s -C / var/lib/hype etc/hype etc/nginx/sites-enabled etc/systemd/system root/.config/obs-studio etc/mediamtx.yml opt/hype 2>/dev/null
+tar -C / -czf "$TMP/$DAY.tar.gz" --ignore-failed-read -C "$TMP" s -C / var/lib/hype etc/hype etc/nginx/sites-enabled etc/systemd/system root/.config/obs-studio opt/mediamtx/mediamtx.yml opt/hype 2>/dev/null
 [ -s "$TMP/$DAY.tar.gz" ] || fail "settings archive"
 $SSH "$BOX" mkdir -p settings media media-old >/dev/null 2>&1
 rsync -a -e "$SSH" "$TMP/$DAY.tar.gz" "$BOX:settings/" || fail "settings upload (storage box not reachable?)"
 # keep 30 days of settings
 OLD=$($SSH "$BOX" ls settings 2>/dev/null | sort | head -n -30)
 for f in $OLD; do $SSH "$BOX" rm "settings/$f" >/dev/null 2>&1; done
+# safety: never mirror an empty or unmounted library (rsync --delete would move the whole backup to media-old)
+[ -d /srv/hype/music ] && [ -n "$(ls -A /srv/hype/music 2>/dev/null)" ] || fail "library missing (disk not mounted?) - media not synced"
 # 2. media mirror (gentle: lowest priority, limited speed so the streams never feel it)
 nice -n 19 ionice -c3 rsync -a --delete --backup --backup-dir="../media-old/$DAY" --bwlimit=40000 --exclude '.*' \
   -e "$SSH" /srv/hype/ "$BOX:media/" || fail "media sync"

@@ -18,7 +18,9 @@ def temp():
         except: pass
     return best
 def raid():
-    t=open("/proc/mdstat").read(); res=[]
+    try: t=open("/proc/mdstat").read()
+    except OSError: return []
+    res=[]
     cur=None
     for l in t.splitlines():
         if l.startswith("md"):
@@ -32,9 +34,11 @@ def raid():
                 if m: cur["sync"]="%s%% (%.1f h left)"%(m.group(1),float(m.group(2))/60)
     return res
 def svc(u):
-    return subprocess.run(["systemctl","is-active","--quiet",u]).returncode==0
+    try: return subprocess.run(["systemctl","is-active","--quiet",u],timeout=10).returncode==0
+    except Exception: return None
 def proc(name):
-    return subprocess.run(["pgrep","-f",name],capture_output=True).returncode==0
+    try: return subprocess.run(["pgrep","-f",name],capture_output=True,timeout=10).returncode==0
+    except Exception: return None
 def backup_info():
     try: return json.load(open("/var/lib/hype/backup.json"))
     except Exception: return None
@@ -43,7 +47,8 @@ def smart_info():
     if time.time()-smart["t"]>3600:
         v=[]
         for d in ["sda","sdb"]:
-            o=subprocess.run(["smartctl","-H","-A","/dev/"+d],capture_output=True,text=True).stdout
+            try: o=subprocess.run(["smartctl","-H","-A","/dev/"+d],capture_output=True,text=True,timeout=30).stdout
+            except Exception: o=""
             ok="PASSED" in o; realloc=hours=None
             for l in o.splitlines():
                 p=l.split()
@@ -53,11 +58,14 @@ def smart_info():
         smart.update(t=time.time(),v=v)
     return smart["v"]
 def seg_age():
-    f=glob.glob("/dev/shm/hls/v0/*.ts")
-    return round(time.time()-max(os.path.getmtime(x) for x in f),1) if f else None
+    m=0
+    for x in glob.glob("/dev/shm/hls/v0/*.ts"):
+        try: m=max(m,os.path.getmtime(x))
+        except OSError: pass          # (a piece removed by the TV ladder in between)
+    return round(time.time()-m,1) if m else None
 pt,pi=cpu_times(); ptx=net_tx(); pts=time.time()
-while True:
-    time.sleep(5)
+def once():
+    global pt,pi,ptx,pts
     t,i=cpu_times(); tx=net_tx(); now=time.time()
     cpu=100*(1-(i-pi)/max(1,t-pt)); up=(tx-ptx)*8/(now-pts)/1e6
     pt,pi,ptx,pts=t,i,tx,now
@@ -72,4 +80,10 @@ while True:
       "disk_root":du("/"),"backup":backup_info(),"disk_srv":du("/srv"),"raid":raid(),"smart":smart_info(),
       "upload_mbit":round(up,2),"gpu_mhz":gpu,"seg_age":seg_age(),
       "procs":{k:svc(v) for k,v in [("Radio engine (Liquidsoap)","hype-radio"),("Playout engine","hype-engine"),("TV picture (OBS)","hype-obs"),("Stream qualities (ffmpeg)","hype-ladder"),("Stream router (MediaMTX)","hype-mediamtx"),("Graphics screen (sway)","hype-sway"),("Audio bus (Pulse)","hype-pulse"),("Library indexer","hype-indexer"),("Login (2-factor)","hype-auth")]}}
-    tmp=OUT+".tmp"; json.dump(data,open(tmp,"w")); os.replace(tmp,OUT)
+    tmp=OUT+".tmp"
+    with open(tmp,"w") as f: json.dump(data,f)
+    os.replace(tmp,OUT)
+while True:
+    time.sleep(5)
+    try: once()
+    except Exception as e: print("stats:",e,flush=True)     # never die: the status page just shows the last good values

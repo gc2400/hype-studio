@@ -66,7 +66,7 @@ body.incall .wrap{max-width:1100px}
 <script>
 const $ = s => document.querySelector(s);
 const T = new URLSearchParams(location.search).get('t') || '';
-let ME = null, stream = null, pub = null, ret = null, air = null, others = {}, muted = false;
+let ME = null, stream = null, pub = null, ret = null, air = null, others = {}, muted = false, othersT = null, lvlM = null;
 function fail(m) { $('#bad').hidden = false; $('#ok').hidden = true; $('#badMsg').textContent = m; }
 async function info() { const r = await fetch('/api/guest_info?t=' + encodeURIComponent(T), {cache: 'no-store'}); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'not valid'); return j; }
 const SINK_OK = 'setSinkId' in HTMLMediaElement.prototype;      // choosing the output works in Chrome / Edge / Firefox (on iPhone the phone decides)
@@ -99,7 +99,7 @@ async function preview(video = true) {
     audio: {deviceId: $('#mic').value ? {exact: $('#mic').value} : undefined, echoCancellation: true, noiseSuppression: true, autoGainControl: true},
     video: video ? {deviceId: $('#cam').value ? {exact: $('#cam').value} : undefined, width: {ideal: 1280}, height: {ideal: 720}, frameRate: {ideal: 30}} : false});
   $('#me').srcObject = stream; $('#me').hidden = !video;
-  HypeRTC.meter(stream, v => { $('#lvl').style.width = Math.min(100, v * 120) + '%'; });
+  if (lvlM) lvlM.stop(); lvlM = HypeRTC.meter(stream, v => { $('#lvl').style.width = Math.min(100, v * 120) + '%'; });      // one meter (a new device replaces it)
 }
 function state(name, s) {
   if (name !== 'me') return;
@@ -112,7 +112,7 @@ async function join(video) {
   pub = HypeRTC.keep('me', () => HypeRTC.publish(ME.slot, stream, {key: T, videoKbps: 1800, audioKbps: 64, stereo: false}), state);
   // what you hear: the studio (mix-minus) + the other guests
   ret = HypeRTC.keep('studio', async () => { const r = await HypeRTC.play('mixminus', {key: T}); $('#studio').srcObject = r.stream; applySink(); $('#studio').play().catch(() => {}); return r; }, () => {});
-  setInterval(listenOthers, 3000); listenOthers();
+  clearInterval(othersT); othersT = setInterval(listenOthers, 3000); listenOthers();
   // what is on air: a small picture (it follows your connection), next to your own camera - no sound (you hear the studio)
   document.body.classList.add('incall'); $('#airBox').hidden = false;
   air = HypeRTC.keep('air', async () => { const r = await HypeRTC.play('guestview', {key: T, video: true, audio: false}); $('#air').srcObject = r.stream; $('#air').play().catch(() => {});
@@ -120,6 +120,7 @@ async function join(video) {
 }
 async function listenOthers() {
   let j; try { j = await info(); } catch (e) { return; }
+  if (!othersT) return;      // left meanwhile
   if (j.live) $('#dot').className = 'dot live';
   j.others.forEach(s => { if (others[s]) return; const a = new Audio(); a.autoplay = true; document.body.appendChild(a);
     if (SINK_OK && $('#spk').value) { try { a.setSinkId($('#spk').value); } catch (e) {} }
@@ -134,7 +135,7 @@ $('#turnBtn').onclick = async () => { try { await document.documentElement.reque
 $('#airFs').onclick = () => { const v = $('#air'); (v.requestFullscreen ? v.requestFullscreen() : v.webkitEnterFullscreen ? v.webkitEnterFullscreen() : $('#airBox').requestFullscreen()).catch?.(() => {}); };
 $('#joinV').onclick = () => join(true); $('#joinA').onclick = () => join(false);
 $('#mute').onclick = () => { muted = !muted; stream.getAudioTracks().forEach(t => t.enabled = !muted); $('#mute').textContent = muted ? 'Unmute mic' : 'Mute mic'; $('#mute').className = 'btn ' + (muted ? 'y' : 'o'); };
-$('#leave').onclick = () => { pub && pub.close(); ret && ret.close(); air && air.close(); air = null; $('#airBox').hidden = true; document.body.classList.remove('incall'); Object.values(others).forEach(o => o.c.close()); stream && stream.getTracks().forEach(t => t.stop()); $('#inCall').hidden = true; $('#joinRow').hidden = false; $('#setup').hidden = false; $('#tip').textContent = ''; };
+$('#leave').onclick = () => { pub && pub.close(); ret && ret.close(); air && air.close(); air = null; $('#airBox').hidden = true; document.body.classList.remove('incall'); clearInterval(othersT); othersT = null; Object.values(others).forEach(o => { o.c.close(); o.a.srcObject = null; o.a.remove(); }); others = {}; stream && stream.getTracks().forEach(t => t.stop()); $('#inCall').hidden = true; $('#joinRow').hidden = false; $('#setup').hidden = false; $('#tip').textContent = ''; };
 $('#cam').onchange = () => useDevices().catch(() => {}); $('#mic').onchange = () => useDevices().catch(() => {}); $('#spk').onchange = applySink;
 info().then(async j => { ME = j; $('#ok').hidden = false; $('#gName').textContent = j.name; $('#gShow').textContent = j.show || 'Hype Radio TV';
   const audioOnly = j.mode === 'audio';   // the host invited you as a phone-style (audio only) guest

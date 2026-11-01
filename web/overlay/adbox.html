@@ -11,7 +11,7 @@ html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transpa
 const box = document.getElementById('slides');
 let SL = [], slI = -1, slT = 0;
 function slideshow(list, secs) {
-  if (list.join() !== SL.join()) { SL = list; box.innerHTML = list.map(u => `<img src="${u}" alt="">`).join(''); slI = -1; slT = 0; }
+  if (list.join() !== SL.join()) { SL = list; box.innerHTML = list.map(u => `<img src="${String(u).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]))}" alt="">`).join(''); slI = -1; slT = 0; }
   if (!SL.length) return;
   if (Date.now() - slT > secs * 1000) { slI = (slI + 1) % SL.length; slT = Date.now(); [...box.children].forEach((im, i) => im.classList.toggle('on', i === slI)); }
 }

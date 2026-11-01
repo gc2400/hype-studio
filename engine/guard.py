@@ -203,8 +203,10 @@ class Guard:
             self.hb = {"ok": a.startswith("OK"), "t": time.time(), "answer": a[:80] if len(a) < 80 else "(Hype Live does not know this link yet – plugin update needed)"}
             if a.startswith("OK") and sev and "ev=" in a:   # Hype Live confirmed it stored them ("OK ev=N"): keep only what came in meanwhile
                 try:
-                    now_ev = json.load(open("/var/lib/hype/screen_events.json"))
-                    json.dump(now_ev[len(sev[:200]):], open("/var/lib/hype/screen_events.json", "w"))
+                    p_ = "/var/lib/hype/screen_events.json"; now_ev = json.load(open(p_))
+                    tmp = p_ + ".guard.tmp"
+                    with open(tmp, "w") as f_: json.dump(now_ev[len(sev[:200]):], f_)
+                    os.replace(tmp, p_)   # atomic: the engine never reads half a file
                 except Exception: pass
         except Exception as e:
             self.hb = {"ok": False, "t": time.time(), "answer": str(e)[:80]}

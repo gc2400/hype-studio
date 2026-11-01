@@ -21,6 +21,14 @@ ARTIST_SEP = 75 * 60; TITLE_SEP = 3 * 3600; TARGET_LUFS = -14.0; PLAN_LEN = 10; 
 COLS = "path, artist, title, folder, mode, clip_path, duration, lufs, cue_start, cue_mix, cue_end, section, has_video, cues_edited"
 LOCK = threading.RLock()
 
+def jdump(obj, path, mode=None, **kw):
+    """Write a JSON state file atomically (tmp + replace): a crash or a reader never sees a half-written file."""
+    tmp = "%s.%d.%d.tmp" % (path, os.getpid(), threading.get_ident())
+    with open(tmp, "w") as f: json.dump(obj, f, **kw)
+    if mode is not None: os.chmod(tmp, mode)
+    os.replace(tmp, path)
+SCREEN_EV_LOCK = threading.Lock()   # screen_events.json: read-modify-write by the engine (the guard trims it too)
+
 def fold(t):
     """For searching: lower case, no accents (Álvaro = alvaro, Bésame = besame, Ñejo = nejo)."""
     import unicodedata
@@ -28,9 +36,15 @@ def fold(t):
 def dbc():
     c = sqlite3.connect(DB, timeout=30)
     c.create_function("fold", 1, fold, deterministic=True)
-    c.execute("""CREATE TABLE IF NOT EXISTS asrun(id INTEGER PRIMARY KEY, started REAL, path TEXT, artist TEXT,
-                 title TEXT, folder TEXT, mode TEXT, clip TEXT, scene TEXT, kind TEXT)""")
+    if not _DBI[0]:      # once per engine run: WAL (readers never wait for the indexer), as-run table + its indexes
+        try: c.execute("PRAGMA journal_mode=WAL")
+        except sqlite3.OperationalError as e: log.warning("WAL: %s", e)
+        c.execute("""CREATE TABLE IF NOT EXISTS asrun(id INTEGER PRIMARY KEY, started REAL, path TEXT, artist TEXT,
+                     title TEXT, folder TEXT, mode TEXT, clip TEXT, scene TEXT, kind TEXT)""")
+        c.execute("CREATE INDEX IF NOT EXISTS asrun_path ON asrun(path)"); c.execute("CREATE INDEX IF NOT EXISTS asrun_started ON asrun(started)")
+        c.commit(); _DBI[0] = True
     return c
+_DBI = [False]
 
 def row_item(r, src="clock"):
     k = ["path", "artist", "title", "folder", "mode", "clip_path", "duration", "lufs", "cue_start", "cue_mix", "cue_end", "section", "has_video", "cues_edited"]
@@ -275,10 +289,17 @@ def annotate(it, pad=False, nxt=None):
     # pads + intro sweepers: -14 (a bit on top of the music, as before)
     gain = 0.0 if it["lufs"] is None else max(-12.0, min(12.0, (-14.0 if pad else TARGET_LUFS) - it["lufs"]))
     if it.get("section") in ("jingles", "ads"): gain += JINGLE_DB    # short, dense jingles sound louder than songs at the same LUFS (Settings → Mixing)
-    q = lambda v: str(v).replace('"', "'")
+    # one telnet line: no control characters (a newline would split the command), no " or \ inside a quoted value
+    if BAD_NAME.search(it["path"]): raise ValueError("file name with control characters: %r" % it["path"])
+    q = lambda v: BAD_NAME.sub(" ", str(v)).replace("\\", "/").replace('"', "'")
     meta = (f'liq_cue_in="{cs:.2f}",liq_cue_out="{ce:.2f}",liq_cross_duration="{cross:.2f}",liq_amplify="{gain:.2f} dB",hype_fade="{fade:.2f}",'
             f'artist="{q(it["artist"])}",title="{q(it["title"])}",hype_path="{q(it["path"])}",hype_id="{it["id"]}"')
     return f"annotate:{meta}:{os.path.join(ROOT, it['path'])}"
+
+BAD_NAME = re.compile(r"[\x00-\x1f\x7f]")
+def plain_len(it):
+    """Length from the cue points only (no loudness maps) - for quick estimates over many songs."""
+    return max(1.0, (it.get("cue_mix") or it.get("cue_end") or it.get("duration") or 180) - (it.get("cue_start") or 0))
 
 def warm(c, it):
     files = [os.path.join(ROOT, it["path"])]
@@ -306,7 +327,7 @@ class Screen:
             for a in self.active: a["file"] = tickers.as_ticker(a["file"])
         except Exception: pass
     def save(self):
-        try: json.dump([a for a in self.active if a["end"] > time.time()], open(SCREEN_STATE, "w"))
+        try: jdump([a for a in self.active if a["end"] > time.time()], SCREEN_STATE)
         except Exception: pass
     def add(self, rid, file, delay, dur, where="all", manual=False):
         file = tickers.as_ticker(file)     # a ticker's bar PNG = that ticker (bar + scrolling text)
@@ -470,9 +491,10 @@ class TV:
         ev = {"t": int(t0), "type": "pip", "item": name, "brand": re.sub(r"^PIP[_ -]*", "", name, flags=re.I).replace("_", " ").strip(), "dur": dur}
         try:
             p = "/var/lib/hype/screen_events.json"
-            try: evs = json.load(open(p))
-            except Exception: evs = []
-            evs = (evs + [ev])[-500:]; json.dump(evs, open(p, "w"))
+            with SCREEN_EV_LOCK:
+                try: evs = json.load(open(p))
+                except FileNotFoundError: evs = []
+                evs = (evs + [ev])[-500:]; jdump(evs, p)    # (unreadable file: exception -> logged, the file is NOT overwritten)
         except Exception as e: log.warning("screen event: %s", e)
     def pip_frame(self, frame):
         f = os.path.join(PIP_DIR, os.path.basename(frame))
@@ -657,6 +679,7 @@ class TV:
         f = show_intro(SHOW.get("title"))
         if not f: return None
         try:
+          with self.olock:     # (also called from the show watcher thread: one OBS request at a time)
             cur = (self.client().get_input_settings("Show loop").input_settings or {}).get("local_file")   # what OBS really has (also after an OBS restart)
             if cur != f:
                 self.client().set_input_settings("Show loop", {"local_file": f, "looping": True, "hw_decode": True}, True)
@@ -687,6 +710,7 @@ class Engine:
         self.ov_last = 0; self.ov_count = {}; self.ov_recent = []
         self.idi_times = []; self.idi_used = {}      # IDs over soft intros: when they played (max per hour / minutes apart), which ID
         self.last_kind = None
+        self.missing = {}    # path -> when push_next found it missing / unplayable (not planned again for 10 min)
         self.plan = []; self.liq_next = None; self.now = {}; self.auto = True; self.stop_at_end = False; self.stopped = False
         self.snaps = []      # (item id, playlist positions before it was planned) for the planned items not on air yet
         try:   # after a restart: what was planned but never played gives its songs back to the playlists
@@ -713,7 +737,8 @@ class Engine:
     # ---------- planning ----------
     def avoid(self):
         items = self.plan + ([self.liq_next] if self.liq_next else [])
-        return {"paths": {i["path"] for i in items}, "artists": {a for i in items[-4:] for a in artist_key(i["artist"])}}
+        now = time.time(); self.missing = {p_: t_ for p_, t_ in self.missing.items() if now - t_ < 600}
+        return {"paths": {i["path"] for i in items} | set(self.missing), "artists": {a for i in items[-4:] for a in artist_key(i["artist"])}}
     @staticmethod
     def length(it):
         sm = smart_mix(it) if it.get("section") in ("music", "jingles", "ads") else None
@@ -780,30 +805,36 @@ class Engine:
                 if it: self.plan.append(it)
             return
         while self.auto and len(self.plan) < PLAN_LEN:
-            if self.hour_events(c, self.cursor()): continue      # a new hour starts with its :00 items (Top of the hour), then its clock
-            self.runner.snap = None
-            hf = getattr(self, "hour_floor", 0)
-            if hf and self.cursor() < hf and not any(p_.get("hour_T") == hf for p_ in self.plan + ([self.liq_next] if self.liq_next else [])):
-                self.hour_floor = hf = 0      # its top of the hour isn't planned (any more): plan with the clock of the hour we are in
-            at = max(self.cursor(), hf)
-            ph = self.pending_hour(c, at)
-            # the TOH of this hour hasn't played yet: keep planning with the old hour's clock - unless that TOH is already
-            # in Up next (hour_floor): then what comes after it is the new hour's clock from slot 1, and it stays at the TOH
-            if ph and hf != ph: at = ph - 1
-            if self.runner.mix_key != planner.runner_key(at) and self.mix_in_run(at): self.runner.mix_key = planner.runner_key(at)
-            planner.CTX["touched"] = {}
-            try: it = self.picker.next_planned(c, self.avoid(), at, self.runner)
-            finally: touched = planner.CTX.pop("touched", None)
-            if it and touched: self.snaps.append((it["id"], {str(k): v for k, v in touched.items()}))
-            if it and self.runner.snap: it["snap"] = self.runner.snap
-            if it: it["hour_k"] = list(planner.runner_key(at))    # which clock run (hour / show) picked it - kept at the top of the hour
-            if not it: it = self.picker.next(c, self.avoid())     # nothing in the clocks: built-in test clock
-            if not it: break
-            self.picker.note(it); self.place(it)
+            try:
+                if self.plan_one(c) == "stop": break
+            except Exception as e:      # a broken slot / event never stops the radio: log it, stop planning for this tick (push_next still runs)
+                log.warning("planning: %s", e); break
             guard = getattr(self, "_guard", 0) + 1; self._guard = guard
             if guard > 60: self._guard = 0; break          # (jingles skipped many times in a row: stop for this tick)
         self._guard = 0
         self.save_snaps()
+    def plan_one(self, c):
+        """Plan one more item at the end of Up next (refill's loop body). "stop" = nothing to plan."""
+        if self.hour_events(c, self.cursor()): return      # a new hour starts with its :00 items (Top of the hour), then its clock
+        self.runner.snap = None
+        hf = getattr(self, "hour_floor", 0)
+        if hf and self.cursor() < hf and not any(p_.get("hour_T") == hf for p_ in self.plan + ([self.liq_next] if self.liq_next else [])):
+            self.hour_floor = hf = 0      # its top of the hour isn't planned (any more): plan with the clock of the hour we are in
+        at = max(self.cursor(), hf)
+        ph = self.pending_hour(c, at)
+        # the TOH of this hour hasn't played yet: keep planning with the old hour's clock - unless that TOH is already
+        # in Up next (hour_floor): then what comes after it is the new hour's clock from slot 1, and it stays at the TOH
+        if ph and hf != ph: at = ph - 1
+        if self.runner.mix_key != planner.runner_key(at) and self.mix_in_run(at): self.runner.mix_key = planner.runner_key(at)
+        planner.CTX["touched"] = {}
+        try: it = self.picker.next_planned(c, self.avoid(), at, self.runner)
+        finally: touched = planner.CTX.pop("touched", None)
+        if it and touched: self.snaps.append((it["id"], {str(k): v for k, v in touched.items()}))
+        if it and self.runner.snap: it["snap"] = self.runner.snap
+        if it: it["hour_k"] = list(planner.runner_key(at))    # which clock run (hour / show) picked it - kept at the top of the hour
+        if not it: it = self.picker.next(c, self.avoid())     # nothing in the clocks: built-in test clock
+        if not it: return "stop"
+        self.picker.note(it); self.place(it)
     def pending_hour(self, c, at):
         """Start of the hour `at` falls in, when that hour begins with a hard :00 item (Top of the hour) that hasn't fired yet."""
         H0 = int(at // 3600) * 3600
@@ -984,9 +1015,28 @@ class Engine:
             if T and start < T - 5:    # never before :00 – one more song first (picked to end just after :00)
                 f = self.filler(c, T - start)
                 if f: self.picker.note(f); self.plan.insert(0, f); log.info("top of the hour would start %d s early – %s – %s first", T - start, f["artist"], f["title"])
-        it = self.plan.pop(0); warm(c, it)
+        it = self.plan[0]
+        if BAD_NAME.search(it.get("path") or "") or not os.path.isfile(os.path.join(ROOT, it.get("path") or "")):
+            # renamed / deleted since it was planned (or a name Liquidsoap can't take): Liquidsoap would drop it -> dead air
+            self.plan.pop(0); self.missing[it.get("path")] = time.time()
+            log.warning("skipped %s – the file is missing / its name can't be played: %s", it.get("title"), it.get("path"))
+            return self.push_next(c, force)
+        try:
+            it.pop("id_over", None); idp = self.pick_intro_id(c, it)
+            if idp: it["id_over"] = idp; log.info("ID over the intro of %s: %s", it["title"], idp)
+        except Exception as e: log.warning("intro ID: %s", e)
+        # push FIRST: only when Liquidsoap really took it, it leaves Up next and its fixed time counts as done
+        try: res = self.liq.cmd("q.push " + annotate(it, nxt=self.plan[1] if len(self.plan) > 1 else None))
+        except (socket.timeout, TimeoutError) as e:
+            # sent, but no answer: it may be queued after all - count it as queued (never twice); if it never starts,
+            # recover_stuck() queues the next one
+            res = ""; log.warning("queue %s – %s: no answer from Liquidsoap (%s) – counted as queued", it.get("artist"), it.get("title"), e)
+        except Exception as e:      # not reachable (restarting …): nothing was sent, it stays first in Up next
+            log.warning("queue %s – %s failed (%s): stays first in Up next", it.get("artist"), it.get("title"), e); return
+        self.plan.pop(0); self.liq_next = it; it["pushed"] = time.time(); warm(c, it)
         if it.get("event"):
-            c.execute("INSERT OR IGNORE INTO events_done VALUES(?,?)", it["event"]); c.commit()
+            try: c.execute("INSERT OR IGNORE INTO events_done VALUES(?,?)", it["event"]); c.commit()
+            except Exception as e: log.warning("events_done: %s", e)
             if it.get("hour_T") and self.auto:
                 # the top of the hour goes out: the new hour's clock starts at slot 1 right after it
                 keep = [p_ for p_ in self.plan if p_.get("event") == it["event"] or p_.get("src") != "clock"]
@@ -1009,11 +1059,6 @@ class Engine:
         if it.get("snap"):   # a resume clock goes on after the last item that really went out
             try: planner.save_clock_state(c, *it["snap"])
             except Exception as e: log.warning("clock state: %s", e)
-        try:
-            it.pop("id_over", None); idp = self.pick_intro_id(c, it)
-            if idp: it["id_over"] = idp; log.info("ID over the intro of %s: %s", it["title"], idp)
-        except Exception as e: log.warning("intro ID: %s", e)
-        res = self.liq.cmd("q.push " + annotate(it, nxt=self.plan[0] if self.plan else None)); self.liq_next = it; it["pushed"] = time.time()
         ids = [s_[0] for s_ in self.snaps]
         if it.get("id") in ids: self.snaps = self.snaps[ids.index(it["id"]) + 1:]     # it goes on air: its songs are really used
         self.save_snaps()
@@ -1036,7 +1081,7 @@ class Engine:
         for q, args in (("folder=?", (self.now.get("folder"),)), ("1=1", ())):
             rows = c.execute(f"SELECT {COLS} FROM items WHERE section='music' AND problem IS NULL AND folder NOT LIKE 'MIXES%' AND {q}", args).fetchall()
             cand = [row_item(r, "clock") for r in rows if r[0] not in paths and not (set(artist_key(r[1])) & arts)]
-            if cand: return min(cand, key=lambda i: planner.fit_score(self.length(i), gap))
+            if cand: return min(cand, key=lambda i: planner.fit_score(plain_len(i), gap))   # cue length: no loudness maps for every song (runs under LOCK, just before :00)
         return None
     def take_back_next(self):
         """Pull the already-queued song back out of Liquidsoap (it goes back to the top of the plan)."""
@@ -1053,6 +1098,16 @@ class Engine:
             self.liq_next = None
     def event_items(self, c, e):
         avoid = self.avoid(); paths = []
+        try: paths = self._event_paths(c, e, avoid)
+        except Exception as ex: log.warning("fixed time %s (%s %s): %s – skipped", e.get("at"), e.get("kind"), e.get("ref"), ex)   # e.g. a deleted playlist
+        items = []
+        for p_ in paths:
+            if not p_ or p_ in self.missing: continue
+            r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (p_,)).fetchone()
+            if r: items.append(row_item(r, "fixed"))
+        c.commit(); return items
+    def _event_paths(self, c, e, avoid):
+        paths = []
         if e["kind"] == "song": paths = [e["ref"]]
         elif e["kind"] == "adbreak":         # a fixed-time ad break: the spots that are due now (max. "how many")
             pl = {}
@@ -1066,12 +1121,7 @@ class Engine:
             n = e["amount"] if e["amount"] and e["amount"] > 0 else len(planner.playlist_songs(c, pid))
             for i in range(n):   # a fixed-time block plays its playlist from the start (e.g. the Top 10)
                 paths.append(planner.take_from_playlist(c, pid, "start" if i == 0 else "continue", lambda p: True))
-        items = []
-        for p_ in paths:
-            if not p_: continue
-            r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (p_,)).fetchone()
-            if r: items.append(row_item(r, "fixed"))
-        c.commit(); return items
+        return paths
     def check_events(self, c):
         now = time.time(); n = self.now
         cur_end = n["started"] + self.length(n) if n else now
@@ -1114,17 +1164,37 @@ class Engine:
             c = dbc()
             try: self.check_events(c)
             except Exception as ex: log.warning("events: %s", ex)
-            self.refill(c)
+            try: self.refill(c)
+            except Exception as ex: log.warning("refill: %s", ex)      # whatever goes wrong in planning, the queue below still runs
             if self.stop_at_end and self.liq_next: self.take_back_next()
-            if self.liq_next and self.liq.queue_len() == 0 and time.time() - self.liq_next.get("pushed", time.time()) > 5:
-                pass
+            self.recover_stuck()
             self.push_next(c)
             if self.liq_next and "pushed" not in self.liq_next: self.liq_next["pushed"] = time.time()
             up = [p_["path"] for p_ in ([self.liq_next] if self.liq_next else []) + self.plan if p_.get("mode") in ("clip", "pair", "jingle-video")]
             if up != getattr(self, "_up_w", None):   # the indexer upgrades these clips' TV copies first
                 self._up_w = up
-                try: json.dump(up, open("/var/lib/hype/upcoming.json", "w"))
+                try: jdump(up, "/var/lib/hype/upcoming.json")
                 except Exception: pass
+    def recover_stuck(self):
+        """The queued item never started (Liquidsoap dropped it: file unreadable, a failed request …): without this the
+        engine would wait for it forever (dead air). Only when the song on air should have changed 10+ s ago (the estimate
+        can be a few s early: smart mix with the real next item), the queued one was pushed 20+ s ago and Liquidsoap's
+        queue is really empty - a normal change never gets here (the guard's silence repair comes after 25 s)."""
+        n = self.liq_next
+        if not n or self.stopped or self.stop_at_end: return
+        now = time.time()
+        if now - n.get("pushed", now) < 20: return
+        if self.now.get("path") and now < (self.now.get("started") or 0) + self.length(self.now) + 10: return
+        try:
+            if self.liq.queue_len() != 0: return
+        except Exception: return
+        log.warning("queued %s – %s never started (Liquidsoap dropped it?) – queuing the next item", n.get("artist"), n.get("title"))
+        try: self.liq.cmd("radio.clear")
+        except Exception: pass
+        self.revoked = getattr(self, "revoked", set()) | {n.get("id")}     # if it still turns up after all, it is skipped (no double)
+        if n.get("src") != "loop": self.missing[n.get("path")] = now      # (not planned again for 10 min)
+        self.liq_next = None
+        self.push_next(dbc(), force=True)
     # ---------- song start (called by Liquidsoap) ----------
     def on_track(self, meta):
         path = meta.get("hype_path") or ""
@@ -1137,10 +1207,13 @@ class Engine:
                 except Exception as e: log.warning("revoked: %s", e)
             self.liq.cmd("radio.skip"); return
         with LOCK:
-            if self.now.get("path") == path and time.time() - self.now.get("started", 0) < 15: return
+            # the queued item, recognised by its id (also when the path came back changed, e.g. " -> ') or by its path
+            id_next = bool(self.liq_next and meta.get("hype_id") and meta["hype_id"] == self.liq_next.get("id"))
+            is_next = id_next or bool(self.liq_next and self.liq_next["path"] == path)
+            if self.now.get("path") == path and time.time() - self.now.get("started", 0) < 15 and not id_next: return   # (same metadata twice; a short LOOP copy still counts)
             c = dbc()
-            it = self.liq_next if self.liq_next and self.liq_next["path"] == path else None
-            if it: self.liq_next = None
+            it = self.liq_next if is_next else None
+            if it: self.liq_next = None; path = it["path"]     # (the real path, not the quoted copy from the metadata)
             else:
                 r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (path,)).fetchone()
                 if not r: log.info("not in library: %s", path); return
@@ -1326,9 +1399,10 @@ class Engine:
                 if (self.now or {}).get("path") == rel: return {"ok": False, "error": "it is on air right now"}
                 if self.liq_next and self.liq_next.get("path") == rel: return {"ok": False, "error": "it is the next item (already queued) - try again in a minute"}
                 src = os.path.join(ROOT, rel)
-                if os.path.exists(src):
-                    dst = os.path.join("/srv/hype-data/deleted", time.strftime("%Y-%m-%d"), rel); os.makedirs(os.path.dirname(dst), exist_ok=True)
-                    shutil.move(src, dst)
+                # only ONE library file (never a folder: "music" would move the whole section to the bin)
+                if not os.path.isfile(src) or not c.execute("SELECT 1 FROM items WHERE path=?", (rel,)).fetchone(): return {"ok": False, "error": "not a library file"}
+                dst = os.path.join("/srv/hype-data/deleted", time.strftime("%Y-%m-%d"), rel); os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.move(src, dst)
                 c.execute("DELETE FROM items WHERE path=?", (rel,)); c.execute("UPDATE items SET clip_path=NULL, mode='audio' WHERE clip_path=?", (rel,)); c.commit()
                 self.plan = [p_ for p_ in self.plan if p_.get("path") != rel]
                 for k_ in list(self.aux): self.aux[k_] = [p_ for p_ in self.aux[k_] if p_.get("path") != rel]
@@ -1436,7 +1510,7 @@ class Engine:
         self.hour_floor = 0
     # ---------- AUX players: two lists you fill by dragging, fire into the log ----------
     def aux_save_file(self):
-        try: os.makedirs("/var/lib/hype", exist_ok=True); json.dump(self.aux, open("/var/lib/hype/aux.json", "w"))
+        try: os.makedirs("/var/lib/hype", exist_ok=True); jdump(self.aux, "/var/lib/hype/aux.json")
         except Exception as e: log.warning("aux save: %s", e)
     def aux_cmd(self, c, action, d):
         a = str(d.get("aux", "1"))
@@ -1580,20 +1654,32 @@ def up_check(qs):
     if not os.path.isdir(d): raise ValueError("folder not found")
     name = os.path.basename(qs.get("name", [""])[0]).replace("\x00", "").strip()
     if not name or name.startswith(".") or os.path.splitext(name)[1].lower() not in UP_EXT: raise ValueError("only audio / video files")
+    if BAD_NAME.search(name): raise ValueError("the file name has control characters (e.g. a line break) - rename it")
     total = int(qs.get("total", ["0"])[0] or 0)
     if total <= 0 or total > 8 * 1024 ** 3: raise ValueError("file too big (max 8 GB)")
     return uid, d, name, total
 def up_status(qs):
     uid = qs.get("id", [""])[0]
     if not re.fullmatch(r"[a-f0-9]{16,64}", uid): return {"ok": False, "error": "bad upload id"}
+    dn = up_done(uid)
+    if dn: return dn
     f = os.path.join(UP_DIR, uid + ".part")
     return {"ok": True, "have": os.path.getsize(f) if os.path.exists(f) else 0}
+def up_done(uid):
+    """An upload that already finished (its last piece arrived but the answer got lost): <id>.done says where it went."""
+    try: dn = json.load(open(os.path.join(UP_DIR, uid + ".done")))
+    except (OSError, ValueError): return None
+    return {"ok": True, "done": True, "path": dn.get("path"), "have": dn.get("size", 0)}
 def up_chunk(qs, rfile, n):
+    uid = qs.get("id", [""])[0]
+    if re.fullmatch(r"[a-f0-9]{16,64}", uid):
+        dn = up_done(uid)
+        if dn: rfile.read(n); return dn
     try: uid, d, name, total = up_check(qs)
     except ValueError as e:
         rfile.read(n); return {"ok": False, "error": str(e)}
     os.makedirs(UP_DIR, exist_ok=True)
-    for f in os.listdir(UP_DIR):                               # unfinished uploads are given up after 2 days
+    for f in os.listdir(UP_DIR):                               # unfinished uploads are given up after 2 days (and .done notes are forgotten)
         fp = os.path.join(UP_DIR, f)
         try:
             if time.time() - os.path.getmtime(fp) > 2 * 86400: os.remove(fp)
@@ -1618,27 +1704,36 @@ def up_chunk(qs, rfile, n):
         import pwd, grp; os.chown(dst, pwd.getpwnam("upload").pw_uid, grp.getgrnam("hype").gr_gid)
     except Exception: pass
     os.chmod(dst, 0o664)
-    rel = os.path.relpath(dst, ROOT); log.info("uploaded from the Library page: %s (%.1f MB)", rel, total / 1048576)
+    rel = os.path.relpath(dst, ROOT)
+    try: jdump({"path": rel, "size": have}, os.path.join(UP_DIR, uid + ".done"))   # a retried last piece / status check gets "done" (no 2nd copy)
+    except Exception as e: log.warning("upload done note: %s", e)
+    log.info("uploaded from the Library page: %s (%.1f MB)", rel, total / 1048576)
     return {"ok": True, "have": have, "done": True, "path": rel}
+
+def lib_file(path):
+    """A file in the library (under ROOT) - never an absolute path or ../ outside it."""
+    full = os.path.normpath(os.path.join(ROOT, str(path or "")))
+    if not full.startswith(ROOT.rstrip("/") + "/") or not os.path.isfile(full): raise ValueError("not a library file")
+    return full
 
 def wave_zoom(path, t0, dur=6.0):
     """Fine waveform for the cue editor zoom: the loudest sample of every 10 ms from t0, over dur seconds."""
     t0 = max(0.0, t0); dur = max(1.0, min(60.0, dur))
-    p = subprocess.run(["nice", "-n", "10", "ffmpeg", "-v", "error", "-ss", f"{t0:.3f}", "-t", f"{dur:.3f}", "-i", os.path.join(ROOT, path),
+    p = subprocess.run(["nice", "-n", "10", "ffmpeg", "-v", "error", "-ss", f"{t0:.3f}", "-t", f"{dur:.3f}", "-i", lib_file(path),
                         "-map", "0:a:0", "-ac", "1", "-ar", "8000", "-f", "s16le", "-"], capture_output=True, timeout=30)
     a = array.array("h"); a.frombytes(p.stdout[: len(p.stdout) // 2 * 2])
     return {"t0": t0, "step": 0.01, "p": [round(max((abs(x) for x in a[i:i + 80]), default=0) / 32768, 3) for i in range(0, len(a) - 79, 80)]}
 
 def waveform(path):
-    os.makedirs(WAVES, exist_ok=True)
+    full = lib_file(path); os.makedirs(WAVES, exist_ok=True)
     f = os.path.join(WAVES, hashlib.sha1(path.encode()).hexdigest()[:16] + "_1600.json")
     if os.path.exists(f): return json.load(open(f))
-    p = subprocess.run(["ffmpeg", "-v", "error", "-i", os.path.join(ROOT, path), "-map", "0:a:0", "-ac", "1", "-ar", "2000", "-f", "s16le", "-"],
+    p = subprocess.run(["ffmpeg", "-v", "error", "-i", full, "-map", "0:a:0", "-ac", "1", "-ar", "2000", "-f", "s16le", "-"],
                        capture_output=True, timeout=120)
     a = array.array("h"); a.frombytes(p.stdout[: len(p.stdout) // 2 * 2])
     n = 1600; step = max(1, len(a) // n)     # 1600 points: about 0.1 s per point on a 3-minute song
     peaks = [round(max((abs(x) for x in a[i:i + step]), default=0) / 32768, 3) for i in range(0, step * n, step)][:n]
-    json.dump(peaks, open(f, "w")); return peaks
+    jdump(peaks, f); return peaks
 
 SHOW = {"title": None, "start": None, "end": None, "image": None}; WEATHER = {"temp": None, "code": None, "at": 0}
 def norm_name(t): return re.sub(r"[^a-z0-9]", "", (t or "").lower())
@@ -1676,7 +1771,7 @@ def load_week():
             week.append({"day": di, "start": sh["show_time"], "end": sh["show_time_end"], "title": SHOW_TITLES[sid]})
     if week:
         planner.WEEK[:] = week; log.info("week schedule: %d show slots", len(week))
-        try: json.dump(week, open("/var/lib/hype/week.json", "w"))
+        try: jdump(week, "/var/lib/hype/week.json")
         except Exception: pass
 
 try: planner.WEEK[:] = json.load(open("/var/lib/hype/week.json"))   # known right at start (show jingles plan right after a restart)
@@ -1907,7 +2002,7 @@ def lower_cmd(d):
         nm = str(d.get("forget") or "")
         LOWER["recent"] = [r for r in LOWER.get("recent", []) if r.get("name") != nm]
     LOWER["rev"] = LOWER.get("rev", 0) + 1
-    os.makedirs(os.path.dirname(LOWER_FILE), exist_ok=True); json.dump(LOWER, open(LOWER_FILE, "w"))
+    os.makedirs(os.path.dirname(LOWER_FILE), exist_ok=True); jdump(LOWER, LOWER_FILE)
     return {"ok": True, "lower": LOWER}
 
 E = Engine()
@@ -1956,7 +2051,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/playlists": return self.send(200, planner.api_playlists(dbc()))
             if p == "/playlist": return self.send(200, planner.api_preview_playlist(dbc(), int(qs["id"][0])))
             if p == "/playlist_take":    # the next songs of a playlist (for Up next / AUX); they count as played in its order
-                c = dbc(); pid = int(qs["id"][0]); n = int(qs.get("n", ["0"])[0] or 0)
+                c = dbc(); pid = int(qs["id"][0]); n = min(200, int(qs.get("n", ["0"])[0] or 0))
                 r = c.execute("SELECT loop, shuffle, rotate FROM playlists WHERE id=?", (pid,)).fetchone()
                 if not r: return self.send(404, {"error": "not found"})
                 if not r[1] and not r[2] and n <= 0: paths = planner.playlist_songs(c, pid)          # an ordered list (Top 10): all of it, from the top
@@ -2043,7 +2138,8 @@ class H(BaseHTTPRequestHandler):
                             c.execute("UPDATE playlists SET updated=? WHERE id=?", (time.time(), pid)); c.commit()
                     elif a == "delete_playlist":
                         c.execute("DELETE FROM playlists WHERE id=?", (d["id"],)); c.execute("DELETE FROM playlist_sources WHERE playlist_id=?", (d["id"],))
-                        c.execute("DELETE FROM playlist_state WHERE playlist_id=?", (d["id"],)); c.commit()
+                        c.execute("DELETE FROM playlist_state WHERE playlist_id=?", (d["id"],))
+                        c.execute("DELETE FROM clock_slots WHERE kind='playlist' AND ref=?", (str(int(d["id"])),)); c.commit()   # no clock slot points at a playlist that is gone
                     elif a == "reset_playlist": c.execute("DELETE FROM playlist_state WHERE playlist_id=?", (d["id"],)); c.commit()
                     elif a == "save_clock": res["id"] = planner.api_save_clock(c, d)
                     elif a == "delete_clock":
@@ -2114,7 +2210,7 @@ def resync_tv():
         if n and E.tv.auto: E.tv.scene = None; E.tv.set_scene(n.get("scene") or "Hype Screen")
         return
     try:
-        cl = E.tv.client(); items = cl.get_scene_item_list("Music video").scene_items
+        with E.tv.olock: items = E.tv.client().get_scene_item_list("Music video").scene_items   # (one OBS request at a time)
         if any(i["sceneItemEnabled"] for i in items if i["sourceName"] in ("Clip A", "Clip B")) and (E.tv.scene == "Music video" or not E.tv.auto): return
         c = dbc(); el = time.time() - n["started"]
         if n["mode"] == "pair":
@@ -2178,14 +2274,14 @@ def media_files():
                             try:
                                 m = re.findall(r"I:\s*(-?[\d.]+) LUFS", subprocess.run(["nice", "-n", "15", "ffmpeg", "-hide_banner", "-nostats", "-i", full, "-map", "0:a:0",
                                                 "-af", "ebur128", "-f", "null", "-"], capture_output=True, text=True, timeout=1800).stderr)
-                                info["lufs"] = float(m[-1]) if m else None; json.dump(_MC, open(MEDIA_CACHE, "w"))
+                                info["lufs"] = float(m[-1]) if m else None; jdump(dict(_MC), MEDIA_CACHE)   # (a copy: the main thread may add files meanwhile)
                             except Exception as e: log.warning("media loudness: %s", e)
                         threading.Thread(target=measure, daemon=True).start()
                 except Exception as e: log.warning("media %s: %s", f, e)
             _MC[key] = info; changed = True
         out.append(dict(info, file=f))
     if changed:
-        try: json.dump(_MC, open(MEDIA_CACHE, "w"))
+        try: jdump(dict(_MC), MEDIA_CACHE)
         except Exception: pass
     return out
 
@@ -2300,9 +2396,14 @@ def tv_viewer_ips(window=40):
     return log_devices("/var/log/nginx/stream.access.log", lambda ln: " /tv/" in ln and ".ts" in ln, window)
 def hls_viewers(window=40): return len(tv_viewer_ips(window))
 VIEW = {"t": 0, "d": None}; VSTATS_FILE = "/var/lib/hype/viewers.json"
+VIEW_LOCK = threading.Lock(); LISTEN_LOCK = threading.Lock()   # one request at a time recounts (public /nowplaying: many at once)
 def viewers():
     """TV viewers on Hype Studio's own video stream (all players: website, app, TV apps, VLC …): now, peak today, unique today."""
     if VIEW["d"] and time.time() - VIEW["t"] < 10: return VIEW["d"]
+    with VIEW_LOCK:
+        if VIEW["d"] and time.time() - VIEW["t"] < 10: return VIEW["d"]     # another request just counted
+        return _viewers()
+def _viewers():
     ips = tv_viewer_ips(); now_n = len(ips); day = time.strftime("%Y-%m-%d")
     try: st = json.load(open(VSTATS_FILE))
     except Exception: st = {}
@@ -2311,7 +2412,7 @@ def viewers():
     u = set(st.get("uniq", []))
     for ip in ips: u.add(hashlib.sha1((day + ip).encode()).hexdigest()[:12])     # no IPs stored, only a daily hash
     st["uniq"] = sorted(u)
-    try: json.dump(st, open(VSTATS_FILE, "w"))
+    try: jdump(st, VSTATS_FILE)
     except Exception: pass
     d = {"current": now_n, "peak_today": st["peak"], "peak_time": st["peak_t"], "unique_today": len(u)}
     VIEW.update(t=time.time(), d=d); return d
@@ -2361,6 +2462,10 @@ def listeners():
     """Radio listeners on Hype Studio's own streams as DEVICES (address + player; MP3 and HLS together, no double count):
     now, peak today, unique today (only daily codes are stored, no addresses)."""
     if LISTEN["d"] and time.time() - LISTEN["t"] < 10: return LISTEN["d"]
+    with LISTEN_LOCK:
+        if LISTEN["d"] and time.time() - LISTEN["t"] < 10: return LISTEN["d"]
+        return _listeners()
+def _listeners():
     mp3s = mp3_devices()
     if mp3s is None:                                   # Icecast's list not readable: fall back to its connection count
         mp3s = set()
@@ -2380,7 +2485,7 @@ def listeners():
     for k in devs:
         if not k.startswith("conn"): u.add(hashlib.sha1((day + k).encode()).hexdigest()[:12])     # no addresses stored, only a daily code
     st["uniq"] = sorted(u)
-    try: json.dump(st, open(LSTATS_FILE, "w"))
+    try: jdump(st, LSTATS_FILE)
     except Exception: pass
     d = {"current": now_n, "mp3": len(mp3s), "hls": len(hls), "peak_today": st["peak"], "peak_time": st["peak_t"],
          "unique_today": max(len(u), st["peak"]), "counts": "devices"}
@@ -2507,7 +2612,7 @@ def autorec_save(d):
 
 # ---------------- 🎙 voice messages from Hype Live → the VOICE pad bank ----------------
 VOICE_DIR = os.path.join(ROOT, "jingles", "VOICE"); VOICE_STATE = "/var/lib/hype/voice.json"; VOICE_DAYS = 14
-VOICE_BANK = "🎙 VOICE"
+VOICE_BANK = "🎙 VOICE"; VOICE_FAIL = {}
 def voice_state():
     try: return json.load(open(VOICE_STATE))
     except Exception: return {}
@@ -2559,16 +2664,21 @@ def voice_loop():
             os.makedirs(VOICE_DIR, exist_ok=True)
             for it in d.get("items") or []:
                 vid = re.sub(r"[^A-Za-z0-9_-]", "", str(it.get("id") or ""))
-                if not vid or vid in st: continue
+                if not vid or vid in st or time.time() - VOICE_FAIL.get(vid, 0) < 3600: continue   # (a message that failed: again in 1 h)
                 name = re.sub(r"[^\w .'-]", "", str(it.get("name") or "Listener"), flags=re.U).strip()[:30] or "Listener"
                 city = re.sub(r"[^\w .'-]", "", str(it.get("city") or ""), flags=re.U).strip()[:30]
                 src = os.path.join("/tmp", "voice_" + vid); fn = f"Voice - {name}{' (' + city + ')' if city else ''} {vid}.mp3"
+                tmp = os.path.join(VOICE_DIR, "." + fn)
                 try:
                     with get(base + "&file=" + urllib.parse.quote(vid), timeout=60) as r, open(src, "wb") as f: f.write(r.read(30_000_000))
-                    tmp = os.path.join(VOICE_DIR, "." + fn)
                     p_ = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vn", "-af", "highpass=f=80", "-ar", "44100", "-ac", "2", "-b:a", "192k", "-f", "mp3", tmp], timeout=120)
                     if p_.returncode != 0: raise RuntimeError("ffmpeg could not read it")
                     os.replace(tmp, os.path.join(VOICE_DIR, fn))
+                except Exception as e:      # one bad message never blocks the others (or their acks)
+                    VOICE_FAIL[vid] = time.time(); log.warning("voice: %s failed (%s) – tried again in 1 h", vid, e)
+                    try: os.remove(tmp)
+                    except OSError: pass
+                    continue
                 finally:
                     try: os.remove(src)
                     except FileNotFoundError: pass
@@ -2612,7 +2722,7 @@ def guard_save(d):
     if "hl_url" in d and str(d["hl_url"]).startswith("https://"): c["hl_url"] = str(d["hl_url"]).strip()[:200]
     for k in ("heartbeat", "repair", "np", "np_spots"):
         if k in d: c[k] = bool(d[k])
-    json.dump(c, open(GUARD_CONF, "w")); os.chmod(GUARD_CONF, 0o600)
+    jdump(c, GUARD_CONF, mode=0o600)
     return guard_status(full=True)
 def shutil_disk(p):
     import shutil; u = shutil.disk_usage(p); return round(u.free / 1e9)

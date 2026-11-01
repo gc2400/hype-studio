@@ -82,6 +82,7 @@
     .observe(h.querySelector('.hst'), {attributes: true, subtree: true, attributeFilter: ['class']});
   // ---- status window on the dots ----
   const pop = h.querySelector('#hPop'), dots = h.querySelector('#hDots');
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
   const yes = (v, a, b) => v ? '<b class="ok">● ' + a + '</b>' : '<b class="bad">● ' + b + '</b>';
   function popRender(d) {
     const r = d.radio || {}, t = d.tv || {}, p = d.public || {}, sv = d.server || {};
@@ -96,11 +97,11 @@
       <div class="r"><span>OBS streaming</span>${yes(t.obs, 'yes', 'no')}</div>
       <div class="r"><span>TV stream (HLS)</span>${t.seg_age == null ? '<b class="bad">● no pieces</b>' : yes(t.seg_age < 8, 'live · ' + t.seg_age + ' s', 'late · ' + t.seg_age + ' s')}</div>
       <div class="r"><span>Viewers on this stream</span><b class="big">${t.viewers ?? '–'}</b></div>
-      <div class="r"><span>Scene</span><b>${t.scene || '–'}</b></div>
+      <div class="r"><span>Scene</span><b>${esc(t.scene || '–')}</b></div>
       <h4>Guard · alarm</h4>
-      <div class="r"><span>Self-repair</span>${!d.guard || !d.guard.fresh ? '<b class="bad">● not running</b>' : (d.guard.problems || []).length ? '<b class="bad">● ' + d.guard.problems.map(x => x.text).join(' · ') + '</b>' : '<b class="ok">● all OK</b>'}</div>
-      <div class="r"><span>Hype Live alarm link</span>${d.guard && d.guard.heartbeat && d.guard.heartbeat.ok ? '<b class="ok">● connected</b>' : '<b style="color:#FFB547">● ' + ((d.guard && d.guard.heartbeat && d.guard.heartbeat.answer) || 'off') + '</b>'}</div>
-      ${d.guard && (d.guard.events || []).filter(e => e.level !== 'ok').length ? '<div class="note">Last: ' + d.guard.events.filter(e => e.level !== 'ok')[0].text + '</div>' : ''}
+      <div class="r"><span>Self-repair</span>${!d.guard || !d.guard.fresh ? '<b class="bad">● not running</b>' : (d.guard.problems || []).length ? '<b class="bad">● ' + d.guard.problems.map(x => esc(x.text)).join(' · ') + '</b>' : '<b class="ok">● all OK</b>'}</div>
+      <div class="r"><span>Hype Live alarm link</span>${d.guard && d.guard.heartbeat && d.guard.heartbeat.ok ? '<b class="ok">● connected</b>' : '<b style="color:#FFB547">● ' + esc((d.guard && d.guard.heartbeat && d.guard.heartbeat.answer) || 'off') + '</b>'}</div>
+      ${d.guard && (d.guard.events || []).filter(e => e.level !== 'ok').length ? '<div class="note">Last: ' + esc(d.guard.events.filter(e => e.level !== 'ok')[0].text) + '</div>' : ''}
       <h4>Server</h4>
       <div class="r"><span>Load</span><b>${sv.load ?? '–'} / ${sv.cpus ?? '–'} cores</b></div>
       <div class="r"><span>Free on /srv</span><b>${sv.disk_free_gb ?? '–'} GB</b></div>
@@ -127,9 +128,11 @@
     const on = !!(REC && REC.since);
     if (on && !(recAsk && Date.now() < recAsk)) { recAsk = Date.now() + 3000; recPaint(); return; }
     recAsk = 0;
-    fetch('/api/live/' + (on ? 'rec_stop' : 'rec_start'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'}).then(r => r.json()).then(d => { REC = d.rec; recPaint(); });
+    fetch('/api/live/' + (on ? 'rec_stop' : 'rec_start'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'}).then(r => r.json()).then(d => { REC = d.rec; recPaint(); }).catch(() => {});
   };
-  recLoad(); setInterval(recLoad, 5000); setInterval(recPaint, 1000);
+  // On Air and Broadcast already poll /api/live: they hand REC over (window.hypeRec), so no second poll here
+  window.hypeRec = rec => { REC = rec; recPaint(); };
+  recLoad(); if (!home && cur !== 'studio') setInterval(recLoad, 5000); setInterval(recPaint, 1000);
   addEventListener('keydown', e => { if (e.altKey && !e.ctrlKey && e.key >= '1' && e.key <= '7') { e.preventDefault(); location.href = P[+e.key - 1][0]; } });
   if (home) return;                                                    // On Air updates all of this itself
   const q = s => h.querySelector(s); let S = null, skew = 0;

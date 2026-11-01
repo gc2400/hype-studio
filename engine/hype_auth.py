@@ -164,16 +164,20 @@ class H(BaseHTTPRequestHandler):
         f = {k: v[0] for k, v in urllib.parse.parse_qs(s.rfile.read(n).decode(errors="replace")).items()}
         user, nxt, ip = f.get("user", "").strip().lower(), safe(f.get("next", "/")), s.ip()
         with LOCK:
-            if too_many(ip):
-                return s.send(429, s.page(nxt, user, "Too many wrong tries. Wait 15 minutes."))
-            conf = load(CONF, {"users": {}})
-            u = conf["users"].get(user)
-            ok = bool(u) and check_pw(f.get("password", ""), u["pw"]) and \
-                 bool(u.get("totp")) and check_totp(u["totp"], f.get("code", ""), user, conf)
-            if not ok:
-                FAILS.setdefault(ip, []).append(time.time())
-                time.sleep(1)
-                return s.send(401, s.page(nxt, user, "Wrong user, password or code."))
+            if too_many(ip): busy = True
+            else: busy = False; u = load(CONF, {"users": {}})["users"].get(user)
+        if busy: return s.send(429, s.page(nxt, user, "Too many wrong tries. Wait 15 minutes."))
+        pw_ok = bool(u) and check_pw(f.get("password", ""), u["pw"])     # the slow part runs outside the lock: the panel never waits for it
+        with LOCK:
+            ok = False
+            if pw_ok:
+                conf = load(CONF, {"users": {}}); u = conf["users"].get(user)
+                ok = bool(u) and bool(u.get("totp")) and check_totp(u["totp"], f.get("code", ""), user, conf)
+            if not ok: FAILS.setdefault(ip, []).append(time.time())
+        if not ok:
+            time.sleep(1)
+            return s.send(401, s.page(nxt, user, "Wrong user, password or code."))
+        with LOCK:
             FAILS.pop(ip, None)
             sid = secrets.token_urlsafe(32)
             days = SESSION_DAYS if f.get("keep") else 1
@@ -187,7 +191,7 @@ class H(BaseHTTPRequestHandler):
     def log_message(s, *a): pass
 
 def safe(nxt):
-    return nxt if nxt.startswith("/") and not nxt.startswith("//") and not nxt.startswith("/login") else "/"
+    return nxt if nxt.startswith("/") and not nxt.startswith("//") and "\\" not in nxt and not nxt.startswith("/login") else "/"
 
 def cli():
     import getpass

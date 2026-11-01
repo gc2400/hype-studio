@@ -10,26 +10,31 @@
 const q = new URLSearchParams(location.search), P = q.get('path') || 'cam1', A = q.get('audio') === '1', V = q.get('video') !== '0';
 const v = document.getElementById('v'); v.muted = !A; if (!V) v.style.display = 'none';
 let pc = null, timer = null, lastT = -1, still = 0;
-function retry(ms) { clearTimeout(timer); timer = setTimeout(start, ms); }
+// one retry timer; when it fires it only restarts if `me` is still the current connection and not connected again by itself
+function retry(ms, me) { clearTimeout(timer); timer = setTimeout(() => { timer = null; if (me && (pc !== me || me.connectionState === 'connected')) return; start(); }, ms); }
 function stop() { if (pc) { try { pc.close(); } catch (e) {} pc = null; } }
 async function start() {
-  stop(); lastT = -1; still = 0;
-  const me = pc = new RTCPeerConnection(), ms = new MediaStream();
+  clearTimeout(timer); timer = null; stop(); lastT = -1; still = 0;
+  const me = pc = new RTCPeerConnection(), ms = new MediaStream(), old = () => pc !== me;      // old(): a newer start() took over
   if (A) me.addTransceiver('audio', {direction: 'recvonly'});
   if (V) me.addTransceiver('video', {direction: 'recvonly'});
-  me.ontrack = e => { ms.addTrack(e.track); v.srcObject = ms; v.play().catch(() => {}); };
-  me.onconnectionstatechange = () => { if (pc !== me) return; const s = me.connectionState;
-    if (s === 'failed' || s === 'closed') retry(800); else if (s === 'disconnected') retry(2500); };
+  me.ontrack = e => { if (old()) return; ms.addTrack(e.track); v.srcObject = ms; v.play().catch(() => {}); };
+  me.onconnectionstatechange = () => { if (old()) return; const s = me.connectionState;
+    if (s === 'connected') { clearTimeout(timer); timer = null; }      // healed by itself: no reconnect
+    else if (s === 'failed' || s === 'closed') retry(800, me); else if (s === 'disconnected') retry(2500, me); };
   try {
-    const offer = await me.createOffer();
+    const offer = await me.createOffer(); if (old()) return;
     if (A) offer.sdp = offer.sdp.replace(/a=fmtp:111 ([^\r\n]*)/, (m, p) => 'a=fmtp:111 ' + p + ';stereo=1;sprop-stereo=1');   // studio sound in stereo
-    await me.setLocalDescription(offer);
+    await me.setLocalDescription(offer); if (old()) return;
     await new Promise(ok => { if (me.iceGatheringState === 'complete') return ok(); const t = setTimeout(ok, 700);
       me.onicegatheringstatechange = () => { if (me.iceGatheringState === 'complete') { clearTimeout(t); ok(); } }; });
+    if (old()) return;
     const r = await fetch('http://127.0.0.1:8889/' + P + '/whep', {method: 'POST', headers: {'Content-Type': 'application/sdp'}, body: me.localDescription.sdp});
-    if (r.status !== 201) { retry(r.status === 404 ? 1500 : 3000); return; }       // not sending (yet): look again soon
-    await me.setRemoteDescription({type: 'answer', sdp: await r.text()});
-  } catch (e) { retry(3000); }
+    if (old()) return;
+    if (r.status !== 201) { retry(r.status === 404 ? 1500 : 3000, me); return; }       // not sending (yet): look again soon
+    const sdp = await r.text(); if (old()) return;
+    await me.setRemoteDescription({type: 'answer', sdp});
+  } catch (e) { if (!old()) retry(3000, me); }      // an attempt that was replaced never schedules a retry
 }
 // watchdog: a picture that stands still for 6 s while connected (the sender came back on a new connection) -> fresh start
 setInterval(() => { if (!pc || pc.connectionState !== 'connected' || !V) return;

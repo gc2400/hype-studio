@@ -3,7 +3,8 @@
 - playlist  = folders / single songs / other playlists, with loop and shuffle; remembers where it stopped
 - clock     = ordered slots: playlist|folder (amount, start), jingle folder, single song, ad break
 - schedule  = week grid (day 0=Mon … 6=Sun, hour 0–23) -> clock"""
-import os, re, json, time, random, sqlite3
+import os, re, json, time, random, sqlite3, logging
+log = logging.getLogger("planner")
 
 ROOT = "/srv/hype"
 COLS = "path, artist, title, folder, mode, clip_path, duration, lufs, cue_start, cue_mix, cue_end, section, has_video"
@@ -114,7 +115,9 @@ def playlist_songs(c, pid, seen=None):
 
 def playlist_order(c, pid):
     """The current round's order (shuffled once per round if shuffle is on); new songs join, removed ones drop out."""
-    loop, shuffle = c.execute("SELECT loop, shuffle FROM playlists WHERE id=?", (pid,)).fetchone()
+    r = c.execute("SELECT loop, shuffle FROM playlists WHERE id=?", (pid,)).fetchone()
+    if not r: return [], 0, 0, False, False          # the playlist was deleted (a clock slot / event still names it): nothing to take
+    loop, shuffle = r
     songs = playlist_songs(c, pid)
     st = c.execute("SELECT ord, pos, rounds FROM playlist_state WHERE playlist_id=?", (pid,)).fetchone()
     if st:
@@ -287,39 +290,14 @@ class ClockRunner:
             if st[1] == 0:
                 if amount and amount >= 999: st[1] = 10**6      # fill until the hour / show ends
                 elif amount and amount > 0: st[1] = amount
-                elif kind == "playlist" and ref: st[1] = max(1, playlist_len(c, int(ref)))   # all = one round
+                elif kind == "playlist" and str(ref).isdigit(): st[1] = max(1, playlist_len(c, int(ref)))   # all = one round
                 elif kind == "folder": st[1] = max(1, len(playlist_songs(c, folder_playlist_id(c, ref))))
                 else: st[1] = 1
                 st[2] = True
             path = None
-            if kind in ("playlist", "folder"):
-                pid = int(ref) if kind == "playlist" else folder_playlist_id(c, ref)
-                left = (at // 3600 + 1) * 3600 - at
-                CTX.update(at=at, fit=left if get_setting(c, "hit_hour", True) and 45 <= left <= 330 else None)
-                try: path = take_from_playlist(c, pid, start if st[2] else "continue", ok)
-                finally: CTX.update(at=None, fit=None)
-            elif kind == "showjingle":                         # sweeper of the show on air (jingles/SHOWS/<show>), else the fallback folder
-                s_ = show_at(at)
-                path = (pick_jingle(c, "SHOWS/" + s_["title"]) if s_ else None) or pick_jingle(c, ref or "SWEEPERS")
-            elif kind == "song":
-                path = ref
-            elif kind == "file":
-                path = resolve_file(c, ref)
-            elif kind in ("jingle", "id"):
-                path = pick_jingle(c, ref)
-            elif kind == "adbreak":          # one sponsor spot per call; the slot's number = spots in this break
-                brands = self.ad_brands if getattr(self, "ad_slot", None) == (cid, st[0]) else set()
-                self.ad_slot = (cid, st[0]); self.ad_brands = brands
-                pl = CTX.get("ad_planned") if CTX.get("ad_planned") is not None else {}
-                got = pick_ads(c, at, 1, pl, brands)
-                path = got[0] if got else None
-                if path:
-                    r_b = c.execute("SELECT brand FROM ad_spots WHERE path=?", (path,)).fetchone()
-                    if r_b and r_b[0]: brands.add(r_b[0].strip().lower())
-            st[2] = False
-            if path and kind in ("playlist", "folder") and c.execute("SELECT 1 FROM items WHERE path=? AND folder LIKE 'MIXES%'", (path,)).fetchone():
-                if self.mix_key == key: path = None; st[0] += 1; st[1] = 0; continue   # only 1 mixtape per hour
-                self.mix_key = key
+            try: path = self._take(c, at, ok, pick_jingle, cid, st, key, kind, ref, start)
+            except Exception as e: log.warning("clock %s slot %d (%s %s): %s – skipped", cid, st[0] + 1, kind, ref, e); path = None   # a broken slot never stops the radio
+            if path == "_SKIP_": continue
             if not path: self.skipped = (self.skipped + [(kind, ref)])[-60:]
             if path and not c.execute("SELECT 1 FROM items WHERE path=? AND section='music'", (path,)).fetchone():
                 if self.jrun >= 2: path = None                   # never more than 2 jingles in a row (e.g. music folders still empty)
@@ -331,6 +309,38 @@ class ClockRunner:
                 c.commit(); return path
             st[0] += 1; st[1] = 0                                # slot empty / playlist finished: next slot
         return None
+    def _take(self, c, at, ok, pick_jingle, cid, st, key, kind, ref, start):
+        """The item for one slot (None = nothing; "_SKIP_" = mixtape already played this hour: slot passed)."""
+        path = None
+        if kind in ("playlist", "folder"):
+            pid = int(ref) if kind == "playlist" else folder_playlist_id(c, ref)
+            left = (at // 3600 + 1) * 3600 - at
+            CTX.update(at=at, fit=left if get_setting(c, "hit_hour", True) and 45 <= left <= 330 else None)
+            try: path = take_from_playlist(c, pid, start if st[2] else "continue", ok)
+            finally: CTX.update(at=None, fit=None)
+        elif kind == "showjingle":                         # sweeper of the show on air (jingles/SHOWS/<show>), else the fallback folder
+            s_ = show_at(at)
+            path = (pick_jingle(c, "SHOWS/" + s_["title"]) if s_ else None) or pick_jingle(c, ref or "SWEEPERS")
+        elif kind == "song":
+            path = ref
+        elif kind == "file":
+            path = resolve_file(c, ref)
+        elif kind in ("jingle", "id"):
+            path = pick_jingle(c, ref)
+        elif kind == "adbreak":          # one sponsor spot per call; the slot's number = spots in this break
+            brands = self.ad_brands if getattr(self, "ad_slot", None) == (cid, st[0]) else set()
+            self.ad_slot = (cid, st[0]); self.ad_brands = brands
+            pl = CTX.get("ad_planned") if CTX.get("ad_planned") is not None else {}
+            got = pick_ads(c, at, 1, pl, brands)
+            path = got[0] if got else None
+            if path:
+                r_b = c.execute("SELECT brand FROM ad_spots WHERE path=?", (path,)).fetchone()
+                if r_b and r_b[0]: brands.add(r_b[0].strip().lower())
+        st[2] = False
+        if path and kind in ("playlist", "folder") and c.execute("SELECT 1 FROM items WHERE path=? AND folder LIKE 'MIXES%'", (path,)).fetchone():
+            if self.mix_key == key: st[0] += 1; st[1] = 0; return "_SKIP_"   # only 1 mixtape per hour
+            self.mix_key = key
+        return path
 
 def save_clock_state(c, cid, i, left, first):
     c.execute("INSERT OR REPLACE INTO clock_state VALUES(?,?,?,?,?)", (cid, i, left, int(bool(first)), time.time())); c.commit()
@@ -410,8 +420,12 @@ def api_save_clock(c, d):
     else:
         cid = c.execute("INSERT INTO clocks(name, color, resume, updated) VALUES(?,?,?,?)", (name, d.get("color", "#05A9C6"), int(bool(d.get("resume"))), time.time())).lastrowid
     c.execute("DELETE FROM clock_slots WHERE clock_id=?", (cid,))
-    for i, s in enumerate(d.get("slots", [])):
-        c.execute("INSERT INTO clock_slots VALUES(?,?,?,?,?,?)", (cid, i, s["kind"], str(s.get("ref", "")), int(s.get("amount") or 0), s.get("start", "continue")))
+    i = 0
+    for s in d.get("slots", []):
+        ref = str(s.get("ref", ""))
+        if s.get("kind") == "playlist" and not (ref.isdigit() and c.execute("SELECT 1 FROM playlists WHERE id=?", (int(ref),)).fetchone()):
+            log.warning("clock %s: playlist slot without a (known) playlist (%r) left out", name, ref); continue   # it could only fail on air
+        c.execute("INSERT INTO clock_slots VALUES(?,?,?,?,?,?)", (cid, i, s["kind"], ref, int(s.get("amount") or 0), s.get("start", "continue"))); i += 1
     c.commit(); return cid
 
 def api_schedule(c):
@@ -565,7 +579,12 @@ def api_save_events(c, d):
     c.commit()
 
 def due_events(c, now, window_end):
-    """Enabled events of today whose time falls between now-10 min and window_end, not done today."""
+    """Enabled events of today whose time falls between now-10 min and window_end, not done today.
+    Known limits (left on purpose - changing the events_done keys could re-fire events right after an update):
+    - the date is the one of `now`: a fixed "00:00" event is not seen from 23:59 (hour_events / pending_hour), so it
+      plays after the song on air at midnight instead of exactly at :00 ("*:00" events are fine);
+    - when the clocks go back (last Sunday of October) the repeated 02:00 hour has the same "%Y-%m-%d %H" key, so
+      its hourly events are skipped the second time."""
     lt = time.localtime(now); day = time.strftime("%Y-%m-%d", lt)
     out = []
     for e in api_events(c):

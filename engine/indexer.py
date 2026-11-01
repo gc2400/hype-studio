@@ -12,7 +12,9 @@ SECTIONS = ("music", "clips", "jingles", "ads")
 
 def db():
     os.makedirs(os.path.dirname(DB), exist_ok=True)
-    c = sqlite3.connect(DB)
+    c = sqlite3.connect(DB, timeout=30)
+    try: c.execute("PRAGMA journal_mode=WAL")       # the engine reads while we write (WAL is kept in the file)
+    except sqlite3.OperationalError as e: print("WAL:", e, flush=True)
     c.execute("""CREATE TABLE IF NOT EXISTS items(
       path TEXT PRIMARY KEY, section TEXT, folder TEXT, filename TEXT, size INT, mtime REAL,
       artist TEXT, title TEXT, duration REAL, has_video INT, has_audio INT, width INT, height INT,
@@ -33,7 +35,7 @@ def db():
     return c
 
 def run(cmd, timeout=600):
-    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    return subprocess.run(cmd, capture_output=True, text=True, errors="replace", timeout=timeout)   # (ffmpeg may print non-UTF-8 names/tags)
 
 def norm(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
@@ -251,6 +253,7 @@ def index_file(c, path, st):
             close_import.db(); close_import.apply(c, rel)
         except Exception as e: print("close cues:", e, flush=True)
 
+SCAN_FAIL = {}     # path -> (size, mtime) of a file that made index_file fail (tried again when it changes / after a restart)
 TVDIR = os.environ.get("HYPE_TV", "/srv/hype-data/tv")
 TV_V = 2   # v2 = re-encoded with a keyframe every 0.5 s, so a clip can start (in sync) at any moment, also during a mix
 LONG = 12 * 60     # longer than this = a mixtape / long video
@@ -312,9 +315,11 @@ def suggest_pairs(c):
         for k in {norm((a_ + " " + t_) if a_ else os.path.splitext(f_)[0]), norm(os.path.splitext(f_)[0])}:
             if k:
                 keys.setdefault(k, p_); keys.setdefault(" ".join(sorted(k.split())), p_)
-    for path, artist, title, filename in c.execute("SELECT path, artist, title, filename FROM items WHERE section='music' AND has_video=0 AND problem IS NULL").fetchall():
+    for path, artist, title, filename, m_, cp_, cs_, csc_, msu_ in c.execute("""SELECT path, artist, title, filename, mode, clip_path, clip_suggest, clip_score,
+                                     mode_set_by_user FROM items WHERE section='music' AND has_video=0 AND problem IS NULL""").fetchall():
         k = norm(artist + " " + title) if artist else norm(os.path.splitext(filename)[0])
         clip = keys.get(k) or keys.get(" ".join(sorted(k.split())))
+        if (m_, cp_, cs_, csc_, msu_ or 0) == ("pair" if clip else "audio", clip, None, None, 0): continue   # unchanged: no write (every 30 s)
         c.execute("UPDATE items SET mode=?, clip_path=?, clip_suggest=NULL, clip_score=NULL, mode_set_by_user=0 WHERE path=?",
                   ("pair" if clip else "audio", clip, path))
 
@@ -332,13 +337,26 @@ def scan(full=False):
                 try: st = os.stat(p)
                 except FileNotFoundError: continue
                 if time.time() - max(st.st_mtime, st.st_ctime) < 20: continue   # still uploading (FileZilla may keep the old file date: ctime shows the writing)
-                old = c.execute("SELECT size, mtime FROM items WHERE path=?", (rel,)).fetchone()
-                if old and not full and old[0] == st.st_size and abs(old[1] - st.st_mtime) < 1: continue
-                index_file(c, p, st); n_new += 1; c.commit()
+                if SCAN_FAIL.get(rel) == (st.st_size, st.st_mtime): continue      # failed before and unchanged: not again every 30 s
+                try:
+                    old = c.execute("SELECT size, mtime FROM items WHERE path=?", (rel,)).fetchone()
+                    if old and not full and old[0] == st.st_size and abs(old[1] - st.st_mtime) < 1: continue
+                    index_file(c, p, st); n_new += 1; c.commit()
+                except Exception as e:      # one bad file never stops the scan (and everything after it)
+                    print("index error:", repr(rel), repr(e), flush=True); SCAN_FAIL[rel] = (st.st_size, st.st_mtime)
+                    try:
+                        c.rollback(); parts = rel.split(os.sep)
+                        c.execute("""INSERT INTO items(path, section, folder, filename, size, mtime, problem, indexed_at) VALUES(?,?,?,?,?,?,?,?)
+                                     ON CONFLICT(path) DO UPDATE SET size=excluded.size, mtime=excluded.mtime, problem=excluded.problem, indexed_at=excluded.indexed_at""",
+                                  (rel, parts[0], "/".join(parts[1:-1]), parts[-1], st.st_size, st.st_mtime, ("could not be read (%s) – upload it again" % str(e).encode("utf-8", "replace").decode())[:200], time.time()))
+                        c.commit()
+                    except Exception as e2: print("index error (not stored):", repr(rel), repr(e2), flush=True); c.rollback()
     # fingerprints for rows indexed before fingerprints existed
     for (p_,) in c.execute("SELECT path FROM items WHERE fp IS NULL").fetchall():
         f_ = os.path.join(ROOT, p_)
-        if os.path.exists(f_): c.execute("UPDATE items SET fp=? WHERE path=?", (fingerprint(f_, os.path.getsize(f_)), p_))
+        try:
+            if os.path.exists(f_): c.execute("UPDATE items SET fp=? WHERE path=?", (fingerprint(f_, os.path.getsize(f_)), p_))
+        except OSError as e: print("fingerprint:", p_, e, flush=True)
     gone = [r[0] for r in c.execute("SELECT path FROM items") if r[0] not in seen]
     for g in gone:
         # copied to a new place and the old one deleted: hand the old row's data to the copy

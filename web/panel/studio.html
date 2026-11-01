@@ -134,7 +134,7 @@ const post = (p, d) => fetch('../api/' + p, {method: 'POST', headers: {'Content-
 function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('show'), 2600); }
 const store = (k, v) => { try { if (v === undefined) return localStorage.getItem('hypeStudio.' + k); localStorage.setItem('hypeStudio.' + k, v); } catch (e) {} };
 
-let L = null, KEY = '', conns = {}, guestEls = {}, connected = false;
+let L = null, KEY = '', conns = {}, guestEls = {}, connected = false, MICS = [];
 const STATE = {};
 function setState(name, st) { STATE[name] = st; const s = Object.values(STATE); const ok = s.filter(x => x === 'connected').length;
   $('#stStudio').textContent = connected ? `Studio: ${ok}/${s.length} streams connected` : 'Studio: not connected'; $('#stStudio').className = 'chip ' + (connected ? (ok === s.length ? 'ok' : 'wait') : ''); }
@@ -176,15 +176,17 @@ if (store('qVer') !== '2') { [['qAudio', '256'], ['qRes', '1920x1080'], ['qFps',
 [['qAudio', '256'], ['qRes', '1920x1080'], ['qFps', '25'], ['qVkbps', '4000']].forEach(([id, def]) => { const v = store(id); $('#' + id).value = v !== null && [...$('#' + id).options].some(o => o.value === v) ? v : def;
   $('#' + id).onchange = () => { store(id, $('#' + id).value); if (id === 'qRes' || id === 'qFps') { camPreview(1); camPreview(2); } toast(connected ? 'Saved – Disconnect and Connect again to use it' : 'Saved'); }; });
 const rawAudio = id => ({audio: {deviceId: id ? {exact: id} : undefined, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2, sampleRate: 48000}, video: false});
-function meterTo(stream, id) { HypeRTC.meter(stream, v => { $('#' + id).style.width = Math.min(100, v * 110) + '%'; }); }
+const METERS = {};      // one meter per bar (+ per guest): a reconnect replaces the old one instead of stacking AudioContexts
+function meterTo(stream, id, k = '') { meterOff(id + k); METERS[id + k] = HypeRTC.meter(stream, v => { $('#' + id).style.width = Math.min(100, v * 110) + '%'; }); }
+function meterOff(k) { if (METERS[k]) { METERS[k].stop(); delete METERS[k]; } }
 
 // ---------- connect the studio ----------
 async function connect() {
   if (connected) return; connected = true; $('#connect').hidden = true; $('#disconnect').hidden = false;
   try {
-    const mix = await navigator.mediaDevices.getUserMedia(rawAudio($('#dMix').value)); meterTo(mix, 'mMix');
+    const mix = await navigator.mediaDevices.getUserMedia(rawAudio($('#dMix').value)); MICS.push(mix); meterTo(mix, 'mMix');
     conns.studio = HypeRTC.keep('studio mix', () => HypeRTC.publish('studio', mix, {key: KEY, audioKbps: Q().a}), setState);
-    if ($('#dMinus').value) { const mm = await navigator.mediaDevices.getUserMedia(rawAudio($('#dMinus').value)); meterTo(mm, 'mMinus');
+    if ($('#dMinus').value) { const mm = await navigator.mediaDevices.getUserMedia(rawAudio($('#dMinus').value)); MICS.push(mm); meterTo(mm, 'mMinus');
       conns.minus = HypeRTC.keep('mix-minus', () => HypeRTC.publish('mixminus', mm, {key: KEY, audioKbps: 128}), setState); }
     else conns.minus = HypeRTC.keep('mix-minus', () => HypeRTC.publish('mixminus', mix, {key: KEY, audioKbps: 128}), setState);
     for (const [n, sel, vid] of [['cam1', '#dCam1', '#vCam1'], ['cam2', '#dCam2', '#vCam2']]) {
@@ -194,7 +196,7 @@ async function connect() {
     }
     // music back to the Mixcast USB fader
     const ma = new Audio(); ma.autoplay = true; document.body.appendChild(ma);
-    conns.music = HypeRTC.keep('music', async () => { const r = await HypeRTC.play('return', {key: KEY, bufferMs: 250}); /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ ma.srcObject = r.stream; if (ma.setSinkId && $('#dMusic').value) await ma.setSinkId($('#dMusic').value); ma.play().catch(() => {}); meterTo(r.stream, 'mMusic'); return r; }, setState);
+    conns.music = HypeRTC.keep('music', async alive => { const r = await HypeRTC.play('return', {key: KEY, bufferMs: 250}); if (!alive()) return r; /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ ma.srcObject = r.stream; if (ma.setSinkId && $('#dMusic').value) await ma.setSinkId($('#dMusic').value); ma.play().catch(() => {}); meterTo(r.stream, 'mMusic'); return r; }, setState);
     toast('Studio connected – check the meters, then GO LIVE');
   } catch (e) { toast('Could not start: ' + e.message); disconnect(); }
 }
@@ -216,9 +218,11 @@ document.addEventListener('click', e => { const a = e.target.closest('#hhead a[h
   e.preventDefault(); window.open(a.href, '_blank'); toast('Opened in a new tab – keep this tab open, the broadcast runs from here'); }, true);
 addEventListener('beforeunload', e => { if (connected) { e.preventDefault(); e.returnValue = ''; } });
 function disconnect() {
+  connected = false;      // first: renderGuests below must not start the guests again
   Object.values(conns).forEach(c => c.close()); conns = {}; Object.keys(STATE).forEach(k => delete STATE[k]);
-  Object.values(guestEls).forEach(g => g.conn && g.conn.close()); guestEls = {}; renderGuests(true);
-  connected = false; $('#connect').hidden = false; $('#disconnect').hidden = true; $('#stStudio').textContent = 'Studio: not connected'; $('#stStudio').className = 'chip';
+  Object.keys(guestEls).forEach(dropGuest); renderGuests(true);
+  MICS.forEach(m => m.getTracks().forEach(t => t.stop())); MICS = []; Object.keys(METERS).forEach(meterOff);      // the Mixcast inputs are let go
+  $('#connect').hidden = false; $('#disconnect').hidden = true; $('#stStudio').textContent = 'Studio: not connected'; $('#stStudio').className = 'chip';
 }
 $('#connect').onclick = connect; $('#disconnect').onclick = () => { if (!L || !L.live || confirm('You are LIVE. Disconnect the studio? The radio goes back to the automation.')) disconnect(); };
 
@@ -247,25 +251,31 @@ function renderGuests(force) {
     $$('[data-gvol]').forEach(i => { let t; i.oninput = () => { const s = i.dataset.gvol; $(`[data-gvl="${s}"]`).textContent = Math.round(i.value * 100) + '%'; GV_LOCAL[s] = {v: +i.value, t: Date.now()}; applyVol(); clearTimeout(t); t = setTimeout(() => post('live/guest_vol', {slot: s, vol: +i.value}), 150); }; i.ondblclick = () => { i.value = 1; i.oninput(); }; });
     $$('[data-copy]').forEach(b => b.onclick = () => { navigator.clipboard.writeText(guestLink(G[b.dataset.copy])).then(() => toast('Link copied')); });
     $$('[data-rm]').forEach(b => b.onclick = () => { if (confirm('Remove this guest? Their link stops working.')) post('live/guest_remove', {slot: b.dataset.rm}).then(refresh); });
-    Object.keys(guestEls).forEach(s => { if (!G[s] || !G[s].online) { guestEls[s].conn && guestEls[s].conn.close(); delete guestEls[s]; } });
+    Object.keys(guestEls).forEach(s => { if (!G[s] || !G[s].online) dropGuest(s); });
+    // the list was drawn again: the guests that stay give their picture to the new video (their sound never stops)
+    Object.entries(guestEls).forEach(([s, E]) => { if (E.stream) showGuest(s, E.stream); });
   }
   // online guests: their picture here, their voice to the Mixcast TRRS (guests output)
   Object.entries(G).forEach(([s, g]) => {
-    const el = box.querySelector(`[data-slot="${s}"] video`);
     if (g.online && connected && !guestEls[s]) {
-      guestEls[s] = {conn: HypeRTC.keep(s, async () => { const r = await HypeRTC.play(s, {key: KEY, video: true});
-        const v = box.querySelector(`[data-slot="${s}"] video`); if (v) { v.srcObject = r.stream; const ph = v.parentNode.querySelector('.ph'); if (ph) ph.hidden = true; v.muted = true; v.play().catch(() => {}); }
+      const E = guestEls[s] = {};
+      E.conn = HypeRTC.keep(s, async alive => { const r = await HypeRTC.play(s, {key: KEY, video: true}); if (!alive()) return r;      // removed meanwhile: keep() closes it
+        E.stream = r.stream; showGuest(s, r.stream);
         // the voice goes through a gain (0–200 %) to the Mixcast TRRS output
-        const E = guestEls[s]; try { E.ac && E.ac.close(); } catch (e) {}
+        try { E.ac && E.ac.close(); } catch (e) {}
         E.ac = new AudioContext(); E.gain = E.ac.createGain(); E.ac.createMediaStreamSource(r.stream).connect(E.gain); E.gain.connect(E.ac.destination);
         const sink = $('#dGuests').value || $('#dMusic').value; if (E.ac.setSinkId && sink) { try { await E.ac.setSinkId(sink); } catch (e) {} }
-        E.ac.resume().catch(() => {}); applyVol(); meterTo(r.stream, 'mGuests');
-        return r; }, setState)};
-    } else if (guestEls[s] && el && !el.srcObject) { guestEls[s].conn.close(); try { guestEls[s].ac && guestEls[s].ac.close(); } catch (e) {} delete guestEls[s]; }
+        if (!alive()) { try { E.ac.close(); } catch (e) {} return r; }
+        E.ac.resume().catch(() => {}); applyVol(); meterTo(r.stream, 'mGuests', s);
+        return r; }, setState);
+    }
   });
   applyVol();
 }
 
+function showGuest(s, stream) { const v = $('#guests').querySelector(`[data-slot="${s}"] video`); if (!v) return;
+  if (v.srcObject !== stream) v.srcObject = stream; const ph = v.parentNode.querySelector('.ph'); if (ph) ph.hidden = true; v.muted = true; v.play().catch(() => {}); }
+function dropGuest(s) { const E = guestEls[s]; if (!E) return; E.conn && E.conn.close(); try { E.ac && E.ac.close(); } catch (e) {} meterOff('mGuests' + s); delete guestEls[s]; }
 // guest levels: from this page or the panel (LIVE mode); 100 % = as they come in, up to 200 % (+6 dB)
 const GV_LOCAL = {};
 function applyVol() {
@@ -320,7 +330,7 @@ function render() {
 }
 $('#qSync').oninput = () => { const v = +$('#qSync').value; $('#qSyncV').textContent = (v > 0 ? '+' : '') + v + ' ms'; };
 $('#qSync').onchange = () => post('live/settings', {lip_sync: +$('#qSync').value}).then(d => { L = d; toast('Lip sync set'); });
-function refresh() { return get('live').then(d => { L = d; KEY = d.studio_key; render(); }).catch(() => {}); }
+function refresh() { return get('live').then(d => { L = d; KEY = d.studio_key; render(); window.hypeRec && hypeRec(d.rec); }).catch(() => {}); }      // also feeds the header's REC button (no second poll)
 refresh().then(listDevices); setInterval(refresh, 2000);
 </script>
 </body>

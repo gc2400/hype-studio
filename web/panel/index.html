@@ -155,7 +155,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .meter{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:8px;row-gap:3px;margin-top:6px;align-items:center}
 .mrow{display:flex;align-items:center;gap:6px;grid-column:1}.mrow span{font-size:9px;font-weight:800;color:var(--mut);width:8px}
 .mb{flex:1;position:relative;height:7px;border-radius:4px;overflow:hidden;background:linear-gradient(90deg,#2FBF7A 0%,#3DDC97 70%,#FFE000 85%,#FF4D5E 96%)}
-.mb i{position:absolute;top:0;right:0;bottom:0;background:var(--deep);transition:left .06s linear;left:0}
+.mb i{position:absolute;top:0;right:0;bottom:0;background:var(--deep);transition:left .24s linear;left:0}
 .mb b{position:absolute;top:0;bottom:0;width:2px;background:#fff;left:0;opacity:.85}
 .mdb{grid-column:2;grid-row:1/3;font-size:11px;color:var(--mut);width:46px;text-align:right}
 /* log */
@@ -255,6 +255,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #cueDlg .cues{margin-top:8px}
 @media (max-width:640px){.cdt{flex-wrap:wrap}.cdt .pos{margin-left:auto}.cues .cueset{font-size:11px;letter-spacing:.03em;padding:0 6px}}
 @media (hover:none) and (max-width:640px){.keys{display:none}}
+@media (max-width:640px){#cGuests>.row.between,#cGuests>.row.between>.row,.gcard .row{flex-wrap:wrap!important}.gcard{grid-template-columns:1fr}.gcard video{width:100%}.cdf{flex-wrap:wrap}.cdf .ovb .sel{max-width:100%}}
 </style>
 </head>
 <body>
@@ -499,7 +500,8 @@ function renderLog() {
     const [bt] = badge(u.mode), jg = (u.mode || '').startsWith('jingle');
     html += `<div class="li ${jg ? 'jg' : ''}" draggable="true" data-id="${u.id}" data-i="${i}"><span class="tm mono">${start}</span><span class="ic">${jg ? '◆' : u.mode === 'audio' ? '♪' : '▶'}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)} · ${bt}${u.src === 'you' ? ' · added by you' : ''}${u.id_over ? ' · <span style="color:var(--y);font-weight:800">+ ID over intro</span>' : ''}${S.stop_at_end && i === 0 ? ' · waits (STOP AT END)' : ''}</span></div><span class="du mono">${fmt(u.duration)}</span><button class="x" title="Remove from Up next" aria-label="Remove ${esc(u.title)} from Up next" data-rm="${u.id}">×</button></div>`;
   });
-  L.innerHTML = html; const lt = S.upcoming.reduce((n, u) => n + ((u.cue_mix || u.duration || 0) - (u.cue_start || 0)), 0); $('#logInfo').textContent = S.upcoming.length + ' · ' + fmt(lt);
+  const lt = S.upcoming.reduce((n, u) => n + ((u.cue_mix || u.duration || 0) - (u.cue_start || 0)), 0); $('#logInfo').textContent = S.upcoming.length + ' · ' + fmt(lt);
+  if (L.dataset.h === html) return; L.dataset.h = html; L.innerHTML = html;      // unchanged: keep the rows (a click is never lost to a redraw)
   L.querySelectorAll('[data-rm]').forEach(b => b.onclick = e => { e.stopPropagation(); cmd('remove', {id: b.dataset.rm}); });
   L.querySelectorAll('.li[draggable]').forEach(el => {
     el.ondblclick = () => cmd('move', {id: el.dataset.id, to: 0}).then(() => toast('Plays next'));
@@ -525,8 +527,8 @@ function renderAux() {
   $('#auxInfo').textContent = L.length ? L.length + ' songs · ' + fmt(tot) : '';
   $$('[data-auxtab]').forEach(b => { const n = ((S.aux || {})[b.dataset.auxtab] || []).length; b.classList.toggle('on', b.dataset.auxtab === AUX); b.textContent = 'AUX ' + b.dataset.auxtab + (n ? ' · ' + n : ''); });
   const nx = (S.upcoming || [])[0];
-  $('#auxNext').innerHTML = nx ? `<div class="li next"><span class="ic" style="color:var(--y)">▸</span><div class="tx"><b>${nx.artist ? esc(nx.artist) + ' – ' : ''}${esc(nx.title)}</b><span>NEXT · ${nx.src === 'clock' ? 'from the clock (AUX empty)' : nx.deck ? 'from AUX ' + nx.deck : esc(nx.folder)}</span></div><button class="x" style="opacity:1" data-nxrm="${nx.id}" aria-label="Remove the next song">×</button></div>` : '';
-  const nb = $('#auxNext [data-nxrm]'); if (nb) nb.onclick = () => cmd('remove', {id: nb.dataset.nxrm});
+  const nxh = nx ? `<div class="li next"><span class="ic" style="color:var(--y)">▸</span><div class="tx"><b>${nx.artist ? esc(nx.artist) + ' – ' : ''}${esc(nx.title)}</b><span>NEXT · ${nx.src === 'clock' ? 'from the clock (AUX empty)' : nx.deck ? 'from AUX ' + nx.deck : esc(nx.folder)}</span></div><button class="x" style="opacity:1" data-nxrm="${nx.id}" aria-label="Remove the next song">×</button></div>` : '';
+  if ($('#auxNext').dataset.h !== nxh) { $('#auxNext').dataset.h = nxh; $('#auxNext').innerHTML = nxh; const nb = $('#auxNext [data-nxrm]'); if (nb) nb.onclick = () => cmd('remove', {id: nb.dataset.nxrm}); }
   const sig = AUX + JSON.stringify(L.map(u => u.id)); if (sig === auxSig) return; auxSig = sig;
   $('#aux').innerHTML = L.length ? L.map((u, i) => { const [bt] = badge(u.mode), jg = (u.mode || '').startsWith('jingle');
     return `<div class="li ${jg ? 'jg' : ''}" draggable="true" data-aid="${u.id}" data-i="${i}"><span class="ic">${jg ? '◆' : u.mode === 'audio' ? '♪' : '▶'}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)} · ${bt} · ${fmt((u.cue_mix || u.duration || 0) - (u.cue_start || 0))}</span></div>
@@ -623,7 +625,7 @@ $('#bLTset').onclick = () => { $('#ltBox').hidden = !$('#ltBox').hidden; $('#bLT
 $('#bLT').onclick = () => { if (LT && LT.visible) return ltSend('hide'); if (!$('#ltName').value.trim()) { $('#ltBox').hidden = false; $('#ltName').focus(); return toast('Type the lower third text first', 1); } ltSend('show'); };
 // ---------- live ----------
 let LV = null;
-function lvLoad() { api('live').then(d => { LV = d; lvRender(); }).catch(() => {}); }
+function lvLoad() { api('live').then(d => { LV = d; lvRender(); window.hypeRec && hypeRec(d.rec); }).catch(() => {}); }      // also the header's REC button
 let wasLive = null;
 function lvRender() {
   if (!LV) return;
@@ -634,8 +636,9 @@ function lvRender() {
   $('#lvStudio').textContent = LV.studio_online ? 'studio connected' : 'studio offline'; $('#lvStudio').className = 'chip ' + (LV.studio_online ? 'ok' : '');
   const go = Object.values(LV.guests || {}).filter(x => x.online).length; $('#lvGuests').textContent = 'guests ' + go + '/' + Object.keys(LV.guests || {}).length;
   const r = $('#lvRec'); r.textContent = LV.rec ? '■ STOP REC ' + fmt(Date.now() / 1000 - skew - LV.rec.since) : '● REC'; r.classList.toggle('redon', !!LV.rec);
-  $('#lvRest').innerHTML = Object.entries(LV.restream || {}).map(([k, d]) => `<button class="btn sm ${d.on ? 'on' : ''}" data-rs="${k}" title="${d.on ? (d.ok ? 'streaming' : 'connecting / retrying') : 'off'}">${d.on ? (d.ok ? '● ' : '◌ ') : ''}${esc(d.name)}</button>`).join('') || '<span class="muted" style="font-size:12px">Restream: add YouTube / Facebook / … in Settings</span>';
+  const rsh = Object.entries(LV.restream || {}).map(([k, d]) => `<button class="btn sm ${d.on ? 'on' : ''}" data-rs="${k}" title="${d.on ? (d.ok ? 'streaming' : 'connecting / retrying') : 'off'}">${d.on ? (d.ok ? '● ' : '◌ ') : ''}${esc(d.name)}</button>`).join('') || '<span class="muted" style="font-size:12px">Restream: add YouTube / Facebook / … in Settings</span>';
   if (MODE === 'live') renderGuests();
+  if ($('#lvRest').dataset.h === rsh) return; $('#lvRest').dataset.h = rsh; $('#lvRest').innerHTML = rsh;      // redrawn only when it changed (lvRender runs every second)
   $$('#lvRest [data-rs]').forEach(b => b.onclick = () => api('live/restream', {key: b.dataset.rs, on: !LV.restream[b.dataset.rs].on}).then(d => { LV = d; lvRender(); }));
 }
 $('#lvGo').onclick = () => {
@@ -643,8 +646,9 @@ $('#lvGo').onclick = () => {
   if (!LV.studio_online) return toast('The studio is not connected – open the live studio page on the studio laptop', 1);
   api('live/on', {}).then(d => { LV = d; lvRender(); toast('LIVE: the studio is on air'); });
 };
-$('#lvRec').onclick = () => api(LV.rec ? 'live/rec_stop' : 'live/rec_start', {}).then(d => { LV = d; lvRender(); toast(LV.rec ? 'Recording – Library → Recordings' : 'Recording saved in /recordings'); });
-lvLoad(); setInterval(lvLoad, 3000); setInterval(lvRender, 1000);
+$('#lvRec').onclick = () => api(LV.rec ? 'live/rec_stop' : 'live/rec_start', {}).then(d => { LV = d; lvRender(); window.hypeRec && hypeRec(d.rec); toast(LV.rec ? 'Recording – Library → Recordings' : 'Recording saved in /recordings'); });
+// hidden tab: no polling - except with the preview sound on (it plays on in the background and must be muted when LIVE starts)
+lvLoad(); setInterval(() => { if (!document.hidden || !$('#pvv').muted) lvLoad(); }, 3000); setInterval(lvRender, 1000);
 // ---------- lower third ----------
 let LT = null;
 function ltLoad() { api('lower').then(L => { LT = L; ltRender(); }).catch(() => {}); }
@@ -659,18 +663,19 @@ function ltRender() {
 function ltSend(action) { const [style, size] = $('#ltStyle').value.split('|');
   return api('cmd/lower', {action, style, size, name: $('#ltName').value, role: $('#ltRole').value, handle: ''}).then(r => { if (r.ok === false) toast(r.error, 1); else { LT = r.lower; ltRender(); } }); }
 $('#ltShow').onclick = () => ltSend('show'); $('#ltHide').onclick = () => ltSend('hide');
-ltLoad(); setInterval(ltLoad, 5000);
+ltLoad(); setInterval(() => { if (!document.hidden) ltLoad(); }, 5000);
 // ---------- preview ----------
 // live video preview of the TV (WebRTC from our own server, ~0.5 s delay); falls back to pictures if it can't connect
-let PVC = null, pvFails = 0;
-function pvLive() {
-  if (!(typeof HypeRTC !== 'undefined') || !LV || !LV.studio_key) return setTimeout(pvLive, 1500);
+let PVC = null, pvFails = 0, pvWait = null;
+function pvLive() {      // never two at once: one connection, one waiting retry
+  clearTimeout(pvWait); pvWait = null; if (PVC || PVSTOP) return;
+  if (!(typeof HypeRTC !== 'undefined') || !LV || !LV.studio_key) { pvWait = setTimeout(pvLive, 1500); return; }
   // light by default (360p, ~0.6 Mbps, no sound): it hardly uses your internet while you broadcast; sound on = the full preview (720p + sound)
-  PVC = HypeRTC.keep('program', async () => { const r = await HypeRTC.play($('#pvv').muted ? 'guestview' : 'preview', {key: LV.studio_key, video: true, videoBufferMs: 150}); $('#pvv').srcObject = r.stream; $('#pvv').play().catch(() => {}); return r; },
+  PVC = HypeRTC.keep('program', async alive => { const r = await HypeRTC.play($('#pvv').muted ? 'guestview' : 'preview', {key: LV.studio_key, video: true, videoBufferMs: 150}); if (!alive()) return r; $('#pvv').srcObject = r.stream; $('#pvv').play().catch(() => {}); return r; },
     (n, st) => { if (st === 'connected') { pvFails = 0; $('#pvv').hidden = false; $('#pv').hidden = true; $('#pvv').volume = +$('#pvVol').value; }
       else if (/error|failed/.test(st) && ++pvFails === 3) { $('#pvv').hidden = true; $('#pv').hidden = false; $('#pvInfo').textContent = 'Preview: a picture every second'; pv(); } });
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden && PVC && $('#pvv').muted) { PVC.close(); PVC = null; } else if (!document.hidden && !PVC && pvFails < 3 && !PVSTOP) pvLive(); });   // with sound on it keeps playing in a background tab
+document.addEventListener('visibilitychange', () => { if (document.hidden && $('#pvv').muted) { clearTimeout(pvWait); pvWait = null; if (PVC) { PVC.close(); PVC = null; } } else if (!document.hidden && !PVC && pvFails < 3 && !PVSTOP) pvLive(); });   // with sound on it keeps playing in a background tab
 let PVSTOP = false;
 try { $('#pvVol').value = localStorage.getItem('hypePvVol') || '0.8'; } catch (e) {}
 function pvPaint() {
@@ -692,9 +697,12 @@ $('#pvTog').onclick = () => {
 };
 pvPaint();
 $('#pvBox').addEventListener('touchstart', () => { const b = $('#pvBox'); b.classList.add('show'); clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('show'), 4000); }, {passive: true});
-function pv() {   // 1 small picture per second, only while this tab is visible
-  if (document.hidden) return setTimeout(pv, 2000);
-  const i = new Image(); i.onload = () => { $('#pv').src = i.src; setTimeout(pv, 1000); }; i.onerror = () => setTimeout(pv, 3000); i.src = '../api/preview.jpg?w=640&t=' + Date.now(); }
+let pvImg = false;
+function pv() { if (!pvImg) { pvImg = true; pvStep(); } }      // only one picture loop
+function pvStep() {   // 1 small picture per second, only while this tab is visible - stops when the live video is back (or the preview is stopped)
+  if (PVSTOP || !$('#pvv').hidden) { pvImg = false; return; }
+  if (document.hidden) return setTimeout(pvStep, 2000);
+  const i = new Image(); i.onload = () => { $('#pv').src = i.src; setTimeout(pvStep, 1000); }; i.onerror = () => setTimeout(pvStep, 3000); i.src = '../api/preview.jpg?w=640&t=' + Date.now(); }
 // ---------- pads (own banks, pressed + playing feedback) ----------
 let BANKS = [], bank = 0, PEDIT = false, PADS = [];
 const PADC = ['#8C2A3A', '#B4651E', '#9C7A12', '#1E7A4A', '#1E6B7A', '#2A4FA0', '#5A3A8C', '#8C3A6B'];
@@ -836,11 +844,11 @@ function lib() {
     $('#secs').querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     // level 1: genre folders · level 2: the subfolders of the chosen genre
     const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];
-    $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g || 'All'}</button>`).join('');
+    $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g ? esc(g) : 'All'}</button>`).join('');
     $('#folders').querySelectorAll('[data-g]').forEach(b => b.onclick = () => { GENRE = b.dataset.g; FOLDER = ''; lib(); });
     const subs = GENRE ? [...new Set(d.all_folders.filter(f => f.startsWith(GENRE + '/')).map(f => f.split('/').slice(0, 2).join('/')))] : [];
     $('#subfolders').hidden = !subs.length;
-    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? f.split('/').slice(1).join('/') : 'All ' + esc(GENRE)}</button>`).join('');
+    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(1).join('/')) : 'All ' + esc(GENRE)}</button>`).join('');
     $('#subfolders').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FOLDER = b.dataset.f; lib(); });
     $('#res').innerHTML = d.items.map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
       const last = it.last ? 'played ' + ago(it.last) : 'not played yet';
@@ -880,12 +888,12 @@ function meterTick() {
   if (document.hidden || !$('#mL')) return setTimeout(meterTick, 500);
   fetch('../api/level').then(r => r.json()).then(d => {
     const now = Date.now();
-    ['l', 'r'].forEach(k => { const v = dbPos(d[k] || 0); MET[k] = Math.max(v, MET[k] * 0.82);       // fast up, smooth down
+    ['l', 'r'].forEach(k => { const v = dbPos(d[k] || 0); MET[k] = Math.max(v, MET[k] * 0.6);        // fast up, smooth down (per 250 ms)
       if (MET[k] >= MET['p' + k] || now - MET['t' + k] > 1500) { MET['p' + k] = MET[k]; MET['t' + k] = now; } });
     $('#mL').style.left = (MET.l * 100) + '%'; $('#mR').style.left = (MET.r * 100) + '%';
     $('#pL').style.left = 'calc(' + (MET.pl * 100) + '% - 2px)'; $('#pR').style.left = 'calc(' + (MET.pr * 100) + '% - 2px)';
     const pk = Math.max(d.l || 0, d.r || 0); $('#mDb').textContent = pk > 1e-4 ? (20 * Math.log10(pk)).toFixed(1) + ' dB' : '–∞';
-  }).catch(() => {}).finally(() => setTimeout(meterTick, 100));
+  }).catch(() => {}).finally(() => setTimeout(meterTick, 250));      // 4 a second is plenty (home wifi during a show)
 }
 meterTick();
 // ---------- song settings: cue points with video preview ----------
@@ -913,14 +921,21 @@ const fmtF = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), r = t
 function fillCue() { ['s', 'm', 'e'].forEach(k => { const el = $('#v' + k.toUpperCase()); if (el && document.activeElement !== el) el.value = fmtF(CUE[k]); });
   $('#mixAuto').style.opacity = CUE.auto ? 1 : .55; $('#mixAuto').textContent = CUE.auto ? 'AUTO ✓' : 'AUTO'; }
 function parseT(v) { v = String(v).trim().replace(',', '.'); if (!v) return null; let t = 0; for (const x of v.split(':')) { const n = parseFloat(x); if (isNaN(n)) return null; t = t * 60 + n; } return t; }
-function setCueAt(k, t) { cw.focus(k); CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false; else smartFetch(); if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m; fillCue(); drawCue(); cueSaveSoon(); }
+function setCueAt(k, t) { cw.focus(k); CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100;
+  if (k === 'e') { if (CUE.m > CUE.e) CUE.m = CUE.e; if (CUE.s > CUE.e) CUE.s = CUE.e; }      // END earlier: MIX / START move back with it (END stays where you put it)
+  if (CUE.s > CUE.m) CUE.m = CUE.s; if (CUE.m > CUE.e) CUE.e = CUE.m;
+  if (k === 'm') CUE.auto = false; else smartFetch(); fillCue(); drawCue(); cueSaveSoon(); }
 const cw = CueWave($('#cueWave'), {cue: () => CUE, media: () => M(), path: () => SEL && SEL.path, api, label: $('#zLv'),
   set: (k, t, done) => { if (done) setCueAt(k, t); else { CUE[k] = Math.round(Math.max(0, Math.min(CUE.d, t)) * 100) / 100; if (k === 'm') CUE.auto = false; M().currentTime = CUE[k]; fillCue(); drawCue(); } },
   seek: t => { M().currentTime = t; drawCue(); }});
 function drawCue() { if (CUE) cw.draw(); }
 $('#zIn').onclick = () => cw.zoom(1); $('#zOut').onclick = () => cw.zoom(-1);
-let cueSaveT = null;
-function cueSaveSoon() { clearTimeout(cueSaveT); cueSaveT = setTimeout(() => $('#cueSave').click(), 900); }     // auto-save
+let cueSaveT = null, cuePend = null;
+// auto-save: remembers WHICH song and cues, so a quick click on another song never gets these cues
+function cueSaveSoon() { if (cuePend && cuePend.q !== CUE) cueSaveNow(cuePend.it, cuePend.q); clearTimeout(cueSaveT);
+  const p = cuePend = {it: SEL, q: CUE}; cueSaveT = setTimeout(() => { if (cuePend === p) cueSaveNow(p.it, p.q); }, 900); }
+function cueSaveNow(it = SEL, q = CUE) { if (cuePend && cuePend.q === q) { clearTimeout(cueSaveT); cuePend = null; } if (!it || !q) return;
+  return cmd('set_cues', {path: it.path, cue_start: q.s, cue_mix: q.m, cue_end: q.e, mix_auto: !!q.auto}).then(r => { if (r.ok) { Object.assign(it, {cue_start: q.s, cue_mix: q.m, cue_end: q.e, mix_set: q.auto ? 0 : 1}); toast('Saved ✓'); } else toast(r.error || 'Not saved', 1); }); }
 $('#mixAuto').onclick = () => { if (!CUE) return; CUE.auto = true; cw.focus('m'); fillCue(); drawCue(); smartFetch(); cueSaveSoon(); };
 $$('#cueDlg [data-set]').forEach(b => b.onclick = () => setCueAt(b.dataset.set, M().currentTime));
 $$('#cueDlg [data-nud]').forEach(b => b.onclick = () => { if (!CUE) return; const k = b.dataset.nud; setCueAt(k, CUE[k] + parseFloat(b.dataset.d)); M().pause(); M().currentTime = CUE[k]; });
@@ -940,8 +955,8 @@ $('#pvStart').onclick = () => playFrom(CUE.s); $('#pvMix').onclick = () => playF
 setInterval(() => { if (!CUE || !$('#cueDlg').open) return; const t = M().currentTime || 0; $('#pvPos').textContent = fmtC(t); drawCue(); }, 100);
 document.addEventListener('keydown', e => { if (!$('#cueDlg').open || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return; if (e.key === ' ') { e.preventDefault(); $('#pvPlay').click(); } if (e.key === 'ArrowLeft') { cw.follow(); M().currentTime -= e.shiftKey ? 0.1 : 1; } if (e.key === 'ArrowRight') { cw.follow(); M().currentTime += e.shiftKey ? 0.1 : 1; } if (e.key === '+' || e.key === '=') cw.zoom(1); if (e.key === '-' || e.key === '_') cw.zoom(-1);
   const k = {s: 's', m: 'm', e: 'e'}[e.key.toLowerCase()]; if (k && !e.ctrlKey && !e.metaKey) { e.preventDefault(); document.querySelector('#cueDlg [data-set="' + k + '"]').click(); } });
-$('#cueSave').onclick = () => cmd('set_cues', {path: SEL.path, cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, mix_auto: !!CUE.auto}).then(r => { if (r.ok) { Object.assign(SEL, {cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, mix_set: CUE.auto ? 0 : 1}); toast('Saved ✓'); } else toast(r.error || 'Not saved', 1); });
-$('#cueReset').onclick = () => { clearTimeout(cueSaveT); cmd('reset_cues', {path: SEL.path}).then(() => toast('Automatic cue points – measured again in a minute')); };
+$('#cueSave').onclick = () => cueSaveNow();
+$('#cueReset').onclick = () => { clearTimeout(cueSaveT); cuePend = null; cmd('reset_cues', {path: SEL.path}).then(() => toast('Automatic cue points – measured again in a minute')); };
 // ---------- intro sweeper per song ----------
 function openOverlay(it) {
   $('#ovBox').hidden = SEC !== 'music'; if (SEC !== 'music') return;
@@ -990,6 +1005,7 @@ function applyMode(m) {
   $$('.modes [data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
   Object.entries(LAYOUT[m]).forEach(([slot, ids]) => { const host = document.getElementById(slot); ids.forEach(id => { const el = document.getElementById(id); if (el) { host.appendChild(el); el.hidden = false; } }); });
   HIDE[m].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
+  if (m !== 'live') { Object.keys(GV).forEach(s => { GV[s].close(); delete GV[s]; }); $('#gList').dataset.sig = ''; }      // guest pictures only in LIVE mode
   ['col1', 'col3', 'deckA', 'deckB'].forEach(c => { const el = document.getElementById(c); const cards = [...el.children].filter(x => x.classList.contains('card')); el.hidden = !cards.length || cards.every(x => x.hidden); });
   if (S) render();
   if (typeof lib === 'function' && $('#res')) lib();       // library rows: AUX 1/2 ↔ deck A/B
@@ -1042,6 +1058,7 @@ function renderGuests() {
   if (!LV) return;
   const G = LV.guests || {}, box = $('#gList'), sig = JSON.stringify(Object.entries(G).map(([s, g]) => [s, g.name, g.online])) + JSON.stringify(LV.cams);
   if (box.dataset.sig === sig) return; box.dataset.sig = sig;
+  Object.keys(GV).forEach(s => { if (!G[s]) { GV[s].close(); delete GV[s]; } });      // a removed guest: stop watching (no endless retries)
   box.innerHTML = Object.entries(G).map(([s, g]) => { const cam = Object.entries(LV.cams).find(([c, src]) => src === s);
     return `<div class="gcard ${g.online ? 'on' : ''}" data-g="${s}"><video muted playsinline autoplay></video><div style="min-width:0;display:flex;flex-direction:column;gap:6px">
       <div class="row between" style="gap:6px;flex-wrap:nowrap"><div class="row" style="gap:6px;min-width:0;flex-wrap:nowrap"><b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.name)}</b><span class="chip ${g.online ? 'ok' : ''}">${g.online ? 'online' : 'not joined'}</span><span class="chip">${g.mode === 'audio' ? '☎ audio' : '🎥 video'}</span></div><button class="btn sm red" data-rmg aria-label="Remove ${esc(g.name)}" title="Remove guest">×</button></div>
@@ -1056,14 +1073,15 @@ function renderGuests() {
     gv.ondblclick = () => { gv.value = 1; gv.oninput(); };
     el.querySelector('[data-copy]').onclick = () => navigator.clipboard.writeText(location.origin + '/guest/?t=' + encodeURIComponent(g.token)).then(() => toast('Guest link copied'));
     el.querySelector('[data-rmg]').onclick = () => { if (confirm('Remove ' + g.name + '?')) api('live/guest_remove', {slot: s}).then(d => { LV = d; renderGuests(); }); };
-    if (g.online && (typeof HypeRTC !== 'undefined')) { if (GV[s]) GV[s].close(); GV[s] = HypeRTC.keep(s, async () => { const r = await HypeRTC.play(s, {key: LV.studio_key, video: true}); const v = el.querySelector('video'); if (v) v.srcObject = r.stream; return r; }, () => {}); }
+    if (g.online && (typeof HypeRTC !== 'undefined')) { if (GV[s]) GV[s].close(); GV[s] = HypeRTC.keep(s, async alive => { const r = await HypeRTC.play(s, {key: LV.studio_key, video: true}); if (!alive()) return r; const v = el.querySelector('video'); if (v) v.srcObject = r.stream; return r; }, () => {}); }
     else if (GV[s]) { GV[s].close(); delete GV[s]; }
   });
 }
 $('#gnAdd').onclick = () => api('live/guest_add', {name: $('#gnName').value, mode: $('#gnMode').value}).then(d => { if (d.error) return toast(d.error, 1); $('#gnName').value = ''; navigator.clipboard && navigator.clipboard.writeText(location.origin + '/guest/?t=' + encodeURIComponent(d.token)).catch(() => {}); toast('Guest invited – link copied, send it by WhatsApp'); lvLoad(); });
 applyMode(MODE);
 // ---------- go ----------
-refresh(); setInterval(refresh, 2000); setInterval(tick, 250); lib(); pvLive();
+refresh(); setInterval(() => { if (!document.hidden) refresh(); }, 2000); setInterval(tick, 250); lib(); pvLive();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); lvLoad(); ltLoad(); } });      // back on the tab: fresh at once
 </script>
 </body>
 </html>

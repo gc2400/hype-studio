@@ -7,7 +7,7 @@ engine/close_import.py|/opt/hype/close_import.py|644|hype-engine
 engine/indexer.py|/opt/hype/indexer.py|755|hype-indexer
 engine/guard.py|/opt/hype/guard.py|755|hype-guard
 engine/hype_auth.py|/opt/hype/hype_auth.py|644|hype-auth
-engine/live/return.sh|/opt/hype/live/return.sh|755|hype-return
+engine/live/return.sh|/opt/hype/live/return.sh|755|-
 engine/live/studio_in.sh|/opt/hype/live/studio_in.sh|755|hype-studio-in
 engine/hype-stats.py|/usr/local/bin/hype-stats.py|755|hype-stats
 radio/radio.liq|/etc/hype/radio.liq|644|hype-radio

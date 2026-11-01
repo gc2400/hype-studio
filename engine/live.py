@@ -79,6 +79,12 @@ class Live:
         self.rec = None; self.rest = {}; self.live_since = None
         self.rec_restore()
         self.live = self.liq_live()
+        if self.live:       # the engine restarted during LIVE: restreams ran inside it, start them again
+            self.live_since = time.time()
+            for k, d in self.dests().items():
+                if d.get("with_live"):
+                    try: self.restream(k, True)
+                    except Exception as e: log.warning("restream %s: %s", k, e)
     # ---------- LIVE on/off ----------
     def liq_live(self):
         try: return self.liq.cmd("var.get live_on").split()[0] == "true"
@@ -136,6 +142,16 @@ class Live:
         save(GUESTS, {"guests": g}, 0o600); return slot, g[slot]
     def guest_remove(self, slot):
         g = self.guests(); g.pop(slot, None); save(GUESTS, {"guests": g}, 0o600)
+        self.kick(slot)
+    def kick(self, slot):
+        """MediaMTX only checks a link when a connection starts: a removed guest is disconnected here (their camera/mic in their slot)."""
+        try:
+            import urllib.request
+            items = json.loads(urllib.request.urlopen("http://127.0.0.1:9997/v3/webrtcsessions/list", timeout=3).read()).get("items", [])
+            for it in items:
+                if it.get("path") == slot and it.get("state") == "publish":
+                    urllib.request.urlopen(urllib.request.Request(f"http://127.0.0.1:9997/v3/webrtcsessions/kick/{it['id']}", method="POST"), timeout=3)
+        except Exception as e: log.warning("kick %s: %s", slot, e)
     def guest_vol(self, slot, vol):
         """Per-guest level 0–2 (200 % = +6 dB boost) – the Broadcast page plays each guest at this level to the Mixcast."""
         g = self.guests()
@@ -180,7 +196,8 @@ class Live:
     def start_rec(self, why="manual", name=None, what="both"):
         """what: both (video .mp4 + radio .mp3) | audio | video. Each file is written by its own systemd unit (hype-rec-*),
         outside the engine: an engine restart (update) never stops a recording."""
-        if self.rec: return
+        if self.rec and self.rec_alive(): return
+        self.rec = None
         os.makedirs(REC_DIR, exist_ok=True)
         try:
             import pwd, grp; os.chown(REC_DIR, pwd.getpwnam("upload").pw_uid, grp.getgrnam("hype").gr_gid); os.chmod(REC_DIR, 0o2775)
@@ -188,14 +205,19 @@ class Live:
         base = os.path.join(REC_DIR, time.strftime("%Y-%m-%d %H%M ") + safe_name(name or self.show_title()))
         jobs = []
         if what in ("both", "video"):
-            jobs.append(("hype-rec-video", ["-i", PROGRAM, "-c", "copy", "-f", "mp4", "-movflags", "+frag_keyframe+empty_moov+default_base_moof", base + ".mp4"]))
+            jobs.append(("hype-rec-video", "mp4", ["-i", PROGRAM, "-c", "copy", "-f", "mp4", "-movflags", "+frag_keyframe+empty_moov+default_base_moof"]))
         if what in ("both", "audio"):
-            jobs.append(("hype-rec-audio", ["-i", RADIO, "-c", "copy", "-f", "mp3", base + ".mp3"]))
+            jobs.append(("hype-rec-audio", "mp3", ["-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_at_eof", "1", "-reconnect_delay_max", "2",
+                                                   "-i", RADIO, "-c", "copy", "-f", "mp3"]))
+        # if the input stops (radio or OBS restarted) ffmpeg ends: the loop goes on in "<name> part2", part3 … – never cut off.
+        # RuntimeMaxSec: a forgotten recording stops by itself after 8 hours.
+        loop = ('B="$1"; X="$2"; shift 2; n=1; while :; do f="$B.$X"; [ $n -gt 1 ] && f="$B part$n.$X"; '
+                '/usr/bin/ffmpeg -hide_banner -loglevel error -nostdin -y "$@" "$f"; [ -s "$f" ] && n=$((n+1)); sleep 2; done')
         units = []
-        for unit, args in jobs:
+        for unit, ext, args in jobs:
             subprocess.run(["systemctl", "stop", unit], capture_output=True); subprocess.run(["systemctl", "reset-failed", unit], capture_output=True)
-            r = subprocess.run(["systemd-run", "--unit=" + unit, "--collect", "--quiet", "-p", "Nice=5", "/usr/bin/ffmpeg", "-hide_banner", "-loglevel", "error",
-                                "-nostdin", "-y"] + args, capture_output=True, text=True)
+            r = subprocess.run(["systemd-run", "--unit=" + unit, "--collect", "--quiet", "-p", "Nice=5", "-p", "RuntimeMaxSec=8h",
+                                "/bin/sh", "-c", loop, "rec", base, ext] + args, capture_output=True, text=True)
             if r.returncode == 0: units.append(unit)
             else: log.warning("recording %s: %s", unit, r.stderr.strip()[-200:])
         self.rec = {"why": why, "start": time.time(), "file": os.path.basename(base), "units": units}
