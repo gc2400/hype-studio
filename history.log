@@ -160,3 +160,4 @@
 2026-11-01T22:10:22 ok 71e81d27 Help page in Studio: the whole manual with contents, search and Print / PDF; Help in the menu
 2026-11-01T22:12:27 ok 22f5eb6b Help moved from the menu bar to Settings → Help
 2026-11-01T22:17:35 ok 706a48c8 DJ decks: STOP button and the same button order as the main player (… END · STOP · LOOP · NEXT); help updated
+2026-11-01T22:25:32 ok 299b8688 ID over intro: count earlier IDs over intros too (also after a restart), so the IDs take turns instead of always ID 4
