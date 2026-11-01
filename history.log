@@ -86,3 +86,4 @@
 2026-11-01T02:02:36 ok b15ccfb3 Return feed (music to the studio's Mixcast) straight from Liquidsoap to MediaMTX instead of a Pulse capture: no more hiccups / speeding up / slowing down; studio player buffer back to 250 ms
 2026-11-01T02:47:33 ok a016de0c Guest page: full-screen button bottom-right with an icon (no longer over the logo)
 2026-11-01T03:36:19 ok-restart-updater ad590381 Fixes from the full code review: playout never stalls, safer deletes, atomic state files, WebRTC leaks, guest/broadcast reconnects, updater waits for LIVE
+2026-11-01T03:41:29 ok 04b0aae6 Guest page: a removed or expired guest sees 'your link has ended' instead of reconnecting forever
