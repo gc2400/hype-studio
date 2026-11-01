@@ -13,7 +13,8 @@
 #hhead .show{font-size:17px;font-weight:900;white-space:nowrap}
 #hhead .hctl{display:flex;align-items:center;gap:6px;flex:none}
 #hhead .btn{cursor:pointer;border-radius:10px;border:1px solid #23496B;background:#0F2B44;color:#F2F6FA;font:700 11px Inter,system-ui,sans-serif;min-height:32px;padding:0 10px}
-#hhead .btn{transition:background .12s,border-color .12s,color .12s}
+#hhead .btn{transition:background .12s,border-color .12s,color .12s;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;line-height:1;letter-spacing:.02em;margin:0;box-shadow:none;text-decoration:none;white-space:nowrap;box-sizing:border-box}   /* the same header on every page (pages style .btn differently) */
+#hhead .modes .btn{height:28px;min-height:28px;border:0}
 #hhead .btn:hover{border-color:#05A9C6;background:#143049}
 #hhead .btn.on{background:#05A9C6;border-color:#05A9C6;color:#061423}#hhead .btn.on:hover{background:#18BEDA}
 #hhead .modes{display:inline-flex;gap:3px;background:#071A2B;border-radius:10px;padding:3px}
