@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T14:47:34",
+ "time": "2026-11-01T14:55:46",
  "result": "ok",
- "commit": "83eede78069b1fa3ffaa710aa41d8f56ee0950f9",
- "subject": "Up next shows the time each item is really heard (START \u2192 smart MIX) instead of the full file length",
+ "commit": "cacfc907d5f19d3d2c83d39716259f7c2da2a010",
+ "subject": "Up next: durations line up; on hover (tap on phones) \u2191 \u2193 \u00d7 buttons instead of the hidden \u00d7; start times use the real heard length",
  "log": [
-  "14:46:48 update 1e8d55f5 \u2192 83eede78 \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
-  "14:46:48 restart hype-engine",
-  "14:47:34 installed OK \u00b7 restarted: hype-engine"
+  "14:55:46 update 83eede78 \u2192 cacfc907 \u00b7 1 file(s): web/panel/index.html",
+  "14:55:46 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Akon \u2013 Don't Matter",
+  "song": "Burna Boy x Stormzy \u2013 Real Life",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
