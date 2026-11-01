@@ -696,8 +696,14 @@ class TV:
         try:
           with self.olock:     # (also called from the show watcher thread: one OBS request at a time)
             cur = (self.client().get_input_settings("Show loop").input_settings or {}).get("local_file")   # what OBS really has (also after an OBS restart)
-            if cur != f:
+            try: mt = os.path.getmtime(f)
+            except OSError: mt = 0
+            if cur != f or getattr(self, "_loop_mt", None) != (f, mt):
+                if cur == f:     # same name, new file (uploaded again): OBS keeps the old one open until it is unloaded
+                    self.client().set_input_settings("Show loop", {"local_file": ""}, True)
                 self.client().set_input_settings("Show loop", {"local_file": f, "looping": True, "hw_decode": True}, True)
+                self.client().trigger_media_input_action("Show loop", "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
+            self._loop_mt = (f, mt)
             self.loop_file = f
             return f
         except Exception as e: log.warning("branding: %s", e); return None
