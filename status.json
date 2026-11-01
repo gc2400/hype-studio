@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T15:36:58",
+ "time": "2026-11-01T15:43:53",
  "result": "ok",
- "commit": "918a3b2fd4f377f37e3b2191fc729132e92112f1",
- "subject": "DJ mode: the decks give one song at a time (a second song no longer left its deck early); everything queued for a deck shows on top of it; NEXT button per deck (takes the deck's next song)",
+ "commit": "30a74ad49ff9f63209223fb701d3c83d52d77e2d",
+ "subject": "Library: all songs \u2013 300 more load as you scroll down ('x of y items'); row buttons only on hover on a computer (no longer hanging on a clicked row)",
  "log": [
-  "15:36:13 update 7610961c \u2192 918a3b2f \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
-  "15:36:13 restart hype-engine",
-  "15:36:58 installed OK \u00b7 restarted: hype-engine"
+  "15:43:08 update 918a3b2f \u2192 30a74ad4 \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/library.html",
+  "15:43:08 restart hype-engine",
+  "15:43:53 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "BAD BUNNY X ROSALIA \u2013 LA NOCHE DE ANOCHE",
+  "song": "Yandel x Feid \u2013 Yandel 150",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
