@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T15:54:40",
+ "time": "2026-11-01T15:58:47",
  "result": "ok",
- "commit": "070b16515ffc59d424b242d37557838946f0f23a",
- "subject": "An engine restart keeps AUTO / MANUAL / DJ as it was, and the song on air keeps its deck / source",
+ "commit": "a3db5840987b64ea4f893266eb3e19681e47f7be",
+ "subject": "Main player: controls under the waveform (like the decks); MANUAL AUX: Save as playlist + Clear at the bottom",
  "log": [
-  "15:53:54 update 5b295107 \u2192 070b1651 \u00b7 1 file(s): engine/engine.py",
-  "15:53:55 restart hype-engine",
-  "15:54:40 installed OK \u00b7 restarted: hype-engine"
+  "15:58:47 update 070b1651 \u2192 a3db5840 \u00b7 1 file(s): web/panel/index.html",
+  "15:58:47 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "AVENTURA X BAD BUNNY \u2013 VOLV\u00cd",
+  "song": "Farruko x Greeicy x Steve Aoki \u2013 YAPAQUE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },

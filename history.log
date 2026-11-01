@@ -104,3 +104,4 @@
 2026-11-01T15:43:53 ok 30a74ad4 Library: all songs – 300 more load as you scroll down ('x of y items'); row buttons only on hover on a computer (no longer hanging on a clicked row)
 2026-11-01T15:52:51 ok 5b295107 MANUAL AUX looks like a deck list (time, hover ▶ ↑ ↓ ×; no 'Load playlist'); DJ page shows the programming's song on air + time left until the decks take over; after a restart the song on air keeps its deck
 2026-11-01T15:54:40 ok 070b1651 An engine restart keeps AUTO / MANUAL / DJ as it was, and the song on air keeps its deck / source
+2026-11-01T15:58:47 ok a3db5840 Main player: controls under the waveform (like the decks); MANUAL AUX: Save as playlist + Clear at the bottom
