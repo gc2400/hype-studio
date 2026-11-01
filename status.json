@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T16:45:23",
+ "time": "2026-11-01T16:46:26",
  "result": "ok",
- "commit": "b2844b0582d79ead569a5f09223db6894da45228",
- "subject": "LIVE page: player column exactly as wide as on ON AIR",
+ "commit": "c386141e34b63ee15d764aaecb19621fd16a78df",
+ "subject": "Guest card: CAM 1 2 3 4 on one line; Name on screen / Copy link stay together on the right",
  "log": [
-  "16:45:23 update cd0c4b7b \u2192 b2844b05 \u00b7 1 file(s): web/panel/index.html",
-  "16:45:23 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:46:26 update b2844b05 \u2192 c386141e \u00b7 1 file(s): web/panel/index.html",
+  "16:46:26 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Tekno \u2013 Press Button",
+  "song": "Chivv x Broederliefde \u2013 Henny Op Een Maandag",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
