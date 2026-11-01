@@ -141,3 +141,4 @@
 2026-11-01T19:16:11 ok 7d3c95b5 Playlists styled like Shows (list items, Save/Delete in the card header, rows); Hype Live page same width as the other pages
 2026-11-01T19:18:17 ok 1f0a83a2 Hype Live page: load the clock font like the other pages
 2026-11-01T19:20:21 ok 07ea8042 Bump header.js version
+2026-11-01T19:21:25 ok 27114a3d Hype Live page: header and tabs never squeezed

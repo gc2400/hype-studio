@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T19:20:21",
+ "time": "2026-11-01T19:21:25",
  "result": "ok",
- "commit": "07ea8042214cd5c309dc638650765eee203503d2",
- "subject": "Bump header.js version",
+ "commit": "27114a3d3b133c5ddec72854293b18307d3a8461",
+ "subject": "Hype Live page: header and tabs never squeezed",
  "log": [
-  "19:20:21 update 1f0a83a2 \u2192 07ea8042 \u00b7 9 file(s): web/panel/header.js, web/panel/history.html, web/panel/hypelive.html, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/status/index.html",
-  "19:20:21 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:21:25 update 07ea8042 \u2192 27114a3d \u00b7 1 file(s): web/panel/hypelive.html",
+  "19:21:25 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Quavo x Offset \u2013 Away",
+  "song": "Tyla \u2013 CHANEL",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
