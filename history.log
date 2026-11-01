@@ -151,3 +151,4 @@
 2026-11-01T20:04:31 ok 0f2dc5c4 Playlists: add items like on Shows – Add to the playlist column (Folder/Song/Jingles/Playlist + search), drag a result to the yellow line or click; rows with type tag, hover ×
 2026-11-01T20:07:21 ok d422cb78 Schedule: click the lower half of an hour to open a show that starts on the half hour (Fresh Out, Rewind Radio) and set its hour plan
 2026-11-01T20:09:26 ok 77f3aa5b Playlists: Loop / Randomize / Rotation as three option cards
+2026-11-01T20:11:30 ok ef50ca4e Schedule: top half of a split hour selects only that show (Top 10 20:00–20:30)

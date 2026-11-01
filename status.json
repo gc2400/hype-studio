@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T20:09:26",
+ "time": "2026-11-01T20:11:30",
  "result": "ok",
- "commit": "77f3aa5b936ee260dcb0035059773f6043370d4b",
- "subject": "Playlists: Loop / Randomize / Rotation as three option cards",
+ "commit": "ef50ca4e0987f60310c37524bfe84896a889245d",
+ "subject": "Schedule: top half of a split hour selects only that show (Top 10 20:00\u201320:30)",
  "log": [
-  "20:09:26 update d422cb78 \u2192 77f3aa5b \u00b7 1 file(s): web/panel/plan.html",
-  "20:09:26 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:11:30 update 77f3aa5b \u2192 ef50ca4e \u00b7 1 file(s): web/panel/plan.html",
+  "20:11:30 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Maluma x Shakira \u2013 AGUA",
+  "song": "Gedi1000 x Dongo \u2013 No Ta Nada",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
