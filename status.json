@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T22:25:32",
+ "time": "2026-11-01T22:32:26",
  "result": "ok",
- "commit": "299b8688c5ebc64e5663278342059383d7679397",
- "subject": "ID over intro: count earlier IDs over intros too (also after a restart), so the IDs take turns instead of always ID 4",
+ "commit": "4babd2eaa6b6b08ff73ca7dc8c1fabec6d7206ed",
+ "subject": "TV: 360p (650 kbps + 96k audio) as a 4th quality for slow connections",
  "log": [
-  "22:24:46 update 706a48c8 \u2192 299b8688 \u00b7 1 file(s): engine/engine.py",
-  "22:24:47 restart hype-engine",
-  "22:25:32 installed OK \u00b7 restarted: hype-engine"
+  "22:31:41 update 299b8688 \u2192 4babd2ea \u00b7 3 file(s): system/nginx-hype.conf, tv/ladder.sh, web/status/index.html",
+  "22:31:41 restart hype-ladder",
+  "22:32:26 installed OK \u00b7 restarted: nginx-reload, hype-ladder"
  ],
  "guard": {
-  "song": "Broederliefde \u2013 Dansvloerkiller",
+  "song": "Tyla \u2013 Water",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },

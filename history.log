@@ -161,3 +161,4 @@
 2026-11-01T22:12:27 ok 22f5eb6b Help moved from the menu bar to Settings → Help
 2026-11-01T22:17:35 ok 706a48c8 DJ decks: STOP button and the same button order as the main player (… END · STOP · LOOP · NEXT); help updated
 2026-11-01T22:25:32 ok 299b8688 ID over intro: count earlier IDs over intros too (also after a restart), so the IDs take turns instead of always ID 4
+2026-11-01T22:32:26 ok 4babd2ea TV: 360p (650 kbps + 96k audio) as a 4th quality for slow connections
