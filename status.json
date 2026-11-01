@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T15:58:47",
+ "time": "2026-11-01T16:17:56",
  "result": "ok",
- "commit": "a3db5840987b64ea4f893266eb3e19681e47f7be",
- "subject": "Main player: controls under the waveform (like the decks); MANUAL AUX: Save as playlist + Clear at the bottom",
+ "commit": "b275ecebe026768cada6d55cef1ce39048decaaa",
+ "subject": "Show jingles: in WEEKEND clock hours the folder 'SHOWS/<show> Weekend' is used when it exists (e.g. Hype Non-Stop Weekend's own custom ID)",
  "log": [
-  "15:58:47 update 070b1651 \u2192 a3db5840 \u00b7 1 file(s): web/panel/index.html",
-  "15:58:47 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:17:11 update a3db5840 \u2192 b275eceb \u00b7 1 file(s): engine/planner.py",
+  "16:17:11 restart hype-engine",
+  "16:17:56 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Farruko x Greeicy x Steve Aoki \u2013 YAPAQUE",
+  "song": "Vybz Kartel \u2013 WIFEY For LIFEY",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
