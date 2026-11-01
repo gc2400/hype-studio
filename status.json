@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T17:40:17",
+ "time": "2026-11-01T17:44:24",
  "result": "ok",
- "commit": "f546e728d1f49ccf43bbae1f8e93086a2fec4e76",
- "subject": "SLOT instead of CAM for the 1|2|3|4 boxes (Broadcast + LIVE panel)",
+ "commit": "1c2743e8fb54af4138475a386802f83f16b0a623",
+ "subject": "Header: buttons fully styled by the header itself \u2013 identical on every page",
  "log": [
-  "17:40:17 update ee275584 \u2192 f546e728 \u00b7 2 file(s): web/panel/index.html, web/panel/studio.html",
-  "17:40:17 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "17:44:24 update f546e728 \u2192 1c2743e8 \u00b7 1 file(s): web/panel/header.js",
+  "17:44:24 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "CLUB HYPE \u2013 DJ Ricsz Liveset 9 MID2025SEASON Mojo's Alkmaar",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
