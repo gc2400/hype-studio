@@ -848,7 +848,7 @@ class Engine:
             if p_.get("section") == "ads": planner.CTX["ad_planned"][p_["path"]] = planner.CTX["ad_planned"].get(p_["path"], 0) + 1
         if not self.auto:
             left = ((self.now.get("started") or 0) + self.length(self.now) - time.time()) if self.now.get("path") else 0
-            if not self.plan and left <= PUSH_LEAD + 2:      # DJ / MANUAL: the AUX keeps its songs (visible, movable) until the next one is really needed
+            if not self.plan and not self.liq_next and left <= PUSH_LEAD + 2:      # DJ / MANUAL: the AUX keeps its songs (visible, movable) until the next one is really needed (one at a time)
                 it = self.dj_take() if self.dj else self.aux_take()
                 if not it:   # nothing in the AUX/decks: the radio never stops – the clock keeps the music going
                     it = self.picker.next_planned(c, self.avoid(), self.cursor(), self.runner) or self.picker.next(c, self.avoid())
@@ -1376,7 +1376,11 @@ class Engine:
                 if getattr(self, "loop", False):   # NEXT ends a loop
                     self.loop = False
                     if self.liq_next and self.liq_next.get("src") == "loop": self.liq.cmd("radio.clear"); self.liq_next = None
-                self.stopped = False; self.stop_at_end = False; self.push_next(c, force=True); time.sleep(0.3); self.liq.cmd("radio.skip")
+                self.stopped = False; self.stop_at_end = False
+                if not self.auto and not self.plan and not self.liq_next:     # DJ / MANUAL: the next song of the decks / AUX (taken only when needed)
+                    it_ = self.dj_take() if self.dj else self.aux_take()
+                    if it_: self.picker.note(it_); self.plan.append(it_)
+                self.push_next(c, force=True); time.sleep(0.3); self.liq.cmd("radio.skip")
             elif action == "play":
                 if not self.auto and not self.dj and not self.stopped:   # MANUAL → PLAY = back to the normal programming
                     return self.cmd_auto(c, True)
