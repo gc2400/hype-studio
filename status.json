@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T19:11:03",
+ "time": "2026-11-01T19:16:11",
  "result": "ok",
- "commit": "49476979d9f55c485765f21e8b068ebc45d72d8a",
- "subject": "Shows: yellow drop line between rows (before/after), jingle rows named by folder (LINER, SWEEP, NEW MUSIC, THROWBACK), hover on yellow buttons; Settings nav like Planning with search on the right, no emoji/subtexts",
+ "commit": "7d3c95b53b280475a437f2a6607acf41710a6433",
+ "subject": "Playlists styled like Shows (list items, Save/Delete in the card header, rows); Hype Live page same width as the other pages",
  "log": [
-  "19:11:03 update 63c88a61 \u2192 49476979 \u00b7 2 file(s): web/panel/plan.html, web/panel/settings.html",
-  "19:11:03 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:16:11 update 49476979 \u2192 7d3c95b5 \u00b7 2 file(s): web/panel/hypelive.html, web/panel/plan.html",
+  "19:16:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Sean Paul x Seanizzle \u2013 Face Card",
+  "song": "Myke Towers x Quevedo \u2013 SOLEAO",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
