@@ -753,7 +753,10 @@ class Engine:
             c = dbc(); r = c.execute("SELECT path, started, scene FROM asrun ORDER BY id DESC LIMIT 1").fetchone()
             if r:
                 it = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (r[0],)).fetchone()
-                if it and time.time() - r[1] < (it[6] or 0): self.now = dict(row_item(it, "?"), started=r[1], scene=r[2]); self.tv.scene = r[2]
+                if it and time.time() - r[1] < (it[6] or 0):
+                    self.now = dict(row_item(it, "?"), started=r[1], scene=r[2]); self.tv.scene = r[2]
+                    a_ = getattr(self, "_aired", None) or {}
+                    if a_.get("path") == r[0]: self.now.update({k_: a_[k_] for k_ in ("id", "src", "deck", "id_over", "event") if k_ in a_})   # (its deck / source survive the restart)
         except Exception as e: log.warning("restore now: %s", e)
     def restore_plan(self, c):
         """After an engine restart (update, repair): Up next comes back exactly as it was - same songs, same order - when it
@@ -765,7 +768,7 @@ class Engine:
         items = ([d["next"]] if d.get("next") else []) + list(d.get("plan") or [])
         try:
             last = c.execute("SELECT path, started FROM asrun ORDER BY id DESC LIMIT 1").fetchone()
-            if items and last and items[0].get("path") == last[0] and last[1] >= (items[0].get("pushed") or 0) - 2: items.pop(0)   # it went on air
+            if items and last and items[0].get("path") == last[0] and last[1] >= (items[0].get("pushed") or 0) - 2: self._aired = items.pop(0)   # it went on air
         except Exception: pass
         items = [i for i in items if i.get("path") and os.path.isfile(os.path.join(ROOT, i["path"]))]
         if not items: return False

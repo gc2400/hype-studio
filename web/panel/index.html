@@ -29,6 +29,8 @@ body.dj #deckA{order:1;flex:1 1 360px}body.dj #col2{order:2;flex:1.1 1 380px}bod
 .deck .np .art{width:56px;height:56px;font-size:24px}.deck .dlist .li .dact{display:none;gap:3px}.deck .dlist .li:hover .dact{display:flex}
 .deck .dlist .li .dact button{min-height:26px;min-width:30px;padding:0 6px;font-size:12px}
 body.dj #res [data-act=next],body.dj #res [data-act=end],body.dj #res [data-pact=next],body.dj #res [data-pact=end]{display:none}   /* DJ: only A / B (which deck is clear) */
+.xnow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--deep);border:1px solid var(--line2);font-size:13px}
+.xnow b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xnow .mono{font-size:18px;font-weight:900;color:var(--y)}
 .deck .wave{width:100%;height:40px;display:block;border-radius:8px;background:var(--deep);cursor:default}
 .deck .dlist .li .num{width:18px;flex:none;font-size:12px;color:var(--mut)}.deck .dlist .li.cued{background:#1E1A00;border-color:#5A4E00}.deck .dlist .li.cued .num{color:var(--y)}
 .ib.loop.on{background:var(--y);color:var(--bg);border-color:var(--y)}
@@ -314,11 +316,11 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         </div>
         <div id="auxNext" style="padding:0 6px"></div>
         <div class="row" style="gap:5px;padding:0 6px 6px;flex-wrap:wrap">
-          <select id="auxLoad" aria-label="Load a playlist into this AUX" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 6px;max-width:170px"><option value="">Load playlist…</option></select>
+          <select id="auxLoad" hidden aria-label="Load a playlist into this AUX" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 6px;max-width:170px"><option value="">Load playlist…</option></select>
           <button class="btn sm" id="auxSave">Save as playlist</button>
           <button class="btn sm red" id="auxClear">Clear</button>
         </div>
-        <div class="log aux" id="aux"></div>
+        <div class="log aux ulist" id="aux"></div>
         <span class="muted" style="font-size:11px;padding:0 6px 4px">AUX 1 plays top to bottom, then AUX 2. Both empty → the clock keeps the music going. Press ▶ PLAY or AUTO to go back to the programming.</span>
       </div>
     </section>
@@ -391,6 +393,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         <div class="row"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK: OFF</button><button class="btn sm" id="bPVid" aria-pressed="false" title="When on, pads with a video (▶) also show their video full screen over what's on air">▶ VIDEO: OFF</button><button class="btn sm" id="bPLoop" aria-pressed="false" title="When on, a pad you start repeats until you click it again (or STOP PADS)">⟳ LOOP: OFF</button><span style="flex:1"></span><button class="btn sm red" id="bPadStop">STOP PADS</button></div>
       </div>
       <div class="card" id="cXfade" hidden>
+        <div class="xnow" id="xNow" hidden></div>
         <div class="xf">
           <button class="xl" data-xto="1" style="color:var(--b)" title="Mix into deck A" aria-label="Mix into deck A">A</button>
           <div class="xtrack" id="xTrack"><div class="xthumb" id="xThumb" draggable="false"></div></div>
@@ -490,7 +493,7 @@ function tick() {
   $('#tMix').textContent = mix - el > 0 ? 'next in ' + fmt(mix - el) : 'mixing';
   drawWave(el / (n.duration || 1), (n.cue_start || 0) / (n.duration || 1), mix / (n.duration || 1), end / (n.duration || 1));
   $('#clock').textContent = new Date(Date.now() - skew * 1000).toTimeString().slice(0, 8);
-  if (MODE === 'dj') { deckTime('1'); deckTime('2'); }
+  if (MODE === 'dj') { deckTime('1'); deckTime('2'); xNow(); }
 }
 function drawWave(pos, cs, cm, ce) {
   const c = $('#wave'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H);
@@ -544,16 +547,17 @@ function renderAux() {
   const nxh = nx ? `<div class="li next"><span class="ic" style="color:var(--y)">▸</span><div class="tx"><b>${nx.artist ? esc(nx.artist) + ' – ' : ''}${esc(nx.title)}</b><span>NEXT · ${nx.src === 'clock' ? 'from the clock (AUX empty)' : nx.deck ? 'from AUX ' + nx.deck : esc(nx.folder)}</span></div><button class="x" style="opacity:1" data-nxrm="${nx.id}" aria-label="Remove the next song">×</button></div>` : '';
   if ($('#auxNext').dataset.h !== nxh) { $('#auxNext').dataset.h = nxh; $('#auxNext').innerHTML = nxh; const nb = $('#auxNext [data-nxrm]'); if (nb) nb.onclick = () => cmd('remove', {id: nb.dataset.nxrm}); }
   const sig = AUX + JSON.stringify(L.map(u => u.id)); if (sig === auxSig) return; auxSig = sig;
-  $('#aux').innerHTML = L.length ? L.map((u, i) => { const [bt] = badge(u.mode), jg = (u.mode || '').startsWith('jingle');
-    return `<div class="li ${jg ? 'jg' : ''}" draggable="true" data-aid="${u.id}" data-i="${i}"><span class="ic">${jg ? '◆' : u.mode === 'audio' ? '♪' : '▶'}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)} · ${bt} · ${fmt((u.cue_mix || u.duration || 0) - (u.cue_start || 0))}</span></div>
-      <div class="acts"><button class="btn sm" data-fire="next" title="Plays after the song on air">NEXT</button><button class="btn sm red" data-fire="now" title="Fades the song on air and plays this now">NOW</button></div><button class="x" data-arm="${u.id}" aria-label="Remove from AUX">×</button></div>`; }).join('')
+  $('#aux').innerHTML = L.length ? L.map((u, i) => { const jg = (u.mode || '').startsWith('jingle');
+    return `<div class="li ${jg ? 'jg' : ''}" draggable="true" data-aid="${u.id}" data-i="${i}"><span class="num mono" style="width:18px;flex:none;font-size:12px;color:var(--mut)">${i + 1}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)}</span></div><span class="du mono">${fmt(u.air || ((u.cue_mix || u.duration || 0) - (u.cue_start || 0)))}</span><span class="lacts"><button data-fire="now" title="Play this now (fades the song on air)" aria-label="Play ${esc(u.title)} now">▶</button><button data-amv="${i - 1}" title="Earlier" aria-label="Move ${esc(u.title)} up" ${i === 0 ? 'disabled' : ''}>↑</button><button data-amv="${i + 1}" title="Later" aria-label="Move ${esc(u.title)} down" ${i === L.length - 1 ? 'disabled' : ''}>↓</button><button class="rm" data-arm="${u.id}" title="Remove from AUX ${AUX}" aria-label="Remove ${esc(u.title)}">×</button></span></div>`; }).join('')
     : '<div class="empty">Drag songs here from the library (or from Up next)<br>– they wait here until you send them to air</div>';
   $$('#aux .li').forEach(el => {
     el.ondragstart = e => e.dataTransfer.setData('text/plain', 'aux:' + AUX + ':' + el.dataset.aid);
     el.ondragover = e => { e.preventDefault(); el.classList.add('drop'); }; el.ondragleave = () => el.classList.remove('drop');
     el.ondrop = e => { e.preventDefault(); e.stopPropagation(); el.classList.remove('drop'); auxDrop(e.dataTransfer.getData('text/plain'), +el.dataset.i); };
-    el.querySelectorAll('[data-fire]').forEach(b => b.onclick = () => auxCmd('aux_fire', {id: el.dataset.aid, how: b.dataset.fire, remove: true}).then(() => toast(b.dataset.fire === 'now' ? 'Playing now' : 'Plays next')));
-    el.querySelector('[data-arm]').onclick = () => auxCmd('aux_remove', {id: el.dataset.aid});
+    el.querySelectorAll('[data-fire]').forEach(b => b.onclick = e => { e.stopPropagation(); auxCmd('aux_fire', {id: el.dataset.aid, how: b.dataset.fire, remove: true}).then(() => toast('Playing now')); });
+    el.querySelectorAll('[data-amv]').forEach(b => b.onclick = e => { e.stopPropagation(); auxCmd('aux_move', {id: el.dataset.aid, to: +b.dataset.amv}); });
+    el.querySelector('[data-arm]').onclick = e => { e.stopPropagation(); auxCmd('aux_remove', {id: el.dataset.aid}); };
+    el.addEventListener('click', e => { if (e.target.closest('.lacts')) return; const on = !el.classList.contains('sel'); $$('#aux .li.sel').forEach(x => x.classList.remove('sel')); el.classList.toggle('sel', on); });
   });
 }
 function auxCmd(a, d = {}) { auxSig = ''; return cmd(a, Object.assign({aux: AUX}, d)).then(r => { if (r && r.ok === false) toast(r.error, 1); return r; }); }
@@ -1056,6 +1060,14 @@ function deckTime(k) {
   if (it && it.duration) { const mk = (t, cl) => { x.fillStyle = cl; x.fillRect(t / it.duration * W - 1, 0, 2, H); };
     if ((it.cue_start || 0) > 0.05) mk(it.cue_start, '#3DDC97'); if (it.cue_mix) mk(it.cue_mix, '#FFE000'); }
   if (onair || it) { x.fillStyle = '#fff'; x.fillRect(pos * W - 1, 0, 2, H); }
+}
+function xNow() {      // DJ page: a song from the programming (AUTO / the clock) is on air – how long until the decks take over
+  const n = S && S.now || {}, box = $('#xNow'); if (!box) return;
+  const show = !!n.path && !n.deck; box.hidden = !show; if (!show) return;
+  const left = (n.started + (n.air || ((n.cue_mix || n.duration || 0) - (n.cue_start || 0)))) - (Date.now() / 1000 - skew);
+  const decks = ((S.aux || {})['1'] || []).length + ((S.aux || {})['2'] || []).length;
+  const html = `<span class="chip" style="background:var(--r);color:#1A0207">ON AIR</span><b>${n.artist ? esc(n.artist) + ' – ' : ''}${esc(n.title)}</b><span class="muted">${S.auto ? 'AUTO · the decks start when you press MIX / NOW' : decks ? 'then the decks' : 'then the clock (decks empty)'}</span><span class="mono">-${fmt(left)}</span>`;
+  if (box.innerHTML !== html) box.innerHTML = html;
 }
 function renderDecks() {
   const n = S.now || {}, nxt = (S.upcoming || [])[0] || {};
