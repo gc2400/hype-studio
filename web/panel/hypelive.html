@@ -32,13 +32,13 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(
   <iframe id="fr" title="Hype Live" allow="clipboard-write; autoplay"></iframe>
   <div class="note" id="note" hidden><div>
     <b>Hype Live doesn't open here yet</b>
-    <p id="why">Log in to WordPress first, then come back. If you are logged in, the Hype Live update for Studio isn't installed yet.</p>
-    <a class="btn" id="ext2" target="_blank" rel="noopener">Open Hype Live in WordPress</a>
+    <p id="why">Most likely you are not logged in to WordPress (or the login expired). Log in once in a new tab – tick <b>Remember me</b> so it lasts 14 days – then click Try again.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="https://www.hyperadio.nl/wp-login.php" target="_blank" rel="noopener">Log in to WordPress</a><button class="btn" id="retry" type="button" style="background:transparent;color:var(--txt);border-color:var(--line2)">Try again</button><a class="btn" id="ext2" target="_blank" rel="noopener" style="background:transparent;color:var(--txt);border-color:var(--line2)">Open in WordPress</a></div>
   </div></div>
 </div>
 <script>
 (() => {
-  const WP = 'https://hyperadio.nl/wp-admin/admin.php';
+  const WP = 'https://www.hyperadio.nl/wp-admin/admin.php';   // www: that is where the WordPress login cookie lives
   const V = [['home', 'Home'], ['messages', 'Messages'], ['photos', 'Photos & voice'], ['games', 'Games'], ['sponsors', 'Sponsors'],
              ['notifications', 'Notifications'], ['reports', 'Reports'], ['settings', 'Settings']];
   const url = (v, embed) => `${WP}?page=hype-live&hl_view=${v}` + (embed ? '&hype_embed=1' : '');
@@ -61,9 +61,11 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(
   addEventListener('hashchange', () => { const v = location.hash.slice(1); if (v !== view && V.some(x => x[0] === v)) go(v); });
   // The plugin says hello from inside the frame: {hypeLive:'ready', view:'messages'} – keeps the tab in step when you click links inside.
   addEventListener('message', e => {
-    if (e.origin !== 'https://hyperadio.nl' || !e.data || e.data.hypeLive !== 'ready') return;
+    if (!/^https:\/\/(www\.)?hyperadio\.nl$/.test(e.origin) || !e.data || e.data.hypeLive !== 'ready') return;
     ok = true; note.hidden = true; if (e.data.view && e.data.view !== view && V.some(x => x[0] === e.data.view)) mark(e.data.view);
   });
+  document.getElementById('retry').onclick = () => go(view);
+  addEventListener('focus', () => { if (!ok && !note.hidden) go(view); });   // back from the login tab: try again by itself
   go(view);
 })();
 </script>

@@ -857,3 +857,88 @@ def api_save_screen_rules(c, d):
 def screen_files():
     os.makedirs(SCREEN_DIR, exist_ok=True)
     return sorted(f for f in os.listdir(SCREEN_DIR) if re.search(r"\.(png|jpe?g|gif|webp|webm|mp4|mov)$", f, re.I))
+
+
+# ---------------- week view (Planning → Week) ----------------
+def _folder_paths(c, ref):
+    """The songs a folder slot can play (same rules as a playlist folder source), without creating anything."""
+    w, a = folder_where(ref)
+    rows = c.execute(f"""SELECT path, folder, mtime FROM items WHERE section='music' AND problem IS NULL AND mode IS NOT NULL AND {w}""", a).fetchall()
+    if any((f or "").startswith(ref + "/") for _, f, _m in rows): rows = [r for r in rows if r[1] != ref]
+    return rows
+
+def _clock_of(c, t):
+    """(clock id, 'show' | 'grid') for time t – the same choice clock_for makes."""
+    s = show_at(t)
+    if s:
+        r = c.execute("SELECT clock_id FROM show_clocks WHERE title=?", (s["title"],)).fetchone()
+        if r and r[0] and c.execute("SELECT 1 FROM clocks WHERE id=?", (r[0],)).fetchone(): return r[0], "show"
+    return _old_clock_for(c, t), "grid"
+
+def api_week(c, w=0):
+    """The week Mon–Sun (w = weeks from now): per hour the show and clock, the clocks' mix folders, fixed times,
+    and warnings for the coming 7 days (empty playlists/folders, no new mix uploaded, …)."""
+    now = time.time(); lt = time.localtime(now)
+    mon = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday - lt.tm_wday + 7 * int(w), 0, 0, 0, 0, 0, -1))
+    days = []
+    for d in range(7):
+        t0 = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday - lt.tm_wday + 7 * int(w) + d, 0, 0, 0, 0, 0, -1))
+        hrs = []
+        for h in range(24):
+            t = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday - lt.tm_wday + 7 * int(w) + d, h, 0, 0, 0, 0, -1))
+            cid, via = _clock_of(c, t)
+            r = c.execute("SELECT clock_id FROM schedule WHERE day=? AND hour=?", (d, h)).fetchone()
+            hrs.append(dict(h=h, clock_id=cid, via=via, grid=r[0] if r else None))
+        days.append(dict(date=time.strftime("%Y-%m-%d", time.localtime(t0)), hours=hrs,
+                         shows=[dict(start=s["start"], end=s["end"], title=s["title"]) for s in WEEK if s["day"] == d]))
+    clocks = {}
+    for cid, name, color in c.execute("SELECT id, name, color FROM clocks"):
+        mix = [r for k, r, a in c.execute("SELECT kind, ref, amount FROM clock_slots WHERE clock_id=? ORDER BY pos", (cid,)) if k == "folder" and (r or "").upper().startswith("MIXES/")]
+        clocks[cid] = dict(id=cid, name=name, color=color, mix=mix[0] if mix else None)
+    # ---- warnings for the next 7 days ----
+    names = "Mon Tue Wed Thu Fri Sat Sun".split()
+    pl_empty, fold_rows, warn, seen = {}, {}, [], {}
+    def add(key, level, text, t, cid=None):
+        if key in seen: seen[key]["n"] += 1; return
+        lt_ = time.localtime(t)
+        seen[key] = dict(level=level, text=text, day=lt_.tm_wday, hour=lt_.tm_hour, when=f"{names[lt_.tm_wday]} {lt_.tm_hour:02d}:00",
+                         date=time.strftime("%Y-%m-%d", lt_), clock_id=cid, n=1); warn.append(seen[key])
+    def frows(ref):
+        if ref not in fold_rows: fold_rows[ref] = _folder_paths(c, ref)
+        return fold_rows[ref]
+    def plname(pid):
+        r = c.execute("SELECT name FROM playlists WHERE id=?", (pid,)).fetchone(); return r[0] if r else f"#{pid}"
+    H0 = (int(now) // 3600) * 3600
+    for i in range(168):
+        t = H0 + i * 3600; cid, _via = _clock_of(c, t)
+        if not cid: add("noclock", "warn", "No clock planned – nothing to play.", t); continue
+        cn = clocks.get(cid, {}).get("name", f"#{cid}")
+        for kind, ref, amount in c.execute("SELECT kind, ref, amount FROM clock_slots WHERE clock_id=? ORDER BY pos", (cid,)).fetchall():
+            if kind == "playlist" and str(ref).isdigit():
+                pid = int(ref)
+                if pid not in pl_empty: pl_empty[pid] = not playlist_songs(c, pid)
+                if pl_empty[pid]: add(("pl", cid, pid), "warn", f'Clock {cn}: playlist "{plname(pid)}" is empty – that slot is skipped.', t, cid)
+            elif kind == "folder":
+                rows = frows(ref); dated = (ref or "").upper().startswith("MIXES/") and "MIXTAPES" not in (ref or "").upper()
+                if not rows:
+                    if dated: add(("mix", ref, time.strftime("%Y-%m-%d", time.localtime(t))), "bad", f"No mix uploaded in {ref} – the rest of the clock plays instead.", t, cid)
+                    else: add(("fold", cid, ref), "warn", f"Clock {cn}: folder {ref} is empty – that slot is skipped.", t, cid)
+                elif dated:
+                    newest = max((m or 0) for _p, _f, m in rows)
+                    if newest < t - 6 * 86400:
+                        last = c.execute(f"SELECT MAX(started) FROM asrun WHERE path IN ({','.join('?' * len(rows))})", [p for p, _f, _m in rows]).fetchone()[0]
+                        if last and last > t - 8 * 86400:
+                            add(("old", ref, time.strftime("%Y-%m-%d", time.localtime(t))), "warn",
+                                f"{ref}: no new mix since last time (aired {time.strftime('%a %d %b', time.localtime(last))}) – the same mix plays again.", t, cid)
+    for e in api_events(c):
+        if not e["enabled"]: continue
+        bad = (e["kind"] == "playlist" and str(e["ref"]).isdigit() and not playlist_songs(c, int(e["ref"]))) or \
+              (e["kind"] == "jingle" and not resolve_jingle(c, e["ref"])) or \
+              (e["kind"] == "song" and not c.execute("SELECT 1 FROM items WHERE path=? AND problem IS NULL", (e["ref"],)).fetchone()) or \
+              (e["kind"] == "folder" and not frows(e["ref"]))
+        if bad: add(("ev", e["id"]), "warn", f'Fixed time "{e["name"] or e["at"]}" ({e["at"]}): nothing to play – check it under Fixed times.', now)
+    order = {"bad": 0, "warn": 1}
+    warn.sort(key=lambda x: (order.get(x["level"], 2), x["date"], x["hour"]))
+    evs = [dict(name=e["name"], at=e["at"], days=e["days"]) for e in api_events(c) if e["enabled"]]
+    return dict(week=int(w), monday=time.strftime("%Y-%m-%d", time.localtime(mon)), days=days, clocks=list(clocks.values()),
+                events=evs, warnings=warn[:30], show_clocks=dict(c.execute("SELECT title, clock_id FROM show_clocks WHERE clock_id IS NOT NULL").fetchall()))
