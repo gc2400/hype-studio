@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T14:04:19",
+ "time": "2026-11-01T14:08:26",
  "result": "ok",
- "commit": "f77e785e667f88ca9cc46d61de9434abeb0508ca",
- "subject": "Red buttons (STOP MEDIA, STOP PADS \u2026) light up on hover; Library: Upload + Filter stay together in the right corner",
+ "commit": "b06ee6d6e55c644e77cec4740b01e404df1102d6",
+ "subject": "Library: Upload + Filter next to the search bar (icons only on phones)",
  "log": [
-  "14:04:18 update c9717269 \u2192 f77e785e \u00b7 5 file(s): web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html",
-  "14:04:19 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:08:26 update f77e785e \u2192 b06ee6d6 \u00b7 1 file(s): web/panel/library.html",
+  "14:08:26 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Ryan Castro x J Balvin \u2013 UNA A LA VEZ",
+  "song": "Tyla x Tony Duardo x Optimist Music ZA x Ez Maestro \u2013 SHAKE AH",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
