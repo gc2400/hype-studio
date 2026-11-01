@@ -61,10 +61,17 @@ input[type=text]{width:100%}
 label.tg{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;cursor:pointer}
 label.tg input{width:20px;height:20px;accent-color:var(--y)}
 .muted{color:var(--mut);font-size:13px}
+.plrow{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}.plcard{flex:999 1 420px;min-width:0}
+.pladd .seg button{padding:0 6px}.pladd .pick button{flex-direction:column;align-items:flex-start;gap:2px;border:1px dashed var(--line2);background:var(--card)}.pladd .pick button:hover{border-color:var(--y)}.pladd .pick{background:transparent;padding:0;gap:6px}.pladd .pick button span{font-size:11px}
+.pladd .pick{max-height:calc(100vh - 260px)}
+.pick button[draggable]{cursor:grab}
+.src .tg{font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:999px;width:74px;text-align:center;flex:none}
+.src .ib.mv{display:none}.src .ib.rm{opacity:0}.src:hover .ib.rm,.src:focus-within .ib.rm{opacity:1}@media (hover:none){.src .ib.rm{opacity:1}}
+.srcs.dropend{outline:2px dashed var(--y);outline-offset:4px;border-radius:10px}
 .pick{max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:2px;background:var(--deep);border-radius:10px;padding:6px}
 .pick button{display:flex;justify-content:space-between;gap:10px;border:0;background:none;color:var(--txt);padding:8px;border-radius:8px;cursor:pointer;text-align:left;font-size:13px}
 .pick button:hover{background:var(--card2)}.pick button span{color:var(--mut)}
-.srcs{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto;padding-right:2px}
+.srcs{display:flex;flex-direction:column;gap:6px;padding:4px 2px}
 .src{position:relative;display:flex;align-items:center;gap:8px;min-height:42px;padding:4px 8px;border-radius:10px;background:var(--deep);border:1px solid var(--line);font-size:13px}
 .src .h{cursor:grab;color:var(--mut);font-size:16px;line-height:1;user-select:none;padding:0 2px}
 .src.drag{opacity:.35}.src.over{border-color:var(--y);box-shadow:0 -2px 0 var(--y)}
@@ -294,7 +301,8 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
       <input type="search" id="plQ" placeholder="Search playlists…" style="width:100%">
       <div class="list" id="plList"></div>
     </div>
-    <div class="card main" id="plEdit" hidden>
+    <div class="main plrow" id="plEdit" hidden>
+    <div class="card plcard">
       <div class="row" style="gap:10px;align-items:center">
         <span class="lab" style="flex:1 1 260px">Playlist · <input id="plName" class="shname" placeholder="e.g. HEAVY" aria-label="Playlist name"> <span class="muted" id="plInfo" style="text-transform:none;letter-spacing:0;font-weight:600"></span></span>
         <div class="row" style="gap:6px"><button class="btn yellow" id="plSave">Save</button><button class="btn" id="plReset" title="The next time it plays from 'where it left off', it starts at the top again">Start from the top</button><button class="btn sm red" id="plDel">Delete</button></div>
@@ -306,19 +314,16 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
       </div>
       <span class="lab">What's in it</span>
       <div class="srcs" id="plSources"></div>
-      <div class="row">
-        <button class="btn sm" id="addFolder">+ Folder</button>
-        <button class="btn sm" id="addSong">+ Song</button>
-        <button class="btn sm" id="addJingle">+ Jingles</button>
-        <button class="btn sm" id="addList">+ Playlist</button>
-        <span class="muted" style="font-size:12px">Drag ⠿ to change the order</span>
-      </div>
-      <div id="picker" hidden>
-        <input type="search" id="pickQ" placeholder="Search…" style="width:100%;margin-bottom:6px">
-        <div class="pick" id="pickRes"></div>
-      </div>
+      <div class="muted" style="font-size:11px">Drag ⋮⋮ to reorder · drag an item from "Add to the playlist" to the place you want · hover a row for ×</div>
       <span class="lab">Play order now <span class="muted" style="text-transform:none;letter-spacing:0" id="plPos"></span></span>
       <div class="order" id="plOrder"></div>
+    </div>
+    <div class="shadd pladd">
+      <span class="lab" style="padding:0 4px">Add to the playlist · drag or click</span>
+      <div class="seg" id="pkKind" role="group" aria-label="What to add"><button type="button" data-k="folder" class="on">Folder</button><button type="button" data-k="song">Song</button><button type="button" data-k="jingle">Jingles</button><button type="button" data-k="playlist">Playlist</button></div>
+      <input type="search" id="pickQ" placeholder="Search folders…" style="width:100%">
+      <div class="pick" id="pickRes"></div>
+    </div>
     </div>
   </section>
 
@@ -497,7 +502,7 @@ function openPL(p) {
   cur = JSON.parse(JSON.stringify(p)); $('#plEdit').hidden = false;
   $('#plName').value = cur.name; $('#plLoop').checked = cur.loop; $('#plShuffle').checked = cur.shuffle; $('#plRotate').checked = !!cur.rotate;
   $('#plDel').hidden = !cur.id; $('#plReset').hidden = !cur.id; $('#plInfo').textContent = cur.id ? cur.count + ' songs' : 'new';
-  renderSources(); renderPL(); $('#picker').hidden = true;
+  renderSources(); renderPL(); fillPicker();
   if (cur.id) get('playlist?id=' + cur.id).then(d => {
     $('#plPos').textContent = d.rotation ? `· the next turns of this round${d.random_next ? ' – then the sources get a new random order' : ' – then the same order again'}`
       : d.smart ? '· Smart pick: the song that rested longest plays first (with artist separation) – every song gets its turn'
@@ -508,9 +513,15 @@ function openPL(p) {
 const nf = t => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();   // search without accents
 function srcLabel(s) { if (s.kind === 'folder' && s.ref.startsWith('jingles/')) return '🔊 ' + s.ref.slice(8) + ' (all jingles in it)';
   if (s.kind === 'folder') return '📁 ' + s.ref; if (s.kind === 'song' && s.ref.startsWith('jingles/')) return '🔊 ' + s.ref.split('/').pop().replace(/\.[^.]+$/, ''); if (s.kind === 'playlist') { const p = PL.find(x => x.id == s.ref); return '≡ ' + (p ? p.name : 'playlist ' + s.ref); } return (s.kind === 'file' ? '🔊 ' : '♪ ') + s.ref.split('/').pop().replace(/\.[^.]+$/, '') + (s.kind === 'file' && s.found === false ? ' (not uploaded yet)' : ''); }
+function srcTag(s) {
+  const j = (s.kind === 'folder' && /^jingles\//.test(s.ref || '')) || (s.kind === 'song' && /^jingles\//.test(s.ref || ''));
+  const t = j ? ['JINGLES', '#1E1438', '#B9A2FF'] : s.kind === 'folder' ? ['FOLDER', '#062F38', '#05A9C6'] : s.kind === 'playlist' ? ['PLAYLIST', '#0E3325', '#3DDC97'] : s.kind === 'file' ? ['FILE', '#3A2A00', '#FFB54D'] : ['SONG', '#062F38', '#05A9C6'];
+  return `<span class="tg" style="background:${t[1]};color:${t[2]}">${t[0]}</span>`;
+}
+let PLDRAG = null;
 function renderSources() {
   const rot = $('#plRotate').checked;
-  $('#plSources').innerHTML = cur.sources.map((s, i) => `<div class="src" draggable="true" data-i="${i}" style="${s.found === false ? 'opacity:.55' : ''}"><span class="h" title="Drag to move">⠿</span><span class="n">${i + 1}</span>${rot ? `<input type="number" min="1" value="${s.amount || 1}" data-amt="${i}" title="How many from this source per turn"><span class="muted">×</span>` : ''}<span class="lbl">${esc(srcLabel(s))}</span><button class="ib" data-up="${i}" title="Move up" aria-label="Move up">▲</button><button class="ib" data-dn="${i}" title="Move down" aria-label="Move down">▼</button><button class="ib rm" data-rm="${i}" title="Remove" aria-label="Remove">×</button></div>`).join('') || '<span class="muted">Nothing yet – add folders, songs, jingles or playlists.</span>';
+  $('#plSources').innerHTML = cur.sources.map((s, i) => `<div class="src" draggable="true" data-i="${i}" style="${s.found === false ? 'opacity:.55' : ''}"><span class="h" title="Drag to move">⋮⋮</span><span class="n">${i + 1}</span>${srcTag(s)}${rot ? `<input type="number" min="1" value="${s.amount || 1}" data-amt="${i}" title="How many from this source per turn"><span class="muted">×</span>` : ''}<span class="lbl">${esc(srcLabel(s))}</span><button class="ib mv" data-up="${i}" aria-label="Move up">▲</button><button class="ib mv" data-dn="${i}" aria-label="Move down">▼</button><button class="ib rm" data-rm="${i}" title="Remove" aria-label="Remove">×</button></div>`).join('') || '<span class="muted">Nothing yet – add folders, songs, jingles or playlists.</span>';
   const mv = (a, b) => { if (b < 0 || b >= cur.sources.length || a === b) return; const [x] = cur.sources.splice(a, 1); cur.sources.splice(b, 0, x); renderSources(); };
   $$('#plSources [data-rm]').forEach(b => b.onclick = () => { cur.sources.splice(+b.dataset.rm, 1); renderSources(); });
   $$('#plSources [data-up]').forEach(b => b.onclick = () => mv(+b.dataset.up, +b.dataset.up - 1));
@@ -521,38 +532,48 @@ function renderSources() {
     el.ondragstart = e => { from = +el.dataset.i; el.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'src'); };
     const after = e => { const b = el.getBoundingClientRect(); return e.clientY > b.top + b.height / 2; };
     el.ondragend = () => { el.classList.remove('drag'); $$('#plSources .src').forEach(x => x.classList.remove('ib', 'ia')); };
-    el.ondragover = e => { if (from === null) return; e.preventDefault(); $$('#plSources .src').forEach(x => x.classList.remove('ib', 'ia')); el.classList.add(after(e) ? 'ia' : 'ib'); };
-    el.ondrop = e => { e.preventDefault(); if (from === null) return; let to = +el.dataset.i + (after(e) ? 1 : 0); if (from < to) to--; const f = from; from = null; if (to === f) { renderSources(); return; } mv(f, to); };
+    el.ondragover = e => { if (from === null && !PLDRAG) return; e.preventDefault(); e.stopPropagation(); $('#plSources').classList.remove('dropend'); $$('#plSources .src').forEach(x => x.classList.remove('ib', 'ia')); el.classList.add(after(e) ? 'ia' : 'ib'); };
+    el.ondrop = e => { e.preventDefault(); e.stopPropagation(); let to = +el.dataset.i + (after(e) ? 1 : 0);
+      if (PLDRAG) { cur.sources.splice(to, 0, {...PLDRAG, amount: 1}); PLDRAG = null; renderSources(); toast('Added'); return; }
+      if (from === null) return; if (from < to) to--; const f = from; from = null; if (to === f) { renderSources(); return; } mv(f, to); };
   });
 }
-let pickMode = null;
-function openPicker(mode) { pickMode = mode; $('#picker').hidden = false; $('#pickQ').value = ''; $('#pickQ').focus(); fillPicker(); }
+let pickMode = 'folder';
+function openPicker(mode) { pickMode = mode; $$('#pkKind button').forEach(x => x.classList.toggle('on', x.dataset.k === mode));
+  $('#pickQ').placeholder = {folder: 'Search folders…', song: 'Search songs…', jingle: 'Search jingles…', playlist: 'Search playlists…'}[mode]; fillPicker(); }
+$$('#pkKind button').forEach(b => b.onclick = () => { $('#pickQ').value = ''; openPicker(b.dataset.k); });
+function pickRow(kind, v, title, sub, pad) { return `<button draggable="true" data-k="${kind}" data-v="${esc(v)}"><b style="${pad ? 'padding-left:' + pad + 'px' : ''}">${title}</b><span>${sub}</span></button>`; }
 function fillPicker() {
   const q = nf($('#pickQ').value);
   if (pickMode === 'jingle') {
-    const fl = (FOLD.jingles || []).filter(f => nf(f).includes(q)).map(f => `<button data-v="jingles/${esc(f)}" data-k="folder"><b>🔊 ${esc(f)}</b><span>every jingle in this folder</span></button>`).join('');
+    const fl = (FOLD.jingles || []).filter(f => nf(f).includes(q)).map(f => pickRow('folder', 'jingles/' + f, esc(f), 'every jingle in this folder')).join('');
     get('library?section=jingles&q=' + encodeURIComponent($('#pickQ').value)).then(d => {
-      $('#pickRes').innerHTML = (fl + d.items.slice(0, 60).map(s => `<button data-v="${esc(s.path)}" data-k="song"><b>🔊 ${esc(s.title || s.path.split('/').pop())}</b><span>${esc(s.folder)}</span></button>`).join('')) || '<span class="muted">No jingles found.</span>';
-      $$('#pickRes [data-v]').forEach(b => b.onclick = () => { cur.sources.push({kind: b.dataset.k, ref: b.dataset.v, amount: 1}); renderSources(); toast('Added'); });
+      $('#pickRes').innerHTML = (fl + d.items.slice(0, 60).map(s => pickRow('song', s.path, esc(s.title || s.path.split('/').pop()), esc(s.folder))).join('')) || '<span class="muted">No jingles found.</span>'; bindPick();
     });
     return;
   }
   if (pickMode === 'folder') {
-    $('#pickRes').innerHTML = FOLD.music.filter(f => nf(f).includes(q)).map(f => `<button data-v="${esc(f)}"><b style="padding-left:${(f.split('/').length - 1) * 16}px">📁 ${esc(f.split('/').pop())}</b><span>${f.includes('/') ? esc(f) + ' · ' : ''}${FOLD.counts[f] || 0} songs</span></button>`).join('') || '<span class="muted">No folders found.</span>';
-    bindPick('folder');
+    $('#pickRes').innerHTML = FOLD.music.filter(f => nf(f).includes(q)).map(f => pickRow('folder', f, esc(f.split('/').pop()), `${FOLD.counts[f] || 0} songs`, (f.split('/').length - 1) * 14)).join('') || '<span class="muted">No folders found.</span>';
+    bindPick();
   } else if (pickMode === 'playlist') {
-    $('#pickRes').innerHTML = PL.filter(p => (!cur.id || p.id !== cur.id) && nf(p.name).includes(q)).map(p => `<button data-v="${p.id}"><b>≡ ${esc(p.name)}</b><span>${p.count} songs</span></button>`).join('') || '<span class="muted">No other playlists.</span>';
-    bindPick('playlist');
+    $('#pickRes').innerHTML = PL.filter(p => (!cur || !cur.id || p.id !== cur.id) && nf(p.name).includes(q)).map(p => pickRow('playlist', p.id, esc(p.name), `${p.count} songs`)).join('') || '<span class="muted">No other playlists.</span>';
+    bindPick();
   } else {
-    get('library?section=music&q=' + encodeURIComponent(q)).then(d => {
-      $('#pickRes').innerHTML = d.items.slice(0, 60).map(s => `<button data-v="${esc(s.path)}"><b>${esc(s.artist)} – ${esc(s.title)}</b><span>${esc(s.folder)}</span></button>`).join('') || '<span class="muted">Nothing found.</span>';
-      bindPick('song');
+    if (!q) { $('#pickRes').innerHTML = '<span class="muted" style="padding:8px">Type an artist or title…</span>'; return; }
+    get('library?section=music&q=' + encodeURIComponent($('#pickQ').value)).then(d => {
+      $('#pickRes').innerHTML = d.items.slice(0, 60).map(s => pickRow('song', s.path, `${esc(s.artist)} – ${esc(s.title)}`, esc(s.folder))).join('') || '<span class="muted">Nothing found.</span>'; bindPick();
     });
   }
 }
-function bindPick(kind) { $$('#pickRes [data-v]').forEach(b => b.onclick = () => { cur.sources.push({kind, ref: b.dataset.v, amount: 1}); renderSources(); toast('Added'); }); }
+function bindPick() { $$('#pickRes [data-v]').forEach(b => {
+  b.onclick = () => { if (!cur) return; cur.sources.push({kind: b.dataset.k, ref: b.dataset.v, amount: 1}); renderSources(); toast('Added'); const r = $$('#plSources .src'); if (r.length) r[r.length - 1].scrollIntoView({block: 'nearest'}); };
+  b.ondragstart = e => { if (!cur) { e.preventDefault(); return; } PLDRAG = {kind: b.dataset.k, ref: b.dataset.v}; e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', b.dataset.v); };
+  b.ondragend = () => { PLDRAG = null; $('#plSources').classList.remove('dropend'); $$('#plSources .src').forEach(x => x.classList.remove('ib', 'ia')); };
+}); }
+$('#plSources').ondragover = e => { if (!PLDRAG) return; e.preventDefault(); $$('#plSources .src').forEach(x => x.classList.remove('ib', 'ia')); $('#plSources').classList.add('dropend'); };
+$('#plSources').ondragleave = e => { if (e.target === $('#plSources')) $('#plSources').classList.remove('dropend'); };
+$('#plSources').ondrop = e => { if (!PLDRAG) return; e.preventDefault(); cur.sources.push({...PLDRAG, amount: 1}); PLDRAG = null; $('#plSources').classList.remove('dropend'); renderSources(); toast('Added'); };
 let pqT; $('#pickQ').oninput = () => { clearTimeout(pqT); pqT = setTimeout(fillPicker, 200); };
-$('#addFolder').onclick = () => openPicker('folder'); $('#addSong').onclick = () => openPicker('song'); $('#addJingle').onclick = () => openPicker('jingle'); $('#addList').onclick = () => openPicker('playlist');
 $('#plRotate').onchange = () => renderSources();
 $('#plQ').oninput = () => renderPL(); $('#ckQ').oninput = () => renderCK();
 // the playlists / clocks box ends at the bottom of the window (so the page itself does not scroll because of it)
