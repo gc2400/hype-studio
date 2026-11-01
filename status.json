@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T17:36:08",
+ "time": "2026-11-01T17:39:13",
  "result": "ok",
- "commit": "360ff21f96b3f806a18821cc66309b6434bd713c",
- "subject": "Guests: mute button next to VOL (keeps the VOL), labels CAM again, no emoji in chips, link / WhatsApp / \u00d7 the same size together; Broadcast: hint text removed, 'Audio devices'; LIVE panel card 'Cameras & guests'",
+ "commit": "ee2755849d793e4a4fa0a523dd2374a1f34bf640",
+ "subject": "Broadcast guests: header 'Guests \u00b7 max 6' with name / video-audio / + Invite on the same line to the right; chips like the LIVE panel",
  "log": [
-  "17:35:22 update 644f6064 \u2192 360ff21f \u00b7 4 file(s): engine/engine.py, engine/live.py, web/panel/index.html, web/panel/studio.html",
-  "17:35:22 restart hype-engine",
-  "17:36:08 installed OK \u00b7 restarted: hype-engine"
+  "17:39:13 update 360ff21f \u2192 ee275584 \u00b7 1 file(s): web/panel/studio.html",
+  "17:39:13 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "CLUB HYPE \u2013 DJ Ricsz Liveset 9 MID2025SEASON Mojo's Alkmaar",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
