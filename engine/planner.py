@@ -328,7 +328,7 @@ class ClockRunner:
             finally: CTX.update(at=None, fit=None)
         elif kind == "showjingle":                         # sweeper of the show on air (jingles/SHOWS/<show>), else the fallback folder
             s_ = show_at(at)
-            path = (pick_jingle(c, "SHOWS/" + s_["title"]) if s_ else None) or pick_jingle(c, ref or "SWEEPERS")
+            path = (pick_jingle(c, show_folder(c, at, s_)) if s_ else None) or pick_jingle(c, ref or "SWEEPERS")
         elif kind == "song":
             path = ref
         elif kind == "file":
@@ -497,7 +497,7 @@ def resolve_jingle(c, ref, avoid=()):
     """ref = a jingle file (jingles/...), a jingles folder name, or #SHOW (sweepers of the show on air)."""
     if ref == "#SHOW":
         s_ = show_at(time.time())
-        r_ = resolve_jingle(c, "SHOWS/" + s_["title"], avoid) if s_ else None
+        r_ = resolve_jingle(c, show_folder(c, time.time(), s_), avoid) if s_ else None
         return r_ or resolve_jingle(c, "SWEEPERS", avoid)
     if ref.startswith("jingles/"):
         return ref if c.execute("SELECT 1 FROM items WHERE path=? AND problem IS NULL", (ref,)).fetchone() else None
@@ -526,6 +526,17 @@ def init_shows(c):
 
 def mins(hhmm):
     h, m = hhmm.split(":"); return int(h) * 60 + int(m)
+
+def show_folder(c, t, s_):
+    """The jingles folder of the show on air: SHOWS/<show>. When the clock of that hour is a WEEKEND clock (e.g. NON-STOP
+    WEEKEND) and a folder "SHOWS/<show> Weekend" has jingles, that one (its own IDs and sweepers)."""
+    base = "SHOWS/" + s_["title"]
+    try:
+        cid = clock_for(c, t); r = c.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() if cid else None
+        if r and "WEEKEND" in (r[0] or "").upper() and c.execute("SELECT 1 FROM items WHERE section='jingles' AND problem IS NULL AND folder=?", (base + " Weekend",)).fetchone():
+            return base + " Weekend"
+    except Exception: pass
+    return base
 
 def show_at(t):
     """The website show on air at time t (handles 23:00–00:00 style ends)."""
