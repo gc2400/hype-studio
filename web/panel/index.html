@@ -28,6 +28,9 @@ body.dj #deckA{order:1;flex:1 1 360px}body.dj #col2{order:2;flex:1.1 1 380px}bod
 .deck .np .art{cursor:pointer;transition:transform .12s,box-shadow .12s}.deck .np .art:hover{transform:scale(1.06);box-shadow:0 0 0 3px currentColor}
 .deck .np .art{width:56px;height:56px;font-size:24px}.deck .dlist .li .dact{display:none;gap:3px}.deck .dlist .li:hover .dact{display:flex}
 .deck .dlist .li .dact button{min-height:26px;min-width:30px;padding:0 6px;font-size:12px}
+body.dj #res [data-act=next],body.dj #res [data-act=end],body.dj #res [data-pact=next],body.dj #res [data-pact=end]{display:none}   /* DJ: only A / B (which deck is clear) */
+.deck .wave{width:100%;height:40px;display:block;border-radius:8px;background:var(--deep);cursor:default}
+.deck .dlist .li .num{width:18px;flex:none;font-size:12px;color:var(--mut)}.deck .dlist .li.cued{background:#1E1A00;border-color:#5A4E00}.deck .dlist .li.cued .num{color:var(--y)}
 .ib.loop.on{background:var(--y);color:var(--bg);border-color:var(--y)}
 @media (max-width:1100px){body.dj .cols{flex-wrap:wrap}}
 .modes{display:inline-flex;gap:3px;background:var(--deep);border-radius:10px;padding:3px;margin-left:6px}
@@ -171,13 +174,13 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .li .tx b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .li .tx span{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .li .du{font-size:12px;color:var(--mut);min-width:34px;text-align:right}
-#log .li{position:relative}
-#log .lacts{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:none;gap:4px;padding-left:26px;background:linear-gradient(90deg,transparent,var(--card2) 22px)}
-#log .li:hover .lacts{display:flex}#log .li:hover .du{visibility:hidden}
-@media (hover:none){#log .li:hover .lacts{display:none}#log .li:hover .du{visibility:visible}#log .li.sel .lacts{display:flex}#log .li.sel .du{visibility:hidden}}
-#log .lacts button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
-#log .lacts button:hover:not(:disabled){border-color:var(--b)}#log .lacts button:disabled{opacity:.35;cursor:default}
-#log .lacts .rm{background:var(--rdark);border-color:var(--r);color:#FF8A97}#log .lacts .rm:hover{background:var(--r);color:#1A0207}
+.ulist .li{position:relative}
+.ulist .lacts{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:none;gap:4px;padding-left:26px;background:linear-gradient(90deg,transparent,var(--card2) 22px)}
+.ulist .li:hover .lacts{display:flex}.ulist .li:hover .du{visibility:hidden}
+@media (hover:none){.ulist .li:hover .lacts{display:none}.ulist .li:hover .du{visibility:visible}.ulist .li.sel .lacts{display:flex}.ulist .li.sel .du{visibility:hidden}}
+.ulist .lacts button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.ulist .lacts button:hover:not(:disabled){border-color:var(--b)}.ulist .lacts button:disabled{opacity:.35;cursor:default}
+.ulist .lacts .rm{background:var(--rdark);border-color:var(--r);color:#FF8A97}.ulist .lacts .rm:hover{background:var(--r);color:#1A0207}
 .li .x{opacity:0;border:0;background:none;color:var(--mut);cursor:pointer;font-size:16px;width:24px;height:24px;border-radius:6px}
 .li:hover .x{opacity:1}.li .x:hover{color:var(--r);background:var(--deep)}
 .li.jg b{color:#B9A2FF}
@@ -302,7 +305,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
       </div>
       <div class="card" style="padding:8px" id="cLog">
         <div class="row between" style="padding:4px 6px"><span class="lab">Up next</span><span class="lab" id="logInfo" style="color:var(--b);white-space:nowrap"></span></div>
-        <div class="log" id="log"></div>
+        <div class="log ulist" id="log"></div>
       </div>
       <div class="card" style="padding:8px" id="auxCard">
         <div class="row between" style="padding:4px 6px">
@@ -487,6 +490,7 @@ function tick() {
   $('#tMix').textContent = mix - el > 0 ? 'next in ' + fmt(mix - el) : 'mixing';
   drawWave(el / (n.duration || 1), (n.cue_start || 0) / (n.duration || 1), mix / (n.duration || 1), end / (n.duration || 1));
   $('#clock').textContent = new Date(Date.now() - skew * 1000).toTimeString().slice(0, 8);
+  if (MODE === 'dj') { deckTime('1'); deckTime('2'); }
 }
 function drawWave(pos, cs, cm, ce) {
   const c = $('#wave'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H);
@@ -993,14 +997,19 @@ function deckEl(k) {
     <div class="np" style="color:var(--txt)"><div class="art" data-art role="button" tabindex="0" title="Mix into deck ${K}" aria-label="Mix into deck ${K}" style="background:${k === '1' ? 'linear-gradient(135deg,#0277B8,#05A9C6)' : 'linear-gradient(135deg,#8C3A1E,#FF9D3D)'}">♪</div>
       <div style="min-width:0;flex:1;display:flex;flex-direction:column;gap:2px"><div class="t" data-t>–</div><div class="a" data-a></div></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none"><span class="mono big" data-r style="font-size:26px">–</span><span class="chip" data-f></span></div></div>
-    <div class="dprog"><i data-p style="background:currentColor"></i></div>
+    <canvas class="wave" data-w width="800" height="96" aria-label="Waveform of deck ${K}"></canvas>
     <div class="tp"><button class="btn ib" data-dj="cut" title="Play now: the next song of this deck interrupts (quick cut)" style="background:${col};border-color:${col};color:var(--bg)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg><small>NOW</small></button>
+      <button class="btn ib" data-dj="mix" title="Mix into deck ${K}: its next song comes in with a crossfade" style="color:${col};border-color:${col}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10l-3-3M20 17H10l3 3" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><small>MIX ${K}</small></button>
+      <button class="btn ib" data-dj="end" title="Stop at the end of this song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h3v14H5zM11 5l9 7-9 7z" fill="currentColor"/></svg><small>END</small></button>
       <button class="btn ib loop" data-dj="loop" title="Loop the song on air"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <span class="muted" style="margin-left:auto;font-size:11px" data-info></span></div>
-    <div class="lab" style="color:var(--mut)">AUX ${k} · plays in this order · drag songs here</div><div class="dlist" data-list></div>`;
+    <div class="lab" style="color:var(--mut)">AUX ${k} · plays in this order · drag songs here</div><div class="dlist ulist" data-list></div>`;
   const other = k === '1' ? '2' : '1';
   el.querySelector('[data-dj=cut]').onclick = () => cmd('dj_play', {deck: k, how: 'cut'}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('Deck ' + K + ' – play now'));
   el.querySelector('[data-dj=loop]').onclick = () => cmd('loop', {on: !(S && S.loop)});
+  el.querySelector('[data-dj=mix]').onclick = () => { if (S.now && S.now.deck === k) return toast('Deck ' + K + ' is already on air');
+    cmd('dj_play', {deck: k, how: 'mix'}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('Mixing into deck ' + K)); };
+  el.querySelector('[data-dj=end]').onclick = () => cmd('stop_at_end');
   const art = el.querySelector('[data-art]'); art.textContent = K;
   art.onclick = () => { if (S.now && S.now.deck === k) return toast('Deck ' + K + ' is already on air');
     cmd('dj_play', {deck: k, how: 'mix'}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('Mixing into deck ' + K)); };
@@ -1027,6 +1036,20 @@ $$('.modes [data-mode]').forEach(b => b.onclick = () => {
   if (m !== 'dj' && wasDj) cmd('dj', {on: false}).then(() => toast('MANUAL: your AUX keeps playing – ▶ PLAY or AUTO = back to the programming'));
   applyMode(m);
 });
+const DW = {};     // deck waveforms: {path, peaks}
+function deckTime(k) {
+  const el = DECKS[k]; if (!el) return; const it = el._it, onair = el._onair, n = S && S.now || {};
+  let rem = '–', pos = 0;
+  if (onair && n.path) { const e2 = (Date.now() / 1000 - skew) - n.started, len = n.air || ((n.cue_mix || n.duration || 0) - (n.cue_start || 0)); rem = '-' + fmt(len - e2); pos = ((n.cue_start || 0) + e2) / (n.duration || 1); }
+  else if (it) { rem = fmt(it.air || ((it.cue_mix || it.duration || 0) - (it.cue_start || 0))); pos = (it.cue_start || 0) / (it.duration || 1); }
+  el.querySelector('[data-r]').textContent = rem;
+  const c = el.querySelector('[data-w]'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H);
+  const p = (DW[k] && DW[k].peaks) || [], N = p.length || 1, bw = W / N, col = k === '1' ? '#05A9C6' : '#FF9D3D';
+  for (let i = 0; i < p.length; i++) { const h = Math.max(2, p[i] * (H - 10)); x.fillStyle = i / N < pos ? col : '#2A5577'; x.fillRect(i * bw, (H - h) / 2, Math.max(1, bw - 1), h); }
+  if (it && it.duration) { const mk = (t, cl) => { x.fillStyle = cl; x.fillRect(t / it.duration * W - 1, 0, 2, H); };
+    if ((it.cue_start || 0) > 0.05) mk(it.cue_start, '#3DDC97'); if (it.cue_mix) mk(it.cue_mix, '#FFE000'); }
+  if (onair || it) { x.fillStyle = '#fff'; x.fillRect(pos * W - 1, 0, 2, H); }
+}
 function renderDecks() {
   const n = S.now || {}, nxt = (S.upcoming || [])[0] || {};
   ['1', '2'].forEach(k => {
@@ -1035,20 +1058,27 @@ function renderDecks() {
     const st = el.querySelector('[data-st]'); st.textContent = onair ? '● ON AIR' : cued ? 'NEXT · READY' : it ? 'WAITING' : 'EMPTY'; st.style.cssText = onair ? 'background:var(--r);color:#1A0207' : cued ? 'background:#2B2500;color:var(--y)' : '';
     el.querySelector('[data-t]').textContent = it ? it.title : 'Drag songs onto this deck'; el.querySelector('[data-a]').textContent = it ? it.artist : '';
     el.querySelector('[data-f]').textContent = it ? (it.folder || '') : ''; 
-    let rem = '–', pct = 0;
-    if (onair) { const el2 = (Date.now() / 1000 - skew) - n.started, len = (n.cue_mix || n.duration || 0) - (n.cue_start || 0); rem = '-' + fmt(len - el2); pct = Math.min(100, 100 * el2 / (len || 1)); }
-    else if (it) rem = fmt((it.cue_mix || it.duration || 0) - (it.cue_start || 0));
-    el.querySelector('[data-r]').textContent = rem; el.querySelector('[data-p]').style.width = pct + '%';
+    el._it = it; el._onair = onair;
+    if (it && (!DW[k] || DW[k].path !== it.path)) { const pth = it.path; DW[k] = {path: pth, peaks: null}; api('wave?path=' + encodeURIComponent(pth)).then(p => { if (DW[k] && DW[k].path === pth) DW[k].peaks = p; }); }
+    if (!it) DW[k] = null;
+    deckTime(k);
     const lb = el.querySelector('[data-dj=loop]'); lb.disabled = !onair; lb.classList.toggle('on', onair && !!S.loop);
+    const eb = el.querySelector('[data-dj=end]'); eb.disabled = !onair; eb.classList.toggle('redon', onair && !!S.stop_at_end);
+    el.querySelector('[data-dj=mix]').disabled = onair || !it;
     const list_ = ((S.aux || {})[k] || []); el.querySelector('[data-info]').textContent = list_.length ? list_.length + ' next · ' + fmt(list_.reduce((a, u) => a + ((u.cue_mix || u.duration || 0) - (u.cue_start || 0)), 0)) : '';
-    const L = el.querySelector('[data-list]'), list = ((S.aux || {})[k] || []), sig = JSON.stringify(list.map(x => x.id));
+    // the deck's list: the song already cued for this deck stays on top (marked NEXT) until it really plays
+    const L = el.querySelector('[data-list]'), list = ((S.aux || {})[k] || []), cue = cued && !onair ? nxt : null, sig = JSON.stringify([cue && cue.id, list.map(x => x.id)]);
     if (L.dataset.sig !== sig) { L.dataset.sig = sig;
-      L.innerHTML = list.map((u, i) => `<div class="li" draggable="true" data-aid="${u.id}" data-i="${i}"><span class="mono muted" style="width:18px">${i + 1}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)} · ${fmt((u.cue_mix || u.duration || 0) - (u.cue_start || 0))}</span></div><div class="dact"><button class="btn" data-now="${u.id}" title="Play this now (interrupts)">▶</button>${i ? `<button class="btn" data-top="${u.id}" title="Next on this deck">⤴</button>` : ''}</div><button class="x" data-rm="${u.id}" aria-label="Remove">×</button></div>`).join('') || '<div class="muted" style="padding:16px;text-align:center">Drag songs from the library here</div>';
-      L.querySelectorAll('[data-now]').forEach(b => b.onclick = () => cmd('aux_fire', {aux: k, id: b.dataset.now, how: 'now', remove: true}).then(() => toast('Playing now')));
-      L.querySelectorAll('[data-top]').forEach(b => b.onclick = () => cmd('aux_move', {aux: k, id: b.dataset.top, to: 0}));
+      const len = u => fmt(u.air || ((u.cue_mix || u.duration || 0) - (u.cue_start || 0)));
+      L.innerHTML = (cue ? `<div class="li cued"><span class="num mono">▸</span><div class="tx"><b>${cue.artist ? esc(cue.artist) + ' – ' : ''}${esc(cue.title)}</b><span>NEXT · ready on this deck</span></div><span class="du mono">${len(cue)}</span><span class="lacts"><button class="rm" data-rmnext="${cue.id}" title="Take it off this deck" aria-label="Remove ${esc(cue.title)}">×</button></span></div>` : '') +
+        (list.map((u, i) => `<div class="li" draggable="true" data-aid="${u.id}" data-i="${i}"><span class="num mono">${i + 1}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)}</span></div><span class="du mono">${len(u)}</span><span class="lacts"><button data-now="${u.id}" title="Play this now (interrupts)" aria-label="Play ${esc(u.title)} now">▶</button><button data-mv="${u.id}" data-to="${i - 1}" title="Earlier" aria-label="Move ${esc(u.title)} up" ${i === 0 ? 'disabled' : ''}>↑</button><button data-mv="${u.id}" data-to="${i + 1}" title="Later" aria-label="Move ${esc(u.title)} down" ${i === list.length - 1 ? 'disabled' : ''}>↓</button><button class="rm" data-rm="${u.id}" title="Remove from this deck" aria-label="Remove ${esc(u.title)}">×</button></span></div>`).join('')) || '<div class="muted" style="padding:16px;text-align:center">Drag songs from the library here</div>';
+      L.querySelectorAll('[data-now]').forEach(b => b.onclick = e => { e.stopPropagation(); cmd('aux_fire', {aux: k, id: b.dataset.now, how: 'now', remove: true}).then(() => toast('Playing now')); });
+      L.querySelectorAll('[data-mv]').forEach(b => b.onclick = e => { e.stopPropagation(); cmd('aux_move', {aux: k, id: b.dataset.mv, to: +b.dataset.to}); });
+      L.querySelectorAll('[data-rmnext]').forEach(b => b.onclick = e => { e.stopPropagation(); cmd('remove', {id: b.dataset.rmnext}); });
+      L.querySelectorAll('.li').forEach(r => r.addEventListener('click', e => { if (e.target.closest('.lacts')) return; const on = !r.classList.contains('sel'); L.querySelectorAll('.li.sel').forEach(x => x.classList.remove('sel')); r.classList.toggle('sel', on); }));
       L.querySelectorAll('.li').forEach(r => { r.ondragstart = e => e.dataTransfer.setData('text/plain', 'aux:' + k + ':' + r.dataset.aid);
         r.ondragover = e => e.preventDefault(); r.ondrop = e => { e.preventDefault(); e.stopPropagation(); const keep = AUX; AUX = k; auxDrop(e.dataTransfer.getData('text/plain'), +r.dataset.i); AUX = keep; }; });
-      L.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => cmd('aux_remove', {aux: k, id: b.dataset.rm})); }
+      L.querySelectorAll('[data-rm]').forEach(b => b.onclick = e => { e.stopPropagation(); cmd('aux_remove', {aux: k, id: b.dataset.rm}); }); }
   });
   const onB = n.deck === '2'; $('#xThumb').style.left = onB ? 'calc(100% - 46px)' : '6px';
   $$('[data-xto]').forEach(b => { const on = n.deck === b.dataset.xto; b.style.background = on ? (b.dataset.xto === '1' ? 'var(--b)' : '#FF9D3D') : ''; b.style.color = on ? '#061423' : (b.dataset.xto === '1' ? 'var(--b)' : '#FF9D3D'); });
