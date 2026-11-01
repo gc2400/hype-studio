@@ -1340,7 +1340,7 @@ class Engine:
         for row in c.execute(f"SELECT {COLS} FROM items WHERE section='jingles' AND folder=? AND problem IS NULL", (ID_FOLDER,)).fetchall():
             ji = row_item(row, "intro"); voice = duck_len(ji)               # START -> MIX: the part with the voice
             if voice + ID_OFFSET + 1.0 > nl: continue
-            la = c.execute("SELECT MAX(started) FROM asrun WHERE path=?", (ji["path"],)).fetchone()[0] or 0   # also played in the clock
+            la = c.execute("SELECT MAX(started) FROM asrun WHERE path=? OR over=?", (ji["path"], "ID: " + (ji.get("title") or ""))).fetchone()[0] or 0   # in the clock, or over an intro (also before a restart)
             rested = max(la, self.idi_used.get(ji["path"], 0))
             if now - rested < 20 * 60: continue                            # the same ID not twice within 20 min
             if best is None or rested < best[0]: best = (rested, ji["path"])
