@@ -123,3 +123,4 @@
 2026-11-01T17:28:07 ok 78d96993 One way to put cameras and guests on TV: every source (studio cam 1/2, each guest) has the same 'On TV in 1|2|3|4' box on the Broadcast page and the LIVE panel, both from the server (swap, never twice); dropdown row removed; LIVE panel icons aligned
 2026-11-01T17:30:12 ok ee3905c5 LIVE panel guest card: 'On TV in' on one line
 2026-11-01T17:32:17 ok 644f6064 LIVE panel guest card: link / WhatsApp / × together at the top right, CAM box + Show name below (no overflow)
+2026-11-01T17:36:08 ok 360ff21f Guests: mute button next to VOL (keeps the VOL), labels CAM again, no emoji in chips, link / WhatsApp / × the same size together; Broadcast: hint text removed, 'Audio devices'; LIVE panel card 'Cameras & guests'
