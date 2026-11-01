@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T19:26:36",
+ "time": "2026-11-01T19:35:33",
  "result": "ok",
- "commit": "80ded36ffe13259cc23c21f4cb4c6f20fc40e09b",
- "subject": "Scrollbars in Hype colours without arrows (Chrome), Hype Live page: no outline, no page scroll (only the frame scrolls); playlists: tidy list items, yellow drop line when dragging sources",
+ "commit": "be079ce886609a8ad7f0ec9bc6213fa0abb316ae",
+ "subject": "Week: red warning for hours without an hour plan; delete warns where a plan is used; Only this week button tidy; Recordings Save same size",
  "log": [
-  "19:26:36 update 63c9929e \u2192 80ded36f \u00b7 6 file(s): web/panel/hypelive.html, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html",
-  "19:26:36 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:34:48 update 80ded36f \u2192 be079ce8 \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
+  "19:34:48 restart hype-engine",
+  "19:35:33 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Dei V x Rauw Alejandro \u2013 All Night",
+  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
