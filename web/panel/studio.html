@@ -71,6 +71,7 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
 .camseg button{width:36px;border:0;background:transparent;color:var(--soft);font:inherit;font-size:13px;font-weight:800;cursor:pointer;padding:0}
 .camseg button+button{border-left:1px solid var(--line2)}.camseg button:hover:not(.on){background:var(--line2);color:#fff}.camseg button.on{background:var(--y);color:#061423}
 .btn.ic{width:34px;height:32px;min-height:32px;padding:0;justify-content:center;font-size:16px;flex:none}.btn.mute.on{background:#3A0E18;color:#FF8A97;border-color:var(--r)}.btn.wa{color:#25D366}.btn.wa:hover{border-color:#25D366}
+#guests .chip{font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border:0;color:var(--mut)}#guests .chip.ok{color:var(--g)}
 </style>
 </head>
 <body>
@@ -100,8 +101,8 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
         <div class="camcol"><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div><label class="camsel"><b>Camera 2</b><select id="dCam2"></select></label><div class="row camrow"><span class="lab">CAM</span><div class="camseg" data-src="cam2" role="group" aria-label="Studio cam 2 on TV in"></div></div></div></div>
     </section>
   <section class="card">
-    <div class="row between"><span class="lab">Guests <span class="muted" style="text-transform:none;letter-spacing:0">· max. 6 · they join with a link (no app)</span></span>
-      <div class="row"><input type="text" id="gName" placeholder="Guest name, e.g. DJ Kim" style="width:180px"><select id="gMode" style="width:150px" aria-label="Video or audio only"><option value="video">Video + sound</option><option value="audio">Audio only</option></select><button class="btn yellow" id="gAdd">+ Invite</button></div></div>
+    <div class="row" style="flex-wrap:nowrap;gap:10px"><span class="lab" style="white-space:nowrap">Guests · max 6</span>
+      <div class="row" style="flex:1;justify-content:flex-end;flex-wrap:nowrap;gap:6px;min-width:0"><input type="text" id="gName" placeholder="Guest name" style="flex:1;max-width:200px;min-width:90px;min-height:34px"><select id="gMode" style="width:110px;min-height:34px" aria-label="Video or audio only"><option value="video">Video</option><option value="audio">Audio only</option></select><button class="btn sm yellow" id="gAdd" style="min-height:34px;white-space:nowrap">+ Invite</button></div></div>
     <div id="guests" style="display:flex;flex-direction:column;gap:8px"></div>
     <span class="muted" style="font-size:12px">Guests' video and sound adjust to their own internet automatically (a weak line gets a lower picture, the voice stays clear). Scenes and lower thirds: the panel, LIVE mode.</span>
   </section>
