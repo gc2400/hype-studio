@@ -17,7 +17,7 @@
 #hhead .modes .btn{height:28px;min-height:28px;border:0}
 #hhead .btn:hover{border-color:#05A9C6;background:#143049}
 #hhead .btn.on{background:#05A9C6;border-color:#05A9C6;color:#061423}#hhead .btn.on:hover{background:#18BEDA}
-#hhead .modes{display:inline-flex;gap:3px;background:#071A2B;border-radius:10px;padding:3px}
+#hhead .modes{display:inline-flex;gap:3px;background:#071A2B;border-radius:10px;padding:3px;margin:0}
 #hhead .modes .btn{border:0;background:transparent;color:#A9BCCD;min-height:28px;white-space:nowrap}
 #hhead .modes .btn:hover{background:#143049;color:#fff}#hhead .modes .btn.on:hover{background:#FFE95C;color:#061423}#hhead .modes .btn.on{background:#FFE000;color:#061423}
 #hhead .modes .btn[data-mode=live].on{background:#FF4D5E;color:#fff}
