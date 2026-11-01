@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T14:55:46",
+ "time": "2026-11-01T15:00:39",
  "result": "ok",
- "commit": "cacfc907d5f19d3d2c83d39716259f7c2da2a010",
- "subject": "Up next: durations line up; on hover (tap on phones) \u2191 \u2193 \u00d7 buttons instead of the hidden \u00d7; start times use the real heard length",
+ "commit": "afbd0cdd68c48c663caadb6258236d1d33c49bb5",
+ "subject": "Fix: Up next restored after a restart kept fixed-time items as lists \u2013 the top of the hour was not recognised and added a second time",
  "log": [
-  "14:55:46 update 83eede78 \u2192 cacfc907 \u00b7 1 file(s): web/panel/index.html",
-  "14:55:46 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:59:54 update cacfc907 \u2192 afbd0cdd \u00b7 1 file(s): engine/engine.py",
+  "14:59:54 restart hype-engine",
+  "15:00:39 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Burna Boy x Stormzy \u2013 Real Life",
+  "song": "Maisak x Jay Wheeler \u2013 Casi Algo",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
