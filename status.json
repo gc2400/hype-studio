@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T18:50:29",
+ "time": "2026-11-01T18:52:33",
  "result": "ok",
- "commit": "a378f8a2ba1cb69020e094755932e1eb2cd160c7",
- "subject": "Planning nav like Hype Live (all pages, no More), week controls in the Week page, save buttons above Add; no CLOSE wording; Broadcast guest volume fits on phones",
+ "commit": "7923c5038496decd5a1bb56196b7fac977af2376",
+ "subject": "Shows: hour plan rows wrap on phones",
  "log": [
-  "18:50:29 update 76a46e7b \u2192 a378f8a2 \u00b7 3 file(s): web/panel/plan.html, web/panel/settings.html, web/panel/studio.html",
-  "18:50:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "18:52:33 update a378f8a2 \u2192 7923c503 \u00b7 1 file(s): web/panel/plan.html",
+  "18:52:33 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Anuel AA \u2013 Donde Hubo Fuego Cenizas Quedan",
+  "song": "Bayanni x Jason Derulo \u2013 Ta Ta Ta",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
