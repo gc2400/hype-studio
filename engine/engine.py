@@ -769,7 +769,9 @@ class Engine:
         except Exception: pass
         items = [i for i in items if i.get("path") and os.path.isfile(os.path.join(ROOT, i["path"]))]
         if not items: return False
-        for i in items: i.pop("pushed", None)
+        for i in items:
+            i.pop("pushed", None)
+            if isinstance(i.get("event"), list): i["event"] = tuple(i["event"])     # (JSON made it a list: it is compared / hashed as a tuple)
         self.plan = items
         try: self.snaps = [tuple(x) for x in json.load(open(SNAPS_FILE))]
         except Exception: self.snaps = []
