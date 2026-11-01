@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T20:11:30",
+ "time": "2026-11-01T20:12:34",
  "result": "ok",
- "commit": "ef50ca4e0987f60310c37524bfe84896a889245d",
- "subject": "Schedule: top half of a split hour selects only that show (Top 10 20:00\u201320:30)",
+ "commit": "52213636585c21ecd111eb4a6136790c1e02a8cc",
+ "subject": "Playlist options without outlines, Randomize explains in-order; hour plan checkbox never shows a stale tick",
  "log": [
-  "20:11:30 update 77f3aa5b \u2192 ef50ca4e \u00b7 1 file(s): web/panel/plan.html",
-  "20:11:30 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:12:34 update ef50ca4e \u2192 52213636 \u00b7 1 file(s): web/panel/plan.html",
+  "20:12:34 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Gedi1000 x Dongo \u2013 No Ta Nada",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },

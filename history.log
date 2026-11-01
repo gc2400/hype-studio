@@ -152,3 +152,4 @@
 2026-11-01T20:07:21 ok d422cb78 Schedule: click the lower half of an hour to open a show that starts on the half hour (Fresh Out, Rewind Radio) and set its hour plan
 2026-11-01T20:09:26 ok 77f3aa5b Playlists: Loop / Randomize / Rotation as three option cards
 2026-11-01T20:11:30 ok ef50ca4e Schedule: top half of a split hour selects only that show (Top 10 20:00–20:30)
+2026-11-01T20:12:34 ok 52213636 Playlist options without outlines, Randomize explains in-order; hour plan checkbox never shows a stale tick
