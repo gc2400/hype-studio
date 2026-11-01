@@ -140,11 +140,11 @@ JINGLE_FADE = 0.0   # Settings → Mixing → Jingles: fade-out (0 = plays out t
 MIX_OUT = 1.5     # Settings → Mixing → fade-out of the old song (= how long both songs play together)
 # ---------------- smart mix (from the loudness map) ----------------
 SMART_MIX = True     # Settings → Mixing → Smart mix
-ID_INTRO = {"on": True, "max": 3, "gap": 15}   # Settings → Mixing → ID over soft intros (max per hour, minutes apart)
+ID_INTRO = {"on": True, "max": 3, "gap": 15, "db": -4.0}   # Settings → Mixing → ID over soft intros (max per hour, minutes apart)
 ID_FOLDER = "IDS"    # the IDs: /srv/hype/jingles/IDS
 ID_OFFSET, ID_DUCK = 0.4, 0.5   # the ID starts 0.4 s into the song; the (already soft) intro dips to 50 % under the voice
 PUSH_LEAD = 15.0      # the next item goes to Liquidsoap 15 s before the song on air ends (see push_next)
-CLOCK_POS = "/var/lib/hype/clock_pos.json"
+CLOCK_POS = "/var/lib/hype/clock_pos.json"; PLAN_FILE = "/var/lib/hype/upnext_plan.json"
 SNAPS_FILE = "/var/lib/hype/plan_snaps.json"; MINE_FILE = "/var/lib/hype/upnext_mine.json"
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
 LM_CACHE = {}
@@ -731,17 +731,20 @@ class Engine:
         self.missing = {}    # path -> when push_next found it missing / unplayable (not planned again for 10 min)
         self.plan = []; self.liq_next = None; self.now = {}; self.auto = True; self.stop_at_end = False; self.stopped = False
         self.snaps = []      # (item id, playlist positions before it was planned) for the planned items not on air yet
-        try:   # after a restart: what was planned but never played gives its songs back to the playlists
+        kept = self.restore_plan(c0)
+        if kept: pass        # Up next is back exactly as it was: its playlist positions stay used (snaps loaded with it)
+        else:
+          try:   # after a restart: what was planned but never played gives its songs back to the playlists
             for _id, snap in reversed(json.load(open(SNAPS_FILE))): planner.restore_states(c0, snap)
             os.remove(SNAPS_FILE); log.info("playlists: positions of the unplayed Up next given back")
-        except FileNotFoundError: pass
-        except Exception as e: log.warning("snaps: %s", e)
-        try:   # the songs you had put in Up next come back
+          except FileNotFoundError: pass
+          except Exception as e: log.warning("snaps: %s", e)
+          try:   # the songs you had put in Up next come back
             for p_ in json.load(open(MINE_FILE)):
                 if c0.execute("SELECT 1 FROM items WHERE path=? AND problem IS NULL", (p_.get("path"),)).fetchone(): self.plan.append(p_)
             if self.plan: log.info("Up next: %d song(s) you added are back after the restart", len(self.plan))
-        except FileNotFoundError: pass
-        except Exception as e: log.warning("up next (yours): %s", e)
+          except FileNotFoundError: pass
+          except Exception as e: log.warning("up next (yours): %s", e)
         try: self.aux = json.load(open("/var/lib/hype/aux.json"))
         except Exception: self.aux = {"1": [], "2": []}
         self.dj = False; self.deck = None; self.faders = {}; self.parked = None
@@ -752,6 +755,34 @@ class Engine:
                 it = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (r[0],)).fetchone()
                 if it and time.time() - r[1] < (it[6] or 0): self.now = dict(row_item(it, "?"), started=r[1], scene=r[2]); self.tv.scene = r[2]
         except Exception as e: log.warning("restore now: %s", e)
+    def restore_plan(self, c):
+        """After an engine restart (update, repair): Up next comes back exactly as it was - same songs, same order - when it
+        was saved less than 20 min ago. The queued song (Liquidsoap is cleared at start) goes back to the top, unless it
+        already went on air. The clock goes on after the last planned item."""
+        try: d = json.load(open(PLAN_FILE))
+        except Exception: return False
+        if time.time() - d.get("t", 0) > 20 * 60: return False
+        items = ([d["next"]] if d.get("next") else []) + list(d.get("plan") or [])
+        try:
+            last = c.execute("SELECT path, started FROM asrun ORDER BY id DESC LIMIT 1").fetchone()
+            if items and last and items[0].get("path") == last[0] and last[1] >= (items[0].get("pushed") or 0) - 2: items.pop(0)   # it went on air
+        except Exception: pass
+        items = [i for i in items if i.get("path") and os.path.isfile(os.path.join(ROOT, i["path"]))]
+        if not items: return False
+        for i in items: i.pop("pushed", None)
+        self.plan = items
+        try: self.snaps = [tuple(x) for x in json.load(open(SNAPS_FILE))]
+        except Exception: self.snaps = []
+        pos = next((i["pos"] for i in reversed(items) if i.get("pos")), None)
+        if pos: self.runner.restore = pos
+        log.info("Up next: back as it was before the restart (%d items)", len(items))
+        return True
+    def save_plan(self):
+        sig = [i.get("id") for i in ([self.liq_next] if self.liq_next else []) + self.plan]
+        if sig == getattr(self, "_plan_sig", None) and time.time() - getattr(self, "_plan_t", 0) < 300: return
+        self._plan_sig = sig; self._plan_t = time.time()
+        try: jdump({"t": time.time(), "next": self.liq_next, "plan": self.plan}, PLAN_FILE)
+        except Exception as e: log.warning("save up next: %s", e)
     # ---------- planning ----------
     def avoid(self):
         items = self.plan + ([self.liq_next] if self.liq_next else [])
@@ -1189,6 +1220,7 @@ class Engine:
             self.recover_stuck()
             self.push_next(c)
             if self.liq_next and "pushed" not in self.liq_next: self.liq_next["pushed"] = time.time()
+            self.save_plan()
             up = [p_["path"] for p_ in ([self.liq_next] if self.liq_next else []) + self.plan if p_.get("mode") in ("clip", "pair", "jingle-video")]
             if up != getattr(self, "_up_w", None):   # the indexer upgrades these clips' TV copies first
                 self._up_w = up
@@ -1323,7 +1355,9 @@ class Engine:
         self.ov_last = time.time(); self.ov_recent.append(jingle)
         kind_ = "ID" if it.get("id_over") and jingle == it.get("id_over") else "Sweeper"
         def go():
-            ji = row_item(jr, "intro"); self.liq.cmd("pads.push " + annotate(ji, True)); self.duck_for(duck_len(ji), duck)
+            ji = row_item(jr, "intro")
+            if kind_ == "ID" and ji.get("lufs") is not None: ji["lufs"] = ji["lufs"] - ID_INTRO["db"]    # ID over the intro: its own level (Settings → Mixing)
+            self.liq.cmd("pads.push " + annotate(ji, True)); self.duck_for(duck_len(ji), duck)
             log.info("intro sweeper %s over %s", jingle, it["title"])
             try:     # History shows it next to the song: "+ ID …" / "+ Sweeper …"
                 cc = dbc(); cc.execute("UPDATE asrun SET over=? WHERE id=(SELECT max(id) FROM asrun WHERE path=?)", (kind_ + ": " + (ji.get("title") or os.path.basename(jingle)), it["path"])); cc.commit()
@@ -1886,7 +1920,7 @@ def load_rotation():
     """Artist / song separation and the longest overlap, from Settings."""
     global ARTIST_SEP, TITLE_SEP, MIX_MAX, JINGLE_FADE, JINGLE_DB, ADBOX_ALWAYS, SMART_MIX, AV_LAG
     c = dbc()
-    ID_INTRO.update(on=bool(planner.get_setting(c, "id_intro", True)), max=int(planner.get_setting(c, "id_intro_max", 3)), gap=float(planner.get_setting(c, "id_intro_gap", 15)))
+    ID_INTRO.update(on=bool(planner.get_setting(c, "id_intro", True)), max=int(planner.get_setting(c, "id_intro_max", 3)), gap=float(planner.get_setting(c, "id_intro_gap", 15)), db=float(planner.get_setting(c, "id_intro_db", -4.0)))
     ARTIST_SEP = 60 * float(planner.get_setting(c, "artist_sep_min", 75)); TITLE_SEP = 3600 * float(planner.get_setting(c, "title_sep_h", 3))
     JINGLE_FADE = float(planner.get_setting(c, "jingle_fade", 0.0)); JINGLE_DB = float(planner.get_setting(c, "jingle_db", -3.0))
     ADBOX_ALWAYS = bool(planner.get_setting(c, "adbox_always", True))
@@ -2029,7 +2063,7 @@ def get_settings():
         except Exception: snd[v] = None
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
-            "artist_sep_min": ARTIST_SEP / 60, "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
+            "artist_sep_min": ARTIST_SEP / 60, "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd}
 def set_settings(d):
     global MIX_OUT
@@ -2051,6 +2085,7 @@ def set_settings(d):
     if "id_intro" in d: planner.set_setting(c, "id_intro", bool(d["id_intro"]))
     if "id_intro_max" in d: planner.set_setting(c, "id_intro_max", max(1, min(12, int(float(d["id_intro_max"])))))
     if "id_intro_gap" in d: planner.set_setting(c, "id_intro_gap", max(0.0, min(60.0, float(d["id_intro_gap"]))))
+    if "id_intro_db" in d: planner.set_setting(c, "id_intro_db", max(-15.0, min(6.0, float(d["id_intro_db"]))))
     if "av_lag" in d: planner.set_setting(c, "av_lag", max(0.0, min(1.0, float(d["av_lag"]))))
     if "jingle_db" in d: planner.set_setting(c, "jingle_db", max(-12.0, min(3.0, float(d["jingle_db"]))))
     if "jingle_fade" in d: planner.set_setting(c, "jingle_fade", max(0.0, min(5.0, float(d["jingle_fade"]))))
