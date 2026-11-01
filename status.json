@@ -1,17 +1,23 @@
 {
- "time": "2026-11-01T02:47:33",
- "result": "ok",
- "commit": "a016de0cc78fb5151617f02e504e117cec5d77c7",
- "subject": "Guest page: full-screen button bottom-right with an icon (no longer over the logo)",
+ "time": "2026-11-01T03:36:19",
+ "result": "ok-restart-updater",
+ "commit": "ad590381a96676a73f8dacbafeec350d96a6795c",
+ "subject": "Fixes from the full code review: playout never stalls, safer deletes, atomic state files, WebRTC leaks, guest/broadcast reconnects, updater waits for LIVE",
  "log": [
-  "02:47:33 update b15ccfb3 \u2192 a016de0c \u00b7 1 file(s): web/guest/index.html",
-  "02:47:33 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "03:35:33 update a016de0c \u2192 ad590381 \u00b7 23 file(s): deploy/updater.py, engine/close_import.py, engine/engine.py, engine/guard.py, engine/hype-stats.py, engine/hype_auth.py, engine/indexer.py, engine/live.py, engine/live/studio_in.sh, engine/planner.py, system/hype-backup.sh, system/nginx-hype.conf, web/guest/hype-rtc.js, web/guest/index.html, web/obs/feed.html, web/overlay/adbox.html, web/overlay/index.html, web/panel/header.js, web/panel/hype-rtc.js, web/panel/index.html, web/panel/library.html, web/panel/settings.html, web/panel/studio.html",
+  "03:35:33 restart hype-guard",
+  "03:35:33 restart hype-stats",
+  "03:35:33 restart hype-auth",
+  "03:35:33 restart hype-indexer",
+  "03:35:34 restart hype-studio-in",
+  "03:35:34 restart hype-engine",
+  "03:36:19 installed OK \u00b7 restarted: hype-updater, hype-engine, hype-guard, hype-stats, hype-auth, hype-indexer, hype-studio-in, nginx-reload"
  ],
  "guard": {
-  "song": "DJHAMIDAOFFICIEL \u2013 Joba Owo",
+  "song": "Kybba x Lion Fiah x Rafa Pabon x Citriem x Kensel Tell Them \u2013 CLASE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
