@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T19:52:26",
+ "time": "2026-11-01T20:01:24",
  "result": "ok",
- "commit": "7798f8a406eeb7a3f7c8daf6e0472236fd9d1b3e",
- "subject": "Hit the end of a half-hour show (Top 10 \u2192 Fresh Out/Rewind at 20:30); no page jump between pages with and without scroll",
+ "commit": "ee3e8a113e12fedd16b5d0ba837875e2548a11fe",
+ "subject": "Planning: Week is now Schedule, clocks are hour plans everywhere, All clocks tab hidden; short (half-hour) shows readable on the grid; in-order playlists play strictly in order (Top 10)",
  "log": [
-  "19:51:41 update 6f50cbbb \u2192 7798f8a4 \u00b7 10 file(s): engine/planner.py, web/panel/header.js, web/panel/history.html, web/panel/hypelive.html, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/status/index.html",
-  "19:51:41 restart hype-engine",
-  "19:52:26 installed OK \u00b7 restarted: hype-engine"
+  "20:00:39 update 7798f8a4 \u2192 ee3e8a11 \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
+  "20:00:39 restart hype-engine",
+  "20:01:24 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Be\u00e9le \u2013 Sobelove",
+  "song": "ARIA VEGA \u2013 COMPA COLETO",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
