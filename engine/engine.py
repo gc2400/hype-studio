@@ -747,7 +747,7 @@ class Engine:
           except Exception as e: log.warning("up next (yours): %s", e)
         try: self.aux = json.load(open("/var/lib/hype/aux.json"))
         except Exception: self.aux = {"1": [], "2": []}
-        self.dj = False; self.deck = None; self.faders = {}; self.parked = None
+        self.dj = getattr(self, "dj", False); self.deck = getattr(self, "deck", None); self.faders = {}; self.parked = None
         self.sgroups = planner.get_setting(c0, "scene_groups", [])
         try:   # after a restart: the song that is still playing
             c = dbc(); r = c.execute("SELECT path, started, scene FROM asrun ORDER BY id DESC LIMIT 1").fetchone()
@@ -765,6 +765,9 @@ class Engine:
         try: d = json.load(open(PLAN_FILE))
         except Exception: return False
         if time.time() - d.get("t", 0) > 20 * 60: return False
+        # AUTO / MANUAL / DJ stay as they were (a restart never hands the air back to the clock by itself)
+        if "auto" in d: self.auto = bool(d["auto"]); self.dj = bool(d.get("dj")); self.deck = d.get("deck")
+        if d.get("now"): self._aired = d["now"]       # the song on air: its deck / source (merged when "now" is restored)
         items = ([d["next"]] if d.get("next") else []) + list(d.get("plan") or [])
         try:
             last = c.execute("SELECT path, started FROM asrun ORDER BY id DESC LIMIT 1").fetchone()
@@ -783,10 +786,11 @@ class Engine:
         log.info("Up next: back as it was before the restart (%d items)", len(items))
         return True
     def save_plan(self):
-        sig = [i.get("id") for i in ([self.liq_next] if self.liq_next else []) + self.plan]
+        nw = {k_: self.now.get(k_) for k_ in ("path", "id", "src", "deck", "id_over", "event") if self.now.get(k_) is not None} if self.now else None
+        sig = [i.get("id") for i in ([self.liq_next] if self.liq_next else []) + self.plan] + [self.auto, self.dj, self.deck, (nw or {}).get("path")]
         if sig == getattr(self, "_plan_sig", None) and time.time() - getattr(self, "_plan_t", 0) < 300: return
         self._plan_sig = sig; self._plan_t = time.time()
-        try: jdump({"t": time.time(), "next": self.liq_next, "plan": self.plan}, PLAN_FILE)
+        try: jdump({"t": time.time(), "next": self.liq_next, "plan": self.plan, "now": nw, "auto": self.auto, "dj": self.dj, "deck": self.deck}, PLAN_FILE)
         except Exception as e: log.warning("save up next: %s", e)
     # ---------- planning ----------
     def avoid(self):
