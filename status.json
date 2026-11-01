@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T18:40:14",
+ "time": "2026-11-01T18:50:29",
  "result": "ok",
- "commit": "76a46e7b34161ca370edac2905a889a1f4de0b2e",
- "subject": "Planning like the concept: Week/Shows/Playlists/Ads/More tabs, week controls in the tab row, side panel What plays/Hour plan + hour filled; new Shows page (show list, hour plan rows with drag, add palette, preview)",
+ "commit": "a378f8a2ba1cb69020e094755932e1eb2cd160c7",
+ "subject": "Planning nav like Hype Live (all pages, no More), week controls in the Week page, save buttons above Add; no CLOSE wording; Broadcast guest volume fits on phones",
  "log": [
-  "18:40:14 update 052a60f6 \u2192 76a46e7b \u00b7 1 file(s): web/panel/plan.html",
-  "18:40:14 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "18:50:29 update 76a46e7b \u2192 a378f8a2 \u00b7 3 file(s): web/panel/plan.html, web/panel/settings.html, web/panel/studio.html",
+  "18:50:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Shallipopi x Burna Boy \u2013 Laho II",
+  "song": "Anuel AA \u2013 Donde Hubo Fuego Cenizas Quedan",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
