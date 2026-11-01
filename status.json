@@ -1,11 +1,11 @@
 {
- "time": "2026-11-01T16:43:18",
+ "time": "2026-11-01T16:45:23",
  "result": "ok",
- "commit": "cd0c4b7bfacebf0c1ec6c49521009f2982a0a6e4",
- "subject": "LIVE page: player column narrower (like ON AIR), scenes and guests wider",
+ "commit": "b2844b0582d79ead569a5f09223db6894da45228",
+ "subject": "LIVE page: player column exactly as wide as on ON AIR",
  "log": [
-  "16:43:18 update 7e74217a \u2192 cd0c4b7b \u00b7 1 file(s): web/panel/index.html",
-  "16:43:18 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:45:23 update cd0c4b7b \u2192 b2844b05 \u00b7 1 file(s): web/panel/index.html",
+  "16:45:23 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Tekno \u2013 Press Button",
