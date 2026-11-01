@@ -997,8 +997,9 @@ const SWATCH = ['#05A9C6', '#3DD68C', '#FFC94D', '#FF8A3D', '#FF5C7A', '#FF4FD8'
 function shLoad() { return Promise.all([get('week?w=0'), get('shows'), loadAll()]).then(([w, sh]) => { SHW = {week: w, shows: sh.shows}; shRender(); setTimeout(fitSides, 30); }).catch(() => toast('Shows could not load', 1)); }
 function shInfo() {   // per website show: hours per clock this week
   const info = {};
-  SHW.week.days.forEach((d, di) => d.hours.forEach(x => { const s = wkShowAt(d, x.h); if (!s) return; const t = s.title;
-    (info[t] = info[t] || {}); const k = x.clock_id; (info[t][k] = info[t][k] || []).push([di, x.h]); }));
+  const put = (t, k, di, h) => { (info[t] = info[t] || {}); (info[t][k] = info[t][k] || []).push([di, h]); };
+  SHW.week.days.forEach((d, di) => d.hours.forEach(x => { const s = wkShowAt(d, x.h); if (s) put(s.title, x.clock_id, di, x.h);
+    if (x.h30 && x.h30.show) put(x.h30.show, x.h30.clock_id, di, x.h); }));
   return info;
 }
 const whereTxt = list => { const by = {}; list.forEach(([d, h]) => (by[d] = by[d] || []).push(h)); return Object.entries(by).map(([d, hs]) => DAYS[d] + ' ' + hs.map(h => String(h).padStart(2, '0')).join(',')).join(' · '); };
@@ -1047,7 +1048,7 @@ function shAddSlot(k) {
     : {kind: k, ref: k === 'playlist' ? String((PL[0] || {}).id || '') : k === 'id' ? 'IDS' : k === 'jingle' || k === 'showjingle' ? 'SWEEPERS' : '', amount: k === 'adbreak' ? 3 : 1, start: 'continue'};
 }
 function shSlots() {
-  if (!SHC) { $('#shSlots').innerHTML = '<span class="muted">No hour plan.</span>'; $('#shName').value = ''; $('#shResume').checked = false; return; }
+  if (!SHC) { $('#shSlots').innerHTML = '<span class="muted">No hour plan.</span>'; $('#shName').value = ''; $('#shResume').checked = false; $('#shEst').textContent = ''; return; }
   $('#shName').value = SHC.name; $('#shResume').checked = !!SHC.resume;
   const fixed = (SHW.week.events || []).filter(e => e.at[0] === '*');
   const amOpts = s => s.kind === 'adbreak' ? [1, 2, 3, 4, 5, 6].map(n => [n, n + ' spots']) : [[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [0, 'all'], [999, 'fill to the hour']];
