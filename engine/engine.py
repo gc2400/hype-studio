@@ -2288,8 +2288,10 @@ class H(BaseHTTPRequestHandler):
                     elif a == "save_clock": res["id"] = planner.api_save_clock(c, d)
                     elif a == "delete_clock":
                         c.execute("DELETE FROM clocks WHERE id=?", (d["id"],)); c.execute("DELETE FROM clock_slots WHERE clock_id=?", (d["id"],))
-                        c.execute("UPDATE schedule SET clock_id=NULL WHERE clock_id=?", (d["id"],)); c.commit()
+                        c.execute("UPDATE schedule SET clock_id=NULL WHERE clock_id=?", (d["id"],))
+                        c.execute("DELETE FROM schedule_date WHERE clock_id=?", (d["id"],)); c.execute("UPDATE show_clocks SET clock_id=NULL WHERE clock_id=?", (d["id"],)); c.commit()
                     elif a == "set_schedule": planner.api_set_schedule(c, d)
+                    elif a == "set_schedule_date": planner.api_set_schedule_date(c, d)
                     elif a == "save_overlays": planner.api_save_overlays(c, d); res["note"] = "rules saved"
                     elif a == "save_show_clocks": planner.api_save_show_clocks(c, d)
                     elif a == "save_events": planner.api_save_events(c, d)
@@ -2297,7 +2299,7 @@ class H(BaseHTTPRequestHandler):
                     elif a == "save_screen": planner.api_save_screen_rules(c, d)
                     elif a == "save_ads": planner.api_save_ads(c, d); E.replan()
                     elif a != "replan": return self.send(404, {"error": "unknown"})
-                    if a in ("save_clock", "delete_clock", "set_schedule", "replan", "delete_playlist", "save_playlist", "reset_playlist", "save_show_clocks"): E.replan()
+                    if a in ("save_clock", "delete_clock", "set_schedule", "set_schedule_date", "replan", "delete_playlist", "save_playlist", "reset_playlist", "save_show_clocks"): E.replan()
                 return self.send(200, res)
             except ValueError as e: return self.send(400, {"error": str(e)})
             except sqlite3.IntegrityError: return self.send(400, {"error": "that name is already used"})

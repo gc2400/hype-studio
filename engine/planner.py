@@ -17,6 +17,7 @@ def init(c):
     CREATE TABLE IF NOT EXISTS clocks(id INTEGER PRIMARY KEY, name TEXT UNIQUE, color TEXT DEFAULT '#05A9C6', updated REAL);
     CREATE TABLE IF NOT EXISTS clock_slots(clock_id INT, pos INT, kind TEXT, ref TEXT, amount INT DEFAULT 1, start TEXT DEFAULT 'continue');
     CREATE TABLE IF NOT EXISTS schedule(day INT, hour INT, clock_id INT, show TEXT, PRIMARY KEY(day, hour));
+    CREATE TABLE IF NOT EXISTS schedule_date(date TEXT, hour INT, clock_id INT, PRIMARY KEY(date, hour));
     CREATE TABLE IF NOT EXISTS clock_state(clock_id INT PRIMARY KEY, i INT, left_ INT, first INT, updated REAL);
     CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
     """)
@@ -867,8 +868,19 @@ def _folder_paths(c, ref):
     if any((f or "").startswith(ref + "/") for _, f, _m in rows): rows = [r for r in rows if r[1] != ref]
     return rows
 
+def _date_clock(c, t):
+    """The clock chosen for this one date + hour (Planning → Week → "only this date"), else None."""
+    try:
+        lt = time.localtime(t)
+        r = c.execute("SELECT clock_id FROM schedule_date WHERE date=? AND hour=?", (time.strftime("%Y-%m-%d", lt), lt.tm_hour)).fetchone()
+        if r and r[0] and c.execute("SELECT 1 FROM clocks WHERE id=?", (r[0],)).fetchone(): return r[0]
+    except sqlite3.OperationalError: pass
+    return None
+
 def _clock_of(c, t):
-    """(clock id, 'show' | 'grid') for time t – the same choice clock_for makes."""
+    """(clock id, 'date' | 'show' | 'grid') for time t – the same choice clock_for makes."""
+    dc = _date_clock(c, t)
+    if dc: return dc, "date"
     s = show_at(t)
     if s:
         r = c.execute("SELECT clock_id FROM show_clocks WHERE title=?", (s["title"],)).fetchone()
@@ -888,7 +900,10 @@ def api_week(c, w=0):
             t = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday - lt.tm_wday + 7 * int(w) + d, h, 0, 0, 0, 0, -1))
             cid, via = _clock_of(c, t)
             r = c.execute("SELECT clock_id FROM schedule WHERE day=? AND hour=?", (d, h)).fetchone()
-            hrs.append(dict(h=h, clock_id=cid, via=via, grid=r[0] if r else None))
+            sc_ = None
+            if s_ := show_at(t):
+                r2 = c.execute("SELECT clock_id FROM show_clocks WHERE title=?", (s_["title"],)).fetchone(); sc_ = r2[0] if r2 else None
+            hrs.append(dict(h=h, clock_id=cid, via=via, grid=r[0] if r else None, show_clock=sc_))
         days.append(dict(date=time.strftime("%Y-%m-%d", time.localtime(t0)), hours=hrs,
                          shows=[dict(start=s["start"], end=s["end"], title=s["title"]) for s in WEEK if s["day"] == d]))
     clocks = {}
@@ -942,3 +957,19 @@ def api_week(c, w=0):
     evs = [dict(name=e["name"], at=e["at"], days=e["days"]) for e in api_events(c) if e["enabled"]]
     return dict(week=int(w), monday=time.strftime("%Y-%m-%d", time.localtime(mon)), days=days, clocks=list(clocks.values()),
                 events=evs, warnings=warn[:30], show_clocks=dict(c.execute("SELECT title, clock_id FROM show_clocks WHERE clock_id IS NOT NULL").fetchall()))
+
+
+_show_clock_for = clock_for
+def clock_for(c, t):
+    """0) a clock chosen for this one date + hour, then the show clock, the hour grid, the first clock."""
+    return _date_clock(c, t) or _show_clock_for(c, t)
+
+def api_set_schedule_date(c, d):
+    """cells [{date: 'YYYY-MM-DD', hour, clock_id (None = back to the normal week)}]"""
+    for cell in d.get("cells", []):
+        dt = str(cell["date"])
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", dt): raise ValueError("bad date")
+        if cell.get("clock_id"): c.execute("INSERT OR REPLACE INTO schedule_date VALUES(?,?,?)", (dt, int(cell["hour"]), int(cell["clock_id"])))
+        else: c.execute("DELETE FROM schedule_date WHERE date=? AND hour=?", (dt, int(cell["hour"])))
+    c.execute("DELETE FROM schedule_date WHERE date < ?", (time.strftime("%Y-%m-%d", time.localtime(time.time() - 14 * 86400)),))
+    c.commit()

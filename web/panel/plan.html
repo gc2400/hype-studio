@@ -125,6 +125,12 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .wksel{position:absolute;left:0;right:0;border:2px solid var(--y);border-radius:6px;pointer-events:none;box-sizing:border-box}
 .wknow{position:absolute;left:-2px;right:-2px;height:2px;background:var(--r);pointer-events:none;z-index:3}
 .wkside{flex:1 1 340px;max-width:470px;display:flex;flex-direction:column;gap:10px;position:sticky;top:76px}
+.wsbox{display:flex;flex-direction:column;gap:8px;background:var(--deep);border:1px solid var(--line);border-radius:12px;padding:10px}
+.seg{display:flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden}.seg button{flex:1;min-height:36px;border:0;background:var(--card2);color:var(--mut);font:700 12px Inter,sans-serif;cursor:pointer;padding:0 8px}
+.seg button.on{background:var(--y);color:var(--bg)}.seg button:disabled{opacity:.4;cursor:default}
+.wsmore summary{cursor:pointer;color:var(--mut);font-size:12px;font-weight:700}
+.wkm.one{left:3px;right:auto;color:var(--b)!important;border:1px solid var(--b)}
+.wkdrag{position:absolute;left:0;right:0;background:rgba(255,224,0,.18);border:2px solid var(--y);border-radius:6px;pointer-events:none;box-sizing:border-box}
 .wkside .ttl{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--mut)}
 .wkside .sh{font-size:20px;font-weight:900}
 .wkpl{display:flex;flex-direction:column;gap:2px;max-height:52vh;overflow:auto}
@@ -141,9 +147,9 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
   <header id="hhead"></header><script src="/panel/header.js?v=1793552703"></script>
   <div class="tabs" role="tablist">
     <button class="tab on" data-tab="wk" role="tab">WEEK</button>
-    <button class="tab" data-tab="pl" role="tab">PLAYLISTS</button>
     <button class="tab" data-tab="ck" role="tab">CLOCKS</button>
-    <button class="tab" data-tab="sc" role="tab">SCHEDULE</button>
+    <button class="tab" data-tab="pl" role="tab">PLAYLISTS</button>
+    <button class="tab" data-tab="sc" role="tab" hidden>SCHEDULE</button>
     <button class="tab" data-tab="fx" role="tab">FIXED TIMES</button>
     <button class="tab" data-tab="ov" role="tab">INTRO SWEEPERS</button>
     <button class="tab" data-tab="os" role="tab">ON SCREEN</button>
@@ -157,17 +163,32 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
       <button class="btn sm" id="wkPrev" aria-label="Previous week">◀</button><b id="wkLbl" style="min-width:150px;text-align:center"></b><button class="btn sm" id="wkNext" aria-label="Next week">▶</button>
       <button class="btn sm" id="wkToday">This week</button>
       <span style="flex:1"></span>
-      <span class="muted">Click an hour to see what plays · <b style="color:var(--y)">MIX</b> = hour with its own mix folder · fixed times: <span id="wkEv"></span></span>
+      <span class="muted">Click an hour, or drag over hours · <b style="color:var(--y)">MIX</b> = own mix folder · <b style="color:var(--b)">1×</b> = only that date · show times come from the website · fixed times: <span id="wkEv"></span></span>
     </div>
     <div class="wkwarn" id="wkWarn"></div>
     <div class="wkmain">
       <div class="card wkgrid"><div class="wkg" id="wkGrid"></div></div>
       <aside class="card wkside" id="wkSide" hidden>
         <div class="row" style="flex-wrap:nowrap;align-items:flex-start"><div style="flex:1"><div class="ttl" id="wsWhen"></div><div class="sh" id="wsShow"></div></div><button class="btn sm" id="wsClose" aria-label="Close">×</button></div>
-        <label class="muted" style="display:flex;flex-direction:column;gap:6px">Clock in this hour<select id="wsClock"></select></label>
-        <div class="muted" id="wsVia" style="font-size:12px"></div>
-        <div class="row"><button class="btn sm" id="wsEdit">Edit this clock</button><span class="muted" id="wsMix" style="font-size:12px"></span></div>
+        <div class="row" id="wsSel" style="gap:6px"></div>
+        <div class="wsbox">
+          <label class="muted" style="display:flex;flex-direction:column;gap:6px">Clock<select id="wsClock"></select></label>
+          <div class="seg" id="wsScope" role="group" aria-label="Which days"><button type="button" data-sc="week" class="on"></button><button type="button" data-sc="date"></button></div>
+          <div class="row"><button class="btn yellow" id="wsApply">Apply</button><button class="btn" id="wsEdit">Edit clock</button><button class="btn" id="wsNormal" hidden>Back to normal</button><button class="btn" id="wsUndo" hidden title="Ctrl+Z">↶ Undo</button></div>
+          <div class="muted" id="wsVia" style="font-size:12px"></div>
+        </div>
         <div id="wsWarn" class="wkwarn"></div>
+        <details class="wsmore"><summary>More: show clock · copy this day</summary>
+          <div class="wsbox" style="margin-top:8px">
+            <div class="muted" style="font-size:12px" id="wsShowTxt"></div>
+            <div class="row"><button class="btn sm" id="wsShowSet"></button><button class="btn sm" id="wsShowOff" hidden>Stop</button></div>
+          </div>
+          <div class="wsbox" style="margin-top:8px">
+            <div class="muted" style="font-size:12px" id="wsCopyTxt"></div>
+            <div class="row" id="wsCopyDays" style="gap:4px"></div>
+            <div class="row"><button class="btn sm" id="wsCopy">Copy</button></div>
+          </div>
+        </details>
         <div class="row between"><span class="lab" id="wsPvT">What plays</span><span class="muted" id="wsSum" style="font-size:12px"></span></div>
         <div class="wkpl" id="wsList"></div>
       </aside>
@@ -675,78 +696,143 @@ $('#osSave').onclick = () => { if (OS.some(r => !r.file)) return toast('Choose a
 loadAll();
 
 /* ---------------- week ---------------- */
-let WK = null, WKW = 0, WKSEL = null, WKALL = false;
+let WK = null, WKW = 0, WKSEL = null, WKALL = false, WKDRAG = null, WKSC = 'week', WKUNDO = null;
 const WKPX = 26, WFULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const hh = h => String(h).padStart(2, '0') + ':00';
+const hh = h => String(h % 24).padStart(2, '0') + ':00';
 const toMin = s => { const [a, b] = s.split(':').map(Number); return a * 60 + b; };
 const fmtD = iso => new Date(iso + 'T12:00').toLocaleDateString('en-GB', {day: 'numeric', month: 'short'});
-function wkLoad() { return get('week?w=' + WKW).then(d => { WK = d; wkRender(); if (WKSEL) wkOpen(WKSEL[0], WKSEL[1], true); }).catch(() => toast('Week could not load', 1)); }
+const todayIso = () => new Date().toLocaleDateString('sv');
+function wkLoad() { return get('week?w=' + WKW).then(d => { WK = d; wkRender(); if (WKSEL) wkOpen(...WKSEL, true); }).catch(() => toast('Week could not load', 1)); }
 function wkClock(id) { return WK.clocks.find(c => c.id === id); }
+function wkShowAt(d, h) { const m = h * 60; return d.shows.find(s => { const a = toMin(s.start); let b = toMin(s.end) || 1440; if (b <= a) b = 1440; return a <= m + 59 && m < b; }); }
 function wkRender() {
-  const d0 = WK.days[0].date, d6 = WK.days[6].date, today = new Date().toLocaleDateString('sv');
+  const d0 = WK.days[0].date, d6 = WK.days[6].date, today = todayIso();
   $('#wkLbl').textContent = fmtD(d0) + ' – ' + fmtD(d6) + (WKW === 0 ? ' · this week' : WKW === 1 ? ' · next week' : '');
   $('#wkEv').textContent = WK.events.map(e => (e.name || '') + ' ' + (e.at[0] === '*' ? 'every hour ' + e.at.slice(1) : e.at)).join(' · ') || 'none';
   const WMAX = WKALL ? 99 : 3;
-  $('#wkWarn').innerHTML = WK.warnings.length ? WK.warnings.slice(0, WMAX).map((w, i) => `<button class="wkw ${w.level}" data-w="${i}"><span class="i">${w.level === 'bad' ? '!' : w.level === 'warn' ? '!' : 'i'}</span><span><b>${esc(w.when)} · ${fmtD(w.date)}</b> – ${esc(w.text)}${w.n > 1 ? ` <span style="opacity:.7">(${w.n} hours)</span>` : ''}</span></button>`).join('') + (WK.warnings.length > 3 ? `<button class="wkw" id="wkMore"><span class="i">${WKALL ? '−' : '+'}</span><span>${WKALL ? 'Show less' : (WK.warnings.length - 3) + ' more'}</span></button>` : '')
+  $('#wkWarn').innerHTML = WK.warnings.length ? WK.warnings.slice(0, WMAX).map((w, i) => `<button class="wkw ${w.level}" data-w="${i}"><span class="i">!</span><span><b>${esc(w.when)} · ${fmtD(w.date)}</b> – ${esc(w.text)}${w.n > 1 ? ` <span style="opacity:.7">(${w.n} hours)</span>` : ''}</span></button>`).join('')
+    + (WK.warnings.length > 3 ? `<button class="wkw" id="wkMore"><span class="i">${WKALL ? '−' : '+'}</span><span>${WKALL ? 'Show less' : (WK.warnings.length - 3) + ' more'}</span></button>` : '')
     : '<div class="wkw" style="cursor:default"><span class="i" style="color:var(--g)">✓</span><span>No problems found in the coming 7 days.</span></div>';
   if ($('#wkMore')) $('#wkMore').onclick = () => { WKALL = !WKALL; wkRender(); };
-  $$('#wkWarn [data-w]').forEach(b => b.onclick = () => { const w = WK.warnings[+b.dataset.w]; const off = Math.round((new Date(w.date + 'T12:00') - new Date(WK.monday + 'T12:00')) / 864e5 / 7); const go = () => wkOpen(w.day, w.hour); if (off !== WKW) { WKW = off; wkLoad().then(go); } else go(); });
+  $$('#wkWarn [data-w]').forEach(b => b.onclick = () => { const w = WK.warnings[+b.dataset.w]; const off = WKW + Math.floor((new Date(w.date + 'T12:00') - new Date(WK.monday + 'T12:00')) / 864e5 / 7); const go = () => wkOpen(w.day, w.hour, w.hour); if (off !== WKW) { WKW = off; WKSEL = null; wkLoad().then(go); } else go(); });
   const bad = {}; WK.warnings.forEach(w => { if (w.level === 'bad') bad[w.date + ' ' + w.hour] = 1; });
   let g = '<div></div>' + WK.days.map((d, i) => `<div class="wkh ${d.date === today ? 'today' : ''}">${DAYS[i]}<small>${fmtD(d.date)}</small></div>`).join('');
   g += `<div class="wkt" style="height:${24 * WKPX}px">${Array.from({length: 24}, (_, h) => `<span style="top:${h * WKPX}px">${hh(h)}</span>`).join('')}</div>`;
   WK.days.forEach((d, di) => {
-    // segments: the website shows, gaps filled per hour with the clock's name
     const segs = d.shows.map(s => ({a: toMin(s.start), b: toMin(s.end) || 1440, title: s.title})).map(x => (x.b <= x.a ? {...x, b: 1440} : x)).sort((x, y) => x.a - y.a);
     const all = []; let m = 0;
-    segs.forEach(s => { while (m < s.a) { const h = Math.floor(m / 60), e = Math.min(s.a, (h + 1) * 60); all.push({a: m, b: e, title: (wkClock(d.hours[h].clock_id) || {}).name || 'No clock', gap: 1}); m = e; } all.push(s); m = Math.max(m, s.b); });
-    while (m < 1440) { const h = Math.floor(m / 60); all.push({a: m, b: (h + 1) * 60, title: (wkClock(d.hours[h].clock_id) || {}).name || 'No clock', gap: 1}); m = (h + 1) * 60; }
+    const gap = e => { while (m < e) { const h = Math.floor(m / 60), n = Math.min(e, (h + 1) * 60); all.push({a: m, b: n, title: (wkClock(d.hours[h].clock_id) || {}).name || 'No clock'}); m = n; } };
+    segs.forEach(s => { gap(s.a); all.push(s); m = Math.max(m, s.b); }); gap(1440);
     const mg = []; all.forEach(s => { const l = mg[mg.length - 1]; if (l && l.title === s.title && l.b === s.a) l.b = s.b; else mg.push({...s}); });
     let col = '';
     mg.forEach(s => {
       const h0 = Math.floor(s.a / 60), ck = wkClock(d.hours[h0].clock_id) || {color: '#4B5D7A'}, c = ck.color || '#4B5D7A';
       const top = s.a / 60 * WKPX, ht = (s.b - s.a) / 60 * WKPX, hours = []; for (let h = h0; h * 60 < s.b; h++) hours.push(h);
       const isBad = hours.some(h => bad[d.date + ' ' + h]);
-      col += `<div class="wkb ${isBad ? 'bad' : ''}" style="top:${top + 1}px;height:${ht - 2}px;background:${c}2E;color:${c}"><span class="n" style="color:#F2F6FA">${esc(s.title)}</span>${ht >= 44 ? `<span class="tm">${hh(h0).slice(0, 2)}:${String(s.a % 60).padStart(2, '0')} – ${String(Math.floor(s.b / 60) % 24).padStart(2, '0')}:${String(s.b % 60).padStart(2, '0')}</span>` : ''}</div>`;
+      col += `<div class="wkb ${isBad ? 'bad' : ''}" style="top:${top + 1}px;height:${ht - 2}px;background:${c}2E;color:${c}"><span class="n" style="color:#F2F6FA">${esc(s.title)}</span>${ht >= 44 ? `<span class="tm">${String(Math.floor(s.a / 60)).padStart(2, '0')}:${String(s.a % 60).padStart(2, '0')} – ${String(Math.floor(s.b / 60) % 24).padStart(2, '0')}:${String(s.b % 60).padStart(2, '0')}</span>` : ''}</div>`;
     });
-    d.hours.forEach(x => { const ck = wkClock(x.clock_id); if (ck && ck.mix && !/mixtapes/i.test(ck.mix)) col += `<span class="wkm ${bad[d.date + ' ' + x.h] ? 'bad' : ''}" style="top:${x.h * WKPX + 5}px;color:var(--y)" title="${esc(ck.mix)}">${bad[d.date + ' ' + x.h] ? 'NO MIX' : 'MIX'}</span>`; });
-    if (WKSEL && WKSEL[0] === di) col += `<div class="wksel" style="top:${WKSEL[1] * WKPX}px;height:${WKPX}px"></div>`;
+    d.hours.forEach(x => {
+      const ck = wkClock(x.clock_id), b_ = bad[d.date + ' ' + x.h];
+      if (ck && ck.mix && !/mixtapes/i.test(ck.mix)) col += `<span class="wkm ${b_ ? 'bad' : ''}" style="top:${x.h * WKPX + 5}px;color:var(--y)" title="${esc(ck.mix)}">${b_ ? 'NO MIX' : 'MIX'}</span>`;
+      if (x.via === 'date') col += `<span class="wkm one" style="top:${x.h * WKPX + 5}px" title="Only on this date: ${esc(ck ? ck.name : '')}">1×</span>`;
+    });
+    if (WKSEL && WKSEL[0] === di) col += `<div class="wksel" style="top:${WKSEL[1] * WKPX}px;height:${(WKSEL[2] - WKSEL[1] + 1) * WKPX}px"></div>`;
     if (d.date === today) { const n = new Date(); col += `<div class="wknow" style="top:${(n.getHours() + n.getMinutes() / 60) * WKPX}px"></div>`; }
     g += `<div class="wkd ${d.date === today ? 'today' : ''}" data-d="${di}" style="--px:${WKPX}px;height:${24 * WKPX}px">${col}</div>`;
   });
   $('#wkGrid').innerHTML = g;
-  $$('#wkGrid .wkd').forEach(el => el.onclick = e => { const r = el.getBoundingClientRect(); wkOpen(+el.dataset.d, Math.max(0, Math.min(23, Math.floor((e.clientY - r.top) / WKPX)))); });
+  const hourAt = (el, e) => Math.max(0, Math.min(23, Math.floor((e.clientY - el.getBoundingClientRect().top) / WKPX)));
+  $$('#wkGrid .wkd').forEach(el => {
+    el.onmousedown = e => { if (e.button) return; e.preventDefault(); const h = hourAt(el, e); WKDRAG = {el, di: +el.dataset.d, a: h, b: h}; dragBox(); };
+    el.onmousemove = e => { if (!WKDRAG || WKDRAG.el !== el) return; const h = hourAt(el, e); if (h !== WKDRAG.b) { WKDRAG.b = h; dragBox(); } };
+  });
 }
-function wkOpen(di, h, keep) {
-  WKSEL = [di, h]; if (!keep) wkRender();
-  const d = WK.days[di], x = d.hours[h], ck = wkClock(x.clock_id), m = h * 60;
-  const s = d.shows.find(s => { const a = toMin(s.start); let b = toMin(s.end) || 1440; if (b <= a) b = 1440; return a <= m + 59 && m < b; });
+function dragBox() { $$('.wkdrag').forEach(x => x.remove()); const {el, a, b} = WKDRAG, lo = Math.min(a, b), hi = Math.max(a, b);
+  el.insertAdjacentHTML('beforeend', `<div class="wkdrag" style="top:${lo * WKPX}px;height:${(hi - lo + 1) * WKPX}px"></div>`); }
+document.addEventListener('mouseup', () => { if (!WKDRAG) return; const {di, a, b} = WKDRAG; WKDRAG = null; wkOpen(di, Math.min(a, b), Math.max(a, b)); });
+function wkOpen(di, h1, h2, keep) {
+  if (h2 === undefined || h2 === true) { keep = h2 === true || keep; h2 = h1; }
+  WKSEL = [di, h1, h2]; if (!keep) wkRender();
+  const d = WK.days[di], hrs = d.hours.slice(h1, h2 + 1), x = hrs[0], ck = wkClock(x.clock_id), s = wkShowAt(d, h1), n = h2 - h1 + 1;
+  const past = d.date < todayIso();
   $('#wkSide').hidden = false;
-  $('#wsWhen').textContent = `${WFULL[di].toUpperCase()} ${fmtD(d.date).toUpperCase()} · ${hh(h)} – ${hh((h + 1) % 24)}`;
+  $('#wsWhen').textContent = `${WFULL[di].toUpperCase()} ${fmtD(d.date).toUpperCase()} · ${hh(h1)} – ${hh(h2 + 1)}${n > 1 ? ` · ${n} HOURS` : ''}`;
   $('#wsShow').textContent = s ? s.title : (ck ? ck.name : 'No clock'); $('#wsShow').style.color = ck ? ck.color : '';
-  $('#wsClock').innerHTML = WK.clocks.slice().sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.id}" ${c.id === x.clock_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
-  $('#wsClock').disabled = x.via === 'show';
-  $('#wsVia').textContent = x.via === 'show' ? `The show "${s ? s.title : ''}" has its own clock (Schedule tab) – change it there.` : `Changing it here changes every ${WFULL[di]} ${hh(h)} (the normal week).`;
-  $('#wsMix').textContent = ck && ck.mix ? 'Mix folder: ' + ck.mix : '';
-  const ws = WK.warnings.filter(w => w.date === d.date && w.hour === h);
-  $('#wsWarn').innerHTML = ws.map(w => `<div class="wkw ${w.level}" style="cursor:default"><span class="i">!</span><span>${esc(w.text)}</span></div>`).join('');
+  // quick selections
+  let sel = '';
+  if (s) { const a = Math.floor(toMin(s.start) / 60), b = Math.ceil((toMin(s.end) || 1440) / 60) - 1; if (a !== h1 || b !== h2) sel += `<button class="btn sm" data-qs="${a}-${b}">Whole show ${s.start}–${s.end}</button>`; }
+  if (n > 1) sel += `<button class="btn sm" data-qs="${h1}-${h1}">Only ${hh(h1)}</button>`;
+  $('#wsSel').innerHTML = sel; $$('#wsSel [data-qs]').forEach(b => b.onclick = () => { const [a, z] = b.dataset.qs.split('-').map(Number); wkOpen(di, a, Math.min(23, z)); });
+  // clock + scope
+  const same = hrs.every(y => y.clock_id === x.clock_id);
+  $('#wsClock').innerHTML = (same ? '' : '<option value="" selected>– different clocks –</option>') + WK.clocks.slice().sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.id}" ${same && c.id === x.clock_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+  const sc = $$('#wsScope button'); sc[0].textContent = `Every ${WFULL[di]}`; sc[1].textContent = `Only ${DAYS[di]} ${fmtD(d.date)}`; sc[1].disabled = past;
+  if (past && WKSC === 'date') WKSC = 'week'; sc.forEach(b => b.classList.toggle('on', b.dataset.sc === WKSC));
+  const ones = hrs.filter(y => y.via === 'date'), shows = hrs.filter(y => y.via === 'show');
+  $('#wsNormal').hidden = !ones.length;
+  const normal = ones.length ? wkClock(ones[0].grid) : null;
+  $('#wsVia').innerHTML = ones.length ? `Only on ${fmtD(d.date)}: <b>${esc(ck ? ck.name : '')}</b>${normal ? ` – normally ${esc(normal.name)}` : ''}.`
+    : shows.length ? `The show "${esc(s ? s.title : '')}" uses one clock for all its hours (see More). "Every ${WFULL[di]}" changes the hours outside that show.` : '';
+  // show clock
+  const shc = s ? x.show_clock : null;
+  $('#wsShowTxt').innerHTML = s ? (shc ? `Every hour of <b>${esc(s.title)}</b>, all days, plays <b>${esc((wkClock(shc) || {}).name || '')}</b>.` : `Give every hour of <b>${esc(s.title)}</b> (all days) the clock chosen above.`) : 'No website show at this time.';
+  $('#wsShowSet').textContent = shc ? 'Use the chosen clock instead' : 'Use for the whole show'; $('#wsShowSet').disabled = !s; $('#wsShowOff').hidden = !shc;
+  // copy day
+  $('#wsCopyTxt').innerHTML = `Copy the clocks of every hour of <b>${WFULL[di]}</b> (normal week) to:`;
+  $('#wsCopyDays').innerHTML = DAYS.map((dn, i) => i === di ? '' : `<button class="btn sm" data-cd="${i}">${dn}</button>`).join('');
+  $$('#wsCopyDays [data-cd]').forEach(b => b.onclick = () => b.classList.toggle('on'));
+  // warnings + preview of the first hour
+  const ws = WK.warnings.filter(w => w.date === d.date && w.hour >= h1 && w.hour <= h2);
+  $('#wsWarn').innerHTML = ws.map(w => `<div class="wkw ${w.level}" style="cursor:default;max-width:none"><span class="i">!</span><span>${esc(w.text)}</span></div>`).join('');
   $('#wsList').innerHTML = '<div class="muted">Loading…</div>'; $('#wsSum').textContent = '';
   const ask = WKSEL.join('-');
-  get(`preview_hour?day=${di}&hour=${h}`).then(p => {
+  get(`preview_hour?day=${di}&hour=${h1}`).then(p => {
     if (WKSEL.join('-') !== ask) return;
     if (p.off) { $('#wsList').innerHTML = '<div class="muted">Hour preview is off (Settings).</div>'; return; }
-    const t0 = new Date(p.start * 1000); $('#wsPvT').textContent = 'What plays · ' + t0.toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'});
+    const t0 = new Date(p.start * 1000); $('#wsPvT').textContent = 'What plays · ' + t0.toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'}) + ' ' + hh(h1);
     $('#wsSum').textContent = `${p.songs} songs · ${p.jingles} jingles · ` + (p.over > 0 ? `ends ${p.over} s after the hour` : `ends ${-p.over} s early`);
     const len = s_ => Math.floor(s_ / 60) + ':' + String(s_ % 60).padStart(2, '0');
     $('#wsList').innerHTML = p.items.map(i => { const k = i.section === 'music' ? ['SONG', ''] : i.section === 'ads' ? ['AD', 'a'] : ['JINGLE', 'j'];
       return `<div><span class="t">${new Date(i.t * 1000).toTimeString().slice(0, 5)}</span><span class="k ${k[1]}">${k[0]}</span><span class="w" title="${esc(i.folder)}">${esc(i.artist ? i.artist + ' – ' : '')}${esc(i.title)}</span><span class="l">${len(i.length)}</span></div>`; }).join('') +
-      (p.warnings.length ? p.warnings.map(w => `<div style="color:var(--o)">⚠ ${esc(w)}</div>`).join('') : '') +
+      p.warnings.map(w => `<div style="color:var(--o)">⚠ ${esc(w)}</div>`).join('') +
       '<div class="muted" style="border:0;font-size:11px">Songs are picked fresh when the hour comes – this is an example.</div>';
   }).catch(() => $('#wsList').innerHTML = '<div class="muted">Preview failed.</div>');
 }
+function wkUndoToast(msg) { toast(msg + ' · Undo: Ctrl+Z'); $('#wsUndo').hidden = false; }
+function wkSave(kind, cells, undo, msg) {
+  return post('plan/' + kind, {cells}).then(() => { WKUNDO = undo; wkUndoToast(msg); return wkLoad(); }).catch(e => toast(e.message, 1));
+}
+$$('#wsScope button').forEach(b => b.onclick = () => { if (b.disabled) return; WKSC = b.dataset.sc; $$('#wsScope button').forEach(x => x.classList.toggle('on', x === b)); });
+$('#wsApply').onclick = () => {
+  const v = +$('#wsClock').value; if (!v) return toast('Choose a clock first', 1);
+  const [di, h1, h2] = WKSEL, d = WK.days[di], hrs = d.hours.slice(h1, h2 + 1), when = `${hh(h1)}–${hh(h2 + 1)}`;
+  if (WKSC === 'date') {
+    const cells = hrs.map(x => ({date: d.date, hour: x.h, clock_id: v}));
+    const undo = ['set_schedule_date', hrs.map(x => ({date: d.date, hour: x.h, clock_id: x.via === 'date' ? x.clock_id : null}))];
+    wkSave('set_schedule_date', cells, undo, `Only ${DAYS[di]} ${fmtD(d.date)} ${when}: ${wkClock(v).name}`);
+  } else {
+    const cells = hrs.map(x => ({day: di, hour: x.h, clock_id: v}));
+    const undo = ['set_schedule', hrs.map(x => ({day: di, hour: x.h, clock_id: x.grid}))];
+    wkSave('set_schedule', cells, undo, `Every ${WFULL[di]} ${when}: ${wkClock(v).name}`);
+  }
+};
+$('#wsNormal').onclick = () => { const [di, h1, h2] = WKSEL, d = WK.days[di], hrs = d.hours.slice(h1, h2 + 1).filter(x => x.via === 'date');
+  wkSave('set_schedule_date', hrs.map(x => ({date: d.date, hour: x.h, clock_id: null})), ['set_schedule_date', hrs.map(x => ({date: d.date, hour: x.h, clock_id: x.clock_id}))], `${fmtD(d.date)} is back to the normal week`); };
+$('#wsShowSet').onclick = () => { const v = +$('#wsClock').value; const [di, h1] = WKSEL, s = wkShowAt(WK.days[di], h1); if (!s || !v) return toast('Choose a clock first', 1);
+  const prev = WK.days[di].hours[h1].show_clock;
+  post('plan/save_show_clocks', {map: {[s.title]: v}}).then(() => { WKUNDO = ['save_show_clocks', {[s.title]: prev}]; wkUndoToast(`Every hour of ${s.title}: ${wkClock(v).name}`); wkLoad(); }).catch(e => toast(e.message, 1)); };
+$('#wsShowOff').onclick = () => { const [di, h1] = WKSEL, s = wkShowAt(WK.days[di], h1); if (!s) return; const prev = WK.days[di].hours[h1].show_clock;
+  post('plan/save_show_clocks', {map: {[s.title]: null}}).then(() => { WKUNDO = ['save_show_clocks', {[s.title]: prev}]; wkUndoToast(`${s.title} follows the hour clocks again`); wkLoad(); }).catch(e => toast(e.message, 1)); };
+$('#wsCopy').onclick = () => { const di = WKSEL[0], to = $$('#wsCopyDays .on').map(b => +b.dataset.cd); if (!to.length) return toast('Choose the days to copy to', 1);
+  const src = WK.days[di].hours, cells = [], undo = [];
+  to.forEach(t => src.forEach(x => { cells.push({day: t, hour: x.h, clock_id: x.grid}); undo.push({day: t, hour: x.h, clock_id: WK.days[t].hours[x.h].grid}); }));
+  wkSave('set_schedule', cells, ['set_schedule', undo], `${WFULL[di]} copied to ${to.map(t => DAYS[t]).join(', ')}`); };
+function wkUndo() { if (!WKUNDO) return; const [k, data] = WKUNDO; WKUNDO = null; $('#wsUndo').hidden = true;
+  (k === 'save_show_clocks' ? post('plan/save_show_clocks', {map: data}) : post('plan/' + k, {cells: data})).then(() => { toast('Undone'); wkLoad(); }).catch(er => toast(er.message, 1)); }
+$('#wsUndo').onclick = wkUndo;
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'z' && WKUNDO && !$('#tab-wk').hidden && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); wkUndo(); } });
 $('#wsClose').onclick = () => { WKSEL = null; $('#wkSide').hidden = true; wkRender(); };
-$('#wsClock').onchange = () => { const [di, h] = WKSEL, v = +$('#wsClock').value;
-  post('plan/set_schedule', {cells: [{day: di, hour: h, clock_id: v}]}).then(() => { toast(`${WFULL[di]} ${hh(h)} now plays ${wkClock(v).name}`); wkLoad(); }).catch(e => toast(e.message, 1)); };
-$('#wsEdit').onclick = () => { const id = +$('#wsClock').value; $('.tab[data-tab="ck"]').click(); const c = CK.find(k => k.id === id); if (c) openCK(c); };
+$('#wsEdit').onclick = () => { const id = +$('#wsClock').value; if (!id) return; $('.tab[data-tab="ck"]').click(); const c = CK.find(k => k.id === id); if (c) openCK(c); };
 $('#wkPrev').onclick = () => { WKW--; wkLoad(); }; $('#wkNext').onclick = () => { WKW++; wkLoad(); }; $('#wkToday').onclick = () => { WKW = 0; wkLoad(); };
 wkLoad(); setInterval(() => { if (!$('#tab-wk').hidden && !document.hidden) wkLoad(); }, 120000);
 </script>
