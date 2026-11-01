@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T21:52:11",
+ "time": "2026-11-01T22:02:10",
  "result": "ok",
- "commit": "39d79fb4079ea489a9d70452ea2d5f40576a83bc",
- "subject": "Countdown songs held back: songs of a 'play exactly as listed' playlist stay out of the normal rotation from X min before its hour until Y min after it ended (Settings \u2192 Rotation, default 60/60)",
+ "commit": "3806c4d021625f94197824f7aef8afd934559098",
+ "subject": "Guest muted in Studio is also muted for the other guests (guest page mutes them within 2 s)",
  "log": [
-  "21:51:26 update 937b3914 \u2192 39d79fb4 \u00b7 3 file(s): engine/engine.py, engine/planner.py, web/panel/settings.html",
-  "21:51:26 restart hype-engine",
-  "21:52:11 installed OK \u00b7 restarted: hype-engine"
+  "22:01:24 update 39d79fb4 \u2192 3806c4d0 \u00b7 2 file(s): engine/engine.py, web/guest/index.html",
+  "22:01:25 restart hype-engine",
+  "22:02:10 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "ROA x Anuel AA \u2013 Vamo a Vel",
+  "song": "Davido x Mayorkun x FOLA \u2013 B4 B4",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
