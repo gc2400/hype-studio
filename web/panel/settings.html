@@ -87,7 +87,7 @@ table{border-collapse:collapse;width:100%}
 .hit{outline:2px solid var(--y);outline-offset:3px;border-radius:10px}
 
 /* slim scrollbars in the Hype colours */
-*{scrollbar-width:thin;scrollbar-color:#23496B transparent}
+@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:#23496B transparent}}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}
 ::-webkit-scrollbar-thumb{background:#23496B;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#05A9C6;background-clip:padding-box}
 ::-webkit-scrollbar-button{display:none;width:0;height:0}
