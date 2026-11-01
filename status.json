@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T16:52:06",
+ "time": "2026-11-01T16:54:11",
  "result": "ok",
- "commit": "f809b582034829fae90975742d6cc14b5a7eed3f",
- "subject": "Branding loop reload: OBS only reopens a file when the path text changes \u2013 use the same file under another spelling",
+ "commit": "09913d66348685f0dc7da4dc297f7386b89f947c",
+ "subject": "Guest card: CAM 1 | 2 | 3 | 4 as one long box on the same line as 'Show name' and 'Copy link'",
  "log": [
-  "16:51:21 update 9403f64c \u2192 f809b582 \u00b7 1 file(s): engine/engine.py",
-  "16:51:21 restart hype-engine",
-  "16:52:06 installed OK \u00b7 restarted: hype-engine"
+  "16:54:11 update f809b582 \u2192 09913d66 \u00b7 1 file(s): web/panel/index.html",
+  "16:54:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Yung Bredda \u2013 The Greatest Bend Over",
+  "song": "ISSAIRO X FRNKIE X D OPSS \u2013 SAKUDI",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
