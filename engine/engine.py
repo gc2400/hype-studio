@@ -1086,7 +1086,10 @@ class Engine:
         except Exception as e:      # not reachable (restarting …): nothing was sent, it stays first in Up next
             log.warning("queue %s – %s failed (%s): stays first in Up next", it.get("artist"), it.get("title"), e); return
         self.plan.pop(0); self.liq_next = it; it["pushed"] = time.time(); warm(c, it)
-        if it.get("event"):
+        if it.get("event"):    # a fixed-time item never goes out twice (a copy of the same event + file left in Up next goes)
+            ev_ = tuple(it["event"]); n_ = len(self.plan)
+            self.plan = [p_ for p_ in self.plan if not (p_.get("event") and tuple(p_["event"]) == ev_ and p_.get("path") == it.get("path"))]
+            if len(self.plan) < n_: log.info("removed %d copy(ies) of %s from Up next", n_ - len(self.plan), it.get("title"))
             try: c.execute("INSERT OR IGNORE INTO events_done VALUES(?,?)", it["event"]); c.commit()
             except Exception as e: log.warning("events_done: %s", e)
             if it.get("hour_T") and self.auto:
