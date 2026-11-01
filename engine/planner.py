@@ -260,8 +260,10 @@ def slots(c, cid):
 class ClockRunner:
     """Walks through the clock of the time each planned item will start in.
     Hour clocks start at the top every hour; 'resume' clocks (CLOSE show clocks) go on where they left off."""
-    def __init__(self):
+    def __init__(self, restore=None):
         self.key = None; self.st = {}; self.snap = None; self.jrun = 0; self.force_cid = None; self.skipped = []
+        self.pos = None          # (run key, clock, slot, left, first) after the last item this runner gave out
+        self.restore = restore   # the same, from the last item that really went on air (engine restart: go on from there)
         self.mix_key = None    # the clock run (hour/show) that already has its mixtape: one mix per run, the clock never goes round for a 2nd
     def _state(self, c, cid, resume):
         if cid not in self.st:
@@ -277,7 +279,12 @@ class ClockRunner:
         resume = bool(r_ and r_[0])   # show clocks (like CLOSE) go on where they left off; hour clocks start at the top
         if key != self.key:
             self.key = key
-            if not resume: self.st[cid] = [0, 0, True]
+            if not resume:
+                rs, self.restore = self.restore, None
+                n_sl = len(slots(c, cid))
+                if rs and list(rs[0]) == list(key) and rs[1] == cid and 0 <= rs[2] <= n_sl:
+                    self.st[cid] = [rs[2], rs[3], bool(rs[4])]     # same hour, same clock: on from where the radio was (not slot 1 again)
+                else: self.st[cid] = [0, 0, True]
             elif cid in self.st and self.st[cid][1] >= 10**6: self.st[cid][1] = 0; self.st[cid][0] += 1   # a "fill" slot ends with the hour
         st = self._state(c, cid, resume)
         sl = slots(c, cid)
@@ -306,6 +313,7 @@ class ClockRunner:
                 st[1] -= 1
                 if st[1] <= 0 or kind in ("song", "file", "jingle", "id", "showjingle"): st[0] += 1; st[1] = 0
                 self.snap = (cid, st[0], st[1], st[2]) if resume else None
+                self.pos = (list(key), cid, st[0], st[1], st[2])
                 c.commit(); return path
             st[0] += 1; st[1] = 0                                # slot empty / playlist finished: next slot
         return None
@@ -538,10 +546,15 @@ def clock_for(c, t):
         if r and r[0] and c.execute("SELECT 1 FROM clocks WHERE id=?", (r[0],)).fetchone(): return r[0]
     return _old_clock_for(c, t)
 
+def repeated_hour(t):
+    """True in the 2nd run of the hour that repeats when the clocks go back (e.g. the 2nd 02:00-03:00)."""
+    a, b = time.localtime(t), time.localtime(t - 3600)
+    return a.tm_hour == b.tm_hour and a.tm_yday == b.tm_yday
+
 def runner_key(t):
-    """A new clock run starts every hour and at every show change (e.g. 20:30)."""
+    """A new clock run starts every hour and at every show change (e.g. 20:30). (The repeated hour when the clocks go back counts as its own hour.)"""
     lt = time.localtime(t); s = show_at(t)
-    return (lt.tm_yday, lt.tm_hour, s["title"] if s else None, s["start"] if s else None)
+    return (lt.tm_yday, lt.tm_hour + (100 if repeated_hour(t) else 0), s["title"] if s else None, s["start"] if s else None)
 
 def api_shows(c):
     sc = dict(c.execute("SELECT title, clock_id FROM show_clocks").fetchall())
@@ -580,21 +593,20 @@ def api_save_events(c, d):
 
 def due_events(c, now, window_end):
     """Enabled events of today whose time falls between now-10 min and window_end, not done today.
-    Known limits (left on purpose - changing the events_done keys could re-fire events right after an update):
-    - the date is the one of `now`: a fixed "00:00" event is not seen from 23:59 (hour_events / pending_hour), so it
-      plays after the song on air at midnight instead of exactly at :00 ("*:00" events are fine);
-    - when the clocks go back (last Sunday of October) the repeated 02:00 hour has the same "%Y-%m-%d %H" key, so
-      its hourly events are skipped the second time."""
+    A fixed-time event of tomorrow (e.g. 00:00) is seen from late tonight, so it starts exactly at its time.
+    (The hour that repeats when the clocks go back has its own key "… 02 b": its hourly events run again.)"""
     lt = time.localtime(now); day = time.strftime("%Y-%m-%d", lt)
     out = []
+    H0 = int(now // 3600) * 3600       # hourly events: counted in real hours, so the repeated hour when the clocks go back gets its own run
     for e in api_events(c):
         if not e["enabled"]: continue
         hh, m = e["at"].split(":"); m = int(m)
-        hours = [lt.tm_hour, lt.tm_hour + 1] if hh == "*" else [int(hh)]
-        for h in hours:
-            t = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, h, m, 0, 0, 0, -1)); tl = time.localtime(t)
+        if hh == "*": ts = [H0 + m * 60, H0 + 3600 + m * 60]
+        else: ts = [time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday + d, int(hh), m, 0, 0, 0, -1)) for d in (0, 1)]   # (+ tomorrow: a 00:00 event is seen from 23:xx)
+        for t in ts:
+            tl = time.localtime(t)
             if str(tl.tm_wday) not in e["days"]: continue
-            key = time.strftime("%Y-%m-%d %H", tl) if hh == "*" else time.strftime("%Y-%m-%d", tl)
+            key = time.strftime("%Y-%m-%d %H", tl) + (" b" if repeated_hour(t) else "") if hh == "*" else time.strftime("%Y-%m-%d", tl)
             if now - 600 <= t <= window_end and not c.execute("SELECT 1 FROM events_done WHERE event_id=? AND day=?", (e["id"], key)).fetchone():
                 out.append(dict(e, t=t, day=key))
     return out

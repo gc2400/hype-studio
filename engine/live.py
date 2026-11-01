@@ -100,6 +100,8 @@ class Live:
             time.sleep(0.5)
             try: self.black_tick()
             except Exception as e: log.warning("cam black: %s", e)
+            try: self.guest_sweep()
+            except Exception as e: log.warning("guest sweep: %s", e)
     def black_tick(self):
         """Behind every camera there is a black box: a portrait phone camera shows upright on black (never stretched).
         It is only shown while that camera is sending - otherwise the CAM slate behind it shows, as before."""
@@ -140,13 +142,24 @@ class Live:
         g[slot] = {"name": (name or "Guest").strip()[:60], "token": secrets.token_urlsafe(16), "exp": time.time() + hours * 3600, "created": time.time(),
                    "mode": "audio" if mode == "audio" else "video"}
         save(GUESTS, {"guests": g}, 0o600); return slot, g[slot]
+    def new_studio_key(self):
+        """A new secret studio key (Settings → Live). Running connections keep going; pages pick the new key up when they reconnect."""
+        c = conf(); c["studio_key"] = secrets.token_urlsafe(18); save(LIVE_CONF, c, 0o600); log.info("new studio key made")
+    def guest_sweep(self):
+        """Every minute: a guest whose link has expired is disconnected (MediaMTX only checks a link when a connection starts)."""
+        now = time.time()
+        if now - getattr(self, "_gs_t", 0) < 60: return
+        self._gs_t = now; done = getattr(self, "_gs_done", set())
+        for slot, info in self.guests().items():
+            if info.get("exp", now + 1) < now and (slot, info.get("token")) not in done:
+                self.kick(slot); done.add((slot, info.get("token"))); log.info("guest link of %s expired – disconnected", info.get("name"))
+        self._gs_done = done
     def guest_remove(self, slot):
         g = self.guests(); g.pop(slot, None); save(GUESTS, {"guests": g}, 0o600)
         self.kick(slot)
     def kick(self, slot):
         """MediaMTX only checks a link when a connection starts: a removed guest is disconnected here (their camera/mic in their slot)."""
         try:
-            import urllib.request
             items = json.loads(urllib.request.urlopen("http://127.0.0.1:9997/v3/webrtcsessions/list", timeout=3).read()).get("items", [])
             for it in items:
                 if it.get("path") == slot and it.get("state") == "publish":

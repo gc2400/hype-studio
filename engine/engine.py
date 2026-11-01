@@ -143,6 +143,7 @@ ID_INTRO = {"on": True, "max": 3, "gap": 15}   # Settings → Mixing → ID over
 ID_FOLDER = "IDS"    # the IDs: /srv/hype/jingles/IDS
 ID_OFFSET, ID_DUCK = 0.4, 0.5   # the ID starts 0.4 s into the song; the (already soft) intro dips to 50 % under the voice
 PUSH_LEAD = 15.0      # the next item goes to Liquidsoap 15 s before the song on air ends (see push_next)
+CLOCK_POS = "/var/lib/hype/clock_pos.json"
 SNAPS_FILE = "/var/lib/hype/plan_snaps.json"; MINE_FILE = "/var/lib/hype/upnext_mine.json"
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
 LM_CACHE = {}
@@ -693,7 +694,10 @@ class TV:
 
 class Engine:
     def __init__(self):
-        self.liq = Liq(); self.picker = Picker(); self.tv = TV(); self.runner = planner.ClockRunner()
+        self.liq = Liq(); self.picker = Picker(); self.tv = TV()
+        try: rs = json.load(open(CLOCK_POS))        # after a restart: the hour clock goes on where the radio was, not from slot 1
+        except Exception: rs = None
+        self.runner = planner.ClockRunner(restore=rs)
         c0 = dbc(); planner.init(c0); planner.default_setup(c0); planner.init_overlays(c0); planner.init_shows(c0)
         planner.init_pads(c0); planner.init_screen(c0); self.screen = Screen()
         try: c0.execute("ALTER TABLE items ADD COLUMN mix_set INT DEFAULT 0"); c0.commit()    # 1 = MIX set by hand (smart mix leaves it alone)
@@ -816,7 +820,7 @@ class Engine:
     def plan_one(self, c):
         """Plan one more item at the end of Up next (refill's loop body). "stop" = nothing to plan."""
         if self.hour_events(c, self.cursor()): return      # a new hour starts with its :00 items (Top of the hour), then its clock
-        self.runner.snap = None
+        self.runner.snap = None; self.runner.pos = None
         hf = getattr(self, "hour_floor", 0)
         if hf and self.cursor() < hf and not any(p_.get("hour_T") == hf for p_ in self.plan + ([self.liq_next] if self.liq_next else [])):
             self.hour_floor = hf = 0      # its top of the hour isn't planned (any more): plan with the clock of the hour we are in
@@ -831,6 +835,7 @@ class Engine:
         finally: touched = planner.CTX.pop("touched", None)
         if it and touched: self.snaps.append((it["id"], {str(k): v for k, v in touched.items()}))
         if it and self.runner.snap: it["snap"] = self.runner.snap
+        if it and self.runner.pos: it["pos"] = self.runner.pos
         if it: it["hour_k"] = list(planner.runner_key(at))    # which clock run (hour / show) picked it - kept at the top of the hour
         if not it: it = self.picker.next(c, self.avoid())     # nothing in the clocks: built-in test clock
         if not it: return "stop"
@@ -1059,6 +1064,9 @@ class Engine:
         if it.get("snap"):   # a resume clock goes on after the last item that really went out
             try: planner.save_clock_state(c, *it["snap"])
             except Exception as e: log.warning("clock state: %s", e)
+        if it.get("pos"):    # an hour clock too, within its hour (read back after an engine restart)
+            try: jdump(it["pos"], CLOCK_POS)
+            except Exception as e: log.warning("clock pos: %s", e)
         ids = [s_[0] for s_ in self.snaps]
         if it.get("id") in ids: self.snaps = self.snaps[ids.index(it["id"]) + 1:]     # it goes on air: its songs are really used
         self.save_snaps()
@@ -2172,6 +2180,7 @@ class H(BaseHTTPRequestHandler):
                 elif a == "guest_vol": L.guest_vol(d["slot"], float(d.get("vol", 1)))
                 elif a == "rec_start": L.start_rec("manual")
                 elif a == "rec_stop": L.stop_rec()
+                elif a == "new_key": L.new_studio_key()
                 elif a == "restream": L.restream(d["key"], bool(d.get("on")))
                 elif a == "settings": L.settings(d)
                 else: return self.send(404, {"error": "unknown"})

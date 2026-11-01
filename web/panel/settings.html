@@ -183,6 +183,8 @@ table{border-collapse:collapse;width:100%}
       <div id="dests" style="display:flex;flex-direction:column;gap:8px"></div>
       <div class="row"><button class="btn sm" id="destAdd">+ Add</button><button class="btn sm yellow" id="destSave">Save restream</button></div>
       <p class="muted" style="margin:0">Use the RTMP address and stream key from YouTube Studio (Go live → Stream), Facebook Live Producer, Twitch, … Turn each one on or off in the panel; "with GO LIVE" starts it together with GO LIVE. The stream is sent as it is (no extra load on the server).</p>
+      <span class="lab" style="margin-top:6px">Studio key</span>
+      <div class="row" data-find="studio key security new key"><button class="btn sm" id="newKey">New studio key</button><span class="muted" id="newKeyT">The secret key the panel and Broadcast page use for the live streams. Make a new one if you think it leaked: running connections keep working, open pages use the new key when they reconnect.</span></div>
     </section>
     </div>
   </div>
@@ -375,6 +377,10 @@ $('#destAdd').onclick = () => { const p = prompt('Which one? youtube, facebook, 
 $('#destSave').onclick = () => { const dests = {};
   $$('#dests [data-k]').forEach(r => { const g = f => r.querySelector(`[data-f="${f}"]`); dests[r.dataset.k] = {name: g('name').value, url: g('url').value, key: g('key').value, with_live: g('with_live').checked}; });
   post('live/settings', {dests}).then(d => { LV = d; lvRender(); toast('Restream saved'); }); };
+$('#newKey').onclick = () => { const b = $('#newKey');
+  if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Sure? Click again'; b.classList.add('yellow'); setTimeout(() => { delete b.dataset.sure; b.textContent = 'New studio key'; b.classList.remove('yellow'); }, 4000); return; }
+  delete b.dataset.sure; b.textContent = 'New studio key'; b.classList.remove('yellow');
+  post('live/new_key', {}).then(d => { if (d.error) return toast(d.error); LV = d; toast('New studio key made'); }); };
 get('live').then(d => { LV = d; lvRender(); });
 </script>
 </body>

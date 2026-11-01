@@ -22,9 +22,10 @@ const HypeRTC = (() => {
       if (h.length) tr.setCodecPreferences([...h, ...o]);
     } catch (e) {}
   }
-  async function exchange(url, pc, fixAnswer) {
+  async function exchange(url, pc, fixAnswer, key) {
     await waitIce(pc);
-    const r = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/sdp'}, body: pc.localDescription.sdp});
+    // the key goes in a header (never in the address: addresses end up in logs)
+    const r = await fetch(url, {method: 'POST', headers: Object.assign({'Content-Type': 'application/sdp'}, key ? {'Authorization': 'Bearer ' + key} : {}), body: pc.localDescription.sdp});
     if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'not allowed (link or key not valid)' : 'server said ' + r.status);
     let sdp = await r.text(); if (fixAnswer) sdp = fixAnswer(sdp);    // the browser encodes what the ANSWER allows: stereo + bitrate must be in there
     await pc.setRemoteDescription({type: 'answer', sdp});
@@ -38,7 +39,7 @@ const HypeRTC = (() => {
       const st = o.stereo !== false;
       if (o.audioKbps) offer.sdp = opusSdp(offer.sdp, o.audioKbps, st);
       await pc.setLocalDescription(offer);
-      await exchange(`/live/${path}/whip?key=${encodeURIComponent(o.key || '')}`, pc, o.audioKbps ? (a => opusSdp(a, o.audioKbps, st)) : null);
+      await exchange(`/live/${path}/whip`, pc, o.audioKbps ? (a => opusSdp(a, o.audioKbps, st)) : null, o.key);
     } catch (e) { try { pc.close(); } catch (_) {} throw e; }
     // video adapts to the connection: on a weak line the browser lowers the resolution first and keeps the motion smooth
     pc.getSenders().forEach(s => { if (s.track && s.track.kind === 'video') { const p = s.getParameters(); p.encodings = p.encodings && p.encodings.length ? p.encodings : [{}];
@@ -65,7 +66,7 @@ const HypeRTC = (() => {
       const offer = await pc.createOffer();
       offer.sdp = opusSdp(offer.sdp, 256, true);        // receive in STEREO (without stereo=1 Chrome folds Opus down to mono)
       await pc.setLocalDescription(offer);
-      await exchange(`/live/${path}/whep?key=${encodeURIComponent(o.key || '')}`, pc);
+      await exchange(`/live/${path}/whep`, pc, null, o.key);
     } catch (e) { try { pc.close(); } catch (_) {} throw e; }
     return {pc, stream};
   }
