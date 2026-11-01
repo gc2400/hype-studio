@@ -159,3 +159,4 @@
 2026-11-01T22:02:10 ok 3806c4d0 Guest muted in Studio is also muted for the other guests (guest page mutes them within 2 s)
 2026-11-01T22:10:22 ok 71e81d27 Help page in Studio: the whole manual with contents, search and Print / PDF; Help in the menu
 2026-11-01T22:12:27 ok 22f5eb6b Help moved from the menu bar to Settings → Help
+2026-11-01T22:17:35 ok 706a48c8 DJ decks: STOP button and the same button order as the main player (… END · STOP · LOOP · NEXT); help updated

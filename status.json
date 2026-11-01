@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T22:12:27",
+ "time": "2026-11-01T22:17:35",
  "result": "ok",
- "commit": "22f5eb6bc726982fa9b0d93c8a6ee113b0939d34",
- "subject": "Help moved from the menu bar to Settings \u2192 Help",
+ "commit": "706a48c8c9a3e31f60ad964bf0e349749894cea2",
+ "subject": "DJ decks: STOP button and the same button order as the main player (\u2026 END \u00b7 STOP \u00b7 LOOP \u00b7 NEXT); help updated",
  "log": [
-  "22:12:27 update 71e81d27 \u2192 22f5eb6b \u00b7 10 file(s): web/panel/header.js, web/panel/help.html, web/panel/history.html, web/panel/hypelive.html, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/status/index.html",
-  "22:12:27 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "22:17:35 update 22f5eb6b \u2192 706a48c8 \u00b7 2 file(s): web/panel/help.html, web/panel/index.html",
+  "22:17:35 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Ryan Castro \u2013 BOTAPAFO",
+  "song": "Idaly x Ronnie Flex x Frenna \u2013 POPULAIR",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
