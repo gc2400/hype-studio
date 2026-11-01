@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T22:02:10",
+ "time": "2026-11-01T22:10:22",
  "result": "ok",
- "commit": "3806c4d021625f94197824f7aef8afd934559098",
- "subject": "Guest muted in Studio is also muted for the other guests (guest page mutes them within 2 s)",
+ "commit": "71e81d27816e67604ceb5935cd56913e8d7c6869",
+ "subject": "Help page in Studio: the whole manual with contents, search and Print / PDF; Help in the menu",
  "log": [
-  "22:01:24 update 39d79fb4 \u2192 3806c4d0 \u00b7 2 file(s): engine/engine.py, web/guest/index.html",
-  "22:01:25 restart hype-engine",
-  "22:02:10 installed OK \u00b7 restarted: hype-engine"
+  "22:10:22 update 3806c4d0 \u2192 71e81d27 \u00b7 10 file(s): web/panel/header.js, web/panel/help.html, web/panel/history.html, web/panel/hypelive.html, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/status/index.html",
+  "22:10:22 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Davido x Mayorkun x FOLA \u2013 B4 B4",
+  "song": "Rich Kalashh \u2013 Taurus",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },

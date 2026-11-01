@@ -157,3 +157,4 @@
 2026-11-01T20:21:34 ok 937b3914 Shows: half-hour shows (Fresh Out, Rewind Radio) show their hour plan
 2026-11-01T21:52:11 ok 39d79fb4 Countdown songs held back: songs of a 'play exactly as listed' playlist stay out of the normal rotation from X min before its hour until Y min after it ended (Settings → Rotation, default 60/60)
 2026-11-01T22:02:10 ok 3806c4d0 Guest muted in Studio is also muted for the other guests (guest page mutes them within 2 s)
+2026-11-01T22:10:22 ok 71e81d27 Help page in Studio: the whole manual with contents, search and Print / PDF; Help in the menu
