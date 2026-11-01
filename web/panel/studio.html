@@ -194,7 +194,7 @@ async function connect() {
     }
     // music back to the Mixcast USB fader
     const ma = new Audio(); ma.autoplay = true; document.body.appendChild(ma);
-    conns.music = HypeRTC.keep('music', async () => { const r = await HypeRTC.play('return', {key: KEY, bufferMs: 120}); /* short buffer: music in your headphones stays close to what goes out (was 300 ms) */ ma.srcObject = r.stream; if (ma.setSinkId && $('#dMusic').value) await ma.setSinkId($('#dMusic').value); ma.play().catch(() => {}); meterTo(r.stream, 'mMusic'); return r; }, setState);
+    conns.music = HypeRTC.keep('music', async () => { const r = await HypeRTC.play('return', {key: KEY, bufferMs: 250}); /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ ma.srcObject = r.stream; if (ma.setSinkId && $('#dMusic').value) await ma.setSinkId($('#dMusic').value); ma.play().catch(() => {}); meterTo(r.stream, 'mMusic'); return r; }, setState);
     toast('Studio connected – check the meters, then GO LIVE');
   } catch (e) { toast('Could not start: ' + e.message); disconnect(); }
 }

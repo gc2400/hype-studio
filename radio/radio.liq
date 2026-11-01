@@ -213,5 +213,8 @@ output.icecast(%mp3(bitrate=128, samplerate=44100, stereo=true), host="127.0.0.1
   url="https://www.hyperadio.nl", public=false, s)
 output.pulseaudio(device="hype_air", clock_safe=false, s)
 output.pulseaudio(device="hype_fx", clock_safe=false, fx)
-# music + jingles for the studio (Mixcast USB fader) – always the automation (unprocessed), also while LIVE
-output.pulseaudio(device="hype_return", clock_safe=false, ret)
+# music + jingles for the studio (Mixcast USB fader) – always the automation (unprocessed), also while LIVE.
+# Straight from Liquidsoap to MediaMTX "return" (Opus 256k): sample-exact timing. (Before: a Pulse capture, whose clock jitter
+# made the studio's player speed up / slow down and hiccup.)
+output.url(url="rtsp://127.0.0.1:8554/return",
+  %ffmpeg(format="rtsp", rtsp_transport="tcp", %audio(codec="libopus", b="256k", samplerate=48000, channels=2, application="audio", frame_duration=20)), ret)
