@@ -62,8 +62,8 @@ label.tg{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weig
 label.tg input{width:20px;height:20px;accent-color:var(--y)}
 .muted{color:var(--mut);font-size:13px}
 .plopts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.plopt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--deep);cursor:pointer}
-.plopt:hover{border-color:var(--line2)}.plopt:has(input:checked){border-color:var(--y);background:#14200F00;box-shadow:inset 0 0 0 1px var(--y)}
+.plopt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;background:var(--deep);cursor:pointer}
+.plopt:hover{background:var(--card2)}
 .plopt input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--y);flex:none}
 .plopt b{display:block;font-size:13px}.plopt small{display:block;font-size:11px;color:var(--mut);margin-top:2px;line-height:1.35}
 @media (max-width:700px){.plopts{grid-template-columns:1fr}}
@@ -289,7 +289,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
           <div class="muted" id="shEst" style="font-size:12px"></div>
           <div id="shSlots" class="shslots"></div>
           <div class="muted" style="font-size:11px">Drag ⋮⋮ to reorder · drag a block from "Add to the hour" to the place you want · hover a row for × · yellow rows are fixed times: they come into every show by themselves (Fixed times)</div>
-          <label class="tg" style="font-size:12px;line-height:1.4"><input type="checkbox" id="shResume"> Continue where it left off – the next hour goes on at the next row instead of starting at the top</label>
+          <label class="tg" style="font-size:12px;line-height:1.4"><input type="checkbox" id="shResume" autocomplete="off"> Continue where it left off – the next hour goes on at the next row instead of starting at the top</label>
           <div id="shPv" class="wkpl" hidden></div>
         </div>
         <div class="shadd">
@@ -314,9 +314,9 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
         <div class="row" style="gap:6px"><button class="btn yellow" id="plSave">Save</button><button class="btn" id="plReset" title="The next time it plays from 'where it left off', it starts at the top again">Start from the top</button><button class="btn sm red" id="plDel">Delete</button></div>
       </div>
       <div class="plopts">
-        <label class="plopt"><input type="checkbox" id="plLoop"><span><b>Loop</b><small>Start again at the end</small></span></label>
-        <label class="plopt"><input type="checkbox" id="plShuffle"><span><b>Randomize</b><small>Every song once per round</small></span></label>
-        <label class="plopt" title="One from AFRO, then LAT, then CARIB … With Randomize the order of the sources changes every round"><input type="checkbox" id="plRotate"><span><b>Rotation</b><small>Take turns: the amount from each source, then the next</small></span></label>
+        <label class="plopt"><input type="checkbox" id="plLoop" autocomplete="off"><span><b>Loop</b><small>Start again at the end</small></span></label>
+        <label class="plopt"><input type="checkbox" id="plShuffle" autocomplete="off"><span><b>Randomize</b><small>On: every song once per round, mixed · Off: plays in the order of the list</small></span></label>
+        <label class="plopt" title="One from AFRO, then LAT, then CARIB … With Randomize the order of the sources changes every round"><input type="checkbox" id="plRotate" autocomplete="off"><span><b>Rotation</b><small>Take turns: the amount from each source, then the next</small></span></label>
       </div>
       <span class="lab">What's in it</span>
       <div class="srcs" id="plSources"></div>
@@ -1044,7 +1044,7 @@ function shAddSlot(k) {
     : {kind: k, ref: k === 'playlist' ? String((PL[0] || {}).id || '') : k === 'id' ? 'IDS' : k === 'jingle' || k === 'showjingle' ? 'SWEEPERS' : '', amount: k === 'adbreak' ? 3 : 1, start: 'continue'};
 }
 function shSlots() {
-  if (!SHC) { $('#shSlots').innerHTML = '<span class="muted">No hour plan.</span>'; $('#shName').value = ''; return; }
+  if (!SHC) { $('#shSlots').innerHTML = '<span class="muted">No hour plan.</span>'; $('#shName').value = ''; $('#shResume').checked = false; return; }
   $('#shName').value = SHC.name; $('#shResume').checked = !!SHC.resume;
   const fixed = (SHW.week.events || []).filter(e => e.at[0] === '*');
   const amOpts = s => s.kind === 'adbreak' ? [1, 2, 3, 4, 5, 6].map(n => [n, n + ' spots']) : [[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [0, 'all'], [999, 'fill to the hour']];
