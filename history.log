@@ -114,3 +114,4 @@
 2026-11-01T16:52:06 ok f809b582 Branding loop reload: OBS only reopens a file when the path text changes – use the same file under another spelling
 2026-11-01T16:54:11 ok 09913d66 Guest card: CAM 1 | 2 | 3 | 4 as one long box on the same line as 'Show name' and 'Copy link'
 2026-11-01T17:01:22 ok 94dba2f7 Header: GO LIVE / END LIVE button (click twice) before REC; guest card: Copy link as a link icon; Settings: clear restream setup (platform buttons, labelled server + stream key, where to find the key)
+2026-11-01T17:07:15 ok e4903e51 Restream status: 'sending' only after 5 s without a drop; shows the reason when it can't reach the platform

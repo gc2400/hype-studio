@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T17:01:22",
+ "time": "2026-11-01T17:07:15",
  "result": "ok",
- "commit": "94dba2f79953f88416d44ed8e649abe450bdc2b4",
- "subject": "Header: GO LIVE / END LIVE button (click twice) before REC; guest card: Copy link as a link icon; Settings: clear restream setup (platform buttons, labelled server + stream key, where to find the key)",
+ "commit": "e4903e511a48e4bbaf44709bff73f7b717cade8e",
+ "subject": "Restream status: 'sending' only after 5 s without a drop; shows the reason when it can't reach the platform",
  "log": [
-  "17:01:22 update 09913d66 \u2192 94dba2f7 \u00b7 4 file(s): web/panel/header.js, web/panel/index.html, web/panel/settings.html, web/panel/studio.html",
-  "17:01:22 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "17:06:30 update 94dba2f7 \u2192 e4903e51 \u00b7 2 file(s): engine/live.py, web/panel/settings.html",
+  "17:06:30 restart hype-engine",
+  "17:07:15 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
   "song": "CLUB HYPE \u2013 DJ Ricsz Liveset 9 MID2025SEASON Mojo's Alkmaar",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
