@@ -284,7 +284,7 @@ class Live:
             "guests": {s: {"name": i["name"], "token": i["token"], "exp": i["exp"], "online": on(s), "vol": i.get("vol", 1.0), "mode": i.get("mode", "video")} for s, i in g.items()},
             "rec": {"since": self.rec["start"], "file": self.rec["file"], "ok": self.rec_alive()} if self.rec else None,
             "restream": {k: {"name": d["name"], "on": k in self.rest and not self.rest[k].stop_, "ok": k in self.rest and self.rest[k].healthy(),
-                             "err": (self.rest[k].err[-160:] if k in self.rest and not self.rest[k].healthy() else ""),
+                             "err": ((self.rest[k].err.replace(d["key"], "•••") if d.get("key") else self.rest[k].err)[-160:] if k in self.rest and not self.rest[k].healthy() else ""),   # (never the stream key)
                              "with_live": d.get("with_live"), "url": d["url"], "key": ("•" * 8) if d.get("key") else ""} for k, d in self.dests().items()},
             "studio_key": c["studio_key"]}
     def settings(self, d):
