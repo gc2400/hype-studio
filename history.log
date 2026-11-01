@@ -139,3 +139,4 @@
 2026-11-01T18:59:47 ok 63c88a61 Shows: search + own scroll in the list, colour dropdown, fewer air times (+more), Save/Preview in the hour plan card, drag blocks from Add to the hour; planning bar like Hype Live; fix duplicate shSave id
 2026-11-01T19:11:03 ok 49476979 Shows: yellow drop line between rows (before/after), jingle rows named by folder (LINER, SWEEP, NEW MUSIC, THROWBACK), hover on yellow buttons; Settings nav like Planning with search on the right, no emoji/subtexts
 2026-11-01T19:16:11 ok 7d3c95b5 Playlists styled like Shows (list items, Save/Delete in the card header, rows); Hype Live page same width as the other pages
+2026-11-01T19:18:17 ok 1f0a83a2 Hype Live page: load the clock font like the other pages
