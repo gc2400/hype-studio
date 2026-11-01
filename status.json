@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T15:03:28",
+ "time": "2026-11-01T15:25:58",
  "result": "ok",
- "commit": "fb71aa2fe7c96c2d64ab1aa3b228314d4f6b6f13",
- "subject": "Safety: a fixed-time item (e.g. the top of the hour) can never go out twice \u2013 a copy left in Up next is removed when it is queued",
+ "commit": "7610961c3f2ab3401bed29f96dc05336330b0362",
+ "subject": "DJ mode: waveform + smooth countdown per deck, MIX A/B and END buttons on the decks, the cued song stays on top of its deck list, deck lists with time and hover \u25b6 \u2191 \u2193 \u00d7, library rows only A/B",
  "log": [
-  "15:02:43 update afbd0cdd \u2192 fb71aa2f \u00b7 1 file(s): engine/engine.py",
-  "15:02:43 restart hype-engine",
-  "15:03:28 installed OK \u00b7 restarted: hype-engine"
+  "15:25:58 update fb71aa2f \u2192 7610961c \u00b7 1 file(s): web/panel/index.html",
+  "15:25:58 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "SECH x DARELL \u2013 OTRO TRAGO",
+  "song": "Usher \u2013 You Make Me Wanna...",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
