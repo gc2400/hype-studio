@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T00:44:34",
+ "time": "2026-11-01T01:22:06",
  "result": "ok",
- "commit": "1cdd800a6794670387dcc8fd263bde5fa0622800",
- "subject": "END LIVE: the TV goes back to auto scenes; Panel preview light by default (360p, no sound) so it hardly uses your internet while broadcasting - sound on switches to the full preview",
+ "commit": "009a212d85534c052dfb4c1f7cbdf136261c66eb",
+ "subject": "Pads: only the hover play icon; 'VOL' instead of 'Pads vol'; saved lower-third names can be removed (x on the button)",
  "log": [
-  "00:43:49 update 5da16e63 \u2192 1cdd800a \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
-  "00:43:49 restart hype-engine",
-  "00:44:34 installed OK \u00b7 restarted: hype-engine"
+  "01:21:21 update 1cdd800a \u2192 009a212d \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "01:21:21 restart hype-engine",
+  "01:22:06 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Fireboy DML \u2013 ONE MAN REGIMENT",
+  "song": "Karol G x Judeline x rusowsky \u2013 BbY WOW",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
