@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T19:18:17",
+ "time": "2026-11-01T19:20:21",
  "result": "ok",
- "commit": "1f0a83a2a94757c832aa4abf235df9196b698b92",
- "subject": "Hype Live page: load the clock font like the other pages",
+ "commit": "07ea8042214cd5c309dc638650765eee203503d2",
+ "subject": "Bump header.js version",
  "log": [
-  "19:18:16 update 7d3c95b5 \u2192 1f0a83a2 \u00b7 1 file(s): web/panel/hypelive.html",
-  "19:18:17 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:20:21 update 1f0a83a2 \u2192 07ea8042 \u00b7 9 file(s): web/panel/header.js, web/panel/history.html, web/panel/hypelive.html, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/status/index.html",
+  "19:20:21 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Quavo x Offset \u2013 Away",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
