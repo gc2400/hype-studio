@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T20:04:31",
+ "time": "2026-11-01T20:07:21",
  "result": "ok",
- "commit": "0f2dc5c4924909272c806b9727ad12c45c3bd14c",
- "subject": "Playlists: add items like on Shows \u2013 Add to the playlist column (Folder/Song/Jingles/Playlist + search), drag a result to the yellow line or click; rows with type tag, hover \u00d7",
+ "commit": "d422cb788b325c652548cfd25c58ea981e5ed208",
+ "subject": "Schedule: click the lower half of an hour to open a show that starts on the half hour (Fresh Out, Rewind Radio) and set its hour plan",
  "log": [
-  "20:04:31 update ee3e8a11 \u2192 0f2dc5c4 \u00b7 1 file(s): web/panel/plan.html",
-  "20:04:31 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:06:36 update 0f2dc5c4 \u2192 d422cb78 \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
+  "20:06:36 restart hype-engine",
+  "20:07:21 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Tyla \u2013 THAT GIRL",
+  "song": "Young Jonn \u2013 Elumelu",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },

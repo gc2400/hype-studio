@@ -149,3 +149,4 @@
 2026-11-01T19:52:26 ok 7798f8a4 Hit the end of a half-hour show (Top 10 → Fresh Out/Rewind at 20:30); no page jump between pages with and without scroll
 2026-11-01T20:01:24 ok ee3e8a11 Planning: Week is now Schedule, clocks are hour plans everywhere, All clocks tab hidden; short (half-hour) shows readable on the grid; in-order playlists play strictly in order (Top 10)
 2026-11-01T20:04:31 ok 0f2dc5c4 Playlists: add items like on Shows – Add to the playlist column (Folder/Song/Jingles/Playlist + search), drag a result to the yellow line or click; rows with type tag, hover ×
+2026-11-01T20:07:21 ok d422cb78 Schedule: click the lower half of an hour to open a show that starts on the half hour (Fresh Out, Rewind Radio) and set its hour plan
