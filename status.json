@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T18:53:37",
+ "time": "2026-11-01T18:59:47",
  "result": "ok",
- "commit": "fc0b39d4ef4d494f2ebced061a64124116d7e5d9",
- "subject": "Broadcast: guest cards stack on phones",
+ "commit": "63c88a61d2158313196d4a2037cbb07da69580fc",
+ "subject": "Shows: search + own scroll in the list, colour dropdown, fewer air times (+more), Save/Preview in the hour plan card, drag blocks from Add to the hour; planning bar like Hype Live; fix duplicate shSave id",
  "log": [
-  "18:53:37 update 7923c503 \u2192 fc0b39d4 \u00b7 1 file(s): web/panel/studio.html",
-  "18:53:37 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "18:59:47 update fc0b39d4 \u2192 63c88a61 \u00b7 1 file(s): web/panel/plan.html",
+  "18:59:47 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Bayanni x Jason Derulo \u2013 Ta Ta Ta",
+  "song": "Farruko X Marshmello \u2013 Esta Vida",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
