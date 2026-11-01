@@ -324,6 +324,13 @@ class ClockRunner:
         if kind in ("playlist", "folder"):
             pid = int(ref) if kind == "playlist" else folder_playlist_id(c, ref)
             left = (at // 3600 + 1) * 3600 - at
+            try:                                       # a show that ends on the half hour (Top 10 → Fresh Out 20:30): aim for its end
+                s_ = show_at(at)
+                if s_:
+                    lt_ = time.localtime(at); e_ = mins(s_["end"]) or 1440
+                    end_ = time.mktime((lt_.tm_year, lt_.tm_mon, lt_.tm_mday, 0, 0, 0, 0, 0, -1)) + e_ * 60
+                    if at < end_ < at + left: left = end_ - at
+            except Exception: pass
             CTX.update(at=at, fit=left if get_setting(c, "hit_hour", True) and 45 <= left <= 330 else None)
             try: path = take_from_playlist(c, pid, start if st[2] else "continue", ok)
             finally: CTX.update(at=None, fit=None)

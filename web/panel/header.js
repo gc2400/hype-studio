@@ -8,6 +8,7 @@
   const A = home ? 'bAuto' : 'hAuto', M = home ? 'bManual' : 'hManual';     // On Air binds its own buttons
   const st = document.createElement('style');
   st.textContent = `
+html{scrollbar-gutter:stable}
 #hhead{position:sticky;top:0;z-index:60;background:#061423;box-sizing:border-box;width:100%;padding:10px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;font-family:Inter,system-ui,sans-serif;color:#F2F6FA;border-bottom:1px solid #102A42}
 #hhead .hb{display:flex;align-items:center;gap:10px;flex:none}#hhead .hb img{width:40px;height:40px}
 #hhead .show{font-size:17px;font-weight:900;white-space:nowrap}
