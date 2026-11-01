@@ -1,19 +1,17 @@
 {
- "time": "2026-11-01T13:12:12",
+ "time": "2026-11-01T14:04:19",
  "result": "ok",
- "commit": "c97172699eb65bf8774e54a610706a0d1425495e",
- "subject": "Rename in the Library; History shows '+ ID' / '+ Sweeper' over the intro; paired clips wait at their cue point before showing",
+ "commit": "f77e785e667f88ca9cc46d61de9434abeb0508ca",
+ "subject": "Red buttons (STOP MEDIA, STOP PADS \u2026) light up on hover; Library: Upload + Filter stay together in the right corner",
  "log": [
-  "13:11:27 update 2021d147 \u2192 c9717269 \u00b7 4 file(s): engine/engine.py, engine/indexer.py, web/panel/history.html, web/panel/library.html",
-  "13:11:27 restart hype-indexer",
-  "13:11:27 restart hype-engine",
-  "13:12:12 installed OK \u00b7 restarted: hype-engine, hype-indexer"
+  "14:04:18 update c9717269 \u2192 f77e785e \u00b7 5 file(s): web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html",
+  "14:04:19 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Broederliefde \u2013 Proost",
+  "song": "Ryan Castro x J Balvin \u2013 UNA A LA VEZ",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },

@@ -91,3 +91,4 @@
 2026-11-01T04:12:40 ok 79df9e44 Clock position saved when an item really goes on air (a restart re-plans the queued one instead of skipping its slot)
 2026-11-01T04:20:36 ok 2021d147 Sound presets: × on every preset like the lower-third names (own = deleted, built-in = hidden, 'Show removed' brings them back)
 2026-11-01T13:12:12 ok c9717269 Rename in the Library; History shows '+ ID' / '+ Sweeper' over the intro; paired clips wait at their cue point before showing
+2026-11-01T14:04:19 ok f77e785e Red buttons (STOP MEDIA, STOP PADS …) light up on hover; Library: Upload + Filter stay together in the right corner
