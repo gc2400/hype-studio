@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T20:20:30",
+ "time": "2026-11-01T20:21:34",
  "result": "ok",
- "commit": "ec91b7f7218e2b10ef75cceb658dfbbee4308807",
- "subject": "Playlists: own option 'Play exactly as listed' (skips the separation rules, e.g. Top 10) instead of every in-order playlist; empty state on Playlists",
+ "commit": "937b3914789e983656ad30f217a46e1d03e189e5",
+ "subject": "Shows: half-hour shows (Fresh Out, Rewind Radio) show their hour plan",
  "log": [
-  "20:19:45 update 52213636 \u2192 ec91b7f7 \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
-  "20:19:45 restart hype-engine",
-  "20:20:30 installed OK \u00b7 restarted: hype-engine"
+  "20:21:33 update ec91b7f7 \u2192 937b3914 \u00b7 1 file(s): web/panel/plan.html",
+  "20:21:34 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Ronnie Flex x Carel x Djahboy \u2013 DOE",
+  "song": "Mr. P \u2013 I Can't Look Away",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },

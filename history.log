@@ -154,3 +154,4 @@
 2026-11-01T20:11:30 ok ef50ca4e Schedule: top half of a split hour selects only that show (Top 10 20:00–20:30)
 2026-11-01T20:12:34 ok 52213636 Playlist options without outlines, Randomize explains in-order; hour plan checkbox never shows a stale tick
 2026-11-01T20:20:30 ok ec91b7f7 Playlists: own option 'Play exactly as listed' (skips the separation rules, e.g. Top 10) instead of every in-order playlist; empty state on Playlists
+2026-11-01T20:21:34 ok 937b3914 Shows: half-hour shows (Fresh Out, Rewind Radio) show their hour plan
