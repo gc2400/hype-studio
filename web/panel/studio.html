@@ -65,7 +65,7 @@ details.sec{border:1px solid var(--line2);border-radius:12px;background:var(--de
 details.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 12px;flex-wrap:wrap}
 details.sec>summary::-webkit-details-marker{display:none}details.sec>summary::before{content:'▸';color:var(--mut);transition:transform .15s}details.sec[open]>summary::before{transform:rotate(90deg)}
 details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:column;gap:10px;padding:2px 12px 12px}
-.camcol{display:flex;flex-direction:column;gap:8px}.camsel{display:flex;align-items:center;gap:8px}.camsel b{font-size:13px;white-space:nowrap}
+.camcol{display:flex;flex-direction:column;gap:8px}.camrow{gap:8px}.camrow .lab{white-space:nowrap}.camsel{display:flex;align-items:center;gap:8px}.camsel b{font-size:13px;white-space:nowrap}
 .guest{grid-template-columns:150px 1fr!important}
 .camseg{display:inline-flex;flex:none;height:32px;border:1px solid var(--line2);border-radius:9px;overflow:hidden;background:var(--card2)}
 .camseg button{width:36px;border:0;background:transparent;color:var(--soft);font:inherit;font-size:13px;font-weight:800;cursor:pointer;padding:0}
@@ -96,14 +96,13 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
     <section class="card">
       <span class="lab">Your cameras</span>
       <div class="cams">
-        <div class="camcol"><div class="vbox"><video id="vCam1" muted playsinline autoplay></video><span class="ph" id="phCam1">Camera 1: choose your USB cam below</span></div><label class="camsel"><b>Camera 1</b><select id="dCam1"></select></label></div>
-        <div class="camcol"><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div><label class="camsel"><b>Camera 2</b><select id="dCam2"></select></label></div></div>
+        <div class="camcol"><div class="vbox"><video id="vCam1" muted playsinline autoplay></video><span class="ph" id="phCam1">Camera 1: choose your USB cam below</span></div><label class="camsel"><b>Camera 1</b><select id="dCam1"></select></label><div class="row camrow"><span class="lab">On TV in</span><div class="camseg" data-src="cam1" role="group" aria-label="Studio cam 1 on TV in"></div></div></div>
+        <div class="camcol"><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div><label class="camsel"><b>Camera 2</b><select id="dCam2"></select></label><div class="row camrow"><span class="lab">On TV in</span><div class="camseg" data-src="cam2" role="group" aria-label="Studio cam 2 on TV in"></div></div></div></div>
     </section>
   <section class="card">
     <div class="row between"><span class="lab">Guests <span class="muted" style="text-transform:none;letter-spacing:0">· max. 6 · they join with a link (no app)</span></span>
       <div class="row"><input type="text" id="gName" placeholder="Guest name, e.g. DJ Kim" style="width:180px"><select id="gMode" style="width:150px" aria-label="Video or audio only"><option value="video">Video + sound</option><option value="audio">Audio only</option></select><button class="btn yellow" id="gAdd">+ Invite</button></div></div>
     <div id="guests" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div class="row" style="gap:10px"><span class="muted">Which camera / guest is in CAM 1 · 2 · 3 · 4 of the scenes:</span><div class="row" id="camSlots"></div></div>
     <span class="muted" style="font-size:12px">Guests' video and sound adjust to their own internet automatically (a weak line gets a lower picture, the voice stays clear). Scenes and lower thirds: the panel, LIVE mode.</span>
   </section>
   </div>
@@ -268,14 +267,14 @@ function renderGuests(force) {
       <div style="min-width:0;display:flex;flex-direction:column;gap:7px">
         <div class="row" style="gap:6px;flex-wrap:nowrap"><b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px">${esc(g.name)}</b><span class="chip ${g.online ? 'ok' : ''}">${g.online ? 'online' : 'not joined'}</span><span class="chip">${g.mode === 'audio' ? '☎ audio' : '🎥 video'}</span>
           <span class="row" style="gap:5px;margin-left:auto;flex-wrap:nowrap"><button class="btn sm ic" data-copy="${s}" title="Copy the guest link" aria-label="Copy the link of ${esc(g.name)}">${ICL}</button><a class="btn sm ic wa" target="_blank" rel="noopener" title="Send the link by WhatsApp" aria-label="Send the link of ${esc(g.name)} by WhatsApp" href="https://wa.me/?text=${encodeURIComponent('Join Hype Radio TV live: ' + guestLink(g) + ' (use headphones)')}">${IWA}</a><button class="btn sm red ic" data-rm="${s}" title="Remove guest" aria-label="Remove ${esc(g.name)}">×</button></span></div>
-        <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="lab" style="color:var(--mut)">CAM</span><div class="camseg" role="group" aria-label="Camera slot of ${esc(g.name)}">${['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'].map(c => `<button class="${cam && cam[0] === c ? 'on' : ''}" data-gcam="${c}" data-gs="${s}" title="Show ${esc(g.name)} in ${c}">${c.slice(4)}</button>`).join('')}</div></div>
+        <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="lab" style="color:var(--mut)">On TV in</span><div class="camseg" data-src="${s}" role="group" aria-label="${esc(g.name)} on TV in"></div></div>
         <label class="gvol"><span class="lab" style="width:auto;color:var(--mut)">VOL</span><input type="range" min="0" max="2" step="0.01" value="${g.vol == null ? 1 : g.vol}" data-gvol="${s}" aria-label="Volume of ${esc(g.name)}"><span class="mono" data-gvl="${s}">${Math.round(100 * (g.vol == null ? 1 : g.vol))}%</span></label></div></div>`; }).join('')
       || '<span class="muted">No guests yet. Type a name and press + Invite guest – you get a link to send (WhatsApp). Audio-only guests can also call in by phone over the Mixcast Bluetooth.</span>';
     $$('[data-gvol]').forEach(i => { let t; i.oninput = () => { const s = i.dataset.gvol; $(`[data-gvl="${s}"]`).textContent = Math.round(i.value * 100) + '%'; GV_LOCAL[s] = {v: +i.value, t: Date.now()}; applyVol(); clearTimeout(t); t = setTimeout(() => post('live/guest_vol', {slot: s, vol: +i.value}), 150); }; i.ondblclick = () => { i.value = 1; i.oninput(); }; });
-    $$('[data-gcam]').forEach(b => b.onclick = () => post('live/cam', {cam: b.dataset.gcam, src: b.dataset.gs}).then(d => { L = d; renderGuests(true); renderSlots(); toast(G[b.dataset.gs].name + ' in ' + b.dataset.gcam); }));
     $$('[data-copy]').forEach(b => b.onclick = () => { navigator.clipboard.writeText(guestLink(G[b.dataset.copy])).then(() => toast('Link copied')); });
     $$('[data-rm]').forEach(b => b.onclick = () => { if (confirm('Remove this guest? Their link stops working.')) post('live/guest_remove', {slot: b.dataset.rm}).then(refresh); });
     Object.keys(guestEls).forEach(s => { if (!G[s] || !G[s].online) dropGuest(s); });
+    renderSlots();
     // the list was drawn again: the guests that stay give their picture to the new video (their sound never stops)
     Object.entries(guestEls).forEach(([s, E]) => { if (E.stream) showGuest(s, E.stream); });
   }
@@ -309,10 +308,10 @@ function applyVol() {
     const inp = document.querySelector(`[data-gvol="${s}"]`); if (inp && !(loc && Date.now() - loc.t < 4000) && document.activeElement !== inp) { inp.value = v; const l = document.querySelector(`[data-gvl="${s}"]`); if (l) l.textContent = Math.round(v * 100) + '%'; } });
 }
 // ---------- camera slots ----------
-function renderSlots() {
-  const srcs = L.sources;
-  $('#camSlots').innerHTML = ['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'].map(c => `<label class="row" style="gap:6px"><b style="font-size:13px">${c}</b><select data-cam="${c}" style="width:190px">${Object.entries(srcs).map(([k, v]) => `<option value="${k}" ${L.cams[c] === k ? 'selected' : ''}>${esc(v.name || k)}${v.online ? ' ●' : ''}</option>`).join('')}</select></label>`).join('');
-  $$('[data-cam]').forEach(s => s.onchange = () => post('live/cam', {cam: s.dataset.cam, src: s.value}).then(d => { L = d; toast(s.dataset.cam + ' = ' + s.options[s.selectedIndex].text); }).catch(e => toast(e.message)));
+function renderSlots() {      // every source (studio cams, guests) has the same CAM 1|2|3|4 box – from the server's list, so it always matches the LIVE panel
+  const C = (L && L.cams) || {}, K = ['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'];
+  $$('.camseg[data-src]').forEach(box => { const src = box.dataset.src, h = K.map(c => `<button class="${C[c] === src ? 'on' : ''}" data-c="${c}" title="${c}">${c.slice(4)}</button>`).join('');
+    if (box.innerHTML !== h) { box.innerHTML = h; box.querySelectorAll('[data-c]').forEach(b => b.onclick = () => post('live/cam', {cam: b.dataset.c, src}).then(d => { L = d; renderSlots(); toast(b.dataset.c + ' = ' + (((L.sources || {})[src] || {}).name || src)); })); } });
 }
 
 // ---------- connection health (what the browser really sends) ----------
@@ -349,7 +348,7 @@ function render() {
   $('#airDrops').hidden = !L.live; $('#airDrops').textContent = L.drops ? L.drops + ' drop-out' + (L.drops > 1 ? 's' : '') + ' this show' : 'no drop-outs'; $('#airDrops').className = 'chip ' + (L.drops ? 'wait' : 'ok');
   if (document.activeElement !== $('#qSync')) { $('#qSync').value = L.lip_sync || 0; $('#qSyncV').textContent = (L.lip_sync > 0 ? '+' : '') + (L.lip_sync || 0) + ' ms'; }
   $('#stRec').textContent = L.rec ? 'REC ● ' + L.rec.file : 'REC off'; $('#stRec').className = 'chip ' + (L.rec ? 'bad' : '');
-  if (!$('#camSlots').dataset.done || document.activeElement.tagName !== 'SELECT') { renderSlots(); $('#camSlots').dataset.done = 1; }
+  renderSlots();
   renderGuests();
 }
 $('#qSync').oninput = () => { const v = +$('#qSync').value; $('#qSyncV').textContent = (v > 0 ? '+' : '') + v + ' ms'; };
