@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T14:08:26",
+ "time": "2026-11-01T14:18:25",
  "result": "ok",
- "commit": "b06ee6d6e55c644e77cec4740b01e404df1102d6",
- "subject": "Library: Upload + Filter next to the search bar (icons only on phones)",
+ "commit": "277b5e62051b1ea49c04406dde0de0d30d441b8d",
+ "subject": "Fix: a queued item without a clock position kept its own data at song start (ID over intro, source) \u2013 the clock-position change had taken its else branch",
  "log": [
-  "14:08:26 update f77e785e \u2192 b06ee6d6 \u00b7 1 file(s): web/panel/library.html",
-  "14:08:26 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:17:39 update b06ee6d6 \u2192 277b5e62 \u00b7 1 file(s): engine/engine.py",
+  "14:17:39 restart hype-engine",
+  "14:18:25 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Tyla x Tony Duardo x Optimist Music ZA x Ez Maestro \u2013 SHAKE AH",
+  "song": "Dongo x Jeon \u2013 Marido Y Mujer",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },

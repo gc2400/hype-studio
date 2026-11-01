@@ -93,3 +93,4 @@
 2026-11-01T13:12:12 ok c9717269 Rename in the Library; History shows '+ ID' / '+ Sweeper' over the intro; paired clips wait at their cue point before showing
 2026-11-01T14:04:19 ok f77e785e Red buttons (STOP MEDIA, STOP PADS …) light up on hover; Library: Upload + Filter stay together in the right corner
 2026-11-01T14:08:26 ok b06ee6d6 Library: Upload + Filter next to the search bar (icons only on phones)
+2026-11-01T14:18:25 ok 277b5e62 Fix: a queued item without a clock position kept its own data at song start (ID over intro, source) – the clock-position change had taken its else branch
