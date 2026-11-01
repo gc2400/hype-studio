@@ -148,7 +148,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .ptabs .tab:hover{color:var(--txt);border-color:var(--line2)}
 .ptabs .tab.on{background:var(--b);color:var(--bg);border-color:var(--b)}
 .wkctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.wkctl b{font-size:13px;font-weight:800;min-width:0;padding:0 4px}
-.seg.sm button{min-height:30px;font-size:12px}
+.seg.sm{flex:none}.seg.sm button{flex:none;min-height:32px;font-size:12px;padding:0 14px;white-space:nowrap}
 .btn.sq{min-width:30px;justify-content:center;padding:0}.btn.x44{min-width:44px;min-height:44px;justify-content:center;font-size:18px}.btn.grow{flex:1;justify-content:center}
 .btn.ghosty{background:transparent;border-color:var(--y);color:var(--y)}
 .wklegend{font-size:12px}
@@ -385,7 +385,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
   <!-- RECORDINGS -->
     <section id="tab-rc" hidden>
     <div class="card" style="display:flex;flex-direction:column;gap:10px">
-      <div class="row between"><span class="lab">Recordings · the show is recorded by itself</span><button class="btn sm yellow" id="arSave">Save</button></div>
+      <div class="row between"><span class="lab">Recordings · the show is recorded by itself</span><button class="btn yellow" id="arSave">Save</button></div>
       <p class="muted" style="margin:0" data-find="auto recording record show schedule replay podcast">Recordings go to the Library → <b>Recordings</b> (also <b>music/MIXES/Recordings</b> in WinSCP): the TV picture as .mp4 and the radio as .mp3, named <i>date time name</i>. <b>Show</b> = while that show is on air (website schedule). <b>Day + time</b> = your own window (an end before the start runs over midnight). A recording you start yourself (REC / GO LIVE) always wins, and if you stop an automatic one with REC it stays off until its window ends.</p>
       <div id="arRules" class="arrules"></div>
       <div class="row"><button class="btn sm" id="arAdd">+ Add recording</button><span class="muted" id="arNow" style="font-size:12px"></span></div>
@@ -1058,7 +1058,8 @@ $('#shPrev').onclick = () => { if (!SHC || !SHC.id) return toast('Save first', 1
       p.items.map(i => `<li><span class="t">${new Date(i.t * 1000).toTimeString().slice(0, 5)}</span><span class="k" style="${i.section === 'music' ? '' : 'background:#1E1438;color:#B9A2FF'}">${i.section === 'music' ? 'SONG' : 'JINGLE'}</span><span class="w">${esc(i.artist ? i.artist + ' – ' : '')}${esc(i.title)}</span><span class="l">${len(i.length)}</span></li>`).join('') + p.warnings.map(w => `<li style="color:var(--o)">⚠ ${esc(w)}</li>`).join(''); }).catch(() => box.innerHTML = '<li class="muted">Preview failed.</li>'); };
 $('#shCopy').onclick = () => { if (!SHC) return; const n = prompt('Name for the copy:', SHC.name + ' copy'); if (!n) return; const c = {...JSON.parse(JSON.stringify(SHC)), id: null, name: n};
   post('plan/save_clock', c).then(r => { toast('Copy made'); SHSEL = {clock: r.id}; shLoad(); }).catch(e => toast(e.message, 1)); };
-$('#shDel').onclick = () => { if (!SHC || !SHC.id) return; if (!confirm('Delete hour plan "' + SHC.name + '"? Hours that use it fall back to the first clock.')) return;
+$('#shDel').onclick = () => { if (!SHC || !SHC.id) return; const use = []; SHW.week.days.forEach((d, di) => d.hours.forEach(x => { if (x.grid === SHC.id) use.push(DAYS[di] + ' ' + hh(x.h)); }));
+  if (!confirm('Delete hour plan "' + SHC.name + '"?' + (use.length ? '\n\nIt is planned on: ' + use.slice(0, 12).join(', ') + (use.length > 12 ? ' …' : '') + '.\nChoose another plan for those hours on the Week page (they show a red warning until you do).' : ''))) return;
   post('plan/delete_clock', {id: SHC.id}).then(() => { toast('Deleted'); SHSEL = null; shLoad(); }).catch(e => toast(e.message, 1)); };
 $('#shNew').onclick = () => { const n = prompt('Name of the new hour plan:'); if (!n) return;
   post('plan/save_clock', {id: null, name: n, color: '#05A9C6', resume: false, slots: [{kind: 'showjingle', ref: 'SWEEPERS', amount: 1, start: 'continue'}, {kind: 'playlist', ref: String((PL[0] || {}).id || ''), amount: 999, start: 'continue'}]}).then(r => { SHSEL = {clock: r.id}; shLoad(); }).catch(e => toast(e.message, 1)); };

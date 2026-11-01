@@ -927,6 +927,10 @@ def api_week(c, w=0):
     for i in range(168):
         t = H0 + i * 3600; cid, _via = _clock_of(c, t)
         if not cid: add("noclock", "warn", "No clock planned – nothing to play.", t); continue
+        if _via == "grid":
+            lt_ = time.localtime(t); g_ = c.execute("SELECT clock_id FROM schedule WHERE day=? AND hour=?", (lt_.tm_wday, lt_.tm_hour)).fetchone()
+            if not (g_ and g_[0] and c.execute("SELECT 1 FROM clocks WHERE id=?", (g_[0],)).fetchone()):
+                add(("empty", lt_.tm_wday, lt_.tm_hour), "bad", f"No hour plan chosen for this hour – {clocks.get(cid, {}).get('name', 'the first plan')} plays instead. Click the hour and choose one.", t, cid)
         cn = clocks.get(cid, {}).get("name", f"#{cid}")
         for kind, ref, amount in c.execute("SELECT kind, ref, amount FROM clock_slots WHERE clock_id=? ORDER BY pos", (cid,)).fetchall():
             if kind == "playlist" and str(ref).isdigit():
