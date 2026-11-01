@@ -39,7 +39,7 @@ h1{margin:0;font-size:20px;font-weight:900}
 @media (max-width:600px){.arr input[type=text]{width:100%}.arr .x{margin-left:0}}
 #plEdit,#ckEdit{scroll-margin-top:130px}
 @media (max-width:759px){.split > .side > .list{max-height:46vh;overflow-y:auto}.split > .side,.split > .main{max-width:none;flex:1 1 100%}}
-@media (max-width:700px){.tabs{gap:2px}.tab{flex:1 1 auto;min-height:36px;font-size:11px;letter-spacing:.03em;white-space:nowrap;padding:0 10px}}
+@media (max-width:700px){.ptabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.ptabs::-webkit-scrollbar{display:none}}
 .split{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
 .side{flex:1 1 260px;max-width:340px}.main{flex:999 1 560px;min-width:0}
 .list{display:flex;flex-direction:column;gap:4px}
@@ -142,14 +142,13 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .wkpl .l{font:500 11px 'JetBrains Mono',monospace;color:var(--mut)}
 
 /* ---- page tabs (concept style) ---- */
-.ptabs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:2px 0 12px;border-bottom:1px solid var(--line)}
-.ptabs .tab,.mbtn{cursor:pointer;flex:none;min-height:38px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--mut);font:700 13px Inter,system-ui,sans-serif;letter-spacing:0;padding:0 14px}
-.ptabs .tab:hover,.mbtn:hover{color:var(--txt);border-color:var(--line2)}
-.ptabs .tab.on,.mbtn.on{background:var(--b);color:var(--bg);border-color:var(--b);font-weight:800}
-.more{position:relative}.mmenu{position:absolute;top:44px;left:0;z-index:40;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:2px;min-width:200px;box-shadow:0 12px 30px rgba(0,0,0,.4)}
-.mmenu[hidden]{display:none}.mmenu .tab{text-align:left;width:100%}
-.wkctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.wkctl b{font-size:14px;font-weight:800;min-width:150px;text-align:center}
-.btn.sq{min-width:38px;justify-content:center;padding:0}.btn.x44{min-width:44px;min-height:44px;justify-content:center;font-size:18px}.btn.grow{flex:1;justify-content:center}
+.ptabs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:10px 16px;margin:0 -14px;border-bottom:1px solid var(--line)}
+.ptabs .tab{cursor:pointer;flex:none;min-height:0;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--mut);font:700 13px Inter,system-ui,sans-serif;letter-spacing:0;padding:8px 12px;white-space:nowrap}
+.ptabs .tab:hover{color:var(--txt);border-color:var(--line2)}
+.ptabs .tab.on{background:var(--b);color:var(--bg);border-color:var(--b)}
+.wkctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.wkctl b{font-size:13px;font-weight:800;min-width:0;padding:0 4px}
+.seg.sm button{min-height:30px;font-size:12px}
+.btn.sq{min-width:30px;justify-content:center;padding:0}.btn.x44{min-width:44px;min-height:44px;justify-content:center;font-size:18px}.btn.grow{flex:1;justify-content:center}
 .btn.ghosty{background:transparent;border-color:var(--y);color:var(--y)}
 .wklegend{font-size:12px}
 /* ---- shows ---- */
@@ -191,30 +190,27 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 <body>
 <div class="wrap">
   <header id="hhead"></header><script src="/panel/header.js?v=1793552703"></script>
-  <div class="ptabs" role="tablist">
+  <nav class="ptabs" role="tablist" aria-label="Planning">
     <button class="tab on" data-tab="wk" role="tab">Week</button>
     <button class="tab" data-tab="sh" role="tab">Shows</button>
     <button class="tab" data-tab="pl" role="tab">Playlists</button>
+    <button class="tab" data-tab="fx" role="tab">Fixed times</button>
     <button class="tab" data-tab="ad" role="tab">Ads</button>
-    <span class="more"><button class="mbtn" id="moreBtn" type="button" aria-haspopup="true" aria-expanded="false">More ▾</button>
-      <span class="mmenu" id="moreMenu" hidden>
-        <button class="tab" data-tab="fx" role="tab">Fixed times</button>
-        <button class="tab" data-tab="ov" role="tab">Intro sweepers</button>
-        <button class="tab" data-tab="os" role="tab">On screen</button>
-        <button class="tab" data-tab="rc" role="tab">Recordings</button>
-        <button class="tab" data-tab="ck" role="tab">All clocks (table)</button>
-        <button class="tab" data-tab="sc" role="tab" hidden>Schedule</button>
-      </span></span>
-    <span style="flex:1"></span>
-    <span class="wkctl" id="wkCtl">
-      <button class="btn sq" id="wkPrev" aria-label="Previous week">◀</button><b id="wkLbl"></b><button class="btn sq" id="wkNext" aria-label="Next week">▶</button>
-      <button class="btn sm" id="wkToday">Today</button>
-      <span class="seg" id="wsScope" role="group" aria-label="What you change"><button type="button" data-sc="week" class="on">Normal week</button><button type="button" data-sc="date">Only this week</button></span>
-    </span>
-  </div>
+    <button class="tab" data-tab="ov" role="tab">Intro sweepers</button>
+    <button class="tab" data-tab="os" role="tab">On screen</button>
+    <button class="tab" data-tab="rc" role="tab">Recordings</button>
+    <button class="tab" data-tab="ck" role="tab">All clocks</button>
+    <button class="tab" data-tab="sc" role="tab" hidden>Schedule</button>
+  </nav>
 
   <!-- WEEK -->
   <section id="tab-wk">
+    <div class="wkctl" id="wkCtl">
+      <button class="btn sm sq" id="wkPrev" aria-label="Previous week">◀</button><b id="wkLbl"></b><button class="btn sm sq" id="wkNext" aria-label="Next week">▶</button>
+      <button class="btn sm" id="wkToday">Today</button>
+      <span style="flex:1"></span>
+      <span class="seg sm" id="wsScope" role="group" aria-label="What you change"><button type="button" data-sc="week" class="on">Normal week</button><button type="button" data-sc="date">Only this week</button></span>
+    </div>
     <div class="wkwarn" id="wkWarn"></div>
     <div class="muted wklegend">Click an hour or drag over hours · <b style="color:var(--y)">MIX</b> own mix folder · <b style="color:var(--b)">1×</b> only that date · show names and times come from your website · every hour: <span id="wkEv"></span></div>
     <div class="wkmain">
@@ -266,11 +262,11 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
           <div id="shPv" class="wkpl" hidden></div>
         </div>
         <div class="shadd">
-          <span class="lab" style="padding:0 4px">Add to the hour</span>
-          <div id="shAdd" style="display:flex;flex-direction:column;gap:8px"></div>
-          <label class="tg" style="font-size:12px;margin-top:4px"><input type="checkbox" id="shResume"> Goes on where it left off (CLOSE style)</label>
-          <div class="row" style="margin-top:6px"><button class="btn yellow grow" id="shSave">Save hour plan</button><button class="btn grow" id="shPrev">Preview hour</button></div>
+          <div class="row"><button class="btn yellow grow" id="shSave">Save hour plan</button><button class="btn grow" id="shPrev">Preview hour</button></div>
           <div class="row"><button class="btn sm grow" id="shCopy">Duplicate</button><button class="btn sm red grow" id="shDel">Delete</button></div>
+          <label class="tg" style="font-size:12px;line-height:1.4"><input type="checkbox" id="shResume"> Continue where it left off – the next hour goes on at the next row instead of starting at the top</label>
+          <span class="lab" style="padding:4px 4px 0">Add to the hour</span>
+          <div id="shAdd" style="display:flex;flex-direction:column;gap:8px"></div>
         </div>
       </div>
     </div>
@@ -289,7 +285,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
       <div class="row" style="gap:20px">
         <label class="tg"><input type="checkbox" id="plLoop"> Loop (start again at the end)</label>
         <label class="tg"><input type="checkbox" id="plShuffle"> Randomize (every song once per round)</label>
-        <label class="tg" title="Like CLOSE POWER: one from AFRO, then LAT, then CARIB … Randomize = new order of the sources every round"><input type="checkbox" id="plRotate"> Rotation (take turns: the amount from each source, then the next)</label>
+        <label class="tg" title="One from AFRO, then LAT, then CARIB … Randomize = new order of the sources every round"><input type="checkbox" id="plRotate"> Rotation (take turns: the amount from each source, then the next)</label>
       </div>
       <span class="lab">What's in it</span>
       <div class="srcs" id="plSources"></div>
@@ -325,7 +321,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
         <label class="muted" style="display:flex;flex-direction:column;gap:6px;flex:1">Name<input type="text" id="ckName" placeholder="e.g. Clock A"></label>
         <label class="muted" style="display:flex;flex-direction:column;gap:6px">Colour<input type="color" id="ckColor" style="width:60px;height:40px;border:0;background:none;padding:0"></label>
       </div>
-      <label class="row" style="gap:8px;font-size:13px"><input type="checkbox" id="ckResume" style="width:20px;height:20px;accent-color:var(--y)"><span><b>Goes on where it left off</b> (like CLOSE): the next hour continues with the next slot. Off = the clock starts at slot 1 every hour.</span></label>
+      <label class="row" style="gap:8px;font-size:13px"><input type="checkbox" id="ckResume" style="width:20px;height:20px;accent-color:var(--y)"><span><b>Continue where it left off</b>: the next hour continues with the next slot. Off = the clock starts at slot 1 every hour.</span></label>
       <div style="overflow-x:auto">
       <table class="slots">
         <thead><tr><th>#</th><th>Type</th><th>Which</th><th>How many</th><th>Start</th><th></th></tr></thead>
@@ -334,7 +330,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
       </div>
       <div class="row"><button class="btn sm" id="slotAdd">+ Add slot</button><span class="muted" id="ckSum"></span></div>
       <div class="row between"><div class="row"><button class="btn yellow" id="ckSave">Save</button><button class="btn" id="ckPrev" data-pv="1">👁 Preview an hour</button></div><button class="btn red" id="ckDel">Delete</button></div>
-      <p class="muted" style="margin:0">Every hour starts with the top of the hour (fixed time). A clock with "goes on where it left off" then continues with its next slot (CLOSE show clocks); other clocks start at slot 1 every hour (and at a show start on the half hour). When a clock is done before the hour ends it starts again. A slot plays the amount you choose (<b>all</b> = one full round, <b>fill</b> = until the hour or show ends), then the next slot follows. The top-of-the-hour sweeper is a fixed time (every hour). Never more than 2 jingles in a row, and artist separation always applies.</p>
+      <p class="muted" style="margin:0">Every hour starts with the top of the hour (fixed time). A clock with "goes on where it left off" then continues with its next slot; other clocks start at slot 1 every hour (and at a show start on the half hour). When a clock is done before the hour ends it starts again. A slot plays the amount you choose (<b>all</b> = one full round, <b>fill</b> = until the hour or show ends), then the next slot follows. The top-of-the-hour sweeper is a fixed time (every hour). Never more than 2 jingles in a row, and artist separation always applies.</p>
     </div>
   </section>
 
@@ -406,7 +402,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
   <section id="tab-fx" hidden>
     <div class="card">
       <div class="row between"><span class="lab">Fixed times · something plays at a set time</span><button class="btn yellow" id="fxSave">Save fixed times</button></div>
-      <p class="muted" style="margin:0"><b>After the song</b> = plays right after the song that is on air at that time (smooth, like a soft fixed time). <b>Exactly on time</b> = fades the song out at the minute and starts it (like CLOSE ASSIGN PLAY TIME). A playlist block always plays from the start (e.g. the Top 10). Time <b>*:00</b> = every hour (e.g. the top-of-the-hour sweeper).</p>
+      <p class="muted" style="margin:0"><b>After the song</b> = plays right after the song that is on air at that time (smooth, like a soft fixed time). <b>Exactly on time</b> = fades the song out at the minute and starts it. A playlist block always plays from the start (e.g. the Top 10). Time <b>*:00</b> = every hour (e.g. the top-of-the-hour sweeper).</p>
       <div style="overflow-x:auto">
       <table class="slots">
         <thead><tr><th>On</th><th>Name</th><th>Days</th><th>Time</th><th>What</th><th>Which</th><th>How many</th><th>Start</th><th></th></tr></thead>
@@ -777,13 +773,7 @@ $('#osSave').onclick = () => { if (OS.some(r => !r.file)) return toast('Choose a
 loadAll();
 
 /* ---------------- tabs: More menu + week controls ---------------- */
-function tabChanged(b) {
-  const inMore = !!b.closest('.mmenu'); $('#moreMenu').hidden = true; $('#moreBtn').setAttribute('aria-expanded', 'false');
-  $('#moreBtn').classList.toggle('on', inMore); $('#moreBtn').textContent = inMore ? 'More · ' + b.textContent + ' ▾' : 'More ▾';
-  $('#wkCtl').style.display = b.dataset.tab === 'wk' ? '' : 'none';
-}
-$('#moreBtn').onclick = e => { e.stopPropagation(); const m = $('#moreMenu'); m.hidden = !m.hidden; $('#moreBtn').setAttribute('aria-expanded', String(!m.hidden)); };
-document.addEventListener('click', e => { if (!e.target.closest('.more')) $('#moreMenu').hidden = true; });
+function tabChanged(b) { b.scrollIntoView({block: 'nearest', inline: 'nearest'}); }
 
 /* ---------------- shared: how a slot reads ---------------- */
 const SLK = {playlist: ['SONG', '#062F38', '#05A9C6'], folder: ['SONG', '#062F38', '#05A9C6'], mix: ['MIX', '#3A3300', '#FFE000'], showjingle: ['SHOW ID', '#1E1438', '#B9A2FF'],
