@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T19:46:33",
+ "time": "2026-11-01T19:52:26",
  "result": "ok",
- "commit": "6f50cbbbfb9a0488a097593ccfe2e40657c5a709",
- "subject": "Fixed times keep 'all' (0) when saved; Shows list one-line items, same height as Playlists, nothing selected at start; fixed times shown on the Week grid",
+ "commit": "7798f8a406eeb7a3f7c8daf6e0472236fd9d1b3e",
+ "subject": "Hit the end of a half-hour show (Top 10 \u2192 Fresh Out/Rewind at 20:30); no page jump between pages with and without scroll",
  "log": [
-  "19:45:47 update be079ce8 \u2192 6f50cbbb \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
-  "19:45:48 restart hype-engine",
-  "19:46:33 installed OK \u00b7 restarted: hype-engine"
+  "19:51:41 update 6f50cbbb \u2192 7798f8a4 \u00b7 10 file(s): engine/planner.py, web/panel/header.js, web/panel/history.html, web/panel/hypelive.html, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/status/index.html",
+  "19:51:41 restart hype-engine",
+  "19:52:26 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "B'Jay x Jaido \u2013 Fresh Prince",
+  "song": "Be\u00e9le \u2013 Sobelove",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
