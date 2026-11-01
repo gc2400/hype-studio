@@ -1,17 +1,19 @@
 {
- "time": "2026-11-01T01:33:22",
+ "time": "2026-11-01T02:02:36",
  "result": "ok",
- "commit": "1f619ecc3e08a110e3cb5963c86d734b86482ccf",
- "subject": "Panel preview: a 150 ms picture buffer so it plays smoothly through small wifi bumps",
+ "commit": "b15ccfb376a64116ca4999272f3186d4550b1216",
+ "subject": "Return feed (music to the studio's Mixcast) straight from Liquidsoap to MediaMTX instead of a Pulse capture: no more hiccups / speeding up / slowing down; studio player buffer back to 250 ms",
  "log": [
-  "01:33:22 update 009a212d \u2192 1f619ecc \u00b7 2 file(s): web/panel/hype-rtc.js, web/panel/index.html",
-  "01:33:22 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "02:00:58 update 1f619ecc \u2192 b15ccfb3 \u00b7 2 file(s): radio/radio.liq, web/panel/studio.html",
+  "02:01:35 lab: PASS (6/6 good readings)",
+  "02:01:36 restart hype-radio",
+  "02:02:36 installed OK \u00b7 restarted: hype-radio"
  ],
  "guard": {
-  "song": "Equalz \u2013 Baddies Club",
+  "song": "HYPE RADIO \u2013 TOH",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
