@@ -21,7 +21,7 @@ def init(c):
     CREATE TABLE IF NOT EXISTS clock_state(clock_id INT PRIMARY KEY, i INT, left_ INT, first INT, updated REAL);
     CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
     """)
-    for tbl, col, typ in [("playlists", "rotate", "INT DEFAULT 0"), ("playlist_sources", "amount", "INT DEFAULT 1"), ("clocks", "resume", "INT DEFAULT 0")]:
+    for tbl, col, typ in [("playlists", "rotate", "INT DEFAULT 0"), ("playlists", "strict", "INT DEFAULT 0"), ("playlist_sources", "amount", "INT DEFAULT 1"), ("clocks", "resume", "INT DEFAULT 0")]:
         if col not in [r[1] for r in c.execute(f"PRAGMA table_info({tbl})")]: c.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {typ}")
     c.commit()
 
@@ -212,7 +212,8 @@ def take_merged(c, pid, start, ok):
     ordl, pos, rounds, loop, shuffle = playlist_order(c, pid)
     if not ordl: return None
     fit = CTX.get("fit")
-    if shuffle and start != "start" and get_setting(c, "smart_pick", True):
+    strict = (c.execute("SELECT strict FROM playlists WHERE id=?", (pid,)).fetchone() or [0])[0]
+    if shuffle and not strict and start != "start" and get_setting(c, "smart_pick", True):
         return take_smart(c, ordl, ok, fit)
     if start == "start": pos = 0; rounds += 1; ordl = reshuffle(ordl, shuffle) if shuffle else ordl
     elif start == "random": pos = random.randrange(len(ordl))
@@ -221,8 +222,8 @@ def take_merged(c, pid, start, ok):
         pos = 0; rounds += 1
         if shuffle: ordl = reshuffle(ordl, True)
     pick = None
-    # a playlist "in order" (e.g. HYPE TOP 10) plays strictly in its order: no swapping for artist separation
-    okk = [i for i in range(pos, min(len(ordl), pos + 12)) if ok(ordl[i])] if shuffle else [pos]
+    # "Play exactly as listed" (e.g. HYPE TOP 10): never skip or move an item for the song/artist separation rules
+    okk = [pos] if strict else [i for i in range(pos, min(len(ordl), pos + 12)) if ok(ordl[i])]
     if okk and fit and shuffle:
         L = song_lens(c, [ordl[i] for i in okk]); pick = min(okk, key=lambda i: fit_score(L.get(ordl[i], 180), fit))
     elif okk: pick = okk[0]
@@ -379,21 +380,21 @@ def default_setup(c):
 # ---------------- API helpers ----------------
 def api_playlists(c):
     out = []
-    for pid, name, loop, shuffle, rot in c.execute("SELECT id, name, loop, shuffle, rotate FROM playlists WHERE name NOT LIKE '@%' ORDER BY name COLLATE NOCASE").fetchall():
+    for pid, name, loop, shuffle, rot, strict in c.execute("SELECT id, name, loop, shuffle, rotate, strict FROM playlists WHERE name NOT LIKE '@%' ORDER BY name COLLATE NOCASE").fetchall():
         src = [dict(kind=k, ref=r, amount=a or 1) for k, r, a in c.execute("SELECT kind, ref, amount FROM playlist_sources WHERE playlist_id=? ORDER BY pos", (pid,)).fetchall()]
         for s_ in src:
             if s_["kind"] == "file": s_["found"] = bool(resolve_file(c, s_["ref"]))
         songs = playlist_songs(c, pid); st = c.execute("SELECT pos, rounds FROM playlist_state WHERE playlist_id=?", (pid,)).fetchone()
-        out.append(dict(id=pid, name=name, loop=bool(loop), shuffle=bool(shuffle), rotate=bool(rot), sources=src, count=len(songs), pos=st[0] if st else 0))
+        out.append(dict(id=pid, name=name, loop=bool(loop), shuffle=bool(shuffle), rotate=bool(rot), strict=bool(strict), sources=src, count=len(songs), pos=st[0] if st else 0))
     return out
 
 def api_save_playlist(c, d):
     name = (d.get("name") or "").strip()
     if not name or name.startswith("@"): raise ValueError("give the playlist a name")
     if d.get("id"):
-        pid = int(d["id"]); c.execute("UPDATE playlists SET name=?, loop=?, shuffle=?, rotate=?, updated=? WHERE id=?", (name, int(bool(d.get("loop"))), int(bool(d.get("shuffle"))), int(bool(d.get("rotate"))), time.time(), pid))
+        pid = int(d["id"]); c.execute("UPDATE playlists SET name=?, loop=?, shuffle=?, rotate=?, strict=?, updated=? WHERE id=?", (name, int(bool(d.get("loop"))), int(bool(d.get("shuffle"))), int(bool(d.get("rotate"))), int(bool(d.get("strict"))), time.time(), pid))
     else:
-        pid = c.execute("INSERT INTO playlists(name, loop, shuffle, rotate, updated) VALUES(?,?,?,?,?)", (name, int(bool(d.get("loop", True))), int(bool(d.get("shuffle", True))), int(bool(d.get("rotate"))), time.time())).lastrowid
+        pid = c.execute("INSERT INTO playlists(name, loop, shuffle, rotate, strict, updated) VALUES(?,?,?,?,?,?)", (name, int(bool(d.get("loop", True))), int(bool(d.get("shuffle", True))), int(bool(d.get("rotate"))), int(bool(d.get("strict"))), time.time())).lastrowid
     c.execute("DELETE FROM playlist_sources WHERE playlist_id=?", (pid,))
     for i, s in enumerate(d.get("sources", [])):
         c.execute("INSERT INTO playlist_sources(playlist_id, pos, kind, ref, amount) VALUES(?,?,?,?,?)", (pid, i, s["kind"], str(s["ref"]), max(1, int(s.get("amount") or 1))))
