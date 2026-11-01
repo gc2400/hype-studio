@@ -34,6 +34,7 @@ td b{font-weight:700}
 .tag.music{background:#062F38;color:var(--b)}.tag.jingles{background:#1E1438;color:#B9A2FF}.tag.ads{background:#3A2A00;color:#FFB54D}
 .scroll{max-height:calc(100vh - 210px);overflow:auto}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+.ov{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:700;color:var(--b,#05A9C6);border:1px solid currentColor;white-space:nowrap}.ov.id{color:#FFE000}
 </style>
 </head>
 <body>
@@ -64,7 +65,7 @@ function load() {
   fetch('../api/history?' + qs).then(r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw 0; } return r.json(); }).then(d => {
     let lastH = null;
     $('#rows').innerHTML = d.items.map(r => { const h = r.time.slice(0, 2), hr = lastH !== null && h !== lastH; lastH = h;
-      return `<tr class="${r.type !== 'music' ? 'j' : ''} ${hr ? 'hr' : ''}"><td class="t">${r.time}</td><td>${r.artist ? '<b>' + esc(r.artist) + '</b> – ' : ''}${esc(r.title)}</td><td class="muted">${esc(r.folder)}</td><td><span class="tag ${r.type}">${r.type === 'music' ? 'SONG' : r.type === 'jingles' ? 'JINGLE' : 'AD'}</span></td><td class="mono muted">${r.len ? fmt(r.len) : ''}</td><td class="muted">${esc(r.scene)}</td></tr>`; }).join('')
+      return `<tr class="${r.type !== 'music' ? 'j' : ''} ${hr ? 'hr' : ''}"><td class="t">${r.time}</td><td>${r.artist ? '<b>' + esc(r.artist) + '</b> – ' : ''}${esc(r.title)}${r.over ? ` <span class="ov ${r.over.startsWith('ID') ? 'id' : ''}" title="Played over the intro">+ ${esc(r.over)}</span>` : ''}</td><td class="muted">${esc(r.folder)}</td><td><span class="tag ${r.type}">${r.type === 'music' ? 'SONG' : r.type === 'jingles' ? 'JINGLE' : 'AD'}</span></td><td class="mono muted">${r.len ? fmt(r.len) : ''}</td><td class="muted">${esc(r.scene)}</td></tr>`; }).join('')
       || '<tr><td colspan="6" class="muted" style="padding:20px;text-align:center">Nothing on air for this day' + (q || TYPE ? ' with this filter' : '') + '.</td></tr>';
     $('#sum').textContent = d.count + ' items · ' + d.songs + ' songs' + (day === iso(new Date()) ? ' · updates every 30 s' : '');
   }).catch(() => {});

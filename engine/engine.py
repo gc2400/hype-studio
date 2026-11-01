@@ -41,6 +41,7 @@ def dbc():
         except sqlite3.OperationalError as e: log.warning("WAL: %s", e)
         c.execute("""CREATE TABLE IF NOT EXISTS asrun(id INTEGER PRIMARY KEY, started REAL, path TEXT, artist TEXT,
                      title TEXT, folder TEXT, mode TEXT, clip TEXT, scene TEXT, kind TEXT)""")
+        if "over" not in [r[1] for r in c.execute("PRAGMA table_info(asrun)")]: c.execute("ALTER TABLE asrun ADD COLUMN over TEXT")   # "+ ID …" over the intro (History)
         c.execute("CREATE INDEX IF NOT EXISTS asrun_path ON asrun(path)"); c.execute("CREATE INDEX IF NOT EXISTS asrun_started ON asrun(started)")
         c.commit(); _DBI[0] = True
     return c
@@ -545,7 +546,7 @@ class TV:
                 nxt = "Clip A" if self.cur == "Clip B" else "Clip B"; old = self.cur
                 cl.set_input_settings(nxt, {"local_file": clip_file, "looping": False, "restart_on_activate": False,
                                             "close_when_inactive": False, "hw_decode": True}, True)
-                cl.set_input_mute(nxt, not sound)
+                cl.set_input_mute(nxt, True)          # (its own sound comes on in activate(), once it is at its cue point)
                 if sound: cl.set_input_volume(nxt, vol_db=max(-20.0, min(15.0, gain)))
                 cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
                 cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY")   # never left paused
@@ -567,6 +568,18 @@ class TV:
                         seek_k = k; delay = max(0.0, k - now_pos - 0.12)
                     else:                                  # paired (own sound) or no keyframe list: start right away
                         cl.set_media_input_cursor(nxt, int(now_pos * 1000))
+                        # OBS sometimes ignores a seek right after opening a file: the clip would show from its very start.
+                        # The old picture stays up until the new clip is really at its cue point (max ~2 s, seek again every 0.4 s).
+                        t_try = time.time(); n_try = 0
+                        while time.time() - t_try < 2.0:
+                            time.sleep(0.1)
+                            try: cur_ = (cl.get_media_input_status(nxt).media_cursor or 0) / 1000
+                            except Exception: break
+                            want_ = cue_start + (time.time() - t0) - (0.0 if sound else AV_LAG)
+                            if want_ - 0.8 <= cur_ <= want_ + 2.0: break
+                            if time.time() - t_try > 0.4 * (n_try + 1):
+                                n_try += 1; cl.set_media_input_cursor(nxt, int(want_ * 1000))
+                        if n_try: log.info("clip seek needed %d more tries (OBS ignored it)", n_try)
                         def recheck(nxt=nxt, t0=t0, cs=cue_start, g=gen):
                             with self.olock:
                                 if g != self.gen: return
@@ -578,11 +591,12 @@ class TV:
                         threading.Timer(0.7, recheck).start()
                 self.cur = nxt; scene = "Music video"
                 self.clip_sound = bool(sound)
-                def activate(nxt=nxt, old=old, seek_k=seek_k):
+                def activate(nxt=nxt, old=old, seek_k=seek_k, sound=sound):
                     with self.olock:
                         if gen != self.gen: return          # a newer song already took over
                         try:
                             cl2 = self.client()
+                            if sound: cl2.set_input_mute(nxt, False)
                             if seek_k is not None:
                                 cl2.set_media_input_cursor(nxt, int(seek_k * 1000)); t_seek = time.time()
                                 def verify(nxt=nxt, k0=seek_k, t1=t_seek, g=gen):
@@ -1306,9 +1320,13 @@ class Engine:
         jr = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (jingle,)).fetchone()
         if not jr: return
         self.ov_last = time.time(); self.ov_recent.append(jingle)
+        kind_ = "ID" if it.get("id_over") and jingle == it.get("id_over") else "Sweeper"
         def go():
             ji = row_item(jr, "intro"); self.liq.cmd("pads.push " + annotate(ji, True)); self.duck_for(duck_len(ji), duck)
             log.info("intro sweeper %s over %s", jingle, it["title"])
+            try:     # History shows it next to the song: "+ ID …" / "+ Sweeper …"
+                cc = dbc(); cc.execute("UPDATE asrun SET over=? WHERE id=(SELECT max(id) FROM asrun WHERE path=?)", (kind_ + ": " + (ji.get("title") or os.path.basename(jingle)), it["path"])); cc.commit()
+            except Exception as e: log.warning("history over: %s", e)
         threading.Timer(max(0.0, offset), go).start()
     # ---------- panel commands ----------
     def cmd(self, action, d):
@@ -1418,6 +1436,8 @@ class Engine:
                 except Exception: pass
                 LM_CACHE.pop(rel, None); log.info("deleted (to the bin): %s", rel)
                 self.refill(c)
+            elif action == "rename_item":      # Library: rename a file (same folder, same type) – cues, history, playlists and pads keep it
+                return self.rename_item(c, d)
             elif action == "reset_cues":
                 c.execute("UPDATE items SET cues_edited=0, mix_set=0, mtime=0 WHERE path=?", (d["path"],)); c.commit(); LM_CACHE.pop(d["path"], None)
             elif action == "set_overlay":
@@ -1516,6 +1536,55 @@ class Engine:
         hk = {p_.get("event") for p_ in self.plan if p_.get("hour_T")}
         self.plan = [p_ for p_ in self.plan if p_.get("src") in ("you", "fixed", "aux", "dj") and not (p_.get("event") and p_.get("event") in hk)]
         self.hour_floor = 0
+    def rename_item(self, c, d):
+        import indexer as _ix
+        rel = os.path.normpath(str(d.get("path") or "")).lstrip("/")
+        if not rel or rel.startswith("..") or rel.split("/")[0] not in ("music", "clips", "jingles", "ads"): return {"ok": False, "error": "not a library file"}
+        src = os.path.join(ROOT, rel)
+        if not os.path.isfile(src) or not c.execute("SELECT 1 FROM items WHERE path=?", (rel,)).fetchone(): return {"ok": False, "error": "not a library file"}
+        if (self.now or {}).get("path") == rel: return {"ok": False, "error": "it is on air right now – rename it after it played"}
+        if self.liq_next and self.liq_next.get("path") == rel: return {"ok": False, "error": "it is the next item (already queued) - try again in a minute"}
+        ext = os.path.splitext(rel)[1]
+        name = re.sub(r"\s+", " ", str(d.get("name") or "")).strip()
+        if name.lower().endswith(ext.lower()): name = name[:-len(ext)].strip()
+        if not name or len(name) > 180 or BAD_NAME.search(name) or any(ch in name for ch in '/\\:*?"<>|') or name.startswith("."):
+            return {"ok": False, "error": 'not a valid name (no / \\ : * ? " < > |)'}
+        fn = name + ext; new = os.path.join(os.path.dirname(rel), fn)
+        if new == rel: return {"ok": True, "path": rel}
+        if os.path.exists(os.path.join(ROOT, new)) and new.lower() != rel.lower(): return {"ok": False, "error": "a file with that name is already there"}
+        os.rename(src, os.path.join(ROOT, new))
+        old_fn = os.path.basename(rel)
+        try:
+            fa, ft = _ix.split_name(fn)
+            row = c.execute("SELECT section, artist, title FROM items WHERE path=?", (rel,)).fetchone()
+            artist, title = (fa, _ix.clean_title(ft)) if fa else (row[1], row[2]) if row[0] == "music" else ("", _ix.clean_title(ft))
+            c.execute("UPDATE items SET path=?, filename=?, artist=?, title=? WHERE path=?", (new, fn, artist, title, rel))
+            for sql in ("UPDATE items SET clip_path=? WHERE clip_path=?", "UPDATE items SET overlay_path=? WHERE overlay_path=?",
+                        "UPDATE asrun SET path=? WHERE path=?", "UPDATE pad_items SET path=? WHERE path=?", "UPDATE ad_spots SET path=? WHERE path=?",
+                        "UPDATE events SET ref=? WHERE ref=?", "UPDATE playlist_sources SET ref=? WHERE kind='song' AND ref=?",
+                        "UPDATE clock_slots SET ref=? WHERE kind IN ('song','file','jingle','id') AND ref=?", "UPDATE screen_rules SET file=? WHERE file=?",
+                        "UPDATE overlay_rules SET jingle_ref=? WHERE jingle_ref=?"):
+                try: c.execute(sql, (new, rel))
+                except sqlite3.OperationalError: pass
+            for sql in ("UPDATE playlist_sources SET ref=? WHERE kind='file' AND ref=?", "UPDATE clock_slots SET ref=? WHERE kind='file' AND ref=?"):
+                try: c.execute(sql, (fn, old_fn))      # "file" slots point at a file name
+                except sqlite3.OperationalError: pass
+            for pid, ord_ in c.execute("SELECT playlist_id, ord FROM playlist_state WHERE ord LIKE ?", ("%" + os.path.basename(rel)[:40] + "%",)).fetchall():
+                try:
+                    o = json.loads(ord_)
+                    if rel in o: c.execute("UPDATE playlist_state SET ord=? WHERE playlist_id=?", (json.dumps([new if x == rel else x for x in o]), pid))
+                except Exception: pass
+            c.commit()
+        except Exception:
+            c.rollback(); os.rename(os.path.join(ROOT, new), src); raise
+        for lst in [self.plan] + list(self.aux.values()):
+            for p_ in lst:
+                if p_.get("path") == rel: p_.update(path=new, artist=artist, title=title)
+                if p_.get("clip_path") == rel: p_["clip_path"] = new
+        try: self.aux_save_file()
+        except Exception: pass
+        LM_CACHE.pop(rel, None); log.info("renamed: %s -> %s", rel, new)
+        return {"ok": True, "path": new, "artist": artist, "title": title, "filename": fn}
     # ---------- AUX players: two lists you fill by dragging, fire into the log ----------
     def aux_save_file(self):
         try: os.makedirs("/var/lib/hype", exist_ok=True); jdump(self.aux, "/var/lib/hype/aux.json")
@@ -1941,14 +2010,14 @@ def history(qs, limit=2000):
     t0 = time.mktime(time.strptime(day, "%Y-%m-%d")); t1 = t0 + 86400
     c = dbc(); out = []
     rows = c.execute("""SELECT a.started, a.path, a.artist, a.title, a.folder, a.mode, a.scene, i.section,
-                        COALESCE(i.cue_mix, i.duration, 0) - COALESCE(i.cue_start, 0) FROM asrun a LEFT JOIN items i ON i.path = a.path
+                        COALESCE(i.cue_mix, i.duration, 0) - COALESCE(i.cue_start, 0), a.over FROM asrun a LEFT JOIN items i ON i.path = a.path
                         WHERE a.started >= ? AND a.started < ? ORDER BY a.started DESC LIMIT ?""", (t0, t1, limit)).fetchall()
-    for st, path, ar, ti, fo, mo, sc, sec, ln in rows:
+    for st, path, ar, ti, fo, mo, sc, sec, ln, ov in rows:
         sec = sec or ("jingles" if (path or "").startswith("jingles/") else "ads" if (path or "").startswith("ads/") else "music")
         if typ and sec != typ: continue
         if q and q not in f"{ar} {ti} {fo}".lower(): continue
         out.append({"t": st, "time": time.strftime("%H:%M:%S", time.localtime(st)), "artist": ar or "", "title": ti or "", "folder": fo or "",
-                    "type": sec, "mode": mo or "", "scene": sc or "", "len": round(ln or 0), "path": path or ""})
+                    "type": sec, "mode": mo or "", "scene": sc or "", "len": round(ln or 0), "path": path or "", "over": ov or ""})
     music = sum(1 for r in out if r["type"] == "music")
     return {"day": day, "items": out, "count": len(out), "songs": music}
 
@@ -2052,8 +2121,8 @@ class H(BaseHTTPRequestHandler):
             if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"] + AGC["lift"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01})
             if p == "/history.csv":
                 h = history(qs, limit=5000); import csv, io; b = io.StringIO(); w = csv.writer(b, delimiter=";")
-                w.writerow(["date", "time", "artist", "title", "folder", "type", "length", "tv", "file"])
-                for r in reversed(h["items"]): w.writerow([h["day"], r["time"], r["artist"], r["title"], r["folder"], r["type"], r["len"], r["scene"], r["path"]])
+                w.writerow(["date", "time", "artist", "title", "folder", "type", "length", "tv", "file", "over the intro"])
+                for r in reversed(h["items"]): w.writerow([h["day"], r["time"], r["artist"], r["title"], r["folder"], r["type"], r["len"], r["scene"], r["path"], r.get("over", "")])
                 return self.send(200, ("\ufeff" + b.getvalue()).encode("utf-8"), "text/csv; charset=utf-8")
             if p == "/wave": return self.send(200, waveform(qs["path"][0]))
             if p == "/wavezoom": return self.send(200, wave_zoom(qs["path"][0], float(qs.get("t", ["0"])[0]), float(qs.get("d", ["6"])[0])))

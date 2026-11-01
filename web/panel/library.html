@@ -43,7 +43,8 @@ h1{margin:0;font-size:20px;font-weight:900}h1 small{color:var(--mut);font-weight
 .ri .racts{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;gap:4px;padding-left:28px;background:linear-gradient(90deg,transparent,var(--card2) 26px);opacity:0;pointer-events:none}
 .ri:hover .racts,.ri.sel .racts{opacity:1;pointer-events:auto}@media (hover:none){.ri:hover .racts{opacity:0;pointer-events:none}.ri.sel .racts{opacity:1;pointer-events:auto}}
 .ri .racts button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--soft);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
-.ri .racts svg{width:17px;height:17px}.ri .del:hover{color:#FF8A97;border-color:#FF8A97}.ri .addpl:hover{color:var(--y);border-color:var(--y)}
+.ri .racts svg{width:17px;height:17px}.ri .del:hover{color:#FF8A97;border-color:#FF8A97}.ri .addpl:hover{color:var(--y);border-color:var(--y)}.ri .ren:hover{color:var(--b);border-color:var(--b)}
+.delq input{flex:1;min-width:120px;max-width:520px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);padding:0 10px;font:inherit;font-weight:600}
 .plmenu{position:fixed;z-index:50;width:260px;max-height:340px;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:8px;gap:6px}
 .plmenu input{min-height:34px;border-radius:8px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);padding:0 10px;font:inherit;font-size:13px}
 .plmenu .ls{overflow:auto;display:flex;flex-direction:column;gap:2px}.plmenu .ls button{text-align:left;padding:8px 10px;border-radius:8px;border:0;background:transparent;color:var(--txt);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
@@ -276,9 +277,27 @@ $('#bFilter').onclick = () => { const p = $('#fpanel'); p.hidden = !p.hidden; se
 function renderList() {
   const L = visible(); $('#cnt').textContent = L.length + ' items';
   $('#res').innerHTML = L.map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
-    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''}" role="option" data-p="${esc(it.path)}"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}</span></div><span class="racts"><button class="addpl" data-addpl title="Add to a playlist" aria-label="Add ${esc(it.title || '')} to a playlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="del" data-del title="Delete this file" aria-label="Delete ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
+    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''}" role="option" data-p="${esc(it.path)}"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}</span></div><span class="racts"><button class="addpl" data-addpl title="Add to a playlist" aria-label="Add ${esc(it.title || '')} to a playlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="ren" data-ren title="Rename this file" aria-label="Rename ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="del" data-del title="Delete this file" aria-label="Delete ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
   $$('#res .ri').forEach(el => el.onclick = e => { if (e.target.closest('.racts, .delq')) return; pick(LIB.items.find(x => x.path === el.dataset.p)); });
   $$('#res .addpl').forEach(b => b.onclick = e => { e.stopPropagation(); plMenu(b, b.closest('.ri').dataset.p); });
+  // rename: the file name (without .mp3/.mp4); "Artist - Title" also sets artist and title. Cues, history, playlists keep it.
+  $$('#res .ren').forEach(b => b.onclick = e => { e.stopPropagation(); const row = b.closest('.ri'); if (row.querySelector('.delq')) return;
+    const path = row.dataset.p, fn = path.split('/').pop(), ext = fn.includes('.') ? fn.slice(fn.lastIndexOf('.')) : '';
+    const q = document.createElement('div'); q.className = 'delq';
+    q.innerHTML = `<input aria-label="New file name" spellcheck="false"><span class="muted" style="font-weight:600">${esc(ext)}</span><button class="btn sm yellow" data-yes>Rename</button><button class="btn sm" data-no>Cancel</button>`;
+    row.appendChild(q); const inp = q.querySelector('input'); inp.value = fn.slice(0, fn.length - ext.length); inp.focus(); inp.select();
+    q.onclick = ev => ev.stopPropagation();
+    const close = () => q.remove();
+    const go = () => { const name = inp.value.trim(); if (!name || name + ext === fn) return close();
+      api('cmd/rename_item', {path, name}).then(r => { if (!r || r.ok === false) { toast((r && r.error) || 'Not renamed'); return; }
+        const it = LIB.items.find(x => x.path === path);
+        if (it) Object.assign(it, {path: r.path, artist: r.artist, title: r.title});
+        LIB.items.forEach(x => { if (x.clip_path === path) x.clip_path = r.path; });
+        if (SEL && SEL.path === path) SEL.path = r.path;
+        renderList(); toast('Renamed'); }); };
+    q.querySelector('[data-yes]').onclick = ev => { ev.stopPropagation(); go(); };
+    q.querySelector('[data-no]').onclick = ev => { ev.stopPropagation(); close(); };
+    inp.onkeydown = ev => { ev.stopPropagation(); if (ev.key === 'Enter') go(); if (ev.key === 'Escape') close(); }; });
   $$('#res .del').forEach(b => b.onclick = e => { e.stopPropagation(); const row = b.closest('.ri'); if (row.querySelector('.delq')) return;
     const q = document.createElement('div'); q.className = 'delq';
     q.innerHTML = '<span>Delete this file?</span><button class="btn sm red" data-yes>Delete</button><button class="btn sm" data-no>Cancel</button>';

@@ -359,6 +359,7 @@ def scan(full=False):
         except OSError as e: print("fingerprint:", p_, e, flush=True)
     gone = [r[0] for r in c.execute("SELECT path FROM items") if r[0] not in seen]
     for g in gone:
+        if os.path.exists(os.path.join(ROOT, g)): continue     # renamed in the Library during this scan: it is there (just not seen yet)
         # copied to a new place and the old one deleted: hand the old row's data to the copy
         old = c.execute("SELECT fp, cues_edited, cue_start, cue_intro, cue_mix, cue_end, mode_set_by_user, mode, clip_path FROM items WHERE path=?", (g,)).fetchone()
         twin = c.execute("SELECT path FROM items WHERE fp=? AND path<>?", (old[0], g)).fetchone() if old and old[0] else None
