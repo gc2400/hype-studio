@@ -61,7 +61,9 @@ body.dj #res [data-act=next],body.dj #res [data-act=end],body.dj #res [data-pact
 .gcard.on{box-shadow:inset 0 0 0 2px var(--g)}
 .seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden}.seg button{border:0;background:var(--card2);color:var(--txt);font-weight:800;font-size:12px;min-width:32px;min-height:30px;cursor:pointer}
 .seg button+button{border-left:1px solid var(--line2)}.seg button.on{background:var(--b);color:var(--bg)}.seg button:hover:not(.on){background:var(--line2)}
-.seg.camseg{flex-wrap:nowrap;align-self:center}.seg.camseg button{min-width:34px;padding:7px 0;text-align:center}   /* CAM 1 2 3 4 on one line */
+.camseg{display:inline-flex;flex:none;height:32px;border:1px solid var(--line2);border-radius:9px;overflow:hidden;background:var(--card2)}   /* CAM 1 | 2 | 3 | 4: one long box */
+.camseg button{width:34px;border:0;background:transparent;color:var(--soft);font:inherit;font-size:13px;font-weight:800;cursor:pointer;padding:0}
+.camseg button+button{border-left:1px solid var(--line2)}.camseg button:hover:not(.on){background:var(--line2);color:#fff}.camseg button.on{background:var(--y);color:#061423}
 .gcard video{width:132px;aspect-ratio:16/9;border-radius:8px;background:#000;object-fit:cover}
 .pad:hover{transform:translateY(-2px);filter:brightness(1.18);box-shadow:0 8px 18px rgba(0,0,0,.45)}
 .pad:hover::after{content:'▶';position:absolute;right:8px;top:6px;font-size:12px;opacity:.85}
@@ -1124,8 +1126,8 @@ function renderGuests() {
   box.innerHTML = Object.entries(G).map(([s, g]) => { const cam = Object.entries(LV.cams).find(([c, src]) => src === s);
     return `<div class="gcard ${g.online ? 'on' : ''}" data-g="${s}"><video muted playsinline autoplay></video><div style="min-width:0;display:flex;flex-direction:column;gap:6px">
       <div class="row between" style="gap:6px;flex-wrap:nowrap"><div class="row" style="gap:6px;min-width:0;flex-wrap:nowrap"><b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.name)}</b><span class="chip ${g.online ? 'ok' : ''}">${g.online ? 'online' : 'not joined'}</span><span class="chip">${g.mode === 'audio' ? '☎ audio' : '🎥 video'}</span></div><button class="btn sm red" data-rmg aria-label="Remove ${esc(g.name)}" title="Remove guest">×</button></div>
-      <div class="row" style="gap:6px;flex-wrap:wrap;row-gap:6px"><span class="lab" style="color:var(--mut)">CAM</span><div class="seg camseg">${['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'].map(c => `<button class="${cam && cam[0] === c ? 'on' : ''}" data-cam="${c}" title="Show ${esc(g.name)} in ${c}">${c.slice(4)}</button>`).join('')}</div>
-        <span class="row" style="gap:6px;margin-left:auto;flex-wrap:nowrap"><button class="btn sm" data-lt style="white-space:nowrap">Name on screen</button><button class="btn sm" data-copy style="white-space:nowrap">Copy link</button></span></div>
+      <div class="row" style="gap:6px;flex-wrap:nowrap"><span class="lab" style="color:var(--mut)">CAM</span><div class="camseg" role="group" aria-label="Camera slot">${['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'].map(c => `<button class="${cam && cam[0] === c ? 'on' : ''}" data-cam="${c}" title="Show ${esc(g.name)} in ${c}">${c.slice(4)}</button>`).join('')}</div>
+        <span class="row" style="gap:6px;margin-left:auto;flex-wrap:nowrap"><button class="btn sm" data-lt style="white-space:nowrap" title="Put the guest's name on screen (lower third)">Show name</button><button class="btn sm" data-copy style="white-space:nowrap">Copy link</button></span></div>
       <label class="gvol"><span class="lab" style="width:auto;color:var(--mut)">Vol</span><input type="range" min="0" max="2" step="0.01" value="${g.vol == null ? 1 : g.vol}" data-gvol aria-label="Volume of ${esc(g.name)}"><span class="mono" data-gvl>${Math.round(100 * (g.vol == null ? 1 : g.vol))}%</span></label></div></div>`; }).join('')
     || '<span class="muted">No guests yet – type a name and press + Invite.</span>';
   box.querySelectorAll('[data-g]').forEach(el => { const s = el.dataset.g, g = G[s];
