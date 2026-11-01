@@ -1,17 +1,18 @@
 {
- "time": "2026-11-01T20:12:34",
+ "time": "2026-11-01T20:20:30",
  "result": "ok",
- "commit": "52213636585c21ecd111eb4a6136790c1e02a8cc",
- "subject": "Playlist options without outlines, Randomize explains in-order; hour plan checkbox never shows a stale tick",
+ "commit": "ec91b7f7218e2b10ef75cceb658dfbbee4308807",
+ "subject": "Playlists: own option 'Play exactly as listed' (skips the separation rules, e.g. Top 10) instead of every in-order playlist; empty state on Playlists",
  "log": [
-  "20:12:34 update ef50ca4e \u2192 52213636 \u00b7 1 file(s): web/panel/plan.html",
-  "20:12:34 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:19:45 update 52213636 \u2192 ec91b7f7 \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
+  "20:19:45 restart hype-engine",
+  "20:20:30 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Gedi1000 x Dongo \u2013 No Ta Nada",
+  "song": "Ronnie Flex x Carel x Djahboy \u2013 DOE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
