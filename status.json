@@ -1,15 +1,14 @@
 {
- "time": "2026-11-01T18:17:55",
+ "time": "2026-11-01T18:18:59",
  "result": "ok",
- "commit": "1532601e5b188af132fbf8682248135d02be6a0d",
- "subject": "Planning: Week view (shows per day, mix hours, warnings for 7 days, hour panel with clock + what plays); Hype Live frame uses www (login cookie)",
+ "commit": "41a936ff59206194939fae3d6e9ad2c0492bff85",
+ "subject": "Week: compact warnings (3 + more), readable times",
  "log": [
-  "18:17:10 update 46105275 \u2192 1532601e \u00b7 4 file(s): engine/engine.py, engine/planner.py, web/panel/hypelive.html, web/panel/plan.html",
-  "18:17:10 restart hype-engine",
-  "18:17:55 installed OK \u00b7 restarted: hype-engine"
+  "18:18:59 update 1532601e \u2192 41a936ff \u00b7 1 file(s): web/panel/plan.html",
+  "18:18:59 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Diquenza x Equalz x JayKoppig \u2013 Duracell",
+  "song": "Be\u00e9le \u2013 si te pillara",
   "listeners": 0,
   "obs": true,
   "seg_age": 0.1,
