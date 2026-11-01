@@ -55,34 +55,56 @@ table.hl{width:100%;border-collapse:collapse;font-size:12px}table.hl th{text-ali
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}
 ::-webkit-scrollbar-thumb{background:#23496B;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#05A9C6;background-clip:padding-box}
 ::-webkit-scrollbar-button{display:none;width:0;height:0}
+.steps{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch}
+.step{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--deep);border:1px solid var(--line2);flex-wrap:wrap}
+.step.grow{flex:1 1 360px;min-width:0}.step .sb{display:flex;flex-direction:column;gap:2px;min-width:0}.step .sb b{font-size:14px}.step .sb .muted{font-size:12px}
+.sn{width:26px;height:26px;border-radius:50%;background:var(--card2);border:1px solid var(--line2);display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--y);flex:none}
+.golive{min-height:52px!important;font-size:18px!important;padding:0 22px!important}
+#airBox.on{border-color:var(--g);background:#0B2A22}#airBox.lost{border-color:var(--r);background:#2A0E16}
+details.sec{border:1px solid var(--line2);border-radius:12px;background:var(--deep)}
+details.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 12px;flex-wrap:wrap}
+details.sec>summary::-webkit-details-marker{display:none}details.sec>summary::before{content:'▸';color:var(--mut);transition:transform .15s}details.sec[open]>summary::before{transform:rotate(90deg)}
+details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:column;gap:10px;padding:2px 12px 12px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header id="hhead"></header><script src="/panel/header.js?v=1793349956"></script>
 
-  <section class="card">
-    <div class="row between">
-      <div class="row" style="gap:14px">
-        <button class="golive" id="goLive" disabled>GO LIVE</button>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <div class="row"><span class="chip" id="stStudio">Studio: not connected</span><span class="chip" id="stOnAir">On air: automation</span><span class="chip" id="stRec">REC off</span></div>
-          <span class="muted" id="stHint">Connect the studio below, then press GO LIVE. Your Mixcast mix goes on air; END LIVE goes back to the automation (music never stops).</span>
-        </div>
-      </div>
-      <div class="row"><button class="btn yellow" id="connect">Connect studio</button><button class="btn red" id="disconnect" hidden>Disconnect</button></div>
+  <!-- 1 · CONTROL: connect → go live → what is on air -->
+  <section class="card ctl">
+    <div class="steps">
+      <div class="step"><span class="sn">1</span><div class="sb"><b>Connect the studio</b><span class="muted">cameras + Mixcast to the server</span></div>
+        <button class="btn yellow" id="connect">Connect studio</button><button class="btn red" id="disconnect" hidden>Disconnect</button></div>
+      <div class="step"><span class="sn">2</span><div class="sb"><b>Go live</b><span class="muted">your Mixcast mix on air · END LIVE = back to the automation</span></div>
+        <button class="golive" id="goLive" disabled>GO LIVE</button></div>
+      <div class="step grow" id="airBox"><span style="font-size:26px" id="airIcon">◌</span>
+        <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:900" id="airTitle">On air: the automation</div><div class="muted" id="airSub" style="font-size:12px">When you are LIVE this turns green: only your studio mix is on the radio and the TV (no clip sound).</div>
+          <div class="row" style="margin-top:6px;gap:6px"><span class="chip" id="stStudio">Studio: not connected</span><span class="chip" id="stOnAir">On air: automation</span><span class="chip" id="stRec">REC off</span><span class="chip" id="airDrops" hidden></span></div></div></div>
     </div>
+    <span class="muted" id="stHint" style="font-size:12px">Connect the studio below, then press GO LIVE. Your Mixcast mix goes on air; END LIVE goes back to the automation (music never stops).</span>
   </section>
 
-  <section class="card" id="airBox" style="flex-direction:row;align-items:center;gap:14px;padding:12px 14px">
-    <span style="font-size:28px" id="airIcon">◌</span>
-    <div style="flex:1;min-width:0"><div style="font-size:17px;font-weight:900" id="airTitle">On air: the automation</div><div class="muted" id="airSub">When you are LIVE this turns green: only your studio mix is on the radio and the TV (no clip sound).</div></div>
-    <span class="chip" id="airDrops" hidden></span>
-  </section>
-
+  <!-- 2 · DURING THE SHOW: your cameras · your guests -->
   <div class="grid2">
     <section class="card">
-      <div class="row" style="justify-content:space-between;align-items:center"><span class="lab">Studio devices (this laptop)</span><button class="btn sm" id="devRefresh" title="Look again for cameras, microphones and outputs (after plugging something in) – the page stays as it is">↻ Refresh devices</button></div>
+      <span class="lab">Your cameras</span>
+      <div class="cams"><div class="vbox"><video id="vCam1" muted playsinline autoplay></video><span class="ph" id="phCam1">Camera 1: choose your USB cam on the left</span></div><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div></div>
+    </section>
+  <section class="card">
+    <div class="row between"><span class="lab">Guests <span class="muted" style="text-transform:none;letter-spacing:0">· max. 6 · they join with a link (no app)</span></span>
+      <div class="row"><input type="text" id="gName" placeholder="Guest name, e.g. DJ Kim" style="width:180px"><select id="gMode" style="width:150px" aria-label="Video or audio only"><option value="video">Video + sound</option><option value="audio">Audio only</option></select><button class="btn yellow" id="gAdd">+ Invite</button></div></div>
+    <div id="guests" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="row" style="gap:10px"><span class="muted">Which camera / guest is in CAM 1 · 2 · 3 · 4 of the scenes:</span><div class="row" id="camSlots"></div></div>
+    <span class="muted" style="font-size:12px">Guests' video and sound adjust to their own internet automatically (a weak line gets a lower picture, the voice stays clear). Scenes and lower thirds: the panel, LIVE mode.</span>
+  </section>
+  </div>
+
+  <!-- 3 · SETUP (open what you need – remembered on this laptop) -->
+  <section class="card">
+    <span class="lab">Setup</span>
+    <details class="sec" data-sec="dev" open><summary><b>Studio devices</b><span class="muted">microphone, music, guests, mix-minus, cameras</span><button class="btn sm" id="devRefresh" title="Look again for cameras, microphones and outputs (after plugging something in) – the page stays as it is">↻ Refresh devices</button></summary>
+      <div class="secb">
       <div class="dev"><label><b>Studio mix → air</b><small>Mixcast 4 (USB recording)</small></label><select id="dMix"></select><div class="meter"><i id="mMix"></i></div></div>
       <div class="dev"><label><b>Music → Mixcast</b><small>plays on your USB fader</small></label><select id="dMusic"></select><div class="meter"><i id="mMusic"></i></div></div>
       <div class="dev"><label><b>Guests → Mixcast</b><small>TRRS fader (laptop headphone out)</small></label><select id="dGuests"></select><div class="meter"><i id="mGuests"></i></div></div>
@@ -95,12 +117,9 @@ table.hl{width:100%;border-collapse:collapse;font-size:12px}table.hl th{text-ali
         <b>TRRS cable</b> laptop headphone/mic jack ↔ Mixcast <b>TRRS</b>: guests come in on the <b>TRRS fader</b>; the Mixcast sends a mix-minus (everything except the guests) back, so guests hear you and the music but not themselves.<br>
         <b>Audio-only guest by phone:</b> pair the phone with the Mixcast <b>Bluetooth</b> and call – the Mixcast does the mix-minus.<br>
         Everyone in the studio: <b>headphones</b>.</p></details>
-    </section>
-
-    <section class="card">
-      <span class="lab">Your cameras</span>
-      <div class="cams"><div class="vbox"><video id="vCam1" muted playsinline autoplay></video><span class="ph" id="phCam1">Camera 1: choose your USB cam on the left</span></div><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div></div>
-      <span class="lab" style="margin-top:4px">Broadcast quality <span class="muted" style="text-transform:none;letter-spacing:0">· saved on this laptop</span></span>
+      </div></details>
+    <details class="sec" data-sec="q"><summary><b>Broadcast quality &amp; lip sync</b><span class="muted">saved on this laptop</span></summary>
+      <div class="secb">
       <div class="q">
         <b>Studio audio</b><select id="qAudio"><option value="128">128 kbps stereo</option><option value="192">192 kbps stereo</option><option value="256">256 kbps stereo (recommended)</option><option value="320">320 kbps stereo</option><option value="510">510 kbps stereo (max)</option></select>
         <b>Camera picture</b><select id="qRes"><option value="960x540">540p (960×540) – weak connection</option><option value="1280x720">720p (1280×720)</option><option value="1920x1080">1080p (1920×1080, recommended)</option></select>
@@ -110,17 +129,11 @@ table.hl{width:100%;border-collapse:collapse;font-size:12px}table.hl th{text-ali
       </div>
       <span class="muted" style="font-size:12px">Lip sync: you hear a word <b>before</b> your lips move (picture late)? Move it <b>right</b> – the sound waits. Your lips move <b>before</b> you hear it (sound late)? Move it <b>left</b> – the picture waits. 0 = straight through.</span>
       <span class="muted" style="font-size:12px" id="qNote"></span>
-      <span class="lab" style="margin-top:4px">Connection <span class="muted" style="text-transform:none;letter-spacing:0">· live, every 2 s</span></span>
+      </div></details>
+    <details class="sec" data-sec="hl"><summary><b>Connection</b><span class="muted">live, every 2 s – loss and delay per stream</span></summary>
+      <div class="secb">
       <table class="hl"><thead><tr><th>Stream</th><th>State</th><th>Sending</th><th>Picture</th><th>Loss</th><th>Delay</th></tr></thead><tbody id="health"><tr><td colspan="6" class="muted">Connect the studio to see the connection.</td></tr></tbody></table>
-    </section>
-  </div>
-
-  <section class="card">
-    <div class="row between"><span class="lab">Guests · max. 6 · they join with a link on their phone or laptop (no app)</span>
-      <div class="row"><input type="text" id="gName" placeholder="Guest name, e.g. DJ Kim" style="width:220px"><select id="gMode" style="width:200px" aria-label="Video or audio only"><option value="video">Video + sound</option><option value="audio">Audio only (like a phone call)</option></select><button class="btn yellow" id="gAdd">+ Invite guest</button></div></div>
-    <div id="guests" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div class="row" style="gap:10px"><span class="muted">Which camera / guest is in CAM 1 · 2 · 3 · 4 of the scenes:</span><div class="row" id="camSlots"></div></div>
-    <span class="muted" style="font-size:12px">Guests' video and sound adjust to their own internet automatically (a weak line gets a lower picture, the voice stays clear). Scenes and lower thirds: the panel, LIVE mode.</span>
+      </div></details>
   </section>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -332,6 +345,11 @@ $('#qSync').oninput = () => { const v = +$('#qSync').value; $('#qSyncV').textCon
 $('#qSync').onchange = () => post('live/settings', {lip_sync: +$('#qSync').value}).then(d => { L = d; toast('Lip sync set'); });
 function refresh() { return get('live').then(d => { L = d; KEY = d.studio_key; render(); window.hypeRec && hypeRec(d.rec, d); }).catch(() => {}); }      // also feeds the header's REC button (no second poll)
 refresh().then(listDevices); setInterval(refresh, 2000);
+</script>
+<script>
+document.querySelectorAll('details.sec').forEach(d => { try { const v = localStorage.getItem('hypeBc_' + d.dataset.sec); if (v !== null) d.open = v === '1'; } catch (e) {}
+  d.addEventListener('toggle', () => { try { localStorage.setItem('hypeBc_' + d.dataset.sec, d.open ? '1' : '0'); } catch (e) {} }); });
+document.querySelector('#devRefresh').addEventListener('click', e => e.preventDefault(), true);   // (a button in a summary: never fold the section)
 </script>
 </body>
 </html>
