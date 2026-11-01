@@ -112,7 +112,7 @@ async function join(video) {
   pub = HypeRTC.keep('me', () => HypeRTC.publish(ME.slot, stream, {key: T, videoKbps: 1800, audioKbps: 64, stereo: false}), state);
   // what you hear: the studio (mix-minus) + the other guests
   ret = HypeRTC.keep('studio', async () => { const r = await HypeRTC.play('mixminus', {key: T}); $('#studio').srcObject = r.stream; applySink(); $('#studio').play().catch(() => {}); return r; }, () => {});
-  clearInterval(othersT); othersT = setInterval(listenOthers, 3000); listenOthers();
+  clearInterval(othersT); othersT = setInterval(listenOthers, 2000); listenOthers();
   // what is on air: a small picture (it follows your connection), next to your own camera - no sound (you hear the studio)
   document.body.classList.add('incall'); $('#airBox').hidden = false;
   air = HypeRTC.keep('air', async () => { const r = await HypeRTC.play('guestview', {key: T, video: true, audio: false}); $('#air').srcObject = r.stream; $('#air').play().catch(() => {});
@@ -128,6 +128,7 @@ async function listenOthers() {
     if (SINK_OK && $('#spk').value) { try { a.setSinkId($('#spk').value); } catch (e) {} }
     others[s] = {a, c: HypeRTC.keep(s, async () => { const r = await HypeRTC.play(s, {key: T}); a.srcObject = r.stream; a.play().catch(() => {}); return r; }, () => {})}; });
   Object.keys(others).forEach(s => { if (!j.others.includes(s)) { others[s].c.close(); others[s].a.remove(); delete others[s]; } });
+  Object.keys(others).forEach(s => { others[s].a.muted = (j.muted || []).includes(s); });   // muted in the studio = muted for you too
 }
 // phones: ask to turn sideways (the TV is 16:9); a phone that stays upright shows upright on black on TV, never stretched
 const isPhone = () => matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 600;

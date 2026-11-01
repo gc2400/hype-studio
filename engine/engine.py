@@ -2240,7 +2240,8 @@ class H(BaseHTTPRequestHandler):
                 if not slot: return self.send(404, {"error": "This guest link is not valid (any more). Ask Hype Radio for a new one."})
                 st = E.live.status()
                 return self.send(200, {"slot": slot, "name": info["name"], "show": SHOW.get("title"), "live": st["live"], "mode": info.get("mode", "video"),
-                                       "others": [s_ for s_, g_ in st["guests"].items() if s_ != slot and g_["online"]]})
+                                       "others": [s_ for s_, g_ in st["guests"].items() if s_ != slot and g_["online"]],
+                                       "muted": [s_ for s_, g_ in st["guests"].items() if s_ != slot and g_.get("muted")]})   # muted by the host: the other guests don't hear them either
             if p == "/screen": return self.send(200, E.screen.current(E.tv.scene))
             if p == "/screenrules": return self.send(200, {"rules": planner.api_screen_rules(dbc()), "files": planner.screen_files(),
                                                          "tickers": [{"id": t["id"], "label": t["label"]} for t in tickers.config() if t.get("on")],
