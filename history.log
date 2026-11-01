@@ -137,3 +137,4 @@
 2026-11-01T18:52:33 ok 7923c503 Shows: hour plan rows wrap on phones
 2026-11-01T18:53:37 ok fc0b39d4 Broadcast: guest cards stack on phones
 2026-11-01T18:59:47 ok 63c88a61 Shows: search + own scroll in the list, colour dropdown, fewer air times (+more), Save/Preview in the hour plan card, drag blocks from Add to the hour; planning bar like Hype Live; fix duplicate shSave id
+2026-11-01T19:11:03 ok 49476979 Shows: yellow drop line between rows (before/after), jingle rows named by folder (LINER, SWEEP, NEW MUSIC, THROWBACK), hover on yellow buttons; Settings nav like Planning with search on the right, no emoji/subtexts

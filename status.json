@@ -1,17 +1,17 @@
 {
- "time": "2026-11-01T18:59:47",
+ "time": "2026-11-01T19:11:03",
  "result": "ok",
- "commit": "63c88a61d2158313196d4a2037cbb07da69580fc",
- "subject": "Shows: search + own scroll in the list, colour dropdown, fewer air times (+more), Save/Preview in the hour plan card, drag blocks from Add to the hour; planning bar like Hype Live; fix duplicate shSave id",
+ "commit": "49476979d9f55c485765f21e8b068ebc45d72d8a",
+ "subject": "Shows: yellow drop line between rows (before/after), jingle rows named by folder (LINER, SWEEP, NEW MUSIC, THROWBACK), hover on yellow buttons; Settings nav like Planning with search on the right, no emoji/subtexts",
  "log": [
-  "18:59:47 update fc0b39d4 \u2192 63c88a61 \u00b7 1 file(s): web/panel/plan.html",
-  "18:59:47 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:11:03 update 63c88a61 \u2192 49476979 \u00b7 2 file(s): web/panel/plan.html, web/panel/settings.html",
+  "19:11:03 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Farruko X Marshmello \u2013 Esta Vida",
+  "song": "Sean Paul x Seanizzle \u2013 Face Card",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
