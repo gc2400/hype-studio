@@ -594,7 +594,7 @@ def api_save_events(c, d):
     for i, e in enumerate(d.get("events", [])):
         at = (e.get("at") or "").strip()
         if not re.match(r"^(\d{1,2}|\*):\d{2}$", at): raise ValueError("time must be like 20:30 (or *:00 = every hour)")
-        vals = (e.get("name") or "", int(bool(e.get("enabled", True))), e.get("days") or "0123456", at if at.startswith("*") else at.zfill(5), e["kind"], str(e.get("ref") or ""), int(e.get("amount") or 1), int(bool(e.get("hard"))), i)
+        vals = (e.get("name") or "", int(bool(e.get("enabled", True))), e.get("days") or "0123456", at if at.startswith("*") else at.zfill(5), e["kind"], str(e.get("ref") or ""), (int(e["amount"]) if e.get("amount") is not None and str(e.get("amount")) != "" else 1), int(bool(e.get("hard"))), i)
         if e.get("id"):
             c.execute("UPDATE events SET name=?, enabled=?, days=?, at=?, kind=?, ref=?, amount=?, hard=?, pos=? WHERE id=?", vals + (int(e["id"]),)); keep.append(int(e["id"]))
         else:

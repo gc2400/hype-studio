@@ -130,6 +130,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .seg{display:flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden}.seg button{flex:1;min-height:36px;border:0;background:var(--card2);color:var(--mut);font:700 12px Inter,sans-serif;cursor:pointer;padding:0 8px}
 .seg button.on{background:var(--y);color:var(--bg)}.seg button:disabled{opacity:.4;cursor:default}
 .wsmore summary{cursor:pointer;color:var(--mut);font-size:12px;font-weight:700}
+.wkm.fxd{left:3px;right:auto;color:#FFE000;background:#3A3300}
 .wkm.one{left:3px;right:auto;color:var(--b)!important;border:1px solid var(--b)}
 .wkdrag{position:absolute;left:0;right:0;background:rgba(255,224,0,.18);border:2px solid var(--y);border-radius:6px;pointer-events:none;box-sizing:border-box}
 .wkside .ttl{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--mut)}
@@ -154,7 +155,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .wklegend{font-size:12px}
 /* ---- shows ---- */
 .shwrap{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}.shwrap[hidden]{display:none}
-.shlist{flex:1 1 260px;max-width:330px;gap:8px;position:sticky;top:76px;max-height:calc(100vh - 96px)}
+.shlist{flex:1 1 260px;max-width:340px;gap:8px;position:sticky;top:76px;max-height:calc(100vh - 96px)}
 .shscroll{overflow-y:auto;min-height:0;flex:1;margin-right:-6px;padding-right:6px}
 .shadd{position:sticky;top:76px}
 .colsel{display:flex;align-items:center;gap:8px}.colsel .dot{width:22px;height:22px;border-radius:999px;flex:none}.colsel select{flex:1;min-height:40px}
@@ -164,8 +165,8 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .shi{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:7px 10px;border-radius:12px;cursor:pointer;color:var(--txt);background:transparent;border:1px solid var(--line);text-align:left;font-family:inherit}
 .shi:hover{border-color:var(--line2)}.shi.on{background:var(--card2);border:2px solid var(--y);padding:6px 9px}
 .shi .dot{width:12px;height:12px;border-radius:999px;flex:none}
-.shi b{display:block;font-size:13px;font-weight:800}.shi small{display:block;font-size:11px;color:var(--mut);margin-top:2px}
-.shmain{flex:999 1 620px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.shi > span:last-child{min-width:0}.shi b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.shi small{display:block;font-size:11px;color:var(--mut);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shmain{flex:999 1 620px;min-width:0;display:flex;flex-direction:column;gap:16px}.shmain.empty .shrow{display:none}
 .shhead{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .shhead .f{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--mut)}
 .shhead .v{min-height:40px;border-radius:10px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);font:700 14px Inter,sans-serif;padding:0 10px;display:flex;align-items:center;letter-spacing:0}
@@ -554,8 +555,8 @@ $('#addFolder').onclick = () => openPicker('folder'); $('#addSong').onclick = ()
 $('#plRotate').onchange = () => renderSources();
 $('#plQ').oninput = () => renderPL(); $('#ckQ').oninput = () => renderCK();
 // the playlists / clocks box ends at the bottom of the window (so the page itself does not scroll because of it)
-function fitSides() { if (innerWidth < 760) { $$('.split > .side').forEach(el => el.style.maxHeight = ''); return; }
-  $$('.split > .side').forEach(el => { if (el.offsetParent === null) return; el.style.maxHeight = Math.max(240, innerHeight - Math.max(72, el.getBoundingClientRect().top) - 14) + 'px'; }); }
+function fitSides() { if (innerWidth < 760) { $$('.split > .side, .shwrap > .shlist').forEach(el => el.style.maxHeight = ''); return; }
+  $$('.split > .side, .shwrap > .shlist').forEach(el => { if (el.offsetParent === null) return; el.style.maxHeight = Math.max(240, innerHeight - Math.max(72, el.getBoundingClientRect().top) - 14) + 'px'; }); }
 addEventListener('resize', fitSides); addEventListener('scroll', fitSides, {passive: true}); setTimeout(fitSides, 50); setTimeout(fitSides, 600);
 $$('.tab').forEach(b => b.addEventListener('click', () => setTimeout(fitSides, 30)));
 $('#plNew').onclick = () => openPL({id: null, name: '', loop: true, shuffle: true, rotate: false, sources: [], count: 0});
@@ -846,6 +847,7 @@ function wkRender() {
     d.hours.forEach(x => {
       const ck = wkClock(x.clock_id), b_ = bad[d.date + ' ' + x.h];
       if (ck && ck.mix && !/mixtapes/i.test(ck.mix)) col += `<span class="wkm ${b_ ? 'bad' : ''}" style="top:${x.h * WKPX + 7}px;color:var(--y)" title="${esc(ck.mix)}">${b_ ? 'NO MIX' : 'MIX'}</span>`;
+      WK.events.filter(e => e.at[0] !== '*' && e.days.includes(String(di)) && +e.at.split(':')[0] === x.h).forEach(e => { col += `<span class="wkm fxd" style="top:${x.h * WKPX + 7 + (+e.at.split(':')[1]) / 60 * WKPX * 0}px" title="Fixed time ${esc(e.at)}: ${esc(e.name)}">${esc((e.name || 'FIXED').toUpperCase().slice(0, 12))} ${esc(e.at)}</span>`; });
       if (x.via === 'date') col += `<span class="wkm one" style="top:${x.h * WKPX + 7}px" title="Only on this date: ${esc(ck ? ck.name : '')}">1×</span>`;
     });
     if (WKSEL && WKSEL[0] === di) col += `<div class="wksel" style="top:${WKSEL[1] * WKPX}px;height:${(WKSEL[2] - WKSEL[1] + 1) * WKPX}px"></div>`;
@@ -954,7 +956,7 @@ $('#wkPrev').onclick = () => { WKW--; wkLoad(); }; $('#wkNext').onclick = () => 
 /* ---------------- shows (hour plans) ---------------- */
 let SHSEL = null, SHW = null, SHC = null, SHDRAG = null, SHALLT = false;
 const SWATCH = ['#05A9C6', '#3DD68C', '#FFC94D', '#FF8A3D', '#FF5C7A', '#FF4FD8', '#B07CFF', '#7C8CFF', '#4B5D7A'];
-function shLoad() { return Promise.all([get('week?w=0'), get('shows'), loadAll()]).then(([w, sh]) => { SHW = {week: w, shows: sh.shows}; shRender(); }).catch(() => toast('Shows could not load', 1)); }
+function shLoad() { return Promise.all([get('week?w=0'), get('shows'), loadAll()]).then(([w, sh]) => { SHW = {week: w, shows: sh.shows}; shRender(); setTimeout(fitSides, 30); }).catch(() => toast('Shows could not load', 1)); }
 function shInfo() {   // per website show: hours per clock this week
   const info = {};
   SHW.week.days.forEach((d, di) => d.hours.forEach(x => { const s = wkShowAt(d, x.h); if (!s) return; const t = s.title;
@@ -965,7 +967,6 @@ const whereTxt = list => { const by = {}; list.forEach(([d, h]) => (by[d] = by[d
 function shRender() {
   const info = shInfo(), main = {};
   const shows = SHW.shows.map(s => { const cl = Object.entries(info[s.title] || {}).sort((a, b) => b[1].length - a[1].length); const m = cl.length ? +cl[0][0] : null; if (m) main[m] = 1; return {...s, clocks: cl.map(([k, v]) => ({id: +k, where: v})), main: m}; });
-  if (!SHSEL) SHSEL = shows.length ? {show: shows[0].title} : CK.length ? {clock: CK[0].id} : null;
   if (SHSEL && SHSEL.clock && !SHSEL.show) { const s = shows.find(x => x.main === SHSEL.clock); if (s) SHSEL = {show: s.title, clock: SHSEL.clock}; }
   $('#shList').innerHTML = shows.map(s => { const c = (CK.find(k => k.id === s.main) || {}).color || '#4B5D7A';
     return `<button class="shi ${SHSEL && SHSEL.show === s.title ? 'on' : ''}" data-show="${esc(s.title)}"><span class="dot" style="background:${c}"></span><span style="flex:1;min-width:0"><b>${esc(s.title)}</b><small>${esc(s.when.length > 3 ? s.when.slice(0, 2).join(' · ') + ` +${s.when.length - 2}` : s.when.join(' · '))}</small></span></button>`; }).join('') || '<span class="muted">No shows from the website yet.</span>';
@@ -976,6 +977,8 @@ function shRender() {
   shFilter();
   $$('#shOther [data-ck]').forEach(b => b.onclick = () => { SHSEL = {clock: +b.dataset.ck}; shRender(); });
   // right side
+  $('#shMain').classList.toggle('empty', !SHSEL);
+  if (!SHSEL) { $('#shHead').innerHTML = '<div class="muted" style="grid-column:1/-1;padding:30px 4px;font-size:14px">Choose a show or an hour plan on the left.</div>'; $('#shPlans').innerHTML = ''; SHC = null; shSlots(); return; }
   const s = SHSEL && SHSEL.show ? shows.find(x => x.title === SHSEL.show) : null;
   let cid = SHSEL && SHSEL.clock ? SHSEL.clock : s ? s.main : null;
   if (s && !s.clocks.some(c => c.id === cid)) cid = s.main;
