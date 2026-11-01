@@ -221,7 +221,8 @@ def take_merged(c, pid, start, ok):
         pos = 0; rounds += 1
         if shuffle: ordl = reshuffle(ordl, True)
     pick = None
-    okk = [i for i in range(pos, min(len(ordl), pos + 12)) if ok(ordl[i])]
+    # a playlist "in order" (e.g. HYPE TOP 10) plays strictly in its order: no swapping for artist separation
+    okk = [i for i in range(pos, min(len(ordl), pos + 12)) if ok(ordl[i])] if shuffle else [pos]
     if okk and fit and shuffle:
         L = song_lens(c, [ordl[i] for i in okk]); pick = min(okk, key=lambda i: fit_score(L.get(ordl[i], 180), fit))
     elif okk: pick = okk[0]
@@ -933,7 +934,7 @@ def api_week(c, w=0):
     H0 = (int(now) // 3600) * 3600
     for i in range(168):
         t = H0 + i * 3600; cid, _via = _clock_of(c, t)
-        if not cid: add("noclock", "warn", "No clock planned – nothing to play.", t); continue
+        if not cid: add("noclock", "warn", "No hour plan – nothing to play.", t); continue
         if _via == "grid":
             lt_ = time.localtime(t); g_ = c.execute("SELECT clock_id FROM schedule WHERE day=? AND hour=?", (lt_.tm_wday, lt_.tm_hour)).fetchone()
             if not (g_ and g_[0] and c.execute("SELECT 1 FROM clocks WHERE id=?", (g_[0],)).fetchone()):
@@ -943,12 +944,12 @@ def api_week(c, w=0):
             if kind == "playlist" and str(ref).isdigit():
                 pid = int(ref)
                 if pid not in pl_empty: pl_empty[pid] = not playlist_songs(c, pid)
-                if pl_empty[pid]: add(("pl", cid, pid), "warn", f'Clock {cn}: playlist "{plname(pid)}" is empty – that slot is skipped.', t, cid)
+                if pl_empty[pid]: add(("pl", cid, pid), "warn", f'Hour plan {cn}: playlist "{plname(pid)}" is empty – that slot is skipped.', t, cid)
             elif kind == "folder":
                 rows = frows(ref); dated = (ref or "").upper().startswith("MIXES/") and "MIXTAPES" not in (ref or "").upper()
                 if not rows:
-                    if dated: add(("mix", ref, time.strftime("%Y-%m-%d", time.localtime(t))), "bad", f"No mix uploaded in {ref} – the rest of the clock plays instead.", t, cid)
-                    else: add(("fold", cid, ref), "warn", f"Clock {cn}: folder {ref} is empty – that slot is skipped.", t, cid)
+                    if dated: add(("mix", ref, time.strftime("%Y-%m-%d", time.localtime(t))), "bad", f"No mix uploaded in {ref} – the rest of the hour plan plays instead.", t, cid)
+                    else: add(("fold", cid, ref), "warn", f"Hour plan {cn}: folder {ref} is empty – that slot is skipped.", t, cid)
                 elif dated:
                     newest = max((m or 0) for _p, _f, m in rows)
                     if newest < t - 6 * 86400:
