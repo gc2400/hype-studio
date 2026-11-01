@@ -698,10 +698,11 @@ class TV:
             cur = (self.client().get_input_settings("Show loop").input_settings or {}).get("local_file")   # what OBS really has (also after an OBS restart)
             try: mt = os.path.getmtime(f)
             except OSError: mt = 0
-            if cur != f or getattr(self, "_loop_mt", None) != (f, mt):
-                if cur == f:     # same name, new file (uploaded again): OBS keeps the old one open until it is unloaded
-                    self.client().set_input_settings("Show loop", {"local_file": ""}, True)
-                self.client().set_input_settings("Show loop", {"local_file": f, "looping": True, "hw_decode": True}, True)
+            if os.path.normpath(cur or "") != f or getattr(self, "_loop_mt", None) != (f, mt):
+                # same name, new file (uploaded again): OBS only reopens a file when the path text changes –
+                # "…/intros/./Intro_x.mp4" is the same file under another spelling
+                tgt = f if cur != f else os.path.join(os.path.dirname(f), ".", os.path.basename(f))
+                self.client().set_input_settings("Show loop", {"local_file": tgt, "looping": True, "hw_decode": True}, True)
                 self.client().trigger_media_input_action("Show loop", "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
             self._loop_mt = (f, mt)
             self.loop_file = f
