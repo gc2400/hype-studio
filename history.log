@@ -117,3 +117,4 @@
 2026-11-01T17:07:15 ok e4903e51 Restream status: 'sending' only after 5 s without a drop; shows the reason when it can't reach the platform
 2026-11-01T17:10:05 ok 0f5db228 Restream error text never shows the stream key
 2026-11-01T17:11:54 ok 1cea3efc Header buttons without empty space on the right; Settings → Live: record video + audio / video / audio (GO LIVE and REC)
+2026-11-01T17:12:58 ok 018fd6a7 Settings text: recording type follows the Record choice

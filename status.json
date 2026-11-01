@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T17:11:54",
+ "time": "2026-11-01T17:12:58",
  "result": "ok",
- "commit": "1cea3efc86a7af8401b117dc967e417b9a10feaa",
- "subject": "Header buttons without empty space on the right; Settings \u2192 Live: record video + audio / video / audio (GO LIVE and REC)",
+ "commit": "018fd6a7f95503ed2983428b14ed60af58857ba0",
+ "subject": "Settings text: recording type follows the Record choice",
  "log": [
-  "17:11:09 update 0f5db228 \u2192 1cea3efc \u00b7 3 file(s): engine/live.py, web/panel/header.js, web/panel/settings.html",
-  "17:11:09 restart hype-engine",
-  "17:11:54 installed OK \u00b7 restarted: hype-engine"
+  "17:12:58 update 1cea3efc \u2192 018fd6a7 \u00b7 1 file(s): web/panel/settings.html",
+  "17:12:58 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "CLUB HYPE \u2013 DJ Ricsz Liveset 9 MID2025SEASON Mojo's Alkmaar",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
