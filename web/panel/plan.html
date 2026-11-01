@@ -111,13 +111,13 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .wkmain{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
 .wkgrid{flex:999 1 720px;min-width:0;overflow-x:auto}
 .wkg{display:grid;grid-template-columns:44px repeat(7,minmax(96px,1fr));column-gap:4px;min-width:760px}
-.wkh{font-size:12px;font-weight:800;color:var(--mut);text-align:center;padding:4px 0 8px}.wkh.today{color:var(--y)}
+.wkh{font-size:12px;font-weight:800;color:var(--mut);text-align:center;padding:4px 0 10px}.wkh.today{color:var(--y)}
 .wkh small{display:block;font-weight:600;font-size:10px;opacity:.8}
 .wkt{position:relative}.wkt span{position:absolute;right:6px;font:500 10px 'JetBrains Mono',monospace;color:var(--mut);transform:translateY(-6px)}
 .wkd{position:relative;border-radius:8px;cursor:pointer;background:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px var(--px))}
 .wkd.today{background-color:#0A1D30}
-.wkb{position:absolute;left:1px;right:1px;border-radius:9px;padding:4px 7px;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;gap:1px;pointer-events:none}
-.wkb .n{font-weight:800;font-size:12px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wkb{position:absolute;left:2px;right:2px;border-radius:10px;border:1px solid transparent;padding:5px 8px;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;gap:1px;pointer-events:none}
+.wkb .n{font-weight:800;font-size:12.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wkb .tm{font:500 10px "JetBrains Mono",monospace;color:#C9D7E3;opacity:.8}
 .wkb.bad{outline:2px dashed var(--r);outline-offset:-2px}
 .wkm{position:absolute;right:3px;font-size:9px;font-weight:900;letter-spacing:.05em;padding:1px 5px;border-radius:999px;background:var(--bg);pointer-events:none}
@@ -134,64 +134,145 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .wkside .ttl{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--mut)}
 .wkside .sh{font-size:20px;font-weight:900}
 .wkpl{display:flex;flex-direction:column;gap:2px;max-height:52vh;overflow:auto}
-.wkpl div{display:flex;align-items:center;gap:8px;padding:6px 6px;border-bottom:1px solid var(--line);font-size:13px}
-.wkpl .t{font:500 12px 'JetBrains Mono',monospace;color:var(--y);width:42px;flex:none}
+.wkpl{list-style:none;margin:0;padding:0}.wkpl li{display:flex;align-items:center;gap:8px;padding:6px 6px;border-bottom:1px solid var(--line);font-size:13px}
+.wkpl .k{color:var(--b)}.wkpl .t{font:500 12px 'JetBrains Mono',monospace;color:var(--y);width:42px;flex:none}
 .wkpl .k{font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:999px;width:48px;text-align:center;flex:none;background:#062F38;color:var(--b)}
 .wkpl .k.j{background:#1E1438;color:#B9A2FF}.wkpl .k.a{background:#3A2A00;color:var(--o)}
 .wkpl .w{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wkpl .l{font:500 11px 'JetBrains Mono',monospace;color:var(--mut)}
+
+/* ---- page tabs (concept style) ---- */
+.ptabs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:2px 0 12px;border-bottom:1px solid var(--line)}
+.ptabs .tab,.mbtn{cursor:pointer;flex:none;min-height:38px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--mut);font:700 13px Inter,system-ui,sans-serif;letter-spacing:0;padding:0 14px}
+.ptabs .tab:hover,.mbtn:hover{color:var(--txt);border-color:var(--line2)}
+.ptabs .tab.on,.mbtn.on{background:var(--b);color:var(--bg);border-color:var(--b);font-weight:800}
+.more{position:relative}.mmenu{position:absolute;top:44px;left:0;z-index:40;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:2px;min-width:200px;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+.mmenu[hidden]{display:none}.mmenu .tab{text-align:left;width:100%}
+.wkctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.wkctl b{font-size:14px;font-weight:800;min-width:150px;text-align:center}
+.btn.sq{min-width:38px;justify-content:center;padding:0}.btn.x44{min-width:44px;min-height:44px;justify-content:center;font-size:18px}.btn.grow{flex:1;justify-content:center}
+.btn.ghosty{background:transparent;border-color:var(--y);color:var(--y)}
+.wklegend{font-size:12px}
+/* ---- shows ---- */
+.shwrap{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}.shwrap[hidden]{display:none}
+.shlist{flex:1 1 260px;max-width:330px;gap:6px}
+.shl{display:flex;flex-direction:column;gap:6px}
+.shi{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:7px 10px;border-radius:12px;cursor:pointer;color:var(--txt);background:transparent;border:1px solid var(--line);text-align:left;font-family:inherit}
+.shi:hover{border-color:var(--line2)}.shi.on{background:var(--card2);border:2px solid var(--y);padding:6px 9px}
+.shi .dot{width:12px;height:12px;border-radius:999px;flex:none}
+.shi b{display:block;font-size:13px;font-weight:800}.shi small{display:block;font-size:11px;color:var(--mut);margin-top:2px}
+.shmain{flex:999 1 620px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.shhead{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.shhead .f{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--mut)}
+.shhead .v{min-height:40px;border-radius:10px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);font:700 14px Inter,sans-serif;padding:0 10px;display:flex;align-items:center;letter-spacing:0}
+.shhead .sw{display:flex;gap:8px;align-items:center;min-height:40px;flex-wrap:wrap}
+.shhead .sw button{width:30px;height:30px;border-radius:999px;border:0;cursor:pointer}.shhead .sw button.on{outline:3px solid var(--txt);outline-offset:1px}
+.shhead .on-air{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--mut)}
+.chipc{font-weight:800;padding:5px 10px;border-radius:999px;font-size:12px}
+.shrow{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.shplan{flex:999 1 420px;min-width:0;gap:6px}
+.shname{background:transparent;border:0;border-bottom:1px dashed var(--line2);color:var(--txt);font:800 13px Inter,sans-serif;letter-spacing:0;text-transform:none;padding:2px 2px;min-width:200px}
+.shslots{display:flex;flex-direction:column;gap:6px}
+.sl{display:flex;align-items:center;gap:8px;min-height:42px;padding:4px 8px;border-radius:10px;border:1px solid var(--line);background:var(--deep);position:relative}
+.sl.fx{border-color:#4A4200;background:#1A1A08}.sl.drag{opacity:.4}.sl.over{border-color:var(--y)}
+.sl .hd{color:#4B6B88;cursor:grab;font-size:14px;width:16px;user-select:none}
+.sl .tg{font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:999px;width:70px;text-align:center;flex:none}
+.sl select,.sl input{background:transparent;border:1px solid transparent;color:var(--txt);font:600 13px Inter,sans-serif;border-radius:8px;min-height:32px;padding:0 6px}
+.sl select:hover,.sl select:focus,.sl input:hover,.sl input:focus{border-color:var(--line2);background:var(--card2)}
+.sl .wh{flex:1;min-width:0;max-width:100%}
+.sl .am{width:auto;color:var(--mut)}.sl .st{color:var(--mut);font-size:12px}
+.sl .rx{opacity:0;min-width:32px;min-height:32px;border-radius:8px;border:1px solid var(--r);background:#3A0E18;color:#FF8A97;cursor:pointer;font-weight:800}
+.sl:hover .rx,.sl:focus-within .rx{opacity:1}
+.shadd{flex:1 1 220px;max-width:290px;display:flex;flex-direction:column;gap:8px}
+.adb{width:100%;text-align:left;min-height:50px;padding:7px 12px;border-radius:12px;border:1px dashed var(--line2);background:var(--card);color:var(--txt);font-family:inherit;cursor:pointer}
+.adb:hover{border-color:var(--y)}.adb b{display:block;font-size:13px}.adb small{display:block;font-size:11px;color:var(--mut);margin-top:2px}
+@media (max-width:700px){.shhead{grid-template-columns:1fr}.wkctl b{min-width:0}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header id="hhead"></header><script src="/panel/header.js?v=1793552703"></script>
-  <div class="tabs" role="tablist">
-    <button class="tab on" data-tab="wk" role="tab">WEEK</button>
-    <button class="tab" data-tab="ck" role="tab">CLOCKS</button>
-    <button class="tab" data-tab="pl" role="tab">PLAYLISTS</button>
-    <button class="tab" data-tab="sc" role="tab" hidden>SCHEDULE</button>
-    <button class="tab" data-tab="fx" role="tab">FIXED TIMES</button>
-    <button class="tab" data-tab="ov" role="tab">INTRO SWEEPERS</button>
-    <button class="tab" data-tab="os" role="tab">ON SCREEN</button>
-    <button class="tab" data-tab="ad" role="tab">ADS</button>
-    <button class="tab" data-tab="rc" role="tab">RECORDINGS</button>
+  <div class="ptabs" role="tablist">
+    <button class="tab on" data-tab="wk" role="tab">Week</button>
+    <button class="tab" data-tab="sh" role="tab">Shows</button>
+    <button class="tab" data-tab="pl" role="tab">Playlists</button>
+    <button class="tab" data-tab="ad" role="tab">Ads</button>
+    <span class="more"><button class="mbtn" id="moreBtn" type="button" aria-haspopup="true" aria-expanded="false">More ▾</button>
+      <span class="mmenu" id="moreMenu" hidden>
+        <button class="tab" data-tab="fx" role="tab">Fixed times</button>
+        <button class="tab" data-tab="ov" role="tab">Intro sweepers</button>
+        <button class="tab" data-tab="os" role="tab">On screen</button>
+        <button class="tab" data-tab="rc" role="tab">Recordings</button>
+        <button class="tab" data-tab="ck" role="tab">All clocks (table)</button>
+        <button class="tab" data-tab="sc" role="tab" hidden>Schedule</button>
+      </span></span>
+    <span style="flex:1"></span>
+    <span class="wkctl" id="wkCtl">
+      <button class="btn sq" id="wkPrev" aria-label="Previous week">◀</button><b id="wkLbl"></b><button class="btn sq" id="wkNext" aria-label="Next week">▶</button>
+      <button class="btn sm" id="wkToday">Today</button>
+      <span class="seg" id="wsScope" role="group" aria-label="What you change"><button type="button" data-sc="week" class="on">Normal week</button><button type="button" data-sc="date">Only this week</button></span>
+    </span>
   </div>
 
   <!-- WEEK -->
   <section id="tab-wk">
-    <div class="wkbar">
-      <button class="btn sm" id="wkPrev" aria-label="Previous week">◀</button><b id="wkLbl" style="min-width:150px;text-align:center"></b><button class="btn sm" id="wkNext" aria-label="Next week">▶</button>
-      <button class="btn sm" id="wkToday">This week</button>
-      <span style="flex:1"></span>
-      <span class="muted">Click an hour, or drag over hours · <b style="color:var(--y)">MIX</b> = own mix folder · <b style="color:var(--b)">1×</b> = only that date · show times come from the website · fixed times: <span id="wkEv"></span></span>
-    </div>
     <div class="wkwarn" id="wkWarn"></div>
+    <div class="muted wklegend">Click an hour or drag over hours · <b style="color:var(--y)">MIX</b> own mix folder · <b style="color:var(--b)">1×</b> only that date · show names and times come from your website · every hour: <span id="wkEv"></span></div>
     <div class="wkmain">
       <div class="card wkgrid"><div class="wkg" id="wkGrid"></div></div>
       <aside class="card wkside" id="wkSide" hidden>
-        <div class="row" style="flex-wrap:nowrap;align-items:flex-start"><div style="flex:1"><div class="ttl" id="wsWhen"></div><div class="sh" id="wsShow"></div></div><button class="btn sm" id="wsClose" aria-label="Close">×</button></div>
+        <div class="row" style="flex-wrap:nowrap;align-items:flex-start"><div style="flex:1;min-width:0"><div class="ttl" id="wsWhen"></div><div class="sh" id="wsShow"></div></div><button class="btn x44" id="wsClose" aria-label="Close">×</button></div>
         <div class="row" id="wsSel" style="gap:6px"></div>
-        <div class="wsbox">
-          <label class="muted" style="display:flex;flex-direction:column;gap:6px">Clock<select id="wsClock"></select></label>
-          <div class="seg" id="wsScope" role="group" aria-label="Which days"><button type="button" data-sc="week" class="on"></button><button type="button" data-sc="date"></button></div>
-          <div class="row"><button class="btn yellow" id="wsApply">Apply</button><button class="btn" id="wsEdit">Edit clock</button><button class="btn" id="wsNormal" hidden>Back to normal</button><button class="btn" id="wsUndo" hidden title="Ctrl+Z">↶ Undo</button></div>
-          <div class="muted" id="wsVia" style="font-size:12px"></div>
-        </div>
+        <div class="seg" id="wsView" role="group" aria-label="View"><button type="button" data-v="plays" class="on">What plays</button><button type="button" data-v="plan">Hour plan</button></div>
         <div id="wsWarn" class="wkwarn"></div>
-        <details class="wsmore"><summary>More: show clock · copy this day</summary>
-          <div class="wsbox" style="margin-top:8px">
-            <div class="muted" style="font-size:12px" id="wsShowTxt"></div>
-            <div class="row"><button class="btn sm" id="wsShowSet"></button><button class="btn sm" id="wsShowOff" hidden>Stop</button></div>
-          </div>
-          <div class="wsbox" style="margin-top:8px">
-            <div class="muted" style="font-size:12px" id="wsCopyTxt"></div>
-            <div class="row" id="wsCopyDays" style="gap:4px"></div>
-            <div class="row"><button class="btn sm" id="wsCopy">Copy</button></div>
-          </div>
-        </details>
-        <div class="row between"><span class="lab" id="wsPvT">What plays</span><span class="muted" id="wsSum" style="font-size:12px"></span></div>
-        <div class="wkpl" id="wsList"></div>
+        <ol class="wkpl" id="wsList"></ol>
+        <div class="row between muted" id="wsSum" style="font-size:12px;border-top:1px solid var(--line);padding-top:8px"></div>
+        <div class="row"><button class="btn yellow grow" id="wsEdit">Edit</button><button class="btn grow" id="wsChg">Change clock</button></div>
+        <div class="wsbox" id="wsChgBox" hidden>
+          <label class="muted" style="display:flex;flex-direction:column;gap:6px"><span id="wsChgL">Clock</span><select id="wsClock"></select></label>
+          <div class="row"><button class="btn yellow" id="wsApply">Apply</button><button class="btn" id="wsNormal" hidden>Back to normal</button><button class="btn" id="wsUndo" hidden title="Ctrl+Z">↶ Undo</button></div>
+          <div class="muted" id="wsVia" style="font-size:12px"></div>
+          <details class="wsmore"><summary>Whole show · copy this day</summary>
+            <div class="muted" style="font-size:12px;margin-top:8px" id="wsShowTxt"></div>
+            <div class="row" style="margin-top:6px"><button class="btn sm" id="wsShowSet"></button><button class="btn sm" id="wsShowOff" hidden>Stop</button></div>
+            <div class="muted" style="font-size:12px;margin-top:10px" id="wsCopyTxt"></div>
+            <div class="row" id="wsCopyDays" style="gap:4px;margin-top:6px"></div>
+            <div class="row" style="margin-top:6px"><button class="btn sm" id="wsCopy">Copy</button></div>
+          </details>
+        </div>
       </aside>
+    </div>
+  </section>
+
+  <!-- SHOWS -->
+  <section id="tab-sh" class="shwrap" hidden>
+    <div class="card shlist">
+      <div class="row between"><span class="lab">Shows</span><button class="btn sm ghosty" id="shNew">+ New hour plan</button></div>
+      <div id="shList" class="shl"></div>
+      <span class="lab" style="margin-top:6px">Other hour plans</span>
+      <div id="shOther" class="shl"></div>
+      <p class="muted" style="margin:6px 2px 0;font-size:11px;line-height:1.5">Every show plays an hour plan (a clock). Shows and times come from your website; which plan plays when is set on the Week page.</p>
+    </div>
+    <div class="shmain" id="shMain">
+      <div class="card shhead" id="shHead"></div>
+      <div class="shrow">
+        <div class="card shplan">
+          <div class="row" id="shPlans" style="gap:6px"></div>
+          <div class="row" style="flex-wrap:nowrap;gap:10px">
+            <span class="lab" style="flex:1">Hour plan · <input id="shName" class="shname" aria-label="Hour plan name"></span>
+            <span class="muted" id="shEst" style="font-size:12px"></span>
+          </div>
+          <div id="shSlots" class="shslots"></div>
+          <div class="muted" style="font-size:11px">Drag ⋮⋮ to reorder · hover a row for × · yellow rows are fixed times: they come into every show by themselves (More → Fixed times)</div>
+          <div id="shPv" class="wkpl" hidden></div>
+        </div>
+        <div class="shadd">
+          <span class="lab" style="padding:0 4px">Add to the hour</span>
+          <div id="shAdd" style="display:flex;flex-direction:column;gap:8px"></div>
+          <label class="tg" style="font-size:12px;margin-top:4px"><input type="checkbox" id="shResume"> Goes on where it left off (CLOSE style)</label>
+          <div class="row" style="margin-top:6px"><button class="btn yellow grow" id="shSave">Save hour plan</button><button class="btn grow" id="shPrev">Preview hour</button></div>
+          <div class="row"><button class="btn sm grow" id="shCopy">Duplicate</button><button class="btn sm red grow" id="shDel">Delete</button></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -361,7 +442,7 @@ const authed = r => { if (r.status === 401) { location.href = '/login?next=' + e
 const get = p => fetch('../api/' + p).then(authed).then(r => r.json());
 const post = (p, d) => fetch('../api/' + p, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d || {})}).then(authed).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); return j; });
 function toast(t, err) { const e = $('#toast'); e.textContent = t; e.className = 'toast show' + (err ? ' err' : ''); clearTimeout(e._t); e._t = setTimeout(() => e.className = 'toast', 2400); }
-$$('.tab').forEach(b => b.onclick = () => { $$('.tab').forEach(x => x.classList.toggle('on', x === b)); ['wk', 'pl', 'ck', 'sc', 'fx', 'ov', 'os', 'ad', 'rc'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab); if (b.dataset.tab === 'wk') wkLoad(); if (b.dataset.tab === 'rc') arLoad(); if (b.dataset.tab === 'sc') loadSchedule(); if (b.dataset.tab === 'ov') loadOv(); if (b.dataset.tab === 'fx') loadFx(); if (b.dataset.tab === 'os') loadOs(); });
+$$('.tab').forEach(b => b.onclick = () => { $$('.tab').forEach(x => x.classList.toggle('on', x === b)); ['wk', 'sh', 'pl', 'ck', 'sc', 'fx', 'ov', 'os', 'ad', 'rc'].forEach(t => $('#tab-' + t).hidden = t !== b.dataset.tab); tabChanged(b); if (b.dataset.tab === 'wk') wkLoad(); if (b.dataset.tab === 'sh') shLoad(); if (b.dataset.tab === 'rc') arLoad(); if (b.dataset.tab === 'sc') loadSchedule(); if (b.dataset.tab === 'ov') loadOv(); if (b.dataset.tab === 'fx') loadFx(); if (b.dataset.tab === 'os') loadOs(); });
 $$('.tab').forEach(b => b.addEventListener('click', () => { if (b.dataset.tab === 'ad') loadAds(); }));
 
 let PL = [], CK = [], FOLD = {music: [], counts: {}, jingles: []};
@@ -695,20 +776,47 @@ $('#osAdd').onclick = () => { OS.push({name: '', enabled: true, trigger: 'folder
 $('#osSave').onclick = () => { if (OS.some(r => !r.file)) return toast('Choose a graphic in every row', 1); post('plan/save_screen', {rules: OS}).then(() => { toast('Saved'); loadOs(); }).catch(e => toast(e.message, 1)); };
 loadAll();
 
+/* ---------------- tabs: More menu + week controls ---------------- */
+function tabChanged(b) {
+  const inMore = !!b.closest('.mmenu'); $('#moreMenu').hidden = true; $('#moreBtn').setAttribute('aria-expanded', 'false');
+  $('#moreBtn').classList.toggle('on', inMore); $('#moreBtn').textContent = inMore ? 'More · ' + b.textContent + ' ▾' : 'More ▾';
+  $('#wkCtl').style.display = b.dataset.tab === 'wk' ? '' : 'none';
+}
+$('#moreBtn').onclick = e => { e.stopPropagation(); const m = $('#moreMenu'); m.hidden = !m.hidden; $('#moreBtn').setAttribute('aria-expanded', String(!m.hidden)); };
+document.addEventListener('click', e => { if (!e.target.closest('.more')) $('#moreMenu').hidden = true; });
+
+/* ---------------- shared: how a slot reads ---------------- */
+const SLK = {playlist: ['SONG', '#062F38', '#05A9C6'], folder: ['SONG', '#062F38', '#05A9C6'], mix: ['MIX', '#3A3300', '#FFE000'], showjingle: ['SHOW ID', '#1E1438', '#B9A2FF'],
+  jingle: ['SWEEP', '#1E1438', '#B9A2FF'], id: ['STATION ID', '#1E1438', '#B9A2FF'], song: ['SONG', '#062F38', '#05A9C6'], file: ['FILE', '#062F38', '#05A9C6'], adbreak: ['ADS', '#3A2A00', '#FFB54D'], fixed: ['FIXED', '#3A3300', '#FFE000']};
+const isMix = s => s.kind === 'folder' && /^MIXES\//i.test(s.ref || '');
+const tagOf = s => SLK[isMix(s) ? 'mix' : s.kind] || ['?', '#0F2B44', '#A9BCCD'];
+const tagHtml = s => { const t = tagOf(s); return `<span class="tg" style="background:${t[1]};color:${t[2]}">${t[0]}</span>`; };
+function slotText(s) {
+  const n = s.amount >= 999 ? 'fill to the hour' : !s.amount ? 'all' : s.amount > 1 ? s.amount + '×' : '';
+  if (s.kind === 'playlist') { const p = PL.find(x => String(x.id) === String(s.ref)); return (p ? p.name : 'playlist?') + (n ? ' · ' + n : ''); }
+  if (s.kind === 'folder') return s.ref + (n ? ' · ' + n : '');
+  if (s.kind === 'showjingle') return 'Show ID / sweeper (else ' + (s.ref || 'SWEEPERS') + ')';
+  if (s.kind === 'jingle') return 'Jingle from ' + s.ref; if (s.kind === 'id') return 'Station ID from ' + s.ref;
+  if (s.kind === 'song') return (s.ref || '').split('/').pop(); if (s.kind === 'file') return 'File ' + s.ref;
+  if (s.kind === 'adbreak') return 'Ad break · ' + (s.amount || 1) + ' spots'; return s.ref || '';
+}
+function lighten(hex, k) { const m = /^#?([0-9a-f]{6})/i.exec(hex || ''); if (!m) return '#C9D7E3'; const n = parseInt(m[1], 16); const f = v => Math.round(v + (255 - v) * k);
+  return '#' + [f(n >> 16), f((n >> 8) & 255), f(n & 255)].map(v => v.toString(16).padStart(2, '0')).join(''); }
+
 /* ---------------- week ---------------- */
-let WK = null, WKW = 0, WKSEL = null, WKALL = false, WKDRAG = null, WKSC = 'week', WKUNDO = null;
-const WKPX = 26, WFULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+let WK = null, WKW = 0, WKSEL = null, WKALL = false, WKDRAG = null, WKSC = 'week', WKUNDO = null, WKVIEW = 'plays', WKPV = null;
+const WKPX = 30, WFULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hh = h => String(h % 24).padStart(2, '0') + ':00';
 const toMin = s => { const [a, b] = s.split(':').map(Number); return a * 60 + b; };
 const fmtD = iso => new Date(iso + 'T12:00').toLocaleDateString('en-GB', {day: 'numeric', month: 'short'});
 const todayIso = () => new Date().toLocaleDateString('sv');
-function wkLoad() { return get('week?w=' + WKW).then(d => { WK = d; wkRender(); if (WKSEL) wkOpen(...WKSEL, true); }).catch(() => toast('Week could not load', 1)); }
-function wkClock(id) { return WK.clocks.find(c => c.id === id); }
+function wkLoad() { return Promise.all([get('week?w=' + WKW), PL.length ? null : loadAll()]).then(([d]) => { WK = d; wkRender(); if (WKSEL) wkOpen(...WKSEL, true); }).catch(() => toast('Week could not load', 1)); }
+function wkClock(id) { return (WK ? WK.clocks : CK).find(c => c.id === id); }
 function wkShowAt(d, h) { const m = h * 60; return d.shows.find(s => { const a = toMin(s.start); let b = toMin(s.end) || 1440; if (b <= a) b = 1440; return a <= m + 59 && m < b; }); }
 function wkRender() {
   const d0 = WK.days[0].date, d6 = WK.days[6].date, today = todayIso();
   $('#wkLbl').textContent = fmtD(d0) + ' – ' + fmtD(d6) + (WKW === 0 ? ' · this week' : WKW === 1 ? ' · next week' : '');
-  $('#wkEv').textContent = WK.events.map(e => (e.name || '') + ' ' + (e.at[0] === '*' ? 'every hour ' + e.at.slice(1) : e.at)).join(' · ') || 'none';
+  $('#wkEv').textContent = WK.events.map(e => (e.name || '') + ' ' + (e.at[0] === '*' ? e.at.slice(1) : e.at)).join(' · ') || 'nothing fixed';
   const WMAX = WKALL ? 99 : 3;
   $('#wkWarn').innerHTML = WK.warnings.length ? WK.warnings.slice(0, WMAX).map((w, i) => `<button class="wkw ${w.level}" data-w="${i}"><span class="i">!</span><span><b>${esc(w.when)} · ${fmtD(w.date)}</b> – ${esc(w.text)}${w.n > 1 ? ` <span style="opacity:.7">(${w.n} hours)</span>` : ''}</span></button>`).join('')
     + (WK.warnings.length > 3 ? `<button class="wkw" id="wkMore"><span class="i">${WKALL ? '−' : '+'}</span><span>${WKALL ? 'Show less' : (WK.warnings.length - 3) + ' more'}</span></button>` : '')
@@ -716,7 +824,7 @@ function wkRender() {
   if ($('#wkMore')) $('#wkMore').onclick = () => { WKALL = !WKALL; wkRender(); };
   $$('#wkWarn [data-w]').forEach(b => b.onclick = () => { const w = WK.warnings[+b.dataset.w]; const off = WKW + Math.floor((new Date(w.date + 'T12:00') - new Date(WK.monday + 'T12:00')) / 864e5 / 7); const go = () => wkOpen(w.day, w.hour, w.hour); if (off !== WKW) { WKW = off; WKSEL = null; wkLoad().then(go); } else go(); });
   const bad = {}; WK.warnings.forEach(w => { if (w.level === 'bad') bad[w.date + ' ' + w.hour] = 1; });
-  let g = '<div></div>' + WK.days.map((d, i) => `<div class="wkh ${d.date === today ? 'today' : ''}">${DAYS[i]}<small>${fmtD(d.date)}</small></div>`).join('');
+  let g = '<div></div>' + WK.days.map((d, i) => `<div class="wkh ${d.date === today ? 'today' : ''}">${DAYS[i]} ${new Date(d.date + 'T12:00').getDate()}</div>`).join('');
   g += `<div class="wkt" style="height:${24 * WKPX}px">${Array.from({length: 24}, (_, h) => `<span style="top:${h * WKPX}px">${hh(h)}</span>`).join('')}</div>`;
   WK.days.forEach((d, di) => {
     const segs = d.shows.map(s => ({a: toMin(s.start), b: toMin(s.end) || 1440, title: s.title})).map(x => (x.b <= x.a ? {...x, b: 1440} : x)).sort((x, y) => x.a - y.a);
@@ -726,15 +834,16 @@ function wkRender() {
     const mg = []; all.forEach(s => { const l = mg[mg.length - 1]; if (l && l.title === s.title && l.b === s.a) l.b = s.b; else mg.push({...s}); });
     let col = '';
     mg.forEach(s => {
-      const h0 = Math.floor(s.a / 60), ck = wkClock(d.hours[h0].clock_id) || {color: '#4B5D7A'}, c = ck.color || '#4B5D7A';
+      const h0 = Math.floor(s.a / 60), ck = wkClock(d.hours[h0].clock_id) || {color: '#4B5D7A'}, c = ck.color || '#4B5D7A', lc = lighten(c, .35);
       const top = s.a / 60 * WKPX, ht = (s.b - s.a) / 60 * WKPX, hours = []; for (let h = h0; h * 60 < s.b; h++) hours.push(h);
       const isBad = hours.some(h => bad[d.date + ' ' + h]);
-      col += `<div class="wkb ${isBad ? 'bad' : ''}" style="top:${top + 1}px;height:${ht - 2}px;background:${c}2E;color:${c}"><span class="n" style="color:#F2F6FA">${esc(s.title)}</span>${ht >= 44 ? `<span class="tm">${String(Math.floor(s.a / 60)).padStart(2, '0')}:${String(s.a % 60).padStart(2, '0')} – ${String(Math.floor(s.b / 60) % 24).padStart(2, '0')}:${String(s.b % 60).padStart(2, '0')}</span>` : ''}</div>`;
+      const t2 = `${String(Math.floor(s.a / 60)).padStart(2, '0')}:${String(s.a % 60).padStart(2, '0')} – ${String(Math.floor(s.b / 60) % 24).padStart(2, '0')}:${String(s.b % 60).padStart(2, '0')}`;
+      col += `<div class="wkb ${isBad ? 'bad' : ''}" style="top:${top + 2}px;height:${ht - 4}px;background:${c}33;border-color:${c}55"><span class="n" style="color:${lc}">${esc(s.title)}${isBad ? ' !' : ''}</span>${ht >= 50 ? `<span class="tm" style="color:${lc}">${t2}</span>` : ''}</div>`;
     });
     d.hours.forEach(x => {
       const ck = wkClock(x.clock_id), b_ = bad[d.date + ' ' + x.h];
-      if (ck && ck.mix && !/mixtapes/i.test(ck.mix)) col += `<span class="wkm ${b_ ? 'bad' : ''}" style="top:${x.h * WKPX + 5}px;color:var(--y)" title="${esc(ck.mix)}">${b_ ? 'NO MIX' : 'MIX'}</span>`;
-      if (x.via === 'date') col += `<span class="wkm one" style="top:${x.h * WKPX + 5}px" title="Only on this date: ${esc(ck ? ck.name : '')}">1×</span>`;
+      if (ck && ck.mix && !/mixtapes/i.test(ck.mix)) col += `<span class="wkm ${b_ ? 'bad' : ''}" style="top:${x.h * WKPX + 7}px;color:var(--y)" title="${esc(ck.mix)}">${b_ ? 'NO MIX' : 'MIX'}</span>`;
+      if (x.via === 'date') col += `<span class="wkm one" style="top:${x.h * WKPX + 7}px" title="Only on this date: ${esc(ck ? ck.name : '')}">1×</span>`;
     });
     if (WKSEL && WKSEL[0] === di) col += `<div class="wksel" style="top:${WKSEL[1] * WKPX}px;height:${(WKSEL[2] - WKSEL[1] + 1) * WKPX}px"></div>`;
     if (d.date === today) { const n = new Date(); col += `<div class="wknow" style="top:${(n.getHours() + n.getMinutes() / 60) * WKPX}px"></div>`; }
@@ -750,71 +859,75 @@ function wkRender() {
 function dragBox() { $$('.wkdrag').forEach(x => x.remove()); const {el, a, b} = WKDRAG, lo = Math.min(a, b), hi = Math.max(a, b);
   el.insertAdjacentHTML('beforeend', `<div class="wkdrag" style="top:${lo * WKPX}px;height:${(hi - lo + 1) * WKPX}px"></div>`); }
 document.addEventListener('mouseup', () => { if (!WKDRAG) return; const {di, a, b} = WKDRAG; WKDRAG = null; wkOpen(di, Math.min(a, b), Math.max(a, b)); });
+function wkScope() {
+  const sc = $$('#wsScope button'); if (WKSEL) { const past = WK.days[WKSEL[0]].date < todayIso(); sc[1].disabled = past; if (past && WKSC === 'date') WKSC = 'week'; }
+  sc.forEach(b => b.classList.toggle('on', b.dataset.sc === WKSC));
+  if (WKSEL) { const [di] = WKSEL, d = WK.days[di]; $('#wsChgL').textContent = WKSC === 'date' ? `Clock · only ${DAYS[di]} ${fmtD(d.date)}` : `Clock · every ${WFULL[di]}`;
+    $('#wsChg').textContent = WKSC === 'date' ? `Change only ${DAYS[di]} ${fmtD(d.date)}` : `Change every ${WFULL[di]}`; }
+}
 function wkOpen(di, h1, h2, keep) {
   if (h2 === undefined || h2 === true) { keep = h2 === true || keep; h2 = h1; }
   WKSEL = [di, h1, h2]; if (!keep) wkRender();
   const d = WK.days[di], hrs = d.hours.slice(h1, h2 + 1), x = hrs[0], ck = wkClock(x.clock_id), s = wkShowAt(d, h1), n = h2 - h1 + 1;
-  const past = d.date < todayIso();
   $('#wkSide').hidden = false;
   $('#wsWhen').textContent = `${WFULL[di].toUpperCase()} ${fmtD(d.date).toUpperCase()} · ${hh(h1)} – ${hh(h2 + 1)}${n > 1 ? ` · ${n} HOURS` : ''}`;
-  $('#wsShow').textContent = s ? s.title : (ck ? ck.name : 'No clock'); $('#wsShow').style.color = ck ? ck.color : '';
-  // quick selections
+  $('#wsShow').textContent = s ? s.title : (ck ? ck.name : 'No clock'); $('#wsShow').style.color = ck ? lighten(ck.color, .3) : '';
   let sel = '';
   if (s) { const a = Math.floor(toMin(s.start) / 60), b = Math.ceil((toMin(s.end) || 1440) / 60) - 1; if (a !== h1 || b !== h2) sel += `<button class="btn sm" data-qs="${a}-${b}">Whole show ${s.start}–${s.end}</button>`; }
   if (n > 1) sel += `<button class="btn sm" data-qs="${h1}-${h1}">Only ${hh(h1)}</button>`;
   $('#wsSel').innerHTML = sel; $$('#wsSel [data-qs]').forEach(b => b.onclick = () => { const [a, z] = b.dataset.qs.split('-').map(Number); wkOpen(di, a, Math.min(23, z)); });
-  // clock + scope
   const same = hrs.every(y => y.clock_id === x.clock_id);
+  $('#wsEdit').textContent = ck ? 'Edit ' + ck.name : 'Edit'; $('#wsEdit').disabled = !ck;
   $('#wsClock').innerHTML = (same ? '' : '<option value="" selected>– different clocks –</option>') + WK.clocks.slice().sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.id}" ${same && c.id === x.clock_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
-  const sc = $$('#wsScope button'); sc[0].textContent = `Every ${WFULL[di]}`; sc[1].textContent = `Only ${DAYS[di]} ${fmtD(d.date)}`; sc[1].disabled = past;
-  if (past && WKSC === 'date') WKSC = 'week'; sc.forEach(b => b.classList.toggle('on', b.dataset.sc === WKSC));
+  wkScope();
   const ones = hrs.filter(y => y.via === 'date'), shows = hrs.filter(y => y.via === 'show');
   $('#wsNormal').hidden = !ones.length;
   const normal = ones.length ? wkClock(ones[0].grid) : null;
   $('#wsVia').innerHTML = ones.length ? `Only on ${fmtD(d.date)}: <b>${esc(ck ? ck.name : '')}</b>${normal ? ` – normally ${esc(normal.name)}` : ''}.`
-    : shows.length ? `The show "${esc(s ? s.title : '')}" uses one clock for all its hours (see More). "Every ${WFULL[di]}" changes the hours outside that show.` : '';
-  // show clock
+    : shows.length ? `"${esc(s ? s.title : '')}" uses one clock for all its hours (Whole show, below).` : '';
+  if (ones.length || shows.length) $('#wsChgBox').hidden = false;
   const shc = s ? x.show_clock : null;
   $('#wsShowTxt').innerHTML = s ? (shc ? `Every hour of <b>${esc(s.title)}</b>, all days, plays <b>${esc((wkClock(shc) || {}).name || '')}</b>.` : `Give every hour of <b>${esc(s.title)}</b> (all days) the clock chosen above.`) : 'No website show at this time.';
   $('#wsShowSet').textContent = shc ? 'Use the chosen clock instead' : 'Use for the whole show'; $('#wsShowSet').disabled = !s; $('#wsShowOff').hidden = !shc;
-  // copy day
-  $('#wsCopyTxt').innerHTML = `Copy the clocks of every hour of <b>${WFULL[di]}</b> (normal week) to:`;
+  $('#wsCopyTxt').innerHTML = `Copy the clocks of all hours of <b>${WFULL[di]}</b> (normal week) to:`;
   $('#wsCopyDays').innerHTML = DAYS.map((dn, i) => i === di ? '' : `<button class="btn sm" data-cd="${i}">${dn}</button>`).join('');
   $$('#wsCopyDays [data-cd]').forEach(b => b.onclick = () => b.classList.toggle('on'));
-  // warnings + preview of the first hour
   const ws = WK.warnings.filter(w => w.date === d.date && w.hour >= h1 && w.hour <= h2);
   $('#wsWarn').innerHTML = ws.map(w => `<div class="wkw ${w.level}" style="cursor:default;max-width:none"><span class="i">!</span><span>${esc(w.text)}</span></div>`).join('');
-  $('#wsList').innerHTML = '<div class="muted">Loading…</div>'; $('#wsSum').textContent = '';
+  WKPV = null; wkList();
   const ask = WKSEL.join('-');
-  get(`preview_hour?day=${di}&hour=${h1}`).then(p => {
-    if (WKSEL.join('-') !== ask) return;
-    if (p.off) { $('#wsList').innerHTML = '<div class="muted">Hour preview is off (Settings).</div>'; return; }
-    const t0 = new Date(p.start * 1000); $('#wsPvT').textContent = 'What plays · ' + t0.toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'}) + ' ' + hh(h1);
-    $('#wsSum').textContent = `${p.songs} songs · ${p.jingles} jingles · ` + (p.over > 0 ? `ends ${p.over} s after the hour` : `ends ${-p.over} s early`);
-    const len = s_ => Math.floor(s_ / 60) + ':' + String(s_ % 60).padStart(2, '0');
-    $('#wsList').innerHTML = p.items.map(i => { const k = i.section === 'music' ? ['SONG', ''] : i.section === 'ads' ? ['AD', 'a'] : ['JINGLE', 'j'];
-      return `<div><span class="t">${new Date(i.t * 1000).toTimeString().slice(0, 5)}</span><span class="k ${k[1]}">${k[0]}</span><span class="w" title="${esc(i.folder)}">${esc(i.artist ? i.artist + ' – ' : '')}${esc(i.title)}</span><span class="l">${len(i.length)}</span></div>`; }).join('') +
-      p.warnings.map(w => `<div style="color:var(--o)">⚠ ${esc(w)}</div>`).join('') +
-      '<div class="muted" style="border:0;font-size:11px">Songs are picked fresh when the hour comes – this is an example.</div>';
-  }).catch(() => $('#wsList').innerHTML = '<div class="muted">Preview failed.</div>');
+  get(`preview_hour?day=${di}&hour=${h1}`).then(p => { if (WKSEL && WKSEL.join('-') === ask) { WKPV = p; wkList(); } }).catch(() => { WKPV = {err: 1}; wkList(); });
+}
+function wkList() {
+  if (!WKSEL) return; const [di, h1] = WKSEL, x = WK.days[di].hours[h1], ck = CK.find(c => c.id === x.clock_id);
+  $$('#wsView button').forEach(b => b.classList.toggle('on', b.dataset.v === WKVIEW));
+  const fixed = WK.events.filter(e => e.days.includes(String(di)) && (e.at[0] === '*' || +e.at.split(':')[0] === h1));
+  if (WKVIEW === 'plan') {
+    $('#wsList').innerHTML = fixed.map(e => `<li class="fxr"><span class="t">${e.at[0] === '*' ? e.at.slice(1) : e.at.slice(2)}</span><span class="k" style="background:#3A3300;color:#FFE000">FIXED</span><span class="w">${esc(e.name || 'Fixed time')}</span></li>`).join('') +
+      (ck ? ck.slots.map((s, i) => { const t = tagOf(s); return `<li><span class="t muted">${i + 1}</span><span class="k" style="background:${t[1]};color:${t[2]}">${t[0]}</span><span class="w">${esc(slotText(s))}</span></li>`; }).join('') : '<li class="muted">No clock.</li>');
+    $('#wsSum').innerHTML = ck ? `<span>${ck.slots.length} slots in ${esc(ck.name)}</span><span>Edit it with the yellow button</span>` : ''; return;
+  }
+  const p = WKPV;
+  if (!p) { $('#wsList').innerHTML = '<li class="muted">Loading…</li>'; $('#wsSum').textContent = ''; return; }
+  if (p.err) { $('#wsList').innerHTML = '<li class="muted">Preview failed.</li>'; return; }
+  if (p.off) { $('#wsList').innerHTML = '<li class="muted">Hour preview is off (Settings).</li>'; return; }
+  const len = s_ => Math.floor(s_ / 60) + ':' + String(Math.round(s_ % 60)).padStart(2, '0');
+  $('#wsList').innerHTML = p.items.map(i => { const k = i.section === 'music' ? ['SONG', '#062F38', '#05A9C6'] : i.section === 'ads' ? ['ADS', '#3A2A00', '#FFB54D'] : /TOH/i.test(i.title || '') ? ['FIXED', '#3A3300', '#FFE000'] : ['JINGLE', '#1E1438', '#B9A2FF'];
+    return `<li><span class="t">${new Date(i.t * 1000).toTimeString().slice(0, 5)}</span><span class="k" style="background:${k[1]};color:${k[2]}">${k[0]}</span><span class="w" title="${esc(i.folder)}">${esc(i.artist ? i.artist + ' – ' : '')}${esc(i.title)}</span><span class="l">${len(i.length)}</span></li>`; }).join('') +
+    p.warnings.map(w => `<li style="color:var(--o)">⚠ ${esc(w)}</li>`).join('');
+  const filled = Math.min(3600, 3600 + p.over);
+  $('#wsSum').innerHTML = `<span>Hour filled: <b style="color:${filled >= 3540 ? 'var(--g)' : 'var(--o)'}">${len(filled)}</b> of 60:00 · ${p.songs} songs</span><span>Songs are picked fresh at play time</span>`;
 }
 function wkUndoToast(msg) { toast(msg + ' · Undo: Ctrl+Z'); $('#wsUndo').hidden = false; }
-function wkSave(kind, cells, undo, msg) {
-  return post('plan/' + kind, {cells}).then(() => { WKUNDO = undo; wkUndoToast(msg); return wkLoad(); }).catch(e => toast(e.message, 1));
-}
-$$('#wsScope button').forEach(b => b.onclick = () => { if (b.disabled) return; WKSC = b.dataset.sc; $$('#wsScope button').forEach(x => x.classList.toggle('on', x === b)); });
+function wkSave(kind, cells, undo, msg) { return post('plan/' + kind, {cells}).then(() => { WKUNDO = undo; wkUndoToast(msg); return wkLoad(); }).catch(e => toast(e.message, 1)); }
+$$('#wsScope button').forEach(b => b.onclick = () => { if (b.disabled) return; WKSC = b.dataset.sc; wkScope(); });
+$$('#wsView button').forEach(b => b.onclick = () => { WKVIEW = b.dataset.v; wkList(); });
+$('#wsChg').onclick = () => { $('#wsChgBox').hidden = !$('#wsChgBox').hidden; };
 $('#wsApply').onclick = () => {
   const v = +$('#wsClock').value; if (!v) return toast('Choose a clock first', 1);
   const [di, h1, h2] = WKSEL, d = WK.days[di], hrs = d.hours.slice(h1, h2 + 1), when = `${hh(h1)}–${hh(h2 + 1)}`;
-  if (WKSC === 'date') {
-    const cells = hrs.map(x => ({date: d.date, hour: x.h, clock_id: v}));
-    const undo = ['set_schedule_date', hrs.map(x => ({date: d.date, hour: x.h, clock_id: x.via === 'date' ? x.clock_id : null}))];
-    wkSave('set_schedule_date', cells, undo, `Only ${DAYS[di]} ${fmtD(d.date)} ${when}: ${wkClock(v).name}`);
-  } else {
-    const cells = hrs.map(x => ({day: di, hour: x.h, clock_id: v}));
-    const undo = ['set_schedule', hrs.map(x => ({day: di, hour: x.h, clock_id: x.grid}))];
-    wkSave('set_schedule', cells, undo, `Every ${WFULL[di]} ${when}: ${wkClock(v).name}`);
-  }
+  if (WKSC === 'date') wkSave('set_schedule_date', hrs.map(x => ({date: d.date, hour: x.h, clock_id: v})), ['set_schedule_date', hrs.map(x => ({date: d.date, hour: x.h, clock_id: x.via === 'date' ? x.clock_id : null}))], `Only ${DAYS[di]} ${fmtD(d.date)} ${when}: ${wkClock(v).name}`);
+  else wkSave('set_schedule', hrs.map(x => ({day: di, hour: x.h, clock_id: v})), ['set_schedule', hrs.map(x => ({day: di, hour: x.h, clock_id: x.grid}))], `Every ${WFULL[di]} ${when}: ${wkClock(v).name}`);
 };
 $('#wsNormal').onclick = () => { const [di, h1, h2] = WKSEL, d = WK.days[di], hrs = d.hours.slice(h1, h2 + 1).filter(x => x.via === 'date');
   wkSave('set_schedule_date', hrs.map(x => ({date: d.date, hour: x.h, clock_id: null})), ['set_schedule_date', hrs.map(x => ({date: d.date, hour: x.h, clock_id: x.clock_id}))], `${fmtD(d.date)} is back to the normal week`); };
@@ -832,8 +945,100 @@ function wkUndo() { if (!WKUNDO) return; const [k, data] = WKUNDO; WKUNDO = null
 $('#wsUndo').onclick = wkUndo;
 document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'z' && WKUNDO && !$('#tab-wk').hidden && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); wkUndo(); } });
 $('#wsClose').onclick = () => { WKSEL = null; $('#wkSide').hidden = true; wkRender(); };
-$('#wsEdit').onclick = () => { const id = +$('#wsClock').value; if (!id) return; $('.tab[data-tab="ck"]').click(); const c = CK.find(k => k.id === id); if (c) openCK(c); };
+$('#wsEdit').onclick = () => { const x = WK.days[WKSEL[0]].hours[WKSEL[1]]; if (!x.clock_id) return; SHSEL = {clock: x.clock_id}; $('.tab[data-tab="sh"]').click(); };
 $('#wkPrev').onclick = () => { WKW--; wkLoad(); }; $('#wkNext').onclick = () => { WKW++; wkLoad(); }; $('#wkToday').onclick = () => { WKW = 0; wkLoad(); };
+
+/* ---------------- shows (hour plans) ---------------- */
+let SHSEL = null, SHW = null, SHC = null, SHDRAG = null;
+const SWATCH = ['#05A9C6', '#3DD68C', '#FFC94D', '#FF8A3D', '#FF5C7A', '#FF4FD8', '#B07CFF', '#7C8CFF', '#4B5D7A'];
+function shLoad() { return Promise.all([get('week?w=0'), get('shows'), loadAll()]).then(([w, sh]) => { SHW = {week: w, shows: sh.shows}; shRender(); }).catch(() => toast('Shows could not load', 1)); }
+function shInfo() {   // per website show: hours per clock this week
+  const info = {};
+  SHW.week.days.forEach((d, di) => d.hours.forEach(x => { const s = wkShowAt(d, x.h); if (!s) return; const t = s.title;
+    (info[t] = info[t] || {}); const k = x.clock_id; (info[t][k] = info[t][k] || []).push([di, x.h]); }));
+  return info;
+}
+const whereTxt = list => { const by = {}; list.forEach(([d, h]) => (by[d] = by[d] || []).push(h)); return Object.entries(by).map(([d, hs]) => DAYS[d] + ' ' + hs.map(h => String(h).padStart(2, '0')).join(',')).join(' · '); };
+function shRender() {
+  const info = shInfo(), main = {};
+  const shows = SHW.shows.map(s => { const cl = Object.entries(info[s.title] || {}).sort((a, b) => b[1].length - a[1].length); const m = cl.length ? +cl[0][0] : null; if (m) main[m] = 1; return {...s, clocks: cl.map(([k, v]) => ({id: +k, where: v})), main: m}; });
+  if (!SHSEL) SHSEL = shows.length ? {show: shows[0].title} : CK.length ? {clock: CK[0].id} : null;
+  if (SHSEL && SHSEL.clock && !SHSEL.show) { const s = shows.find(x => x.main === SHSEL.clock); if (s) SHSEL = {show: s.title, clock: SHSEL.clock}; }
+  $('#shList').innerHTML = shows.map(s => { const c = (CK.find(k => k.id === s.main) || {}).color || '#4B5D7A';
+    return `<button class="shi ${SHSEL && SHSEL.show === s.title ? 'on' : ''}" data-show="${esc(s.title)}"><span class="dot" style="background:${c}"></span><span style="flex:1;min-width:0"><b>${esc(s.title)}</b><small>${esc(s.when.length > 3 ? s.when.slice(0, 2).join(' · ') + ` +${s.when.length - 2}` : s.when.join(' · '))}</small></span></button>`; }).join('') || '<span class="muted">No shows from the website yet.</span>';
+  const used = {}; Object.values(info).forEach(o => Object.keys(o).forEach(k => used[k] = 1));
+  const other = CK.filter(c => !main[c.id]).sort((a, b) => a.name.localeCompare(b.name));
+  $('#shOther').innerHTML = other.map(c => `<button class="shi ${SHSEL && !SHSEL.show && SHSEL.clock === c.id ? 'on' : ''}" data-ck="${c.id}"><span class="dot" style="background:${c.color}"></span><span style="flex:1;min-width:0"><b>${esc(c.name)}</b><small>${used[c.id] ? 'used in a show' : 'not on the week'}</small></span></button>`).join('');
+  $$('#shList [data-show]').forEach(b => b.onclick = () => { SHSEL = {show: b.dataset.show}; shRender(); });
+  $$('#shOther [data-ck]').forEach(b => b.onclick = () => { SHSEL = {clock: +b.dataset.ck}; shRender(); });
+  // right side
+  const s = SHSEL && SHSEL.show ? shows.find(x => x.title === SHSEL.show) : null;
+  let cid = SHSEL && SHSEL.clock ? SHSEL.clock : s ? s.main : null;
+  if (s && !s.clocks.some(c => c.id === cid)) cid = s.main;
+  const cl = CK.find(k => k.id === cid);
+  $('#shHead').innerHTML = s ? `
+    <div class="f">SHOW<span class="v">${esc(s.title)}</span></div>
+    <div class="f">SHOW ID &amp; INTRO FOLDER<span class="v" style="font-weight:600;font-size:13px">${esc(FOLD.jingles.includes('SHOWS/' + s.title) ? 'SHOWS/' + s.title : 'SHOWS/' + s.title + ' (empty – uses SWEEPERS)')}</span></div>
+    <div class="f">COLOUR<span class="sw">${SWATCH.map(c => `<button type="button" aria-label="Colour ${c}" data-col="${c}" class="${cl && cl.color.toLowerCase() === c.toLowerCase() ? 'on' : ''}" style="background:${c}"></button>`).join('')}</span></div>
+    <div class="on-air"><span style="font-weight:800;letter-spacing:.1em;font-size:11px">ON AIR</span>${s.when.map(w => `<span class="chipc" style="background:${cl ? cl.color + '33' : 'var(--card2)'};color:${cl ? lighten(cl.color, .35) : 'var(--txt)'}">${esc(w)}</span>`).join('')}<a href="#" id="shToWeek" style="font-weight:700;color:var(--b)">Change on the Week page</a><span style="flex:1"></span><span>Name and times come from your website</span></div>`
+    : cl ? `<div class="f" style="grid-column:1/-1">HOUR PLAN<span class="v">${esc(cl.name)}</span></div><div class="f">COLOUR<span class="sw">${SWATCH.map(c => `<button type="button" aria-label="Colour ${c}" data-col="${c}" class="${cl.color.toLowerCase() === c.toLowerCase() ? 'on' : ''}" style="background:${c}"></button>`).join('')}</span></div>` : '<span class="muted">Choose a show.</span>';
+  if ($('#shToWeek')) $('#shToWeek').onclick = e => { e.preventDefault(); $('.tab[data-tab="wk"]').click(); };
+  $$('#shHead [data-col]').forEach(b => b.onclick = () => { if (!SHC) return; SHC.color = b.dataset.col; $$('#shHead [data-col]').forEach(x => x.classList.toggle('on', x === b)); toast('Colour chosen – press Save hour plan'); });
+  $('#shPlans').innerHTML = s && s.clocks.length > 1 ? '<span class="lab">This show uses</span>' + s.clocks.map(c => { const k = CK.find(x => x.id === c.id) || {name: '?'};
+    return `<button class="btn sm ${c.id === cid ? 'on' : ''}" data-pc="${c.id}" title="${esc(whereTxt(c.where))}">${esc(k.name)} · ${c.where.length > 2 ? c.where.length + ' h/week' : esc(whereTxt(c.where))}</button>`; }).join('') : '';
+  $$('#shPlans [data-pc]').forEach(b => b.onclick = () => { SHSEL = {show: s.title, clock: +b.dataset.pc}; shRender(); });
+  SHC = cl ? JSON.parse(JSON.stringify(cl)) : null; $('#shPv').hidden = true;
+  shSlots();
+}
+function shSlots() {
+  if (!SHC) { $('#shSlots').innerHTML = '<span class="muted">No hour plan.</span>'; $('#shName').value = ''; return; }
+  $('#shName').value = SHC.name; $('#shResume').checked = !!SHC.resume;
+  const fixed = (SHW.week.events || []).filter(e => e.at[0] === '*');
+  const amOpts = s => s.kind === 'adbreak' ? [1, 2, 3, 4, 5, 6].map(n => [n, n + ' spots']) : [[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [0, 'all'], [999, 'fill to the hour']];
+  const refSel = (s, i) => { const o = refOptions(s); if (o) return `<select class="wh" data-i="${i}" data-f="ref" aria-label="Which">${s.ref ? '' : '<option value="">– choose –</option>'}${o.map(([v, l]) => `<option value="${esc(v)}" ${String(s.ref) === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+    if (s.kind === 'song') return `<button class="btn sm wh" data-song="${i}" style="justify-content:flex-start">${s.ref ? esc(s.ref.split('/').pop()) : 'Choose a song…'}</button>`;
+    if (s.kind === 'file') return `<input class="wh" data-i="${i}" data-f="ref" value="${esc(s.ref)}" placeholder="file name">`; return `<span class="wh" style="font-size:13px;font-weight:600">${esc(slotText(s))}</span>`; };
+  $('#shSlots').innerHTML = fixed.map(e => `<div class="sl fx"><span class="hd"></span><span class="tg" style="background:#3A3300;color:#FFE000">FIXED</span><span class="wh" style="font-size:13px;font-weight:600">${esc(e.name || 'Fixed time')}</span><span class="st">every hour at ${esc(e.at.slice(1))}</span></div>`).join('') +
+    SHC.slots.map((s, i) => `<div class="sl" draggable="true" data-row="${i}"><span class="hd" aria-hidden="true">⋮⋮</span>${tagHtml(s)}${refSel(s, i)}
+      ${['playlist', 'folder', 'adbreak'].includes(s.kind) ? `<select class="am" data-i="${i}" data-f="amount" aria-label="How many">${amOpts(s).map(([v, l]) => `<option value="${v}" ${(+s.amount || 0) === v || (v === 999 && s.amount >= 999) ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}
+      ${['playlist', 'folder'].includes(s.kind) ? `<select class="st" data-i="${i}" data-f="start" aria-label="Start">${STARTS.map(([v, l]) => `<option value="${v}" ${s.start === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}
+      <button class="rx" data-rx="${i}" aria-label="Remove">×</button></div>`).join('');
+  $$('#shSlots [data-f]').forEach(e => e.onchange = () => { const s = SHC.slots[+e.dataset.i]; s[e.dataset.f] = e.dataset.f === 'amount' ? +e.value : e.value; shSlots(); shEst(); });
+  $$('#shSlots [data-rx]').forEach(b => b.onclick = () => { SHC.slots.splice(+b.dataset.rx, 1); shSlots(); shEst(); });
+  $$('#shSlots [data-song]').forEach(b => b.onclick = () => { const q = prompt('Search a song (artist or title):'); if (!q) return; get('library?section=music&q=' + encodeURIComponent(q)).then(d => { if (!d.items.length) return toast('Nothing found', 1); SHC.slots[+b.dataset.song].ref = d.items[0].path; toast('Chosen: ' + d.items[0].artist + ' – ' + d.items[0].title); shSlots(); }); });
+  $$('#shSlots [data-row]').forEach(r => {
+    r.ondragstart = e => { SHDRAG = +r.dataset.row; r.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; };
+    r.ondragend = () => { SHDRAG = null; $$('#shSlots .sl').forEach(x => x.classList.remove('drag', 'over')); };
+    r.ondragover = e => { if (SHDRAG === null) return; e.preventDefault(); $$('#shSlots .sl').forEach(x => x.classList.toggle('over', x === r)); };
+    r.ondrop = e => { e.preventDefault(); const to = +r.dataset.row; if (SHDRAG === null || to === SHDRAG) return; const [m] = SHC.slots.splice(SHDRAG, 1); SHC.slots.splice(to, 0, m); SHDRAG = null; shSlots(); };
+  });
+  shEst();
+}
+function shEst() {
+  const n = SHC.slots.reduce((a, s) => a + (['playlist', 'folder'].includes(s.kind) ? (s.amount && s.amount < 999 ? s.amount : 0) : s.kind === 'song' || s.kind === 'file' ? 1 : 0), 0);
+  $('#shEst').textContent = `${SHC.slots.length} rows · ${SHC.slots.some(s => s.amount >= 999) ? 'fills the hour' : SHC.slots.some(s => ['playlist', 'folder'].includes(s.kind) && !s.amount) ? 'has an "all" row' : '≈ ' + n + ' songs per round'} · Preview hour shows the real fill`;
+}
+const ADDS = [['playlist', 'Song from a playlist', 'POWER, CURRENT, GOLD …'], ['folder', 'Song from a folder', 'a music folder'], ['showjingle', 'Show ID / sweeper', 'from the show folder'],
+  ['jingle', 'Jingle / sweeper', 'from a jingles folder'], ['id', 'Station ID', 'from IDS'], ['adbreak', 'Ad break', 'spots picked by Ads'], ['mix', 'Mix / liveset', 'one file from a MIXES folder'], ['song', 'One song', 'always this song'], ['fixed', 'Fixed time', 'news, TOH – at an exact minute']];
+$('#shAdd').innerHTML = ADDS.map(([k, t, d]) => `<button type="button" class="adb" data-add="${k}"><b>+ ${t}</b><small>${d}</small></button>`).join('');
+$$('#shAdd [data-add]').forEach(b => b.onclick = () => {
+  const k = b.dataset.add; if (k === 'fixed') { $('.tab[data-tab="fx"]').click(); return; } if (!SHC) return toast('Choose a show or hour plan first', 1);
+  const s = k === 'mix' ? {kind: 'folder', ref: (FOLD.music.find(f => /^MIXES\//i.test(f)) || 'MIXES/Mixtapes'), amount: 1, start: 'continue'}
+    : {kind: k, ref: k === 'playlist' ? String((PL[0] || {}).id || '') : k === 'id' ? 'IDS' : k === 'jingle' || k === 'showjingle' ? 'SWEEPERS' : '', amount: k === 'adbreak' ? 3 : 1, start: 'continue'};
+  SHC.slots.push(s); shSlots(); const rows = $$('#shSlots .sl'); rows[rows.length - 1].scrollIntoView({block: 'nearest'}); });
+$('#shSave').onclick = () => { if (!SHC) return; SHC.name = $('#shName').value.trim(); SHC.resume = $('#shResume').checked;
+  if (SHC.slots.some(s => ['playlist', 'folder', 'song', 'file'].includes(s.kind) && !s.ref)) return toast('Choose what to play in every row', 1);
+  post('plan/save_clock', SHC).then(r => { toast('Hour plan saved – Up next is updated'); SHSEL = SHSEL && SHSEL.show ? {show: SHSEL.show, clock: r.id} : {clock: r.id}; return shLoad(); }).catch(e => toast(e.message, 1)); };
+$('#shPrev').onclick = () => { if (!SHC || !SHC.id) return toast('Save first', 1); const box = $('#shPv'); box.hidden = false; box.innerHTML = '<li class="muted">Loading…</li>';
+  get('preview_hour?clock=' + SHC.id).then(p => { if (p.off) { box.innerHTML = '<li class="muted">Hour preview is off (Settings).</li>'; return; } const len = s_ => Math.floor(s_ / 60) + ':' + String(Math.round(s_ % 60)).padStart(2, '0'), filled = Math.min(3600, 3600 + p.over);
+    box.innerHTML = `<li><b style="color:${filled >= 3540 ? 'var(--g)' : 'var(--o)'}">Hour filled ${len(filled)} of 60:00</b><span class="muted" style="margin-left:auto">${p.songs} songs · ${p.jingles} jingles</span></li>` +
+      p.items.map(i => `<li><span class="t">${new Date(i.t * 1000).toTimeString().slice(0, 5)}</span><span class="k" style="${i.section === 'music' ? '' : 'background:#1E1438;color:#B9A2FF'}">${i.section === 'music' ? 'SONG' : 'JINGLE'}</span><span class="w">${esc(i.artist ? i.artist + ' – ' : '')}${esc(i.title)}</span><span class="l">${len(i.length)}</span></li>`).join('') + p.warnings.map(w => `<li style="color:var(--o)">⚠ ${esc(w)}</li>`).join(''); }).catch(() => box.innerHTML = '<li class="muted">Preview failed.</li>'); };
+$('#shCopy').onclick = () => { if (!SHC) return; const n = prompt('Name for the copy:', SHC.name + ' copy'); if (!n) return; const c = {...JSON.parse(JSON.stringify(SHC)), id: null, name: n};
+  post('plan/save_clock', c).then(r => { toast('Copy made'); SHSEL = {clock: r.id}; shLoad(); }).catch(e => toast(e.message, 1)); };
+$('#shDel').onclick = () => { if (!SHC || !SHC.id) return; if (!confirm('Delete hour plan "' + SHC.name + '"? Hours that use it fall back to the first clock.')) return;
+  post('plan/delete_clock', {id: SHC.id}).then(() => { toast('Deleted'); SHSEL = null; shLoad(); }).catch(e => toast(e.message, 1)); };
+$('#shNew').onclick = () => { const n = prompt('Name of the new hour plan:'); if (!n) return;
+  post('plan/save_clock', {id: null, name: n, color: '#05A9C6', resume: false, slots: [{kind: 'showjingle', ref: 'SWEEPERS', amount: 1, start: 'continue'}, {kind: 'playlist', ref: String((PL[0] || {}).id || ''), amount: 999, start: 'continue'}]}).then(r => { SHSEL = {clock: r.id}; shLoad(); }).catch(e => toast(e.message, 1)); };
 wkLoad(); setInterval(() => { if (!$('#tab-wk').hidden && !document.hidden) wkLoad(); }, 120000);
 </script>
 </body>
