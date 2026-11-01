@@ -142,7 +142,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .wkpl .l{font:500 11px 'JetBrains Mono',monospace;color:var(--mut)}
 
 /* ---- page tabs (concept style) ---- */
-.ptabs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:10px 16px;margin:0 -14px;border-bottom:1px solid var(--line)}
+.ptabs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:10px 16px;margin:-10px 0 0;border-bottom:1px solid var(--line)}
 .ptabs .tab{cursor:pointer;flex:none;min-height:0;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--mut);font:700 13px Inter,system-ui,sans-serif;letter-spacing:0;padding:8px 12px;white-space:nowrap}
 .ptabs .tab:hover{color:var(--txt);border-color:var(--line2)}
 .ptabs .tab.on{background:var(--b);color:var(--bg);border-color:var(--b)}
@@ -153,7 +153,12 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .wklegend{font-size:12px}
 /* ---- shows ---- */
 .shwrap{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}.shwrap[hidden]{display:none}
-.shlist{flex:1 1 260px;max-width:330px;gap:6px}
+.shlist{flex:1 1 260px;max-width:330px;gap:8px;position:sticky;top:76px;max-height:calc(100vh - 96px)}
+.shscroll{overflow-y:auto;min-height:0;flex:1;margin-right:-6px;padding-right:6px}
+.shadd{position:sticky;top:76px}
+.colsel{display:flex;align-items:center;gap:8px}.colsel .dot{width:22px;height:22px;border-radius:999px;flex:none}.colsel select{flex:1;min-height:40px}
+.adb{cursor:grab}.adb:active{cursor:grabbing}
+.shslots.dropend{outline:2px dashed var(--y);outline-offset:4px;border-radius:10px}
 .shl{display:flex;flex-direction:column;gap:6px}
 .shi{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:7px 10px;border-radius:12px;cursor:pointer;color:var(--txt);background:transparent;border:1px solid var(--line);text-align:left;font-family:inherit}
 .shi:hover{border-color:var(--line2)}.shi.on{background:var(--card2);border:2px solid var(--y);padding:6px 9px}
@@ -185,6 +190,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 .adb{width:100%;text-align:left;min-height:50px;padding:7px 12px;border-radius:12px;border:1px dashed var(--line2);background:var(--card);color:var(--txt);font-family:inherit;cursor:pointer}
 .adb:hover{border-color:var(--y)}.adb b{display:block;font-size:13px}.adb small{display:block;font-size:11px;color:var(--mut);margin-top:2px}
 @media (hover:none){.sl .rx{opacity:1}}
+@media (max-width:760px){.shlist{position:static;max-height:none}.shscroll{max-height:46vh}.shadd{position:static}}
 @media (max-width:700px){.shhead{grid-template-columns:1fr}.shname{min-width:0;width:100%}.shadd{max-width:none}.shlist{max-width:none}.wkctl b{min-width:0}}
 </style>
 </head>
@@ -244,29 +250,31 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
   <section id="tab-sh" class="shwrap" hidden>
     <div class="card shlist">
       <div class="row between"><span class="lab">Shows</span><button class="btn sm ghosty" id="shNew">+ New hour plan</button></div>
-      <div id="shList" class="shl"></div>
-      <span class="lab" style="margin-top:6px">Other hour plans</span>
-      <div id="shOther" class="shl"></div>
-      <p class="muted" style="margin:6px 2px 0;font-size:11px;line-height:1.5">Every show plays an hour plan (a clock). Shows and times come from your website; which plan plays when is set on the Week page.</p>
+      <input type="search" id="shQ" placeholder="Search shows and hour plans…" style="width:100%">
+      <div class="shscroll">
+        <div id="shList" class="shl"></div>
+        <span class="lab" style="margin-top:10px;display:block">Other hour plans</span>
+        <div id="shOther" class="shl" style="margin-top:6px"></div>
+        <p class="muted" style="margin:10px 2px 0;font-size:11px;line-height:1.5">Shows and their times come from your website. Every show plays an hour plan. Which plan plays when is set on the Week page.</p>
+      </div>
     </div>
     <div class="shmain" id="shMain">
       <div class="card shhead" id="shHead"></div>
       <div class="shrow">
         <div class="card shplan">
           <div class="row" id="shPlans" style="gap:6px"></div>
-          <div class="row" style="flex-wrap:nowrap;gap:10px">
-            <span class="lab" style="flex:1">Hour plan · <input id="shName" class="shname" aria-label="Hour plan name"></span>
-            <span class="muted" id="shEst" style="font-size:12px"></span>
+          <div class="row" style="gap:10px;align-items:center">
+            <span class="lab" style="flex:1 1 260px">Hour plan · <input id="shName" class="shname" aria-label="Hour plan name"></span>
+            <div class="row" style="gap:6px"><button class="btn yellow" id="shSave">Save</button><button class="btn" id="shPrev">Preview hour</button><button class="btn sm" id="shCopy">Duplicate</button><button class="btn sm red" id="shDel">Delete</button></div>
           </div>
+          <div class="muted" id="shEst" style="font-size:12px"></div>
           <div id="shSlots" class="shslots"></div>
-          <div class="muted" style="font-size:11px">Drag ⋮⋮ to reorder · hover a row for × · yellow rows are fixed times: they come into every show by themselves (More → Fixed times)</div>
+          <div class="muted" style="font-size:11px">Drag ⋮⋮ to reorder · drag a block from "Add to the hour" to the place you want · hover a row for × · yellow rows are fixed times: they come into every show by themselves (Fixed times)</div>
+          <label class="tg" style="font-size:12px;line-height:1.4"><input type="checkbox" id="shResume"> Continue where it left off – the next hour goes on at the next row instead of starting at the top</label>
           <div id="shPv" class="wkpl" hidden></div>
         </div>
         <div class="shadd">
-          <div class="row"><button class="btn yellow grow" id="shSave">Save hour plan</button><button class="btn grow" id="shPrev">Preview hour</button></div>
-          <div class="row"><button class="btn sm grow" id="shCopy">Duplicate</button><button class="btn sm red grow" id="shDel">Delete</button></div>
-          <label class="tg" style="font-size:12px;line-height:1.4"><input type="checkbox" id="shResume"> Continue where it left off – the next hour goes on at the next row instead of starting at the top</label>
-          <span class="lab" style="padding:4px 4px 0">Add to the hour</span>
+          <span class="lab" style="padding:4px 4px 0">Add to the hour · drag or click</span>
           <div id="shAdd" style="display:flex;flex-direction:column;gap:8px"></div>
         </div>
       </div>
@@ -338,7 +346,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
   <!-- SCHEDULE -->
   <section id="tab-sc" hidden style="display:flex;flex-direction:column;gap:14px">
     <div class="card">
-      <div class="row between"><span class="lab">Shows from hyperadio.nl · choose a clock per show</span><button class="btn yellow" id="shSave">Save show clocks</button></div>
+      <div class="row between"><span class="lab">Shows from hyperadio.nl · choose a clock per show</span><button class="btn yellow" id="scShSave">Save show clocks</button></div>
       <p class="muted" style="margin:0">Show times come from your website schedule (checked every hour). A show's clock starts at the show start, also on the half hour (e.g. Fresh Out 20:30). Hours without a show clock use the grid below.</p>
       <div style="overflow-x:auto"><table class="slots"><thead><tr><th>Show</th><th>When</th><th>Clock</th></tr></thead><tbody id="shRows"></tbody></table></div>
     </div>
@@ -617,7 +625,7 @@ function gridLabel(x) {   // which clocks the hour grid gives this show's hours 
   const names = [...ids].map(id => (CK.find(c => c.id === id) || {}).name).filter(Boolean);
   return names.length ? 'Hour grid: ' + names.join(', ') : '– hour grid (empty) –'; }
 function showAt(day, hour) { const m = hour * 60; return SH.week.find(s => { if (s.day !== day) return false; const [a1, a2] = s.start.split(':').map(Number), [b1, b2] = s.end.split(':').map(Number); let a = a1 * 60 + a2, b = b1 * 60 + b2 || 1440; if (b <= a) b = 1440; return a <= m && m < b || (a > m && a < m + 60); }); }
-$('#shSave').onclick = () => post('plan/save_show_clocks', {map: SHMAP}).then(() => toast('Show clocks saved – the log is updated')).catch(e => toast(e.message, 1));
+$('#scShSave').onclick = () => post('plan/save_show_clocks', {map: SHMAP}).then(() => toast('Show clocks saved – the log is updated')).catch(e => toast(e.message, 1));
 function renderGrid() {
   $('#brush').innerHTML = CK.map(c => `<button class="btn sm ${brush === c.id ? 'on' : ''}" data-b="${c.id}"><span class="dot" style="background:${esc(c.color)}"></span>${esc(c.name)}</button>`).join('') + `<button class="btn sm ${brush === null ? 'on' : ''}" data-b="">Empty</button>`;
   $$('#brush [data-b]').forEach(b => b.onclick = () => { brush = b.dataset.b ? +b.dataset.b : null; renderGrid(); });
@@ -940,7 +948,7 @@ $('#wsEdit').onclick = () => { const x = WK.days[WKSEL[0]].hours[WKSEL[1]]; if (
 $('#wkPrev').onclick = () => { WKW--; wkLoad(); }; $('#wkNext').onclick = () => { WKW++; wkLoad(); }; $('#wkToday').onclick = () => { WKW = 0; wkLoad(); };
 
 /* ---------------- shows (hour plans) ---------------- */
-let SHSEL = null, SHW = null, SHC = null, SHDRAG = null;
+let SHSEL = null, SHW = null, SHC = null, SHDRAG = null, SHALLT = false;
 const SWATCH = ['#05A9C6', '#3DD68C', '#FFC94D', '#FF8A3D', '#FF5C7A', '#FF4FD8', '#B07CFF', '#7C8CFF', '#4B5D7A'];
 function shLoad() { return Promise.all([get('week?w=0'), get('shows'), loadAll()]).then(([w, sh]) => { SHW = {week: w, shows: sh.shows}; shRender(); }).catch(() => toast('Shows could not load', 1)); }
 function shInfo() {   // per website show: hours per clock this week
@@ -960,26 +968,38 @@ function shRender() {
   const used = {}; Object.values(info).forEach(o => Object.keys(o).forEach(k => used[k] = 1));
   const other = CK.filter(c => !main[c.id]).sort((a, b) => a.name.localeCompare(b.name));
   $('#shOther').innerHTML = other.map(c => `<button class="shi ${SHSEL && !SHSEL.show && SHSEL.clock === c.id ? 'on' : ''}" data-ck="${c.id}"><span class="dot" style="background:${c.color}"></span><span style="flex:1;min-width:0"><b>${esc(c.name)}</b><small>${used[c.id] ? 'used in a show' : 'not on the week'}</small></span></button>`).join('');
-  $$('#shList [data-show]').forEach(b => b.onclick = () => { SHSEL = {show: b.dataset.show}; shRender(); });
+  $$('#shList [data-show]').forEach(b => b.onclick = () => { SHSEL = {show: b.dataset.show}; SHALLT = false; shRender(); });
+  shFilter();
   $$('#shOther [data-ck]').forEach(b => b.onclick = () => { SHSEL = {clock: +b.dataset.ck}; shRender(); });
   // right side
   const s = SHSEL && SHSEL.show ? shows.find(x => x.title === SHSEL.show) : null;
   let cid = SHSEL && SHSEL.clock ? SHSEL.clock : s ? s.main : null;
   if (s && !s.clocks.some(c => c.id === cid)) cid = s.main;
   const cl = CK.find(k => k.id === cid);
+  const CNAMES = {'#05A9C6': 'Blue', '#3DD68C': 'Green', '#FFC94D': 'Yellow', '#FF8A3D': 'Orange', '#FF5C7A': 'Red', '#FF4FD8': 'Pink', '#B07CFF': 'Purple', '#7C8CFF': 'Indigo', '#4B5D7A': 'Grey'};
+  const colSel = c => { const cur = (c || '#05A9C6').toUpperCase(), list = Object.keys(CNAMES).includes(cur) ? Object.keys(CNAMES) : [cur, ...Object.keys(CNAMES)];
+    return `<span class="colsel"><span class="dot" id="shDot" style="background:${cur}"></span><select id="shCol" aria-label="Colour">${list.map(x => `<option value="${x}" ${x === cur ? 'selected' : ''}>${CNAMES[x] || 'Own colour'}</option>`).join('')}</select></span>`; };
+  const WMAXT = 4, wl = s ? (SHALLT ? s.when : s.when.slice(0, WMAXT)) : [];
   $('#shHead').innerHTML = s ? `
     <div class="f">SHOW<span class="v">${esc(s.title)}</span></div>
     <div class="f">SHOW ID &amp; INTRO FOLDER<span class="v" style="font-weight:600;font-size:13px">${esc(FOLD.jingles.includes('SHOWS/' + s.title) ? 'SHOWS/' + s.title : 'SHOWS/' + s.title + ' (empty – uses SWEEPERS)')}</span></div>
-    <div class="f">COLOUR<span class="sw">${SWATCH.map(c => `<button type="button" aria-label="Colour ${c}" data-col="${c}" class="${cl && cl.color.toLowerCase() === c.toLowerCase() ? 'on' : ''}" style="background:${c}"></button>`).join('')}</span></div>
-    <div class="on-air"><span style="font-weight:800;letter-spacing:.1em;font-size:11px">ON AIR</span>${s.when.map(w => `<span class="chipc" style="background:${cl ? cl.color + '33' : 'var(--card2)'};color:${cl ? lighten(cl.color, .35) : 'var(--txt)'}">${esc(w)}</span>`).join('')}<a href="#" id="shToWeek" style="font-weight:700;color:var(--b)">Change on the Week page</a><span style="flex:1"></span><span>Name and times come from your website</span></div>`
-    : cl ? `<div class="f" style="grid-column:1/-1">HOUR PLAN<span class="v">${esc(cl.name)}</span></div><div class="f">COLOUR<span class="sw">${SWATCH.map(c => `<button type="button" aria-label="Colour ${c}" data-col="${c}" class="${cl.color.toLowerCase() === c.toLowerCase() ? 'on' : ''}" style="background:${c}"></button>`).join('')}</span></div>` : '<span class="muted">Choose a show.</span>';
+    <div class="f">COLOUR${colSel(cl && cl.color)}</div>
+    <div class="on-air"><span style="font-weight:800;letter-spacing:.1em;font-size:11px">ON AIR</span>${wl.map(w => `<span class="chipc" style="background:${cl ? cl.color + '33' : 'var(--card2)'};color:${cl ? lighten(cl.color, .35) : 'var(--txt)'}">${esc(w)}</span>`).join('')}${s.when.length > WMAXT ? `<button class="btn sm" id="shAllT">${SHALLT ? 'Less' : '+' + (s.when.length - WMAXT) + ' more'}</button>` : ''}<a href="#" id="shToWeek" style="font-weight:700;color:var(--b)">Change on the Week page</a></div>`
+    : cl ? `<div class="f" style="grid-column:span 2">HOUR PLAN<span class="v">${esc(cl.name)}</span></div><div class="f">COLOUR${colSel(cl.color)}</div>` : '<span class="muted">Choose a show.</span>';
+  if ($('#shAllT')) $('#shAllT').onclick = () => { SHALLT = !SHALLT; shRender(); };
+  if ($('#shCol')) $('#shCol').onchange = () => { if (!SHC) return; SHC.color = $('#shCol').value; $('#shDot').style.background = SHC.color; toast('Colour chosen – press Save'); };
   if ($('#shToWeek')) $('#shToWeek').onclick = e => { e.preventDefault(); $('.tab[data-tab="wk"]').click(); };
-  $$('#shHead [data-col]').forEach(b => b.onclick = () => { if (!SHC) return; SHC.color = b.dataset.col; $$('#shHead [data-col]').forEach(x => x.classList.toggle('on', x === b)); toast('Colour chosen – press Save hour plan'); });
   $('#shPlans').innerHTML = s && s.clocks.length > 1 ? '<span class="lab">This show uses</span>' + s.clocks.map(c => { const k = CK.find(x => x.id === c.id) || {name: '?'};
     return `<button class="btn sm ${c.id === cid ? 'on' : ''}" data-pc="${c.id}" title="${esc(whereTxt(c.where))}">${esc(k.name)} · ${c.where.length > 2 ? c.where.length + ' h/week' : esc(whereTxt(c.where))}</button>`; }).join('') : '';
   $$('#shPlans [data-pc]').forEach(b => b.onclick = () => { SHSEL = {show: s.title, clock: +b.dataset.pc}; shRender(); });
   SHC = cl ? JSON.parse(JSON.stringify(cl)) : null; $('#shPv').hidden = true;
   shSlots();
+}
+function shFilter() { const q = ($('#shQ').value || '').trim().toLowerCase(); $$('#shList .shi, #shOther .shi').forEach(b => b.hidden = !!q && !b.textContent.toLowerCase().includes(q)); }
+$('#shQ').oninput = shFilter;
+function shAddSlot(k) {
+  return k === 'mix' ? {kind: 'folder', ref: (FOLD.music.find(f => /^MIXES\//i.test(f)) || 'MIXES/Mixtapes'), amount: 1, start: 'continue'}
+    : {kind: k, ref: k === 'playlist' ? String((PL[0] || {}).id || '') : k === 'id' ? 'IDS' : k === 'jingle' || k === 'showjingle' ? 'SWEEPERS' : '', amount: k === 'adbreak' ? 3 : 1, start: 'continue'};
 }
 function shSlots() {
   if (!SHC) { $('#shSlots').innerHTML = '<span class="muted">No hour plan.</span>'; $('#shName').value = ''; return; }
@@ -1000,8 +1020,10 @@ function shSlots() {
   $$('#shSlots [data-row]').forEach(r => {
     r.ondragstart = e => { SHDRAG = +r.dataset.row; r.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; };
     r.ondragend = () => { SHDRAG = null; $$('#shSlots .sl').forEach(x => x.classList.remove('drag', 'over')); };
-    r.ondragover = e => { if (SHDRAG === null) return; e.preventDefault(); $$('#shSlots .sl').forEach(x => x.classList.toggle('over', x === r)); };
-    r.ondrop = e => { e.preventDefault(); const to = +r.dataset.row; if (SHDRAG === null || to === SHDRAG) return; const [m] = SHC.slots.splice(SHDRAG, 1); SHC.slots.splice(to, 0, m); SHDRAG = null; shSlots(); };
+    r.ondragover = e => { if (SHDRAG === null) return; e.preventDefault(); e.stopPropagation(); $('#shSlots').classList.remove('dropend'); $$('#shSlots .sl').forEach(x => x.classList.toggle('over', x === r)); };
+    r.ondrop = e => { e.preventDefault(); e.stopPropagation(); const to = +r.dataset.row; if (SHDRAG === null) return;
+      if (typeof SHDRAG === 'string') { SHC.slots.splice(to, 0, shAddSlot(SHDRAG)); SHDRAG = null; shSlots(); return; }
+      if (to === SHDRAG) return; const [m] = SHC.slots.splice(SHDRAG, 1); SHC.slots.splice(to, 0, m); SHDRAG = null; shSlots(); };
   });
   shEst();
 }
@@ -1011,12 +1033,16 @@ function shEst() {
 }
 const ADDS = [['playlist', 'Song from a playlist', 'POWER, CURRENT, GOLD …'], ['folder', 'Song from a folder', 'a music folder'], ['showjingle', 'Show ID / sweeper', 'from the show folder'],
   ['jingle', 'Jingle / sweeper', 'from a jingles folder'], ['id', 'Station ID', 'from IDS'], ['adbreak', 'Ad break', 'spots picked by Ads'], ['mix', 'Mix / liveset', 'one file from a MIXES folder'], ['song', 'One song', 'always this song'], ['fixed', 'Fixed time', 'news, TOH – at an exact minute']];
-$('#shAdd').innerHTML = ADDS.map(([k, t, d]) => `<button type="button" class="adb" data-add="${k}"><b>+ ${t}</b><small>${d}</small></button>`).join('');
-$$('#shAdd [data-add]').forEach(b => b.onclick = () => {
-  const k = b.dataset.add; if (k === 'fixed') { $('.tab[data-tab="fx"]').click(); return; } if (!SHC) return toast('Choose a show or hour plan first', 1);
-  const s = k === 'mix' ? {kind: 'folder', ref: (FOLD.music.find(f => /^MIXES\//i.test(f)) || 'MIXES/Mixtapes'), amount: 1, start: 'continue'}
-    : {kind: k, ref: k === 'playlist' ? String((PL[0] || {}).id || '') : k === 'id' ? 'IDS' : k === 'jingle' || k === 'showjingle' ? 'SWEEPERS' : '', amount: k === 'adbreak' ? 3 : 1, start: 'continue'};
-  SHC.slots.push(s); shSlots(); const rows = $$('#shSlots .sl'); rows[rows.length - 1].scrollIntoView({block: 'nearest'}); });
+$('#shAdd').innerHTML = ADDS.map(([k, t, d]) => `<button type="button" class="adb" data-add="${k}" ${k === 'fixed' ? '' : 'draggable="true"'}><b>+ ${t}</b><small>${d}</small></button>`).join('');
+$$('#shAdd [data-add]').forEach(b => {
+  b.onclick = () => { const k = b.dataset.add; if (k === 'fixed') { $('.tab[data-tab="fx"]').click(); return; } if (!SHC) return toast('Choose a show or hour plan first', 1);
+    SHC.slots.push(shAddSlot(k)); shSlots(); const rows = $$('#shSlots .sl'); rows[rows.length - 1].scrollIntoView({block: 'nearest'}); };
+  b.ondragstart = e => { if (!SHC) { e.preventDefault(); return; } SHDRAG = b.dataset.add; e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', b.dataset.add); };
+  b.ondragend = () => { SHDRAG = null; $('#shSlots').classList.remove('dropend'); $$('#shSlots .sl').forEach(x => x.classList.remove('over')); };
+});
+$('#shSlots').ondragover = e => { if (typeof SHDRAG !== 'string') return; e.preventDefault(); $$('#shSlots .sl').forEach(x => x.classList.remove('over')); $('#shSlots').classList.add('dropend'); };
+$('#shSlots').ondragleave = e => { if (e.target === $('#shSlots')) $('#shSlots').classList.remove('dropend'); };
+$('#shSlots').ondrop = e => { if (typeof SHDRAG !== 'string') return; e.preventDefault(); SHC.slots.push(shAddSlot(SHDRAG)); SHDRAG = null; $('#shSlots').classList.remove('dropend'); shSlots(); };
 $('#shSave').onclick = () => { if (!SHC) return; SHC.name = $('#shName').value.trim(); SHC.resume = $('#shResume').checked;
   if (SHC.slots.some(s => ['playlist', 'folder', 'song', 'file'].includes(s.kind) && !s.ref)) return toast('Choose what to play in every row', 1);
   post('plan/save_clock', SHC).then(r => { toast('Hour plan saved – Up next is updated'); SHSEL = SHSEL && SHSEL.show ? {show: SHSEL.show, clock: r.id} : {clock: r.id}; return shLoad(); }).catch(e => toast(e.message, 1)); };
