@@ -1747,7 +1747,10 @@ def library(qs):
     if qs.get("auto", ["0"])[0] == "1": sql += " AND COALESCE(cues_edited, 0) = 0"
     for w in q.lower().split():
         sql += " AND fold(artist||' '||title||' '||filename) LIKE ?"; args.append(f"%{fold(w)}%")
-    sql += " ORDER BY " + ("added_at DESC, artist, title" if sort == "new" else "(problem IS NULL), problem, artist, title" if sort == "problems" else "artist, title") + " LIMIT 300"
+    total = c.execute("SELECT COUNT(*) FROM (" + sql + ")", args).fetchone()[0]
+    try: lim = max(1, min(1000, int(qs.get("limit", ["300"])[0]))); off = max(0, int(qs.get("offset", ["0"])[0]))
+    except ValueError: lim, off = 300, 0
+    sql += " ORDER BY " + ("added_at DESC, artist, title" if sort == "new" else "(problem IS NULL), problem, artist, title" if sort == "problems" else "artist, title") + " LIMIT ? OFFSET ?"; args += [lim, off]
     last = {r[0]: r[1] for r in c.execute("SELECT path, MAX(started) FROM asrun GROUP BY path")}
     k = ["path", "artist", "title", "folder", "mode", "clip_path", "clip_suggest", "clip_score", "duration", "has_video", "problem", "overlay_mode", "overlay_path", "cue_start", "cue_mix", "cue_end", "cues_edited", "added_at", "mix_set"]
     out = []
@@ -1763,7 +1766,7 @@ def library(qs):
     counts["mixes"] -= counts["recordings"]
     counts["music"] = counts.get("music", 0) - counts["mixes"] - counts["recordings"]
     psql = "SELECT COUNT(*) FROM items WHERE section=? AND problem IS NOT NULL" + ((" AND folder " + ("" if mixes else "NOT ") + "LIKE 'MIXES%'") if sec == "music" else "")
-    return {"problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "counts": counts}
+    return {"problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "counts": counts, "total": total, "offset": off}
 
 # ---------- upload from the Library page (WinSCP stays the main way; this is for a phone / someone without server access) ----------
 UP_DIR = "/srv/hype-data/uploads"; UP_SECTIONS = ("music", "clips", "jingles", "ads")

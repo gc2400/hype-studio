@@ -113,7 +113,7 @@ body.dj .auxbtn,body.dj.is-auto .auxbtn{display:inline-flex}body.dj .auxbtn butt
 #res .ri{position:relative}
 .ri .acts{display:flex;gap:4px;flex:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);opacity:0;pointer-events:none;
   padding-left:28px;background:linear-gradient(90deg,transparent,var(--card2) 26px);transition:opacity .12s}
-.ri:hover .acts,.ri.sel .acts,.ri:focus-within .acts{opacity:1;pointer-events:auto}
+.ri:hover .acts,.ri:has(:focus-visible) .acts{opacity:1;pointer-events:auto}
 @media (hover:none){.ri .acts{display:none;position:static;transform:none;opacity:1;pointer-events:auto;background:none;padding-left:0}.ri.sel .acts{display:flex}}
 .ri .acts select{height:34px;background:#071A2B;color:var(--txt);border:1px solid var(--line2);border-radius:9px;padding:0 6px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 #padBanks [data-bank="-1"]{background:#2B2500;border-color:#FFE000;color:#FFE000}
@@ -849,11 +849,16 @@ function libPlan() {     // the Playlists / Clocks tabs of the library card
     }
   });
 }
+let LIBN = 300, LIBKEY = '';     // songs shown (300 more each time you scroll to the bottom)
+$('#res').addEventListener('scroll', () => { const r = $('#res'); if (SEC !== 'playlists' && SEC !== 'clocks' && r.scrollTop + r.clientHeight > r.scrollHeight - 400) libMore(); });
+function libMore() { if (!LIB || !LIB.total || LIB.items.length >= LIB.total || lib.busy) return; LIBN += 300; lib.more = true; lib(); }
 function lib() {
+  const key = [SEC, FOLDER, GENRE, $('#q').value, LSORT].join('|'); if (key !== LIBKEY && !lib.more) { LIBKEY = key; LIBN = 300; }
   if (SEC === 'playlists' || SEC === 'clocks') return libPlan();
   $('#libSort').textContent = LSORT === 'new' ? 'Newest' : 'A–Z';
-  api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + LSORT).then(d => {
-    LIB = d;
+  const keepTop = lib.more ? $('#res').scrollTop : null; lib.more = false; lib.busy = true;
+  api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + LSORT + '&limit=' + LIBN).then(d => {
+    lib.busy = false; LIB = d; if (keepTop != null) setTimeout(() => { $('#res').scrollTop = keepTop; }, 0);
     $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="${k === SEC ? 'on' : ''}" data-sec="${k}" role="tab" aria-selected="${k === SEC}">${n}<span>${d.counts[k] ?? ''}</span></button>`).join('');
     $('#secs').querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     // level 1: genre folders · level 2: the subfolders of the chosen genre
