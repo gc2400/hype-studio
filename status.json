@@ -1,18 +1,17 @@
 {
- "time": "2026-11-01T01:22:06",
+ "time": "2026-11-01T01:33:22",
  "result": "ok",
- "commit": "009a212d85534c052dfb4c1f7cbdf136261c66eb",
- "subject": "Pads: only the hover play icon; 'VOL' instead of 'Pads vol'; saved lower-third names can be removed (x on the button)",
+ "commit": "1f619ecc3e08a110e3cb5963c86d734b86482ccf",
+ "subject": "Panel preview: a 150 ms picture buffer so it plays smoothly through small wifi bumps",
  "log": [
-  "01:21:21 update 1cdd800a \u2192 009a212d \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
-  "01:21:21 restart hype-engine",
-  "01:22:06 installed OK \u00b7 restarted: hype-engine"
+  "01:33:22 update 009a212d \u2192 1f619ecc \u00b7 2 file(s): web/panel/hype-rtc.js, web/panel/index.html",
+  "01:33:22 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Karol G x Judeline x rusowsky \u2013 BbY WOW",
+  "song": "Equalz \u2013 Baddies Club",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },

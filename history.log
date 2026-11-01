@@ -82,3 +82,4 @@
 2026-11-01T00:34:35 ok 5da16e63 Broadcast page: fix the script error from the last update (a comment cut a line in half - the page froze); device changes no longer reopen the camera in a loop
 2026-11-01T00:44:34 ok 1cdd800a END LIVE: the TV goes back to auto scenes; Panel preview light by default (360p, no sound) so it hardly uses your internet while broadcasting - sound on switches to the full preview
 2026-11-01T01:22:06 ok 009a212d Pads: only the hover play icon; 'VOL' instead of 'Pads vol'; saved lower-third names can be removed (x on the button)
+2026-11-01T01:33:22 ok 1f619ecc Panel preview: a 150 ms picture buffer so it plays smoothly through small wifi bumps
