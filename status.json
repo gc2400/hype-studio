@@ -1,18 +1,18 @@
 {
- "time": "2026-11-01T19:35:33",
+ "time": "2026-11-01T19:46:33",
  "result": "ok",
- "commit": "be079ce886609a8ad7f0ec9bc6213fa0abb316ae",
- "subject": "Week: red warning for hours without an hour plan; delete warns where a plan is used; Only this week button tidy; Recordings Save same size",
+ "commit": "6f50cbbbfb9a0488a097593ccfe2e40657c5a709",
+ "subject": "Fixed times keep 'all' (0) when saved; Shows list one-line items, same height as Playlists, nothing selected at start; fixed times shown on the Week grid",
  "log": [
-  "19:34:48 update 80ded36f \u2192 be079ce8 \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
-  "19:34:48 restart hype-engine",
-  "19:35:33 installed OK \u00b7 restarted: hype-engine"
+  "19:45:47 update be079ce8 \u2192 6f50cbbb \u00b7 2 file(s): engine/planner.py, web/panel/plan.html",
+  "19:45:48 restart hype-engine",
+  "19:46:33 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
+  "song": "B'Jay x Jaido \u2013 Fresh Prince",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },

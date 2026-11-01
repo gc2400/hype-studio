@@ -145,3 +145,4 @@
 2026-11-01T19:23:30 ok 63c9929e Hype Live page: frame fits the window under the header
 2026-11-01T19:26:36 ok 80ded36f Scrollbars in Hype colours without arrows (Chrome), Hype Live page: no outline, no page scroll (only the frame scrolls); playlists: tidy list items, yellow drop line when dragging sources
 2026-11-01T19:35:33 ok be079ce8 Week: red warning for hours without an hour plan; delete warns where a plan is used; Only this week button tidy; Recordings Save same size
+2026-11-01T19:46:33 ok 6f50cbbb Fixed times keep 'all' (0) when saved; Shows list one-line items, same height as Playlists, nothing selected at start; fixed times shown on the Week grid
