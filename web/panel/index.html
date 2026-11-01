@@ -170,7 +170,14 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .li .tx{flex:1;min-width:0;display:flex;flex-direction:column}
 .li .tx b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .li .tx span{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.li .du{font-size:12px;color:var(--mut)}
+.li .du{font-size:12px;color:var(--mut);min-width:34px;text-align:right}
+#log .li{position:relative}
+#log .lacts{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:none;gap:4px;padding-left:26px;background:linear-gradient(90deg,transparent,var(--card2) 22px)}
+#log .li:hover .lacts{display:flex}#log .li:hover .du{visibility:hidden}
+@media (hover:none){#log .li:hover .lacts{display:none}#log .li:hover .du{visibility:visible}#log .li.sel .lacts{display:flex}#log .li.sel .du{visibility:hidden}}
+#log .lacts button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+#log .lacts button:hover:not(:disabled){border-color:var(--b)}#log .lacts button:disabled{opacity:.35;cursor:default}
+#log .lacts .rm{background:var(--rdark);border-color:var(--r);color:#FF8A97}#log .lacts .rm:hover{background:var(--r);color:#1A0207}
 .li .x{opacity:0;border:0;background:none;color:var(--mut);cursor:pointer;font-size:16px;width:24px;height:24px;border-radius:6px}
 .li:hover .x{opacity:1}.li .x:hover{color:var(--r);background:var(--deep)}
 .li.jg b{color:#B9A2FF}
@@ -491,18 +498,21 @@ function drawWave(pos, cs, cm, ce) {
 // ---------- log ----------
 let dragId = null;
 function renderLog() {
-  const L = $('#log'); const now = S.now || {}; let t = (now.started || 0) + ((now.cue_mix || now.duration || 0) - (now.cue_start || 0)) - skew * 0;
+  const L = $('#log'); const now = S.now || {}; let t = (now.started || 0) + (now.air || ((now.cue_mix || now.duration || 0) - (now.cue_start || 0)));
   const hist = (S.history || []).slice(1, 3).reverse().map(h => `<div class="li played"><span class="tm mono">${new Date(h.started * 1000).toTimeString().slice(0, 5)}</span><span class="ic">✓</span><div class="tx"><b>${h.artist ? esc(h.artist) + ' – ' : ''}${esc(h.title)}</b><span>${esc(h.folder)}</span></div></div>`).join('');
   let html = hist;
   if (now.path) html += `<div class="li next" style="border-color:var(--r)"><span class="tm mono">${new Date(now.started * 1000).toTimeString().slice(0, 5)}</span><span class="ic" style="color:var(--r)">●</span><div class="tx"><b>${now.artist ? esc(now.artist) + ' – ' : ''}${esc(now.title)}</b><span>ON AIR · ${esc(now.folder)}</span></div><span class="du mono">${fmt(now.air || now.duration)}</span></div>`;
   S.upcoming.forEach((u, i) => {
-    const start = new Date(t * 1000).toTimeString().slice(0, 5); t += (u.cue_mix || u.duration || 0) - (u.cue_start || 0);
+    const start = new Date(t * 1000).toTimeString().slice(0, 5); t += u.air || ((u.cue_mix || u.duration || 0) - (u.cue_start || 0));
     const [bt] = badge(u.mode), jg = (u.mode || '').startsWith('jingle');
-    html += `<div class="li ${jg ? 'jg' : ''}" draggable="true" data-id="${u.id}" data-i="${i}"><span class="tm mono">${start}</span><span class="ic">${jg ? '◆' : u.mode === 'audio' ? '♪' : '▶'}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)} · ${bt}${u.src === 'you' ? ' · added by you' : ''}${u.id_over ? ' · <span style="color:var(--y);font-weight:800">+ ID over intro</span>' : ''}${S.stop_at_end && i === 0 ? ' · waits (STOP AT END)' : ''}</span></div><span class="du mono">${fmt(u.air || u.duration)}</span><button class="x" title="Remove from Up next" aria-label="Remove ${esc(u.title)} from Up next" data-rm="${u.id}">×</button></div>`;
+    html += `<div class="li ${jg ? 'jg' : ''}" draggable="true" data-id="${u.id}" data-i="${i}"><span class="tm mono">${start}</span><span class="ic">${jg ? '◆' : u.mode === 'audio' ? '♪' : '▶'}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)} · ${bt}${u.src === 'you' ? ' · added by you' : ''}${u.id_over ? ' · <span style="color:var(--y);font-weight:800">+ ID over intro</span>' : ''}${S.stop_at_end && i === 0 ? ' · waits (STOP AT END)' : ''}</span></div><span class="du mono">${fmt(u.air || u.duration)}</span><span class="lacts">${u.locked ? '' : `<button data-mv="${u.id}" data-to="${i - 1 - ((S.upcoming[0] || {}).locked ? 1 : 0)}" title="Earlier" aria-label="Move ${esc(u.title)} up" ${i === 0 || (S.upcoming[0] || {}).locked && i === 1 ? 'disabled' : ''}>↑</button><button data-mv="${u.id}" data-to="${i + 1 - ((S.upcoming[0] || {}).locked ? 1 : 0)}" title="Later" aria-label="Move ${esc(u.title)} down" ${i === S.upcoming.length - 1 ? 'disabled' : ''}>↓</button>`}<button class="rm" title="Remove from Up next" aria-label="Remove ${esc(u.title)} from Up next" data-rm="${u.id}">×</button></span></div>`;
   });
   const lt = S.upcoming.reduce((n, u) => n + (u.air || ((u.cue_mix || u.duration || 0) - (u.cue_start || 0))), 0); $('#logInfo').textContent = S.upcoming.length + ' · ' + fmt(lt);
   if (L.dataset.h === html) return; L.dataset.h = html; L.innerHTML = html;      // unchanged: keep the rows (a click is never lost to a redraw)
   L.querySelectorAll('[data-rm]').forEach(b => b.onclick = e => { e.stopPropagation(); cmd('remove', {id: b.dataset.rm}); });
+  L.querySelectorAll('[data-mv]').forEach(b => b.onclick = e => { e.stopPropagation(); cmd('move', {id: b.dataset.mv, to: +b.dataset.to}); });
+  L.querySelectorAll('.li[draggable]').forEach(el => el.addEventListener('click', e => { if (e.target.closest('.lacts')) return;     // phones: tap a row = its buttons
+    const on = !el.classList.contains('sel'); L.querySelectorAll('.li.sel').forEach(x => x.classList.remove('sel')); el.classList.toggle('sel', on); }));
   L.querySelectorAll('.li[draggable]').forEach(el => {
     el.ondblclick = () => cmd('move', {id: el.dataset.id, to: 0}).then(() => toast('Plays next'));
     el.ondragstart = e => { dragId = el.dataset.id; e.dataTransfer.setData('text/plain', 'log:' + el.dataset.id); };
