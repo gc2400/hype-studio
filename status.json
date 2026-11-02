@@ -1,17 +1,18 @@
 {
- "time": "2026-11-02T08:51:09",
+ "time": "2026-11-02T08:57:03",
  "result": "ok",
- "commit": "26dbfca017eae7ce3843f0199699f0e6ed91eca2",
- "subject": "Cameras grid: full-screen CAM 1-4 first, no labels, previous button style",
+ "commit": "07d7fb51e7d979f9027ea8576b62e4caeb695f85",
+ "subject": "Cameras grid: arrange it yourself (drag or click-click to move, \u00d7 to take off, add back, + row, reset) \u2013 saved on the server",
  "log": [
-  "08:51:09 update 3309b5d0 \u2192 26dbfca0 \u00b7 1 file(s): web/panel/index.html",
-  "08:51:09 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "08:56:18 update 26dbfca0 \u2192 07d7fb51 \u00b7 3 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html",
+  "08:56:18 restart hype-engine",
+  "08:57:03 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Ozuna \u2013 Una Aventura",
+  "song": "Tems x Asake \u2013 Get it Right",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
