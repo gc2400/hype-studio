@@ -1453,8 +1453,10 @@ class Engine:
                 if it: self.plan.remove(it); self.plan.insert(int(d["to"]), it)
                 self.push_next(c)
             elif action == "scene":
-                self.tv.auto = False; self.tv.set_scene(d["scene"])
-                if d["scene"] in ("Music video", "Hype Screen"): self._live_layer_back(c)
+                if d["scene"] in ("Music video", "Hype Screen", "Branding"):
+                    # back from the cameras / media: AUTO SCENES on again (the next song picks Music video / Hype Screen by itself)
+                    self._live_layer_back(c); self.tv.auto = True; self.tv.set_scene(d["scene"])
+                else: self.tv.auto = False; self.tv.set_scene(d["scene"])
             elif action == "live_layer":      # the Hype Live Layer (shoutouts, polls, chat …) on / off in every scene
                 on = bool(d.get("on")); planner.set_setting(c, "live_layer", on); self.tv.live_layer(on)
             elif action == "autoscene":

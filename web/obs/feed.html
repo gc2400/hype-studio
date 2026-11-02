@@ -31,7 +31,7 @@ async function start() {
     if (old()) return;
     const r = await fetch('http://127.0.0.1:8889/' + P + '/whep', {method: 'POST', headers: {'Content-Type': 'application/sdp'}, body: me.localDescription.sdp});
     if (old()) return;
-    if (r.status !== 201) { retry(r.status === 404 ? 1500 : 3000, me); return; }       // not sending (yet): look again soon
+    if (r.status !== 201) { v.srcObject = null; retry(r.status === 404 ? 1500 : 3000, me); return; }       // not sending (yet): look again soon
     const sdp = await r.text(); if (old()) return;
     await me.setRemoteDescription({type: 'answer', sdp});
   } catch (e) { if (!old()) retry(3000, me); }      // an attempt that was replaced never schedules a retry
