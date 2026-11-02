@@ -93,7 +93,9 @@ table{border-collapse:collapse;width:100%}
 ::-webkit-scrollbar-button{display:none;width:0;height:0}
 #tkRows input:not([type=checkbox]),#tkRows textarea{background:var(--card);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:34px;padding:0 10px;font:inherit;font-size:13px}
 #tkRows textarea{padding:8px 10px}#tkRows input[type=checkbox]{width:18px;height:18px;accent-color:var(--y)}
-.dm{display:grid;grid-template-columns:130px 1fr 96px;gap:10px;align-items:center;font-size:12px;font-weight:700;color:#A9BCCD}
+.dm b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;min-width:0}   /* a longer AGC text (· catch, · intro lift) never wraps: the box never jumps */
+.dm{display:grid;grid-template-columns:130px 1fr 170px;gap:10px;align-items:center;font-size:12px;font-weight:700;color:#A9BCCD}
+@media (max-width:600px){.dm{grid-template-columns:84px 1fr 128px;gap:6px}}
 .dm b{font-family:'JetBrains Mono',ui-monospace,monospace;color:#F2F6FA;text-align:right}
 .db{height:10px;background:#0B2236;border-radius:5px;overflow:hidden}.db i{display:block;height:100%;width:0;border-radius:5px;transition:width .15s,background .3s}
 #g_key,#g_url{background:#071A2B;color:#F2F6FA;border:1px solid #23496B;border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;min-height:36px}
@@ -108,6 +110,7 @@ table{border-collapse:collapse;width:100%}
 .seg{display:inline-flex;gap:2px;background:#071A2B;border:1px solid var(--line2);border-radius:12px;padding:3px}
 .seg button{border:0;min-height:0;background:transparent;color:var(--soft);font:inherit;font-size:12px;font-weight:800;padding:7px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
 .seg button:hover{background:var(--card2);color:#fff}.seg button.on{background:var(--y);color:#061423}
+.slgrp{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:12px 0 2px;padding-top:10px;border-top:1px solid var(--line)}.slgrp:first-child{margin-top:0;padding-top:0;border-top:0}.slgrp b{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--y)}.slgrp small{color:var(--mut);font-size:12px}
 </style>
 </head>
 <body>
@@ -234,29 +237,32 @@ function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('s
     }).catch(() => {});
   }, 250);      // 4 a second, like the On Air meter
 })();
-const SL = [
-  ['snd_drive', 'Loudness', 'how hard it hits the limiter', 0, 10, 0.5, 'dB'],
-  ['snd_bass', 'Bass warmth', 'punch in the low end', 0, 8, 0.5, 'dB'],
-  ['snd_bass_f', 'Bass frequency', 'lower = deeper', 50, 160, 5, 'Hz'],
-  ['snd_lowmid', 'Low mids (300 Hz)', 'minus = less muddy / boxy, clearer next to heavy bass', -4, 2, 0.5, 'dB'],
-  ['snd_mid', 'Upper mids (3.5 kHz)', 'minus = less harsh / tiring, plus = more presence', -4, 3, 0.5, 'dB'],
-  ['snd_treble', 'Treble', 'minus = warmer, plus = brighter', -4, 4, 0.5, 'dB'],
+const SL = [   // in the order the sound goes through the chain: EQ (tone) → compressor (dynamics) → limiter (loudness)
+  ['#', 'EQ · tone', 'how much of each frequency you hear – always'],
+  ['snd_hpf', 'Rumble cut', 'everything below this is filtered out – lower = more of the deep 808, higher = tighter + a bit louder', 20, 40, 1, 'Hz'],
+  ['snd_bass', 'Bass warmth', 'weight of the kick and 808', 0, 8, 0.5, 'dB'],
+  ['snd_bass_f', 'Bass frequency', 'where the bass warmth sits – lower = deeper', 50, 160, 5, 'Hz'],
+  ['snd_lowmid', 'Low mids (300 Hz)', 'body – minus = less muddy / boxy, clearer next to heavy bass', -4, 2, 0.5, 'dB'],
+  ['snd_mid', 'Upper mids (3.5 kHz)', 'presence – minus = less harsh / tiring, plus = more presence', -4, 3, 0.5, 'dB'],
+  ['snd_treble', 'Treble (9.5 kHz)', 'air and hi-hats – minus = warmer, plus = brighter', -4, 4, 0.5, 'dB'],
+  ['#', 'Compressor · dynamics', 'one compressor for the whole mix: evens out loud and soft moments'],
   ['snd_ratio', 'Compression', '1 = none, 2 = light, 4 = strong', 1, 6, 0.1, ':1'],
   ['snd_thresh', 'Compression starts at', 'lower = more compression', -30, 0, 1, 'dB'],
   ['snd_attack', 'Attack', 'slower = more punch on the beat', 1, 100, 1, 'ms'],
   ['snd_release', 'Release', 'how fast it lets go', 50, 1000, 10, 'ms'],
+  ['#', 'Limiter · loudness', 'the last step: how loud, and the highest peak allowed'],
+  ['snd_drive', 'Loudness', 'how hard it hits the limiter', 0, 10, 0.5, 'dB'],
   ['snd_ceiling', 'Ceiling', 'loudest peak allowed', -3, -0.1, 0.1, 'dB'],
-  ['snd_hpf', 'Rumble cut', 'everything below this is filtered out – lower = more of the deep 808, higher = tighter + a bit louder', 20, 40, 1, 'Hz'],
   ['snd_width', 'Stereo width', 'only above 300 Hz (the bass stays in the centre) – 0 = original', 0, 50, 5, '%']];
 const PRESETS = {   // Classic chain; target: loud enough to keep the energy, never tiring (ceiling −1 dB)
-  'Warm & punchy': {tip: 'the all-round Hype sound: warm bass, light compression', snd_drive: 5, snd_bass: 3, snd_bass_f: 85, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
-  'Hype Energy': {tip: 'daytime: a bit brighter and more driving', snd_drive: 5.5, snd_bass: 3.5, snd_bass_f: 75, snd_mid: 0, snd_treble: 1, snd_ratio: 2.5, snd_thresh: -17, snd_attack: 25, snd_release: 200, snd_ceiling: -1},
-  'Deep Bass': {tip: 'Afro / dancehall / reggaeton: deeper low end, the kick comes through', snd_drive: 5, snd_bass: 5, snd_bass_f: 65, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2.2, snd_thresh: -16, snd_attack: 35, snd_release: 240, snd_ceiling: -1},
-  'Crisp Vocals': {tip: 'clear voices and hi-hats, tighter bass', snd_drive: 4.5, snd_bass: 2, snd_bass_f: 95, snd_mid: 0.5, snd_treble: 1.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
-  'Smooth Daytime': {tip: 'easy for long listening (work, shop): less pressure, still full', snd_drive: 4, snd_bass: 2.5, snd_bass_f: 90, snd_mid: -1, snd_treble: 0, snd_ratio: 2, snd_thresh: -15, snd_attack: 35, snd_release: 260, snd_ceiling: -1},
-  'Night Chill': {tip: 'late night / chill shows: softer top, gentle compression', snd_drive: 3, snd_bass: 3, snd_bass_f: 80, snd_mid: -1.5, snd_treble: -1, snd_ratio: 1.8, snd_thresh: -14, snd_attack: 40, snd_release: 300, snd_ceiling: -1.2},
-  'Loud club': {tip: 'party / club shows: the loudest one – check it does not tire', snd_drive: 6, snd_bass: 4.5, snd_bass_f: 70, snd_treble: 0.5, snd_ratio: 3, snd_thresh: -18, snd_attack: 20, snd_release: 180, snd_ceiling: -0.8},
-  'Clean & open': {tip: 'almost no processing – the songs are already mastered loud; most natural sound', snd_punch: 0, snd_drive: 3, snd_bass: 1.5, snd_bass_f: 90, snd_mid: -0.5, snd_treble: -0.5, snd_ratio: 1.6, snd_thresh: -14, snd_attack: 40, snd_release: 300, snd_ceiling: -1}};
+  'Warm & punchy': {tip: 'the all-round Hype sound: warm bass, light compression', snd_drive: 5, snd_bass: 3, snd_bass_f: 85, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2, snd_thresh: -13.5, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
+  'Hype Energy': {tip: 'daytime: a bit brighter and more driving', snd_drive: 5.5, snd_bass: 3.5, snd_bass_f: 75, snd_mid: 0, snd_treble: 1, snd_ratio: 2.5, snd_thresh: -13, snd_attack: 25, snd_release: 200, snd_ceiling: -1},
+  'Deep Bass': {tip: 'Afro / dancehall / reggaeton: deeper low end, the kick comes through', snd_drive: 4.5, snd_bass: 5, snd_bass_f: 65, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2.2, snd_thresh: -11.5, snd_attack: 35, snd_release: 240, snd_ceiling: -1},
+  'Crisp Vocals': {tip: 'clear voices and hi-hats, tighter bass', snd_drive: 4.5, snd_bass: 2, snd_bass_f: 95, snd_mid: 0.5, snd_treble: 1.5, snd_ratio: 2, snd_thresh: -12, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
+  'Smooth Daytime': {tip: 'easy for long listening (work, shop): less pressure, still full', snd_drive: 4, snd_bass: 2.5, snd_bass_f: 90, snd_mid: -1, snd_treble: 0, snd_ratio: 2, snd_thresh: -11, snd_attack: 35, snd_release: 260, snd_ceiling: -1},
+  'Night Chill': {tip: 'late night / chill shows: softer top, gentle compression', snd_drive: 2.5, snd_bass: 3, snd_bass_f: 80, snd_mid: -1.5, snd_treble: -1, snd_ratio: 1.8, snd_thresh: -9.5, snd_attack: 40, snd_release: 300, snd_ceiling: -1.2},
+  'Loud club': {tip: 'party / club shows: the loudest one – check it does not tire', snd_drive: 6, snd_bass: 4.5, snd_bass_f: 70, snd_treble: 0.5, snd_ratio: 3, snd_thresh: -12.5, snd_attack: 20, snd_release: 180, snd_ceiling: -0.8},
+  'Clean & open': {tip: 'almost no processing – the songs are already mastered loud; most natural sound', snd_punch: 0, snd_drive: 3.5, snd_bass: 1.5, snd_bass_f: 90, snd_mid: -0.5, snd_treble: -0.5, snd_ratio: 1.6, snd_thresh: -14, snd_attack: 40, snd_release: 300, snd_ceiling: -1}};
 const PRO = {   // Hype Pro (4 bands): balanced, never tiring, but fun – the Compression sliders drive all 4 bands
   'Pro Balanced ★ try first': {tip: 'Hype Pro all-round: full low end, clear vocals, smooth highs – loud enough, never tiring', snd_punch: 0.5, snd_drive: 4, snd_bass: 2, snd_bass_f: 75, snd_lowmid: -1, snd_mid: -1, snd_treble: 0, snd_ratio: 2, snd_thresh: -16, snd_attack: 25, snd_release: 220, snd_ceiling: -1, snd_hpf: 25, snd_width: 0},
   'Pro Warm': {tip: 'warmer and rounder: deep 808s, soft top – Afro, dancehall, R&B', snd_punch: 0.5, snd_drive: 4, snd_bass: 3, snd_bass_f: 65, snd_lowmid: -0.5, snd_mid: -1.5, snd_treble: -0.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 240, snd_ceiling: -1, snd_hpf: 22, snd_width: 0},
@@ -276,8 +282,8 @@ function fmtv(v, u) { return (Math.round(v * 10) / 10) + (u === ':1' ? ':1' : ' 
 function render() {
   paintSw();
   const HAS = k => ST.sound[k] != null || !['snd_lowmid', 'snd_hpf', 'snd_width'].includes(k);   // sliders the running radio chain knows
-  $('#sliders').innerHTML = SL.filter(([k]) => HAS(k)).map(([k, l, h, mi, ma, st, u]) => `<div class="sl"><label for="${k}">${l}<small>${h}</small></label><input type="range" id="${k}" min="${mi}" max="${ma}" step="${st}" value="${ST.sound[k] ?? mi}"><span class="v" id="${k}_v">${ST.sound[k] == null ? '?' : fmtv(ST.sound[k], u)}</span></div>`).join('');
-  SL.filter(([k]) => HAS(k)).forEach(([k, , , , , , u]) => { const e = $('#' + k); e.oninput = () => { $('#' + k + '_v').textContent = fmtv(+e.value, u); pend[k] = +e.value; clearTimeout(sT); sT = setTimeout(sendSound, 250); }; });
+  $('#sliders').innerHTML = SL.filter(([k]) => k === '#' || HAS(k)).map(([k, l, h, mi, ma, st, u]) => k === '#' ? `<div class="slgrp"><b>${l}</b><small>${h}</small></div>` : `<div class="sl"><label for="${k}">${l}<small>${h}</small></label><input type="range" id="${k}" min="${mi}" max="${ma}" step="${st}" value="${ST.sound[k] ?? mi}"><span class="v" id="${k}_v">${ST.sound[k] == null ? '?' : fmtv(ST.sound[k], u)}</span></div>`).join('');
+  SL.filter(([k]) => k !== '#' && HAS(k)).forEach(([k, , , , , , u]) => { const e = $('#' + k); e.oninput = () => { $('#' + k + '_v').textContent = fmtv(+e.value, u); pend[k] = +e.value; clearTimeout(sT); sT = setTimeout(sendSound, 250); }; });
   const cur = presetNow();
   const AP = allPresets();
   $('#presets').innerHTML = '<span class="lab" style="width:auto">Presets</span>' + Object.keys(AP).map(n => `<span class="ltr"><button class="btn sm${n === cur ? ' on' : ''}" data-p="${esc(n)}" title="${esc(AP[n].tip)}">${esc(n)}</button><button class="ltx" data-pdel="${esc(n)}" title="Remove ${esc(n)}" aria-label="Remove ${esc(n)}">×</button></span>`).join('') +
