@@ -1,15 +1,15 @@
 {
- "time": "2026-11-02T08:19:37",
+ "time": "2026-11-02T08:39:48",
  "result": "ok",
- "commit": "50c59968cebee52f77b26aa29c52409c70ae7543",
- "subject": "Music video / Hype Screen / Branding turn AUTO SCENES back on; camera feed clears its old picture when the camera is not sending (no black window)",
+ "commit": "4443674956a571a3644e90075053afdf99356c3c",
+ "subject": "Lower thirds v4 (A: S/M/L, C, C_XL full width only with the Live Layer off); a lower third on = the ticker steps aside",
  "log": [
-  "08:18:52 update 43f37a80 \u2192 50c59968 \u00b7 4 file(s): engine/engine.py, web/obs/feed.html, web/panel/help.html, web/panel/index.html",
-  "08:18:52 restart hype-engine",
-  "08:19:37 installed OK \u00b7 restarted: hype-engine"
+  "08:39:03 update 50c59968 \u2192 44436749 \u00b7 4 file(s): engine/engine.py, web/overlay/lower.html, web/panel/help.html, web/panel/index.html",
+  "08:39:03 restart hype-engine",
+  "08:39:48 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Bryan Mg x Youka \u2013 Doorgaan",
+  "song": "Idaly \u2013 Stars",
   "listeners": 0,
   "obs": true,
   "seg_age": 1.9,
