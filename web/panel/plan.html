@@ -1023,7 +1023,7 @@ function shRender() {
   $$('#shOther [data-ck]').forEach(b => b.onclick = () => { SHSEL = {clock: +b.dataset.ck}; shRender(); });
   // right side
   $('#shMain').classList.toggle('empty', !SHSEL); setTimeout(fitEmpty, 0);
-  if (!SHSEL) { $('#shHead').innerHTML = '<div class="muted" style="grid-column:1/-1;padding:30px 4px;font-size:14px">Choose a show or an hour plan on the left.</div>'; $('#shPlans').innerHTML = ''; SHC = null; shSlots(); return; }
+  if (!SHSEL) { $('#shHead').innerHTML = '<div class="muted" style="grid-column:1/-1;padding:16px 4px;font-size:14px">Choose a show or an hour plan on the left.</div>'; $('#shPlans').innerHTML = ''; SHC = null; shSlots(); return; }
   const s = SHSEL && SHSEL.show ? shows.find(x => x.title === SHSEL.show) : null;
   let cid = SHSEL && SHSEL.clock ? SHSEL.clock : s ? s.main : null;
   if (s && !s.clocks.some(c => c.id === cid)) cid = s.main;
