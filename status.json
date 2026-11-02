@@ -1,14 +1,15 @@
 {
- "time": "2026-11-02T18:58:49",
+ "time": "2026-11-02T19:07:46",
  "result": "ok",
- "commit": "72c369bffe3f7c4c229a685e5e3d7382ba008f29",
- "subject": "Lower third: Style C full width always shows full width",
+ "commit": "3d6e1fa2c192a0510af4fd50928ccce6bc9f983c",
+ "subject": "Media: Manual mode (only loads the media, no scene switch on play or stop); STOP MEDIA next to the sound buttons",
  "log": [
-  "18:58:49 update 616e396b \u2192 72c369bf \u00b7 3 file(s): web/overlay/lower.html, web/panel/help.html, web/panel/index.html",
-  "18:58:49 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:07:01 update 72c369bf \u2192 3d6e1fa2 \u00b7 3 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html",
+  "19:07:01 restart hype-engine",
+  "19:07:46 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Sean Paul \u2013 Press Back",
+  "song": "Lil Baby \u2013 Dead Fresh",
   "listeners": 0,
   "obs": true,
   "seg_age": 1.7,
