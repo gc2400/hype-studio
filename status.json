@@ -1,18 +1,18 @@
 {
- "time": "2026-11-02T08:57:03",
+ "time": "2026-11-02T09:11:07",
  "result": "ok",
- "commit": "07d7fb51e7d979f9027ea8576b62e4caeb695f85",
- "subject": "Cameras grid: arrange it yourself (drag or click-click to move, \u00d7 to take off, add back, + row, reset) \u2013 saved on the server",
+ "commit": "08356f7d655b93b122bd8973ffed262fa01b8cb8",
+ "subject": "CAM 1 2 3 B \u2192 CAM 3 1 2 B (CAM 3 big, CAM 1 + 2 on the right); scheduled scenes (PIP) skip while scenes are on manual",
  "log": [
-  "08:56:18 update 26dbfca0 \u2192 07d7fb51 \u00b7 3 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html",
-  "08:56:18 restart hype-engine",
-  "08:57:03 installed OK \u00b7 restarted: hype-engine"
+  "09:10:22 update 07d7fb51 \u2192 08356f7d \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/plan.html",
+  "09:10:22 restart hype-engine",
+  "09:11:07 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Tems x Asake \u2013 Get it Right",
+  "song": "Rich Kalashh x Shermain3 \u2013 Bai foi Moda",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },

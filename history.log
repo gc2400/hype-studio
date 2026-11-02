@@ -176,3 +176,4 @@
 2026-11-02T08:48:03 ok 3309b5d0 Cameras scene grid: columns 1-4 cams, rows by layout type (V, G, V G, VID, B, R), the rest at the end
 2026-11-02T08:51:09 ok 26dbfca0 Cameras grid: full-screen CAM 1-4 first, no labels, previous button style
 2026-11-02T08:57:03 ok 07d7fb51 Cameras grid: arrange it yourself (drag or click-click to move, × to take off, add back, + row, reset) – saved on the server
+2026-11-02T09:11:07 ok 08356f7d CAM 1 2 3 B → CAM 3 1 2 B (CAM 3 big, CAM 1 + 2 on the right); scheduled scenes (PIP) skip while scenes are on manual
