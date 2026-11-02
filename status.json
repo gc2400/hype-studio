@@ -1,17 +1,17 @@
 {
- "time": "2026-11-02T07:25:05",
+ "time": "2026-11-02T07:31:15",
  "result": "ok",
- "commit": "da642091be655f9706cde5489cd731589d3ce38b",
- "subject": "LIVE panel: the screen share shows with its SLOT while it is on",
+ "commit": "384f787eb478554f3788b8968721b7edbe402719",
+ "subject": "Screen share follows the connection: same bitrate ceiling as the cameras, text = sharp 15 fps, video = 720p 30 fps",
  "log": [
-  "07:25:05 update 86324866 \u2192 da642091 \u00b7 1 file(s): web/panel/index.html",
-  "07:25:05 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "07:31:15 update da642091 \u2192 384f787e \u00b7 2 file(s): web/panel/help.html, web/panel/studio.html",
+  "07:31:15 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Kapo \u2013 ALOH ALOH",
+  "song": "Kybba x Lion Fiah x Rafa Pabon x Citriem x Kensel Tell Them \u2013 CLASE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
