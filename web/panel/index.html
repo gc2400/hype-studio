@@ -355,7 +355,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <div class="lt-form">
             <input id="ltName" type="text" placeholder="Line 1 – name, e.g. DJ Kim" maxlength="80" aria-label="Lower third line 1">
             <input id="ltRole" type="text" placeholder="Line 2 – e.g. Host · Weekend Vibes" maxlength="120" aria-label="Lower third line 2">
-            <select id="ltStyle" aria-label="Lower third style"><option value="A|auto">Style A · auto</option><option value="A|S">Style A · S</option><option value="A|M">Style A · M</option><option value="A|L">Style A · L</option><option value="A|XL">Style A · XL</option><option value="C|auto">Style C · blue bar</option></select>
+            <select id="ltStyle" aria-label="Lower third style"><option value="A|auto">Style A · auto</option><option value="A|S">Style A · S</option><option value="A|M">Style A · M</option><option value="A|L">Style A · L</option><option value="C|auto">Style C · blue bar</option><option value="C|XL">Style C · full width (only with Live Layer off)</option></select>
           </div>
           <div class="row"><button class="btn sm yellow" id="ltShow">SHOW</button><button class="btn sm" id="ltHide">HIDE</button><div class="lt-recent" id="ltRecent" style="flex:1"></div></div>
         </div>
@@ -689,7 +689,7 @@ function ltRender() {
   if (!LT.visible && !$('#ltName').value && LT.name && document.activeElement.tagName !== 'INPUT') { $('#ltName').value = LT.name; $('#ltRole').value = LT.role || ''; }
   $('#ltRecent').innerHTML = (LT.recent || []).slice(0, 8).map((r, i) => `<span class="ltr"><button class="btn sm" data-lr="${i}" title="${esc(r.role)}">${esc(r.name)}</button><button class="ltx" data-lx="${i}" title="Remove ${esc(r.name)} from the saved names" aria-label="Remove ${esc(r.name)}">×</button></span>`).join('');
   $$('#ltRecent [data-lx]').forEach(b => b.onclick = e => { e.stopPropagation(); const r = LT.recent[+b.dataset.lx]; api('cmd/lower', {action: 'forget', forget: r.name}).then(d => { if (d && d.lower) { LT = d.lower; } else LT.recent = LT.recent.filter(x => x.name !== r.name); ltRender(); }).catch(() => {}); });
-  $$('#ltRecent [data-lr]').forEach(b => b.onclick = () => { const r = LT.recent[+b.dataset.lr]; $('#ltName').value = r.name; $('#ltRole').value = r.role; $('#ltStyle').value = (r.style || 'A') + '|' + (r.size || 'auto'); });
+  $$('#ltRecent [data-lr]').forEach(b => b.onclick = () => { const r = LT.recent[+b.dataset.lr]; $('#ltName').value = r.name; $('#ltRole').value = r.role; $('#ltStyle').value = (r.style || 'A') + '|' + (r.size || 'auto'); if (!$('#ltStyle').value) $('#ltStyle').value = (r.style === 'C' ? 'C' : 'A') + '|auto'; });
 }
 function ltSend(action) { const [style, size] = $('#ltStyle').value.split('|');
   return api('cmd/lower', {action, style, size, name: $('#ltName').value, role: $('#ltRole').value, handle: ''}).then(r => { if (r.ok === false) toast(r.error, 1); else { LT = r.lower; ltRender(); } }); }

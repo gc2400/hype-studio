@@ -418,6 +418,7 @@ class Screen:
         if tick: tick = tick[1]
         else:      # no planned ticker: the one that is always on in this scene (e.g. News on the Hype Screen)
             g = tickers.always_for(scene); tick = dict(g, key="always-" + g["id"]) if g else None
+        if LOWER.get("visible"): tick = None      # a lower third is on: the ticker makes way (same place on screen), comes back after
         return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "ticker": tick,
                 "slides": ["/adbox/" + urllib.parse.quote(f) for f in slides], "slide_s": 30,
                 "slides_layer": "adbox" if scene == "Hype Screen" else "graphics"}   # Hype Screen: its own source under the Live Layer
@@ -471,6 +472,7 @@ class TV:
             for sc in cl.get_scene_list().scenes:
                 for it in cl.get_scene_item_list(sc["sceneName"]).scene_items:
                     if it["sourceName"] == "Live Layer" and it["sceneItemEnabled"] != on: cl.set_scene_item_enabled(sc["sceneName"], it["sceneItemId"], on)
+        self.ll_on = on
     def set_scene(self, scene):
       with self.olock:
         try:
@@ -1739,6 +1741,7 @@ class Engine:
             c = dbc()
             hist = [dict(zip(["started", "artist", "title", "folder", "mode", "scene"], r)) for r in
                     c.execute("SELECT started, artist, title, folder, mode, scene FROM asrun ORDER BY id DESC LIMIT 8")]
+            self.tv.ll_on = bool(planner.get_setting(c, "live_layer", True))
             cid = planner.clock_for(c, time.time()); cname = c.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() if cid else None
             return {"show": SHOW["title"], "clock": cname[0] if cname else None, "now": n, "elapsed": round(el, 1), "upcoming": upcoming, "history": hist, "auto": self.auto,
                     "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups,
@@ -2242,7 +2245,7 @@ class H(BaseHTTPRequestHandler):
                     "SELECT path, title, folder, COALESCE(cue_end, duration, 0) - COALESCE(cue_start, 0), has_video FROM items WHERE section='ads' AND problem IS NULL ORDER BY folder, title")]
                 return self.send(200, {"spots": [dict(s_, played_today=pl_.get(s_["path"], 0)) for s_ in planner.ad_spots(c_)], "files": files,
                                        "max_len": planner.get_setting(c_, "ad_max_len", 150), "max_spots": planner.get_setting(c_, "ad_max_spots", 3)})
-            if p == "/lower": return self.send(200, dict(LOWER, scene=E.tv.scene))
+            if p == "/lower": return self.send(200, dict(LOWER, scene=E.tv.scene, live_layer=getattr(E.tv, "ll_on", True)))
             if p == "/settings": return self.send(200, get_settings())
             if p == "/autorec": return self.send(200, autorec_status())
             if p == "/padbanks":
