@@ -1,17 +1,18 @@
 {
- "time": "2026-11-02T19:32:27",
+ "time": "2026-11-02T19:49:35",
  "result": "ok",
- "commit": "d3a9354a1a250d087c073fd1f22cf2582f031d19",
- "subject": "Planning: same text spacing in both 'Choose \u2026 on the left' boxes",
+ "commit": "96d846216f43851a1d695b7f0ea885691c93e70b",
+ "subject": "Preview as live as possible: ladder reads without buffer, preview encoders async_depth 1, preview always 360p (with sound when on), browser buffer 50 ms",
  "log": [
-  "19:32:27 update 0000524a \u2192 d3a9354a \u00b7 1 file(s): web/panel/plan.html",
-  "19:32:27 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:48:50 update d3a9354a \u2192 96d84621 \u00b7 2 file(s): tv/ladder.sh, web/panel/index.html",
+  "19:48:50 restart hype-ladder",
+  "19:49:35 installed OK \u00b7 restarted: hype-ladder"
  ],
  "guard": {
-  "song": "Chimbala X Secreto El Famoso Biberon X Crazy Desing X Albert Diamond \u2013 Banana (Remix)",
+  "song": "Issairo x Jaido x Soundflow \u2013 LORA WAK MI",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
