@@ -195,3 +195,4 @@
 2026-11-02T21:21:43 rolled-back 8ec16cc0 Multiband fixed: 4 bands split by subtraction (adds up exactly – the old one had −18 dB holes at 120 Hz and 4 kHz), driven by the sliders/presets; compressor meter = real gain reduction of the busiest band; no extra hidden limiter
 2026-11-02T21:33:31 ok 94bcbff7 Safety: NaN level from the radio counts as silence (guard repairs it) and is never passed on by the AGC
 2026-11-02T21:57:40 lab-failed e4816035 Sound: old 3-band multiband + Hype Punch removed; new ★ Hype Pro (4 bands split by subtraction, driven by the sliders) next to Classic; Low mids, Sub cut and Stereo width (above 300 Hz, M/S) sliders; Pro presets; meter = real band gain reduction
+2026-11-02T22:10:25 rolled-back 01acbc06 Hype Pro: keep the gentle pre-limiter the chain always had before the main limiter (both modes) – tested 4/4 in the lab
