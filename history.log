@@ -170,3 +170,4 @@
 2026-11-02T07:52:45 ok eeef7d1c Scene lists: v4 camera scenes (CAM 1 2 3 V, CAM 1 2 3 4 B/R/G, VID 1 2 3 4)
 2026-11-02T07:59:40 ok 8d8882bf Live Layer on/off button for all scenes; CAM 1 in the Cameras group; MEDIA scene removed (MEDIA FULL default)
 2026-11-02T08:10:40 ok 43f37a80 Live Layer off is temporary: Music video, Hype Screen or AUTO SCENES turns it back on; cam black map refreshes when scenes change
+2026-11-02T08:19:37 ok 50c59968 Music video / Hype Screen / Branding turn AUTO SCENES back on; camera feed clears its old picture when the camera is not sending (no black window)

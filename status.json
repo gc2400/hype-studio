@@ -1,18 +1,18 @@
 {
- "time": "2026-11-02T08:10:40",
+ "time": "2026-11-02T08:19:37",
  "result": "ok",
- "commit": "43f37a805db747123293f88ed1371bc284e65e64",
- "subject": "Live Layer off is temporary: Music video, Hype Screen or AUTO SCENES turns it back on; cam black map refreshes when scenes change",
+ "commit": "50c59968cebee52f77b26aa29c52409c70ae7543",
+ "subject": "Music video / Hype Screen / Branding turn AUTO SCENES back on; camera feed clears its old picture when the camera is not sending (no black window)",
  "log": [
-  "08:09:54 update 8d8882bf \u2192 43f37a80 \u00b7 4 file(s): engine/engine.py, engine/live.py, web/panel/help.html, web/panel/index.html",
-  "08:09:55 restart hype-engine",
-  "08:10:40 installed OK \u00b7 restarted: hype-engine"
+  "08:18:52 update 43f37a80 \u2192 50c59968 \u00b7 4 file(s): engine/engine.py, web/obs/feed.html, web/panel/help.html, web/panel/index.html",
+  "08:18:52 restart hype-engine",
+  "08:19:37 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Ryan Castro x Kapo \u2013 LA VILLA",
+  "song": "Bryan Mg x Youka \u2013 Doorgaan",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
