@@ -34,6 +34,7 @@ html{scrollbar-gutter:stable}
 #hhead .hlive:hover{background:#2A1420;color:#fff}#hhead .hlive.ask{background:#FFE000;border-color:#FFE000;color:#061423}
 #hhead .hlive.on{background:#FF4D5E;color:#fff}#hhead .hlive.on:hover{background:#FF6676}#hhead .hlive.on.ask{background:#FFE000;border-color:#FFE000;color:#061423}
 #hhead .hlive .t{font:700 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#hhead .hlive{width:136px;justify-content:center}#hhead .hrec{width:118px;justify-content:center}   /* fixed widths: going live / recording (timer) never moves the menu */
 #hhead #hRecT:empty,#hhead #hLiveT:empty{display:none}   /* no time shown = no empty space on the right */
 #hhead #hRecT{font:700 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 @keyframes hrecp{50%{opacity:.25}}
@@ -66,7 +67,7 @@ html{scrollbar-gutter:stable}
   #hhead .hnav{order:6;display:none;width:100%;flex-direction:column;align-items:stretch;padding:6px}
   #hhead.open .hnav{display:flex}#hhead .hnav a{padding:13px 12px;font-size:15px}#hhead .hnav .sep{display:none}
   #hhead #clock{font-size:18px}
-  #hhead .hrec{padding:0 9px}
+  #hhead .hrec{padding:0 9px}#hhead .hlive,#hhead .hrec{width:auto}
   #hhead .hpop{position:fixed;top:64px;left:12px;right:12px;width:auto}
 }
 #hhead .hnav .sep{width:1px;height:20px;background:#1E3A56;margin:0 3px}`;
@@ -137,7 +138,7 @@ html{scrollbar-gutter:stable}
   function livePaint() {
     const on = !!(LVH && LVH.live), ask = liveAsk && Date.now() < liveAsk; if (!ask) liveAsk = 0;
     lb.classList.toggle('on', on); lb.classList.toggle('ask', !!ask);
-    lb.querySelector('b').textContent = ask ? (on ? 'END LIVE?' : (LVH && !LVH.studio_online ? 'STUDIO OFFLINE – GO?' : 'GO LIVE?')) : (on ? '● LIVE' : 'GO LIVE');
+    lb.querySelector('b').textContent = ask ? (on ? 'END LIVE?' : (LVH && !LVH.studio_online ? 'OFFLINE – GO?' : 'GO LIVE?')) : (on ? '● LIVE' : 'GO LIVE');
     h.querySelector('#hLiveT').textContent = on && LVH.live_since && !ask ? fmtT(Date.now() / 1000 - LVH.live_since) : '';
     lb.title = on ? 'You are LIVE – click twice to END LIVE (back to the automation)' : (LVH && !LVH.studio_online ? 'The studio is not connected (Broadcast page) – going live now puts the automation on until it connects' : 'GO LIVE: your studio mix goes on air (click twice)');
   }
