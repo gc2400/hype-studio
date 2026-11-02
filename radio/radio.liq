@@ -150,6 +150,7 @@ def process(~meter=false, ~light=false, x) =
   x = filter.iir.eq.peak(frequency=300., gain=snd_lowmid, q=0.9, x)
   x = filter.iir.eq.peak(frequency=3500., gain=snd_mid, q=0.9, x)
   x = filter.iir.eq.peak(frequency=9500., gain=snd_treble, q=0.7, x)
+  x = hype_width(x)      # stereo width before the compressors (they keep the level in check)
   con = fun () -> snd_comp() > 0.5     # compressor switch (Settings → Sound)
   mb = fun () -> snd_punch() > 0.25      # Hype Pro (0.5): the same sliders, 4 bands compressed each on their own
   r1 = rms(duration=0.3, x)
@@ -160,7 +161,6 @@ def process(~meter=false, ~light=false, x) =
   x = limit(x)       # the gentle pre-limiter the old chain always had here (−2 dB, 20:1, 50 ms): keeps the peaks into the main limiter tame
   # compressor off: about the same loudness as on, so you compare the sound, not the volume
   x = amplify(override=null(), {if con() then 1. else lin_of_dB(-3.8) end}, x)
-  x = hype_width(x)
   r2 = rms(duration=0.3, x)
   x = r2
   lm = limit(threshold=snd_ceiling, pre_gain=snd_drive, attack=3., release=120., x)
