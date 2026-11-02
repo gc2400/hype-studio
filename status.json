@@ -1,17 +1,20 @@
 {
- "time": "2026-11-02T22:32:00",
- "result": "conflict",
+ "time": "2026-11-02T22:44:35",
+ "result": "ok-restart-updater",
  "commit": "4764d07acdaabb96503d3925469d07fcba44cba6",
  "subject": "Updater: after a radio restart wait up to 2 more minutes for the first song before calling it silent (the engine needs ~1 min to start; that caused false rollbacks)",
  "log": [
-  "22:32:00 update 94bcbff7 \u2192 4764d07a \u00b7 5 file(s): deploy/updater.py, engine/engine.py, radio/radio.liq, web/panel/help.html, web/panel/settings.html",
-  "22:32:00 CONFLICT: /opt/hype/updater.py was changed on the server \u2013 run deploy/export.py + push first"
+  "22:43:03 update 94bcbff7 \u2192 4764d07a \u00b7 5 file(s): deploy/updater.py, engine/engine.py, radio/radio.liq, web/panel/help.html, web/panel/settings.html",
+  "22:43:49 lab: PASS (6/6 good readings)",
+  "22:43:49 restart hype-engine",
+  "22:43:49 restart hype-radio",
+  "22:44:35 installed OK \u00b7 restarted: hype-updater, hype-engine, hype-radio"
  ],
  "guard": {
-  "song": "Jezzy x Arcangel \u2013 Que Sensaci\u00f3n (Remix)",
+  "song": "Jay Sean \u2013 Body",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
