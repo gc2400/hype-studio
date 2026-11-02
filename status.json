@@ -1,17 +1,17 @@
 {
- "time": "2026-11-02T08:48:03",
+ "time": "2026-11-02T08:51:09",
  "result": "ok",
- "commit": "3309b5d0d208ac8ea6099b372b55e470b1559d54",
- "subject": "Cameras scene grid: columns 1-4 cams, rows by layout type (V, G, V G, VID, B, R), the rest at the end",
+ "commit": "26dbfca017eae7ce3843f0199699f0e6ed91eca2",
+ "subject": "Cameras grid: full-screen CAM 1-4 first, no labels, previous button style",
  "log": [
-  "08:48:03 update 54e9167f \u2192 3309b5d0 \u00b7 1 file(s): web/panel/index.html",
-  "08:48:03 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "08:51:09 update 3309b5d0 \u2192 26dbfca0 \u00b7 1 file(s): web/panel/index.html",
+  "08:51:09 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Rich Kalashh x Winter x Jaido \u2013 Private Party",
+  "song": "Ozuna \u2013 Una Aventura",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },

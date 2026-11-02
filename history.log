@@ -174,3 +174,4 @@
 2026-11-02T08:39:48 ok 44436749 Lower thirds v4 (A: S/M/L, C, C_XL full width only with the Live Layer off); a lower third on = the ticker steps aside
 2026-11-02T08:41:53 ok 54e9167f Library: counts on Playlists / Hour plans tabs; Clocks → Hour plans wording on the main page
 2026-11-02T08:48:03 ok 3309b5d0 Cameras scene grid: columns 1-4 cams, rows by layout type (V, G, V G, VID, B, R), the rest at the end
+2026-11-02T08:51:09 ok 26dbfca0 Cameras grid: full-screen CAM 1-4 first, no labels, previous button style
