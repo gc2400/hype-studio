@@ -1,14 +1,16 @@
 {
- "time": "2026-11-02T22:57:24",
+ "time": "2026-11-02T23:31:09",
  "result": "ok",
- "commit": "da709d3b1e0eeb0b724ebf8168dcba3957bd7bac",
- "subject": "Settings \u2192 Sound: Hype Pro, its presets and the new sliders only show when the radio runs that chain (now: Classic)",
+ "commit": "f81402d8c77c8d564e0c3864a732d83044558cca",
+ "subject": "Classic sound: Rumble cut slider (20\u201340 Hz, default 25 \u2013 keeps more of the deep 808) and Low mids slider (300 Hz); chain otherwise unchanged \u2013 8/8 lab runs incl. the silence test",
  "log": [
-  "22:57:24 update c1004a03 \u2192 da709d3b \u00b7 1 file(s): web/panel/settings.html",
-  "22:57:24 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "23:28:04 update da709d3b \u2192 f81402d8 \u00b7 2 file(s): radio/radio.liq, web/panel/settings.html",
+  "23:28:49 lab: PASS (6/6 good readings)",
+  "23:28:49 restart hype-radio",
+  "23:31:09 installed OK \u00b7 restarted: hype-radio"
  ],
  "guard": {
-  "song": "Dongo x Jeon \u2013 Marido Y Mujer",
+  "song": "HYPE RADIO \u2013 Sweep Hottest Sound In Town",
   "listeners": 0,
   "obs": true,
   "seg_age": 1.4,
