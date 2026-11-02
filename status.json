@@ -1,18 +1,18 @@
 {
- "time": "2026-11-02T09:11:07",
+ "time": "2026-11-02T16:35:00",
  "result": "ok",
- "commit": "08356f7d655b93b122bd8973ffed262fa01b8cb8",
- "subject": "CAM 1 2 3 B \u2192 CAM 3 1 2 B (CAM 3 big, CAM 1 + 2 on the right); scheduled scenes (PIP) skip while scenes are on manual",
+ "commit": "b839609df4c9204cd8cda08b43ff17bd61ce85b6",
+ "subject": "Media scenes: every camera layout with a video window now has an M version (media in place of the video); MEDIA tab laid out like the Cameras grid",
  "log": [
-  "09:10:22 update 07d7fb51 \u2192 08356f7d \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/plan.html",
-  "09:10:22 restart hype-engine",
-  "09:11:07 installed OK \u00b7 restarted: hype-engine"
+  "16:34:15 update 08356f7d \u2192 b839609d \u00b7 4 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html, web/panel/plan.html",
+  "16:34:15 restart hype-engine",
+  "16:35:00 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Rich Kalashh x Shermain3 \u2013 Bai foi Moda",
-  "listeners": 0,
+  "song": "PJ Scoolio x Rich Kalashh \u2013 HJB Dicht",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
