@@ -1,18 +1,17 @@
 {
- "time": "2026-11-02T19:53:26",
+ "time": "2026-11-02T20:23:04",
  "result": "ok",
- "commit": "e283aa0881f53e0383bb664ccbc4d6d35590107e",
- "subject": "Preview: don't hold the picture back for the sound (max 0.1 s interleave)",
+ "commit": "3d250215ec60c362e9ca95f6a31189692b5ac0aa",
+ "subject": "Header: GO LIVE / REC have fixed widths \u2013 going live or recording never moves the menu",
  "log": [
-  "19:52:41 update 96d84621 \u2192 e283aa08 \u00b7 1 file(s): tv/ladder.sh",
-  "19:52:41 restart hype-ladder",
-  "19:53:26 installed OK \u00b7 restarted: hype-ladder"
+  "20:23:04 update e283aa08 \u2192 3d250215 \u00b7 1 file(s): web/panel/header.js",
+  "20:23:04 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "FARLY X 2SYNC \u2013 #CHYNA",
+  "song": "Rema \u2013 Oh No",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
