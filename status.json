@@ -1,17 +1,19 @@
 {
- "time": "2026-11-01T22:49:50",
+ "time": "2026-11-02T07:24:02",
  "result": "ok",
- "commit": "c3222c3c3880557d50a5e1e554d4af58e9e466d6",
- "subject": "Schedule: MIXTAPE tag on hours that play a mixtape from MIXES/Mixtapes",
+ "commit": "8632486640bbe88bf39a88e6d334ff850b80d7ba",
+ "subject": "Broadcast: screen share (screen, window or Chrome tab) as a TV source with its own SLOT, sharp (text) or smooth (video); help updated",
  "log": [
-  "22:49:50 update 4babd2ea \u2192 c3222c3c \u00b7 2 file(s): web/panel/help.html, web/panel/plan.html",
-  "22:49:50 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "07:23:17 update c3222c3c \u2192 86324866 \u00b7 5 file(s): engine/hype_auth.py, engine/live.py, web/panel/help.html, web/panel/hype-rtc.js, web/panel/studio.html",
+  "07:23:17 restart hype-auth",
+  "07:23:17 restart hype-engine",
+  "07:24:02 installed OK \u00b7 restarted: hype-auth, hype-engine"
  ],
  "guard": {
-  "song": "Karol G x Judeline x rusowsky \u2013 BbY WOW",
+  "song": "Rvssian x Rauw Alejandro x Wizkid \u2013 PONGO",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },

@@ -163,3 +163,4 @@
 2026-11-01T22:25:32 ok 299b8688 ID over intro: count earlier IDs over intros too (also after a restart), so the IDs take turns instead of always ID 4
 2026-11-01T22:32:26 ok 4babd2ea TV: 360p (650 kbps + 96k audio) as a 4th quality for slow connections
 2026-11-01T22:49:50 ok c3222c3c Schedule: MIXTAPE tag on hours that play a mixtape from MIXES/Mixtapes
+2026-11-02T07:24:02 ok 86324866 Broadcast: screen share (screen, window or Chrome tab) as a TV source with its own SLOT, sharp (text) or smooth (video); help updated
