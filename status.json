@@ -1,17 +1,17 @@
 {
- "time": "2026-11-02T08:41:53",
+ "time": "2026-11-02T08:48:03",
  "result": "ok",
- "commit": "54e9167f3b26ff73dee990114933fada88e43b2e",
- "subject": "Library: counts on Playlists / Hour plans tabs; Clocks \u2192 Hour plans wording on the main page",
+ "commit": "3309b5d0d208ac8ea6099b372b55e470b1559d54",
+ "subject": "Cameras scene grid: columns 1-4 cams, rows by layout type (V, G, V G, VID, B, R), the rest at the end",
  "log": [
-  "08:41:53 update 44436749 \u2192 54e9167f \u00b7 1 file(s): web/panel/index.html",
-  "08:41:53 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "08:48:03 update 54e9167f \u2192 3309b5d0 \u00b7 1 file(s): web/panel/index.html",
+  "08:48:03 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Rauw Alejandro x Bad Bunny \u2013 Qu\u00e9 Pasar\u00eda...",
+  "song": "Rich Kalashh x Winter x Jaido \u2013 Private Party",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
