@@ -129,7 +129,7 @@ table{border-collapse:collapse;width:100%}
     <div class="scont">
     <section class="card sec" data-sec="sound">
       <div class="row between"><span class="lab">Sound · radio + TV · changes are live</span><span class="chip" id="sndState">–</span></div>
-      <div class="row" id="sndMode" style="gap:6px"><span class="lab" style="width:auto">Sound</span><button class="btn sm" data-m="0">Classic (presets + sliders)</button><button class="btn sm" data-m="0.5" title="The Classic sliders, but bass, mids and highs are compressed on their own: a hard kick no longer turns the whole mix down">Classic + multiband</button><button class="btn sm" data-m="1">⚡ Hype Punch</button><span class="muted" style="font-size:12px" id="sndModeTip"></span></div>
+      <div class="row" id="sndMode" style="gap:6px"><span class="lab" style="width:auto">Sound</span><button class="btn sm" data-m="0" title="One compressor for the whole mix – the sound you know, to compare with">Classic</button><button class="btn sm" data-m="0.5" title="4 bands (bass · low mids · mids · highs) each compressed on their own: a hard kick never pushes the vocals down, the highs never get harsh">★ Hype Pro</button><span class="muted" style="font-size:12px" id="sndModeTip"></span></div>
       <div class="row" id="presets"></div>
       <div id="dynBox" style="background:#071A2B;border:1px solid #17344F;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px">
         <div class="row between"><span class="lab" style="width:auto">On air now · what the processing does</span><span class="muted" style="font-size:11px" id="dynTip">listen + watch: good = compressor 2–4 dB, limiter 0–2 dB on loud parts</span></div>
@@ -238,30 +238,33 @@ const SL = [
   ['snd_drive', 'Loudness', 'how hard it hits the limiter', 0, 10, 0.5, 'dB'],
   ['snd_bass', 'Bass warmth', 'punch in the low end', 0, 8, 0.5, 'dB'],
   ['snd_bass_f', 'Bass frequency', 'lower = deeper', 50, 160, 5, 'Hz'],
+  ['snd_lowmid', 'Low mids (300 Hz)', 'minus = less muddy / boxy, clearer next to heavy bass', -4, 2, 0.5, 'dB'],
   ['snd_mid', 'Upper mids (3.5 kHz)', 'minus = less harsh / tiring, plus = more presence', -4, 3, 0.5, 'dB'],
   ['snd_treble', 'Treble', 'minus = warmer, plus = brighter', -4, 4, 0.5, 'dB'],
   ['snd_ratio', 'Compression', '1 = none, 2 = light, 4 = strong', 1, 6, 0.1, ':1'],
   ['snd_thresh', 'Compression starts at', 'lower = more compression', -30, 0, 1, 'dB'],
   ['snd_attack', 'Attack', 'slower = more punch on the beat', 1, 100, 1, 'ms'],
   ['snd_release', 'Release', 'how fast it lets go', 50, 1000, 10, 'ms'],
-  ['snd_ceiling', 'Ceiling', 'loudest peak allowed', -3, -0.1, 0.1, 'dB']];
-const PRESETS = {   // all on the Classic chain; target: loud enough to keep the energy, never tiring (ceiling −1 dB)
+  ['snd_ceiling', 'Ceiling', 'loudest peak allowed', -3, -0.1, 0.1, 'dB'],
+  ['snd_hpf', 'Sub cut', 'rumble below this is filtered out – lower = more deep 808', 20, 40, 1, 'Hz'],
+  ['snd_width', 'Stereo width', 'only above 300 Hz (the bass stays in the centre) – 0 = original', 0, 50, 5, '%']];
+const PRESETS = {   // Classic chain; target: loud enough to keep the energy, never tiring (ceiling −1 dB)
   'Warm & punchy': {tip: 'the all-round Hype sound: warm bass, light compression', snd_drive: 5, snd_bass: 3, snd_bass_f: 85, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
-  'Warm & punchy multiband': {tip: 'Warm & punchy, but bass, mids and highs are compressed on their own: the kick no longer pulls the whole mix down', snd_punch: 0.5, snd_drive: 4.5, snd_bass: 3, snd_bass_f: 85, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
   'Hype Energy': {tip: 'daytime: a bit brighter and more driving', snd_drive: 5.5, snd_bass: 3.5, snd_bass_f: 75, snd_mid: 0, snd_treble: 1, snd_ratio: 2.5, snd_thresh: -17, snd_attack: 25, snd_release: 200, snd_ceiling: -1},
   'Deep Bass': {tip: 'Afro / dancehall / reggaeton: deeper low end, the kick comes through', snd_drive: 5, snd_bass: 5, snd_bass_f: 65, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2.2, snd_thresh: -16, snd_attack: 35, snd_release: 240, snd_ceiling: -1},
   'Crisp Vocals': {tip: 'clear voices and hi-hats, tighter bass', snd_drive: 4.5, snd_bass: 2, snd_bass_f: 95, snd_mid: 0.5, snd_treble: 1.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
   'Smooth Daytime': {tip: 'easy for long listening (work, shop): less pressure, still full', snd_drive: 4, snd_bass: 2.5, snd_bass_f: 90, snd_mid: -1, snd_treble: 0, snd_ratio: 2, snd_thresh: -15, snd_attack: 35, snd_release: 260, snd_ceiling: -1},
   'Night Chill': {tip: 'late night / chill shows: softer top, gentle compression', snd_drive: 3, snd_bass: 3, snd_bass_f: 80, snd_mid: -1.5, snd_treble: -1, snd_ratio: 1.8, snd_thresh: -14, snd_attack: 40, snd_release: 300, snd_ceiling: -1.2},
   'Loud club': {tip: 'party / club shows: the loudest one – check it does not tire', snd_drive: 6, snd_bass: 4.5, snd_bass_f: 70, snd_treble: 0.5, snd_ratio: 3, snd_thresh: -18, snd_attack: 20, snd_release: 180, snd_ceiling: -0.8},
-  'Hype Full ★ try first': {tip: 'full but never tiring: multiband, slow-ish attack for punch, highs a bit softer', snd_punch: 0.5, snd_drive: 4, snd_bass: 2.5, snd_bass_f: 80, snd_mid: -1.5, snd_treble: -1, snd_ratio: 2.2, snd_thresh: -18, snd_attack: 25, snd_release: 200, snd_ceiling: -1},
-  'Hype Active': {tip: 'more energy for daytime / drive time, still multiband so the kick does not pump', snd_punch: 0.5, snd_drive: 5, snd_bass: 3, snd_bass_f: 75, snd_mid: -0.5, snd_treble: 0, snd_ratio: 2.5, snd_thresh: -18, snd_attack: 20, snd_release: 180, snd_ceiling: -1},
-  'Clean & open': {tip: 'almost no processing – the songs are already mastered loud; most natural sound', snd_punch: 0, snd_drive: 3, snd_bass: 1.5, snd_bass_f: 90, snd_mid: -0.5, snd_treble: -0.5, snd_ratio: 1.6, snd_thresh: -14, snd_attack: 40, snd_release: 300, snd_ceiling: -1},
-  'Urban Warm': {tip: 'Afro / dancehall / Dutch: deep warm low end, soft top', snd_punch: 0.5, snd_drive: 4.5, snd_bass: 4, snd_bass_f: 65, snd_mid: -1, snd_treble: -1, snd_ratio: 2.2, snd_thresh: -17, snd_attack: 30, snd_release: 230, snd_ceiling: -1},
-  'Hip-hop Weight': {tip: '808s and sub bass with weight, kick stays round', snd_punch: 0.5, snd_drive: 4.5, snd_bass: 3.5, snd_bass_f: 60, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2.5, snd_thresh: -18, snd_attack: 35, snd_release: 250, snd_ceiling: -1},
-  'Easy Ears': {tip: 'for hours of listening (shops, offices, at work): soft highs, gentle, still full', snd_punch: 0.5, snd_drive: 3.5, snd_bass: 2, snd_bass_f: 85, snd_mid: -2, snd_treble: -1.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 260, snd_ceiling: -1.2},
-  'Weekend Party': {tip: 'Friday / Saturday night: loud and driving, multiband keeps it clean', snd_punch: 0.5, snd_drive: 5.5, snd_bass: 4, snd_bass_f: 70, snd_mid: -0.5, snd_treble: 0, snd_ratio: 2.8, snd_thresh: -19, snd_attack: 20, snd_release: 170, snd_ceiling: -0.8}};
-const PKEYS = ['snd_drive', 'snd_bass', 'snd_bass_f', 'snd_mid', 'snd_treble', 'snd_ratio', 'snd_thresh', 'snd_attack', 'snd_release', 'snd_ceiling'];
+  'Clean & open': {tip: 'almost no processing – the songs are already mastered loud; most natural sound', snd_punch: 0, snd_drive: 3, snd_bass: 1.5, snd_bass_f: 90, snd_mid: -0.5, snd_treble: -0.5, snd_ratio: 1.6, snd_thresh: -14, snd_attack: 40, snd_release: 300, snd_ceiling: -1}};
+const PRO = {   // Hype Pro (4 bands): balanced, never tiring, but fun – the Compression sliders drive all 4 bands
+  'Pro Balanced ★ try first': {tip: 'Hype Pro all-round: full low end, clear vocals, smooth highs – loud enough, never tiring', snd_punch: 0.5, snd_drive: 4, snd_bass: 2, snd_bass_f: 75, snd_lowmid: -1, snd_mid: -1, snd_treble: 0, snd_ratio: 2, snd_thresh: -16, snd_attack: 25, snd_release: 220, snd_ceiling: -1, snd_hpf: 25, snd_width: 0},
+  'Pro Warm': {tip: 'warmer and rounder: deep 808s, soft top – Afro, dancehall, R&B', snd_punch: 0.5, snd_drive: 4, snd_bass: 3, snd_bass_f: 65, snd_lowmid: -0.5, snd_mid: -1.5, snd_treble: -0.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 240, snd_ceiling: -1, snd_hpf: 22, snd_width: 0},
+  'Pro Clear': {tip: 'clean and open: tighter bass, clear vocals and hi-hats – talk, pop, Dutch', snd_punch: 0.5, snd_drive: 4, snd_bass: 1.5, snd_bass_f: 90, snd_lowmid: -1.5, snd_mid: 0, snd_treble: 1, snd_ratio: 2, snd_thresh: -16, snd_attack: 25, snd_release: 200, snd_ceiling: -1, snd_hpf: 28, snd_width: 10},
+  'Pro Party': {tip: 'weekend / club: more drive and punch, a bit wider – check it does not tire', snd_punch: 0.5, snd_drive: 5, snd_bass: 3, snd_bass_f: 65, snd_lowmid: -1, snd_mid: -0.5, snd_treble: 0.5, snd_ratio: 2.5, snd_thresh: -18, snd_attack: 20, snd_release: 180, snd_ceiling: -1, snd_hpf: 25, snd_width: 15},
+  'Pro Easy Ears': {tip: 'hours of listening (shops, offices): gentle, soft highs, still full', snd_punch: 0.5, snd_drive: 3.5, snd_bass: 2, snd_bass_f: 80, snd_lowmid: -1, snd_mid: -2, snd_treble: -1, snd_ratio: 1.8, snd_thresh: -15, snd_attack: 30, snd_release: 260, snd_ceiling: -1.2, snd_hpf: 25, snd_width: 0}};
+Object.assign(PRESETS, PRO);
+const PKEYS = ['snd_drive', 'snd_bass', 'snd_bass_f', 'snd_lowmid', 'snd_mid', 'snd_treble', 'snd_ratio', 'snd_thresh', 'snd_attack', 'snd_release', 'snd_ceiling', 'snd_hpf', 'snd_width'];
 const MINE = () => (ST && ST.sound_presets) || {};
 const HIDDEN = () => (ST && ST.sound_presets_hidden) || [];
 function allPresets() { const o = Object.assign({}, PRESETS); HIDDEN().forEach(n => delete o[n]); Object.entries(MINE()).forEach(([n, v]) => { o['★ ' + n] = Object.assign({tip: 'your own preset'}, v); }); return o; }
@@ -279,7 +282,7 @@ function render() {
   $('#presets').innerHTML = '<span class="lab" style="width:auto">Presets</span>' + Object.keys(AP).map(n => `<span class="ltr"><button class="btn sm${n === cur ? ' on' : ''}" data-p="${esc(n)}" title="${esc(AP[n].tip)}">${esc(n)}</button><button class="ltx" data-pdel="${esc(n)}" title="Remove ${esc(n)}" aria-label="Remove ${esc(n)}">×</button></span>`).join('') +
     `<button class="btn sm yellow" id="pSave" title="Keep the sliders as they are now as your own preset">＋ Save as my preset</button>` +
     (HIDDEN().length ? `<button class="btn sm" id="pBack" title="Show the built-in presets you removed again">Show removed (${HIDDEN().length})</button>` : '') +
-    `<span class="muted" style="font-size:12px;flex-basis:100%">${cur ? '▶ ' + esc(cur) + ': ' + esc(AP[cur].tip) : (ST.sound && ST.sound.snd_punch > 0.75 ? 'Hype Punch is on – a preset switches back to the Classic chain.' : 'Own settings (sliders moved) – ＋ Save as my preset keeps them.')}</span>`;
+    `<span class="muted" style="font-size:12px;flex-basis:100%">${cur ? '▶ ' + esc(cur) + ': ' + esc(AP[cur].tip) : 'Own settings (sliders moved) – ＋ Save as my preset keeps them.'}</span>`;
   $('#pSave').onclick = () => { const n = (prompt('Name for this preset (e.g. "Warm no pump")', cur && cur.startsWith('★ ') ? cur.slice(2) : '') || '').trim().slice(0, 40); if (!n) return;
     const v = {}; [...PKEYS, 'snd_punch'].forEach(k => { if (ST.sound[k] != null) v[k] = ST.sound[k]; });
     post('settings', {sound_presets: Object.assign({}, MINE(), {[n]: v})}).then(d => { ST = d; render(); toast('Preset "' + n + '" saved'); }); };
@@ -288,12 +291,11 @@ function render() {
     const req = n.startsWith('★ ') ? (m => { delete m[n.slice(2)]; return {sound_presets: m}; })(Object.assign({}, MINE())) : {sound_presets_hidden: [...new Set([...HIDDEN(), n])]};
     post('settings', req).then(d => { ST = d; render(); toast('Removed ' + n); }); });
   if ($('#pBack')) $('#pBack').onclick = () => post('settings', {sound_presets_hidden: []}).then(d => { ST = d; render(); toast('Built-in presets back'); });
-  const sp = (ST && ST.sound && ST.sound.snd_punch) || 0, pm = sp > 0.75, mbm = sp > 0.25 && !pm;
-  $$('#sndMode [data-m]').forEach(b => { const m = +b.dataset.m; b.classList.toggle('on', m === 1 ? pm : m === 0.5 ? mbm : !pm && !mbm);
-    b.onclick = () => { pend = {snd_punch: m}; sendSound().then(() => { render(); toast(m === 1 ? 'Hype Punch on – listen, switch back any time' : m === 0.5 ? 'Classic + multiband on' : 'Classic sound'); }); }; });
-  $('#sndModeTip').textContent = pm ? 'Punch: 3-band compression, punch at 100 Hz, vocal presence + air. Loudness + Ceiling sliders still work.'
-    : mbm ? 'Your sliders (bass, treble, loudness …) with bass, mids and highs compressed on their own – the kick no longer pulls the vocals down. The Compression sliders are not used here.' : '';
-  $$('#presets [data-p]').forEach(b => b.onclick = () => { const P_ = Object.assign({}, allPresets()[b.dataset.p]); delete P_.tip; pend = Object.assign({snd_punch: 0, snd_mid: 0}, P_); sendSound().then(() => { render(); toast('Preset: ' + b.dataset.p); }); });
+  const pro = ((ST && ST.sound && ST.sound.snd_punch) || 0) > 0.25;
+  $$('#sndMode [data-m]').forEach(b => { const m = +b.dataset.m; b.classList.toggle('on', m ? pro : !pro);
+    b.onclick = () => { pend = {snd_punch: m}; sendSound().then(() => { render(); toast(m ? 'Hype Pro on – listen, switch back to Classic to compare' : 'Classic sound'); }); }; });
+  $('#sndModeTip').textContent = pro ? 'Hype Pro: bass, low mids, mids and highs are compressed on their own. The Compression sliders drive all 4 bands; the meter shows the band that works hardest.' : 'Classic: one compressor for the whole mix.';
+  $$('#presets [data-p]').forEach(b => b.onclick = () => { const P_ = Object.assign({}, allPresets()[b.dataset.p]); delete P_.tip; pend = Object.assign({snd_punch: 0, snd_mid: 0, snd_lowmid: 0, snd_hpf: 30, snd_width: 0}, P_); sendSound().then(() => { render(); toast('Preset: ' + b.dataset.p); }); });
   const ok = Object.values(ST.sound).every(v => v != null); $('#sndState').textContent = ok ? 'radio engine connected' : 'radio engine not reachable'; $('#sndState').style.color = ok ? 'var(--g)' : 'var(--r)';
   ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always', 'smart_mix', 'id_intro'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
   $('#tv_clip_offset').value = ST.tv_clip_offset; $('#tv_clip_offset_v').textContent = fmtv(ST.tv_clip_offset, 'dB');

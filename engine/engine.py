@@ -1986,7 +1986,7 @@ def watch_show():
             except Exception as e: log.warning("weather: %s", e)
         time.sleep(60)
 
-SOUND_VARS = ["snd_drive", "snd_bass", "snd_bass_f", "snd_treble", "snd_mid", "snd_comp", "snd_monob", "snd_agc", "snd_ratio", "snd_thresh", "snd_attack", "snd_release", "snd_ceiling", "snd_punch", "mix_out", "mix_in"]
+SOUND_VARS = ["snd_drive", "snd_bass", "snd_bass_f", "snd_treble", "snd_mid", "snd_lowmid", "snd_hpf", "snd_width", "snd_comp", "snd_monob", "snd_agc", "snd_ratio", "snd_thresh", "snd_attack", "snd_release", "snd_ceiling", "snd_punch", "mix_out", "mix_in"]
 def load_rotation():
     """Artist / song separation and the longest overlap, from Settings."""
     global ARTIST_SEP, TITLE_SEP, MIX_MAX, JINGLE_FADE, JINGLE_DB, ADBOX_ALWAYS, SMART_MIX, AV_LAG

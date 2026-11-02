@@ -26,6 +26,9 @@ snd_ceiling  = interactive.float("snd_ceiling", min=-3., max=-0.1, description="
 snd_comp     = interactive.float("snd_comp", min=0., max=1., description="Compressor on (1) / off (0) – the limiter always stays on", 1.)
 snd_monob    = interactive.float("snd_monob", min=0., max=1., description="Mono bass below 120 Hz on (1) / off (0)", 0.)
 snd_mid      = interactive.float("snd_mid", min=-4., max=3., description="Upper mids 3.5 kHz (dB, minus = less harsh)", 0.)
+snd_lowmid   = interactive.float("snd_lowmid", min=-4., max=2., description="Low mids 300 Hz (dB, minus = less muddy / boxy)", 0.)
+snd_hpf      = interactive.float("snd_hpf", min=20., max=40., description="Sub cut (Hz): rumble below this is filtered out", 30.)
+snd_width    = interactive.float("snd_width", min=0., max=50., description="Stereo width above 300 Hz (%, 0 = original; the bass stays centred)", 0.)
 # --- faders (panel): music, pads + sweepers, the studio while LIVE (1.0 = 0 dB) ---
 vol_music  = interactive.float("vol_music", min=0., max=1.6, description="Music fader", 1.)
 vol_pads   = interactive.float("vol_pads", min=0., max=1.6, description="Pads fader", 1.)
@@ -90,34 +93,51 @@ s = add(normalize=false, [s, pads])
 ret = mksafe(ladspa.fastlookaheadlimiter(input_gain=0., limit=-1., release_time=0.08, s))
 
 # --- broadcast processing: warm bass, light compression, loud but clean limiter ---
-# Sound presets on ONE chain (switching chains is not possible here): snd_punch 0 = classic (the sliders), 1 = "Hype Punch":
-# no rumble, punch at 100 Hz instead of deep sub, vocal presence + air, 3-band compression (the bass can't push the vocals down);
+# Sound presets on ONE chain (switching chains is not possible here): snd_punch 0 = Classic (one compressor), 0.5 = Hype Pro (4 bands):
 # the Loudness (drive) and Ceiling sliders work in both.
-snd_punch = interactive.float("snd_punch", min=0., max=1., description="Sound chain: 0 = classic, 0.5 = classic multiband, 1 = Hype Punch", 0.)
+snd_punch = interactive.float("snd_punch", min=0., max=1., description="Sound chain: 0 = Classic, 0.5 (or 1) = Hype Pro", 0.)
 # meters for Settings → Sound: how many dB the compressor and the limiter take off (on the automation chain)
 dyn_pre = ref(fun () -> 0.)
 dyn_mid = ref(fun () -> 0.)
 dyn_post = ref(fun () -> 0.)
 dyn_cg = ref(fun () -> 0.)
 dyn_lg = ref(fun () -> 0.)
-# 3-band compressor = Liquidsoap's compress.multiband, but its dry/wet mix no longer re-applies the song gain:
-# the built-in one uses amplify() WITH the liq_amplify override, so every song's loudness correction was applied twice
-def hype_multiband(~limit=true, ~wet=getter(1.), s, l)
-  def band(low, band)
-    high = if getter.is_constant(band.frequency) and getter.get(band.frequency) >= float_of_int(audio.samplerate()) / 2. then infinity else band.frequency end
-    s = filter.iir.eq.low_high(low=low, high=high, s)
-    s = compress(attack=band.attack, release=band.release, threshold=band.threshold, ratio=band.ratio, gain=band.gain, s)
-    if limit then limiter(s) else s end
+dyn_mg = ref(fun () -> 0.)
+# Hype Pro: 4-band compressor. The bands are split by subtraction (Linkwitz-Riley low-pass; the rest = the input minus that
+# band), so with nothing compressing the 4 bands add up EXACTLY to the input – no holes at the crossovers (the old 3-band one
+# had −18 dB dips at 120 Hz and 4 kHz: a hollow kick, dull vocals). The Compression sliders (ratio / start / attack / release)
+# drive all 4 bands, each with its own small offset: the bass a bit firmer and slower, the highs quicker and gentler.
+def lr4lp(f, s)
+  filter.iir.eq.low(frequency=f, q=0.7071, filter.iir.eq.low(frequency=f, q=0.7071, s))
+end
+def hype_mb(~wet, x)
+  lo = lr4lp(120., x)
+  r1 = add(normalize=false, [x, amplify(override=null(), -1., lo)])
+  lm = lr4lp(500., r1)
+  r2 = add(normalize=false, [r1, amplify(override=null(), -1., lm)])
+  md = lr4lp(4000., r2)
+  hi = add(normalize=false, [r2, amplify(override=null(), -1., md)])
+  def c(off, rf, af, rl, s)
+    compress(attack={snd_attack() * af}, release={snd_release() * rl}, threshold={snd_thresh() + off}, ratio={1. + (snd_ratio() - 1.) * rf}, knee=6., s)
   end
-  ls = list.mapi(fun (i, b) -> band(if i == 0 then 0. else list.nth(l,i-1).frequency end, b), l)
-  c = add(normalize=false, ls)
-  s = add(normalize=false, [amplify(override=null(), {1.-getter.get(wet)}, s), amplify(override=null(), wet, c)])
-  if false then () else list.hd(l) end
-  limiter(s)
+  c1 = c(-2., 1.2, 1.2, 1.2, lo)     # sub + bass < 120 Hz: firmer, slow attack – the kick keeps its punch, no pumping
+  c2 = c(-3., 1., 0.8, 1., lm)       # low mids 120–500 Hz: body; keeps it from getting muddy
+  c3 = c(-3., 1., 0.5, 0.8, md)      # mids 500 Hz – 4 kHz: vocals, snares
+  c4 = c(-6., 0.8, 0.2, 0.5, hi)     # highs > 4 kHz: quick and gentle (never harsh)
+  m = amplify(override=null(), lin_of_dB(1.), add(normalize=false, [c1, c2, c3, c4]))
+  y = add(normalize=false, [amplify(override=null(), {1. - getter.get(wet)}, x), amplify(override=null(), wet, m)])
+  (y, fun () -> min(min(c1.gain(), c2.gain()), min(c3.gain(), c4.gain())))   # the band that compresses most (for the meter)
+end
+# stereo width: only above 300 Hz (split by subtraction again, so 0 % = exactly the original); the bass stays in the centre
+def hype_width(x)
+  lo = lr4lp(300., x)
+  hi = add(normalize=false, [x, amplify(override=null(), -1., lo)])
+  w = stereo.ms.decode(width=1.5, stereo.ms.encode(hi))      # the highs with the side (stereo) part +3.5 dB
+  d = add(normalize=false, [w, amplify(override=null(), -1., hi)])   # only the extra width
+  add(normalize=false, [lo, hi, amplify(override=null(), {snd_width() / 50.}, d)])   # 0 % = exactly the original, 50 % = side +3.5 dB
 end
 def process(~meter=false, ~light=false, x) =
-  p = fun () -> snd_punch() > 0.75     # 1 = Hype Punch
-  x = filter.iir.eq.high(frequency=30., q=0.7, x)
+  x = filter.iir.eq.high(frequency=snd_hpf, q=0.7, x)
   # mono bass: below 120 Hz left and right become the same (Linkwitz-Riley crossover) – off = the original signal, untouched
   # (only on the music + studio chains – the pads chain for the TV does not need it: saves CPU)
   x = if true then x else
@@ -126,25 +146,24 @@ def process(~meter=false, ~light=false, x) =
     mbx = add(normalize=false, [audio_to_stereo(lo), hi])
     add(normalize=false, [amplify(override=null(), {if snd_monob() > 0.5 then 0. else 1. end}, x), amplify(override=null(), {if snd_monob() > 0.5 then 1. else 0. end}, mbx)])
   end
-  x = filter.iir.eq.peak(frequency={if p() then 100. else snd_bass_f() end}, gain={if p() then 2. else snd_bass() end}, q=0.75, x)
-  x = filter.iir.eq.peak(frequency=3500., gain={if p() then 1.5 else snd_mid() end}, q=0.9, x)
-  x = filter.iir.eq.peak(frequency=9500., gain={if p() then 1. else snd_treble() end}, q=0.7, x)
+  x = filter.iir.eq.peak(frequency=snd_bass_f, gain=snd_bass, q=0.75, x)
+  x = filter.iir.eq.peak(frequency=300., gain=snd_lowmid, q=0.9, x)
+  x = filter.iir.eq.peak(frequency=3500., gain=snd_mid, q=0.9, x)
+  x = filter.iir.eq.peak(frequency=9500., gain=snd_treble, q=0.7, x)
   con = fun () -> snd_comp() > 0.5     # compressor switch (Settings → Sound)
-  mb = fun () -> snd_punch() > 0.25      # 0.5 = the Classic sliders with multiband compression (bass, mids, highs each on their own)
+  mb = fun () -> snd_punch() > 0.25      # Hype Pro (0.5): the same sliders, 4 bands compressed each on their own
   r1 = rms(duration=0.3, x)
   x = r1
   cb = compress(attack=snd_attack, release=snd_release, threshold=snd_thresh, ratio={if mb() or not con() then 1. else snd_ratio() end}, knee=6., x)
   x = cb
-  x = hype_multiband(limit=false, wet={if mb() and con() then 1. else 0. end}, x, [
-    {frequency=120., attack=25., release=220., ratio=3., threshold=-20., gain=4.},
-    {frequency=4000., attack=12., release=160., ratio=2.5, threshold=-22., gain=5.},
-    {frequency=20000., attack=5., release=100., ratio=2., threshold=-26., gain=5.}])
-  # compressor off: about the same loudness as on (measured in the lab), so you compare the sound, not the volume
-  x = amplify(override=null(), {if con() then 1. else if mb() then lin_of_dB(3.4) else lin_of_dB(-3.8) end end}, x)
+  let (x, mbg) = hype_mb(wet={if mb() and con() then 1. else 0. end}, x)
+  # compressor off: about the same loudness as on, so you compare the sound, not the volume
+  x = amplify(override=null(), {if con() then 1. else lin_of_dB(-3.8) end}, x)
+  x = hype_width(x)
   r2 = rms(duration=0.3, x)
   x = r2
-  lm = limit(threshold={if p() then snd_ceiling() - 1. else snd_ceiling() end}, pre_gain=snd_drive, attack={if p() then 1. else 3. end}, release=120., x)
-  x = lm   # punch is brighter: 1 dB more room so the MP3 never clips
+  lm = limit(threshold=snd_ceiling, pre_gain=snd_drive, attack=3., release=120., x)
+  x = lm
   cs = compress(ratio=50., attack=0.5, release=60., knee=0., lookahead=4., threshold={snd_ceiling() - 0.3}, x)
   x = cs   # brick-wall safety stage (looks 4 ms ahead): no peak gets over the ceiling
   x = ladspa.fastlookaheadlimiter(input_gain=0., limit={snd_ceiling() - 0.2}, release_time=0.08, x)   # true look-ahead brickwall (swh-plugins): no peak ever goes over the ceiling
@@ -154,6 +173,7 @@ def process(~meter=false, ~light=false, x) =
     dyn_mid := r2.rms
     dyn_post := r3.rms
     dyn_cg := cb.gain
+    dyn_mg := mbg
     dyn_lg := fun () -> lm.gain() + cs.gain()
   end
   r3
@@ -184,10 +204,11 @@ def meter_level(_) =
   quiet = a < -45.
   fcg = dyn_cg()
   flg = dyn_lg()
-  # classic: the compressor's own gain reduction; multiband: estimated from the level before / after (+ its make-up gain)
-  comp = if snd_comp() < 0.5 or quiet then 0. elsif snd_punch() > 0.25 then max(0., a - b + 4.5) else max(0., 0. - fcg()) end
+  fmg = dyn_mg()
+  # classic: the compressor's own gain reduction; Hype Pro: the band that compresses most
+  comp = if snd_comp() < 0.5 or quiet then 0. elsif snd_punch() > 0.25 then max(0., 0. - fmg()) else max(0., 0. - fcg()) end
   lim = if quiet then 0. else max(0., 0. - flg()) end
-  "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a}"
+  "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a} #{b} #{c}"   # b, c: level after the compressor / after the limiter (for checks)
 end
 server.register(namespace="radio", "level", meter_level)
 # what is really on air (for the Broadcast page): your studio mix or the automation
