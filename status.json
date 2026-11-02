@@ -1,17 +1,17 @@
 {
- "time": "2026-11-02T07:36:23",
+ "time": "2026-11-02T07:52:45",
  "result": "ok",
- "commit": "1ca40360c28662d92aa185f9b21a5a774a77bbaf",
- "subject": "LIVE panel: Screen share row always shown with its SLOT",
+ "commit": "eeef7d1cca245d96bead52285d5851d0580a4b86",
+ "subject": "Scene lists: v4 camera scenes (CAM 1 2 3 V, CAM 1 2 3 4 B/R/G, VID 1 2 3 4)",
  "log": [
-  "07:36:23 update 384f787e \u2192 1ca40360 \u00b7 1 file(s): web/panel/index.html",
-  "07:36:23 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "07:52:45 update 1ca40360 \u2192 eeef7d1c \u00b7 2 file(s): web/panel/index.html, web/panel/plan.html",
+  "07:52:45 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Chris Brown \u2013 With You",
+  "song": "Aidonia \u2013 Like How Yuh Feel",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
