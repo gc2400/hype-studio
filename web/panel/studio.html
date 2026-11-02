@@ -372,16 +372,20 @@ function stopScreen() { if (SCRC) { SCRC.close(); SCRC = null; } if (SCR) { SCR.
 $('#scrBtn').onclick = async () => {
   if (SCR) return stopScreen();
   if (!KEY) return toast('One moment – the studio is still loading', 1);
-  try { SCR = await navigator.mediaDevices.getDisplayMedia({video: {frameRate: {ideal: 30, max: 30}, width: {ideal: 1920}, height: {ideal: 1080}}, audio: false, selfBrowserSurface: 'exclude', surfaceSwitching: 'include'}); }
+  try { SCR = await navigator.mediaDevices.getDisplayMedia({video: scrSize($('#scrHint').value), audio: false, selfBrowserSurface: 'exclude', surfaceSwitching: 'include'}); }
   catch (e) { SCR = null; return; }                                   // cancelled
   const hint = $('#scrHint').value;
   $('#vScreen').srcObject = SCR; $('#phScreen').hidden = true; $('#scrBtn').textContent = 'Stop sharing'; $('#scrBtn').classList.add('red');
   SCR.getVideoTracks()[0].onended = stopScreen;                        // "Stop sharing" in the browser bar
-  SCRC = HypeRTC.keep('screen', () => HypeRTC.publish('screen', SCR, {key: KEY, videoKbps: Math.max(Q().v, 3500), hint}), setState);
+  SCRC = HypeRTC.keep('screen', () => HypeRTC.publish('screen', SCR, {key: KEY, videoKbps: Q().v, hint}), setState);     // the same ceiling as a camera; WebRTC goes lower by itself when the line is busy
   const free = Object.entries((L && L.cams) || {}).find(([c, src]) => src === 'screen');
   toast(free ? 'Sharing – on TV in ' + free[0] : 'Sharing – choose a SLOT to put it on TV');
 };
-$('#scrHint').onchange = () => { if (SCR) { const t = SCR.getVideoTracks()[0]; try { t.contentHint = $('#scrHint').value; } catch (e) {} } };
+// text: full sharpness, fewer frames (a weak line drops frames, the letters stay sharp) · video: 720p, smooth (a weak line lowers the sharpness, the motion stays fluent)
+function scrSize(h) { return h === 'detail' ? {width: {ideal: 1920}, height: {ideal: 1080}, frameRate: {ideal: 15, max: 15}} : {width: {ideal: 1280}, height: {ideal: 720}, frameRate: {ideal: 30, max: 30}}; }
+$('#scrHint').onchange = () => { if (!SCR) return; const t = SCR.getVideoTracks()[0], h = $('#scrHint').value;
+  try { t.contentHint = h; t.applyConstraints(scrSize(h)).catch(() => {}); } catch (e) {}
+  const pc = SCRC && SCRC.pc; if (pc) pc.getSenders().forEach(x => { if (x.track && x.track.kind === 'video') { const p = x.getParameters(); p.degradationPreference = h === 'detail' ? 'maintain-resolution' : 'maintain-framerate'; x.setParameters(p).catch(() => {}); } }); };
 </script>
 </body>
 </html>
