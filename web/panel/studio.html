@@ -99,7 +99,8 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
       <span class="lab">Your cameras</span>
       <div class="cams">
         <div class="camcol"><div class="vbox"><video id="vCam1" muted playsinline autoplay></video><span class="ph" id="phCam1">Camera 1: choose your USB cam below</span></div><label class="camsel"><b>Camera 1</b><select id="dCam1"></select></label><div class="row camrow"><span class="lab">SLOT</span><div class="camseg" data-src="cam1" role="group" aria-label="Studio cam 1 on TV in"></div></div></div>
-        <div class="camcol"><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div><label class="camsel"><b>Camera 2</b><select id="dCam2"></select></label><div class="row camrow"><span class="lab">SLOT</span><div class="camseg" data-src="cam2" role="group" aria-label="Studio cam 2 on TV in"></div></div></div></div>
+        <div class="camcol"><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div><label class="camsel"><b>Camera 2</b><select id="dCam2"></select></label><div class="row camrow"><span class="lab">SLOT</span><div class="camseg" data-src="cam2" role="group" aria-label="Studio cam 2 on TV in"></div></div></div>
+        <div class="camcol"><div class="vbox"><video id="vScreen" muted playsinline autoplay></video><span class="ph" id="phScreen">Screen: share your screen, a window or a browser tab</span></div><div class="camsel"><button class="btn" id="scrBtn" type="button">Share screen</button><select id="scrHint" aria-label="What you share" style="flex:1;min-width:0"><option value="motion">Video, moving picture</option><option value="detail">Text, slides, websites</option></select></div><div class="row camrow"><span class="lab">SLOT</span><div class="camseg" data-src="screen" role="group" aria-label="Screen share on TV in"></div></div></div></div>
     </section>
   <section class="card">
     <div class="row" style="flex-wrap:nowrap;gap:10px"><span class="lab" style="white-space:nowrap">Guests · max 6</span>
@@ -363,6 +364,24 @@ refresh().then(listDevices); setInterval(refresh, 2000);
 document.querySelectorAll('details.sec').forEach(d => { try { const v = localStorage.getItem('hypeBc_' + d.dataset.sec); if (v !== null) d.open = v === '1'; } catch (e) {}
   d.addEventListener('toggle', () => { try { localStorage.setItem('hypeBc_' + d.dataset.sec, d.open ? '1' : '0'); } catch (e) {} }); });
 document.querySelector('#devRefresh').addEventListener('click', e => e.preventDefault(), true);   // (a button in a summary: never fold the section)
+
+/* screen share: your screen, a window or a Chrome tab as a TV source (like VDO.Ninja's screen share) – picture only, the sound goes through the Mixcast */
+let SCR = null, SCRC = null;
+function stopScreen() { if (SCRC) { SCRC.close(); SCRC = null; } if (SCR) { SCR.getTracks().forEach(t => t.stop()); SCR = null; }
+  $('#vScreen').srcObject = null; $('#phScreen').hidden = false; $('#scrBtn').textContent = 'Share screen'; $('#scrBtn').classList.remove('red'); }
+$('#scrBtn').onclick = async () => {
+  if (SCR) return stopScreen();
+  if (!KEY) return toast('One moment – the studio is still loading', 1);
+  try { SCR = await navigator.mediaDevices.getDisplayMedia({video: {frameRate: {ideal: 30, max: 30}, width: {ideal: 1920}, height: {ideal: 1080}}, audio: false, selfBrowserSurface: 'exclude', surfaceSwitching: 'include'}); }
+  catch (e) { SCR = null; return; }                                   // cancelled
+  const hint = $('#scrHint').value;
+  $('#vScreen').srcObject = SCR; $('#phScreen').hidden = true; $('#scrBtn').textContent = 'Stop sharing'; $('#scrBtn').classList.add('red');
+  SCR.getVideoTracks()[0].onended = stopScreen;                        // "Stop sharing" in the browser bar
+  SCRC = HypeRTC.keep('screen', () => HypeRTC.publish('screen', SCR, {key: KEY, videoKbps: Math.max(Q().v, 3500), hint}), setState);
+  const free = Object.entries((L && L.cams) || {}).find(([c, src]) => src === 'screen');
+  toast(free ? 'Sharing – on TV in ' + free[0] : 'Sharing – choose a SLOT to put it on TV');
+};
+$('#scrHint').onchange = () => { if (SCR) { const t = SCR.getVideoTracks()[0]; try { t.contentHint = $('#scrHint').value; } catch (e) {} } };
 </script>
 </body>
 </html>

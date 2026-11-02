@@ -11,7 +11,7 @@ REC_DIR = "/srv/hype/music/MIXES/Recordings"   # in the library (Mixes → Recor
 REC_STATE = "/var/lib/hype/rec_state.json"     # the recording that is running (survives an engine restart)
 PROGRAM = "rtmp://127.0.0.1:1935/live/program"
 RADIO = "http://127.0.0.1:8000/rec.mp3"     # the on-air sound at 256k, for the recordings (internal)
-SOURCES = ["cam1", "cam2", "cam3"] + [f"guest{i}" for i in range(1, 7)]
+SOURCES = ["cam1", "cam2", "cam3", "screen"] + [f"guest{i}" for i in range(1, 7)]
 CAMS = ("CAM 1", "CAM 2", "CAM 3", "CAM 4")
 FEED = "http://127.0.0.1:8097/feed.html"     # web/obs/feed.html: one live input for an OBS browser source
 
@@ -288,7 +288,7 @@ class Live:
         def on(p): return bool(paths.get(p, {}).get("ready"))
         return {
             "live": self.live, "live_since": self.live_since, "studio_online": on("studio"), "return_online": on("return"),
-            "sources": {s: {"online": on(s), "name": (g.get(s) or {}).get("name") if s.startswith("guest") else {"cam1": "Studio cam 1", "cam2": "Studio cam 2", "cam3": "Studio cam 3"}[s]} for s in SOURCES},
+            "sources": {s: {"online": on(s), "name": (g.get(s) or {}).get("name") if s.startswith("guest") else {"cam1": "Studio cam 1", "cam2": "Studio cam 2", "cam3": "Studio cam 3", "screen": "Screen share"}[s]} for s in SOURCES},
             "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "air": self.air, "drops": self.drops, "auto_record": self.st.get("auto_record", True), "rec_what": self.st.get("rec_what", "both"),
             "guests": {s: {"name": i["name"], "token": i["token"], "exp": i["exp"], "online": on(s), "vol": i.get("vol", 1.0), "muted": bool(i.get("muted")), "mode": i.get("mode", "video")} for s, i in g.items()},
             "rec": {"since": self.rec["start"], "file": self.rec["file"], "ok": self.rec_alive()} if self.rec else None,

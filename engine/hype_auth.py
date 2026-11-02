@@ -85,7 +85,7 @@ button{margin-top:22px;width:100%;padding:13px;border:0;border-radius:9px;backgr
 
 LIVE_CONF = "/etc/hype/live.json"
 GUESTS = "/var/lib/hype/guests.json"
-STUDIO_PATHS = {"studio", "cam1", "cam2", "cam3", "mixminus", "return"}
+STUDIO_PATHS = {"studio", "cam1", "cam2", "cam3", "screen", "mixminus", "return"}
 def mtx_ok(d):
     """Local programs (OBS, ffmpeg) may do anything. The studio page needs the studio key.
     A guest link (token) may publish its own guestN slot and listen to the mix-minus and the other guests."""

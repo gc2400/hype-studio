@@ -43,10 +43,10 @@ const HypeRTC = (() => {
     } catch (e) { try { pc.close(); } catch (_) {} throw e; }
     // video adapts to the connection: on a weak line the browser lowers the resolution first and keeps the motion smooth
     pc.getSenders().forEach(s => { if (s.track && s.track.kind === 'video') { const p = s.getParameters(); p.encodings = p.encodings && p.encodings.length ? p.encodings : [{}];
-      if (o.videoKbps) p.encodings[0].maxBitrate = o.videoKbps * 1000; p.degradationPreference = 'maintain-framerate'; p.encodings[0].priority = 'medium'; s.setParameters(p).catch(() => {}); }
+      if (o.videoKbps) p.encodings[0].maxBitrate = o.videoKbps * 1000; p.degradationPreference = o.hint === 'detail' ? 'maintain-resolution' : 'maintain-framerate'; p.encodings[0].priority = 'medium'; s.setParameters(p).catch(() => {}); }
       if (s.track && s.track.kind === 'audio') { const p = s.getParameters(); p.encodings = p.encodings && p.encodings.length ? p.encodings : [{}]; p.encodings[0].priority = 'high'; p.encodings[0].networkPriority = 'high';
         if (o.audioKbps) p.encodings[0].maxBitrate = o.audioKbps * 1000; s.setParameters(p).catch(() => {}); } });
-    stream.getVideoTracks().forEach(t => { try { t.contentHint = 'motion'; } catch (e) {} });
+    stream.getVideoTracks().forEach(t => { try { t.contentHint = o.hint || 'motion'; } catch (e) {} });   // screen share with text: 'detail' (sharp), video: 'motion' (smooth)
     return pc;
   }
   /* receive: play('return', {key, video: false}) -> {pc, stream} */
