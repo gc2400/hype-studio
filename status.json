@@ -1,24 +1,26 @@
 {
- "time": "2026-11-02T22:23:16",
- "result": "rolled-back",
+ "time": "2026-11-02T22:28:48",
+ "result": "conflict",
  "commit": "34f8a67b2ae846cfc889bffb69cff8317d67e323",
  "subject": "Lab test: also checks 6 s of pure silence first (NaN at start-up never reaches the air)",
  "log": [
-  "22:21:28 update 94bcbff7 \u2192 34f8a67b \u00b7 4 file(s): engine/engine.py, radio/radio.liq, web/panel/help.html, web/panel/settings.html",
-  "22:22:14 lab: PASS (6/6 good readings)",
-  "22:22:14 restart hype-engine",
-  "22:22:14 restart hype-radio",
-  "22:23:15 PROBLEM after install: ['radio silent after the update'] \u2192 rolling back",
-  "22:23:15 restart hype-engine",
-  "22:23:15 restart hype-radio"
+  "22:28:48 update 94bcbff7 \u2192 34f8a67b \u00b7 4 file(s): engine/engine.py, radio/radio.liq, web/panel/help.html, web/panel/settings.html",
+  "22:28:48 CONFLICT: /etc/hype/radio.liq was changed on the server \u2013 run deploy/export.py + push first"
  ],
  "guard": {
-  "song": "Tekno \u2013 Press Button",
+  "song": "Jezzy x Arcangel \u2013 Que Sensaci\u00f3n (Remix)",
   "listeners": 0,
   "obs": true,
   "seg_age": 1.2,
-  "problems": [],
-  "ok": true
+  "problems": [
+   {
+    "id": "radio_hls",
+    "text": "Radio HLS stream stalled",
+    "since": 1793654911.634513,
+    "level": "bad"
+   }
+  ],
+  "ok": false
  },
  "services": {
   "hype-radio": "active",
