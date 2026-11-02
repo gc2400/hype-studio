@@ -1,17 +1,18 @@
 {
- "time": "2026-11-02T20:26:10",
+ "time": "2026-11-02T20:30:01",
  "result": "ok",
- "commit": "c2a797a97f574227df50c86fa15ba0256f83c9da",
- "subject": "Header: GO LIVE / REC small again; live = 'LIVE 0:54', recording = only its time (header barely grows)",
+ "commit": "4c5b5961a86a8a9333210c533bc10f521774d615",
+ "subject": "GO LIVE only with the studio connected: header button dimmed + message, server refuses live/on while the studio is offline",
  "log": [
-  "20:26:10 update 3d250215 \u2192 c2a797a9 \u00b7 1 file(s): web/panel/header.js",
-  "20:26:10 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:29:16 update c2a797a9 \u2192 4c5b5961 \u00b7 3 file(s): engine/engine.py, web/panel/header.js, web/panel/help.html",
+  "20:29:16 restart hype-engine",
+  "20:30:01 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
   "song": "Jeon \u2013 Padel",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },

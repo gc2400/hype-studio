@@ -191,3 +191,4 @@
 2026-11-02T19:53:26 ok e283aa08 Preview: don't hold the picture back for the sound (max 0.1 s interleave)
 2026-11-02T20:23:04 ok 3d250215 Header: GO LIVE / REC have fixed widths – going live or recording never moves the menu
 2026-11-02T20:26:10 ok c2a797a9 Header: GO LIVE / REC small again; live = 'LIVE 0:54', recording = only its time (header barely grows)
+2026-11-02T20:30:01 ok 4c5b5961 GO LIVE only with the studio connected: header button dimmed + message, server refuses live/on while the studio is offline
