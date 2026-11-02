@@ -190,3 +190,4 @@
 2026-11-02T19:49:35 ok 96d84621 Preview as live as possible: ladder reads without buffer, preview encoders async_depth 1, preview always 360p (with sound when on), browser buffer 50 ms
 2026-11-02T19:53:26 ok e283aa08 Preview: don't hold the picture back for the sound (max 0.1 s interleave)
 2026-11-02T20:23:04 ok 3d250215 Header: GO LIVE / REC have fixed widths – going live or recording never moves the menu
+2026-11-02T20:26:10 ok c2a797a9 Header: GO LIVE / REC small again; live = 'LIVE 0:54', recording = only its time (header barely grows)

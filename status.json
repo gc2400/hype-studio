@@ -1,17 +1,17 @@
 {
- "time": "2026-11-02T20:23:04",
+ "time": "2026-11-02T20:26:10",
  "result": "ok",
- "commit": "3d250215ec60c362e9ca95f6a31189692b5ac0aa",
- "subject": "Header: GO LIVE / REC have fixed widths \u2013 going live or recording never moves the menu",
+ "commit": "c2a797a97f574227df50c86fa15ba0256f83c9da",
+ "subject": "Header: GO LIVE / REC small again; live = 'LIVE 0:54', recording = only its time (header barely grows)",
  "log": [
-  "20:23:04 update e283aa08 \u2192 3d250215 \u00b7 1 file(s): web/panel/header.js",
-  "20:23:04 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:26:10 update 3d250215 \u2192 c2a797a9 \u00b7 1 file(s): web/panel/header.js",
+  "20:26:10 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Rema \u2013 Oh No",
+  "song": "Jeon \u2013 Padel",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
