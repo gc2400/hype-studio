@@ -193,3 +193,4 @@
 2026-11-02T20:26:10 ok c2a797a9 Header: GO LIVE / REC small again; live = 'LIVE 0:54', recording = only its time (header barely grows)
 2026-11-02T20:30:01 ok 4c5b5961 GO LIVE only with the studio connected: header button dimmed + message, server refuses live/on while the studio is offline
 2026-11-02T21:21:43 rolled-back 8ec16cc0 Multiband fixed: 4 bands split by subtraction (adds up exactly – the old one had −18 dB holes at 120 Hz and 4 kHz), driven by the sliders/presets; compressor meter = real gain reduction of the busiest band; no extra hidden limiter
+2026-11-02T21:33:31 ok 94bcbff7 Safety: NaN level from the radio counts as silence (guard repairs it) and is never passed on by the AGC
