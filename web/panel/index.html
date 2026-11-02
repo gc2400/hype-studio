@@ -610,7 +610,7 @@ $('#bAutoScene').onclick = () => cmd('autoscene'); $('#bPadStop').onclick = () =
 const SCENES = [['Music video', 'auto · clips'], ['Hype Screen', 'auto · audio only'], ['Branding', 'auto · jingles']];
 // Cameras grid: first the full-screen cameras, then a column per number of cameras (1-4) and a row per layout type; the rest at the end
 const CAMROWS = [['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'], ['', 'CAM 1 2', 'CAM 1 2 3', 'CAM 1 2 3 4'], ['CAM 1 V', 'CAM 1 2 V', 'CAM 1 2 3 V', ''], ['CAM 1 G', 'CAM 1 2 G', 'CAM 1 2 3 G', 'CAM 1 2 3 4 G'],
-  ['CAM 1 V G', '', 'CAM 1 2 3 V G', ''], ['VID 1', 'VID 1 2', 'VID 1 2 3', 'VID 1 2 3 4'], ['', '', 'CAM 1 2 3 B', 'CAM 1 2 3 4 B'], ['', '', 'CAM 1 2 3 R', 'CAM 1 2 3 4 R']];
+  ['CAM 1 V G', '', 'CAM 1 2 3 V G', ''], ['VID 1', 'VID 1 2', 'VID 1 2 3', 'VID 1 2 3 4'], ['', '', 'CAM 3 1 2 B', 'CAM 1 2 3 4 B'], ['', '', 'CAM 1 2 3 R', 'CAM 1 2 3 4 R']];
 const CAMMORE = ['CAM 1 V PIP', 'VID 1 LIVE MIX'];
 const CAMS = [...CAMROWS.flat().filter(Boolean), ...CAMMORE];
 let CAMEDIT = null, CAMPICK = -1;    // editing the Cameras grid: {cells, hidden}; CAMPICK = the place you clicked first (click another to swap)
