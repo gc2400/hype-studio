@@ -13,6 +13,10 @@ setsid nohup liquidsoap $L >/tmp/lab_run.log 2>&1 &
 for i in $(seq 1 40); do (exec 3<>/dev/tcp/127.0.0.1/1244) 2>/dev/null && break; sleep 1; done; sleep 2
 T(){ python3 -c "
 import socket,sys,time; s=socket.create_connection(('127.0.0.1',1244)); s.sendall((sys.argv[1]+'\nquit\n').encode()); time.sleep(.3); print(s.recv(400).decode().split('\r')[0])" "$1" 2>/dev/null; }
+# 1) silence first (like on air right after a restart, before the engine queues a song): the chain must stay a number, never NaN
+sleep 6; SIL=$(T radio.level)
+python3 -c "
+import sys,math; v=[float(x) for x in sys.argv[1].split()]; sys.exit(1 if any(math.isnan(x) for x in v[:2]) else 0)" "$SIL" || { for p in $(pgrep -f "liquidsoap /tmp/lab_update[.]liq"); do kill $p; done; echo "lab silence: $SIL"; echo "FAIL: NaN on silence (start-up)"; exit 1; }
 SONG=$(ls /srv/hype/music/*/*/*.mp3 2>/dev/null | head -1)
 T "q.push annotate:liq_cue_in=\"20\",liq_amplify=\"0 dB\":$SONG" >/dev/null
 sleep 12; OK=0; OUT=""
