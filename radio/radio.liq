@@ -100,20 +100,32 @@ dyn_mid = ref(fun () -> 0.)
 dyn_post = ref(fun () -> 0.)
 dyn_cg = ref(fun () -> 0.)
 dyn_lg = ref(fun () -> 0.)
-# 3-band compressor = Liquidsoap's compress.multiband, but its dry/wet mix no longer re-applies the song gain:
-# the built-in one uses amplify() WITH the liq_amplify override, so every song's loudness correction was applied twice
-def hype_multiband(~limit=true, ~wet=getter(1.), s, l)
-  def band(low, band)
-    high = if getter.is_constant(band.frequency) and getter.get(band.frequency) >= float_of_int(audio.samplerate()) / 2. then infinity else band.frequency end
-    s = filter.iir.eq.low_high(low=low, high=high, s)
-    s = compress(attack=band.attack, release=band.release, threshold=band.threshold, ratio=band.ratio, gain=band.gain, s)
-    if limit then limiter(s) else s end
+dyn_mg = ref(fun () -> 0.)
+# 4-band compressor (Classic + multiband / Hype Punch). The bands are split by subtraction (Linkwitz-Riley low-pass, the rest
+# = the input minus that band), so with nothing compressing the 4 bands add up EXACTLY to the input – no holes at the
+# crossovers (the old version had −18 dB dips at 120 Hz and 4 kHz: hollow kick, dull vocals). The Ratio / Threshold /
+# Attack / Release sliders (and the presets) drive all 4 bands; each band has its own small offset.
+def lr4lp(f, s)
+  filter.iir.eq.low(frequency=f, q=0.7071, filter.iir.eq.low(frequency=f, q=0.7071, s))
+end
+def hype_mb(~wet, x)
+  lo = lr4lp(120., x)
+  r1 = add(normalize=false, [x, amplify(override=null(), -1., lo)])
+  lm = lr4lp(500., r1)
+  r2 = add(normalize=false, [r1, amplify(override=null(), -1., lm)])
+  md = lr4lp(4000., r2)
+  hi = add(normalize=false, [r2, amplify(override=null(), -1., md)])
+  def c(off, rf, af, s)
+    compress(attack={snd_attack() * af}, release={snd_release() * (if af < 0.5 then 0.6 else 1.1 end)}, threshold={snd_thresh() + off},
+             ratio={1. + (snd_ratio() - 1.) * rf}, knee=6., s)
   end
-  ls = list.mapi(fun (i, b) -> band(if i == 0 then 0. else list.nth(l,i-1).frequency end, b), l)
-  c = add(normalize=false, ls)
-  s = add(normalize=false, [amplify(override=null(), {1.-getter.get(wet)}, s), amplify(override=null(), wet, c)])
-  if false then () else list.hd(l) end
-  limiter(s)
+  c1 = c(-4., 1.2, 1., lo)       # sub + bass (< 120 Hz): a bit firmer, slow – the kick keeps its punch
+  c2 = c(-6., 1., 0.7, lm)       # low mids 120–500 Hz: body, keeps it from getting muddy
+  c3 = c(-6., 1., 0.5, md)       # mids 500 Hz – 4 kHz: vocals, snares
+  c4 = c(-10., 0.9, 0.2, hi)     # highs > 4 kHz: quick, gentle
+  m = amplify(override=null(), lin_of_dB(1.5), add(normalize=false, [c1, c2, c3, c4]))    # small make-up gain (the limiter sets the loudness)
+  y = add(normalize=false, [amplify(override=null(), {1. - getter.get(wet)}, x), amplify(override=null(), wet, m)])
+  (y, fun () -> min(min(c1.gain(), c2.gain()), min(c3.gain(), c4.gain())))   # the band that compresses most (for the meter)
 end
 def process(~meter=false, ~light=false, x) =
   p = fun () -> snd_punch() > 0.75     # 1 = Hype Punch
@@ -135,12 +147,9 @@ def process(~meter=false, ~light=false, x) =
   x = r1
   cb = compress(attack=snd_attack, release=snd_release, threshold=snd_thresh, ratio={if mb() or not con() then 1. else snd_ratio() end}, knee=6., x)
   x = cb
-  x = hype_multiband(limit=false, wet={if mb() and con() then 1. else 0. end}, x, [
-    {frequency=120., attack=25., release=220., ratio=3., threshold=-20., gain=4.},
-    {frequency=4000., attack=12., release=160., ratio=2.5, threshold=-22., gain=5.},
-    {frequency=20000., attack=5., release=100., ratio=2., threshold=-26., gain=5.}])
-  # compressor off: about the same loudness as on (measured in the lab), so you compare the sound, not the volume
-  x = amplify(override=null(), {if con() then 1. else if mb() then lin_of_dB(3.4) else lin_of_dB(-3.8) end end}, x)
+  let (x, mbg) = hype_mb(wet={if mb() and con() then 1. else 0. end}, x)
+  # compressor off: about the same loudness as on, so you compare the sound, not the volume
+  x = amplify(override=null(), {if con() then 1. else if mb() then lin_of_dB(1.) else lin_of_dB(-3.8) end end}, x)
   r2 = rms(duration=0.3, x)
   x = r2
   lm = limit(threshold={if p() then snd_ceiling() - 1. else snd_ceiling() end}, pre_gain=snd_drive, attack={if p() then 1. else 3. end}, release=120., x)
@@ -154,6 +163,7 @@ def process(~meter=false, ~light=false, x) =
     dyn_mid := r2.rms
     dyn_post := r3.rms
     dyn_cg := cb.gain
+    dyn_mg := mbg
     dyn_lg := fun () -> lm.gain() + cs.gain()
   end
   r3
@@ -184,8 +194,9 @@ def meter_level(_) =
   quiet = a < -45.
   fcg = dyn_cg()
   flg = dyn_lg()
-  # classic: the compressor's own gain reduction; multiband: estimated from the level before / after (+ its make-up gain)
-  comp = if snd_comp() < 0.5 or quiet then 0. elsif snd_punch() > 0.25 then max(0., a - b + 4.5) else max(0., 0. - fcg()) end
+  fmg = dyn_mg()
+  # classic: the compressor's own gain reduction; multiband: the band that compresses most (each band's own gain reduction)
+  comp = if snd_comp() < 0.5 or quiet then 0. elsif snd_punch() > 0.25 then max(0., 0. - fmg()) else max(0., 0. - fcg()) end
   lim = if quiet then 0. else max(0., 0. - flg()) end
   "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a}"
 end
