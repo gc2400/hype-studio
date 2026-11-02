@@ -200,3 +200,4 @@
 2026-11-02T22:28:48 conflict 34f8a67b Lab test: also checks 6 s of pure silence first (NaN at start-up never reaches the air)
 2026-11-02T22:32:00 conflict 4764d07a Updater: after a radio restart wait up to 2 more minutes for the first song before calling it silent (the engine needs ~1 min to start; that caused false rollbacks)
 2026-11-02T22:44:35 ok-restart-updater 4764d07a Updater: after a radio restart wait up to 2 more minutes for the first song before calling it silent (the engine needs ~1 min to start; that caused false rollbacks)
+2026-11-02T22:52:15 ok c1004a03 Radio: back to the previous chain for now – the Hype Pro chain uses too much CPU (Liquidsoap 'too much latency' resets every minute)
