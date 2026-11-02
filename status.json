@@ -1,17 +1,18 @@
 {
- "time": "2026-11-02T19:16:46",
+ "time": "2026-11-02T19:20:37",
  "result": "ok",
- "commit": "d689b01aba0c71730fee788a1d5a2e10b5ebf183",
- "subject": "Pads edit bars: hint texts removed, Save pads / Done inline with the buttons",
+ "commit": "fa14823a9fa896848674e48862838a465dae820c",
+ "subject": "STOP MEDIA removed: STOP PADS also takes media off (or click the media pad again); Done in its place",
  "log": [
-  "19:16:46 update 4f72932c \u2192 d689b01a \u00b7 1 file(s): web/panel/index.html",
-  "19:16:46 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:19:52 update d689b01a \u2192 fa14823a \u00b7 3 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html",
+  "19:19:52 restart hype-engine",
+  "19:20:37 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Bokoesam x Yssi SB \u2013 20 Backshot",
+  "song": "HYPE RADIO \u2013 Sweep Hit After Hit",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
