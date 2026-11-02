@@ -166,3 +166,4 @@
 2026-11-02T07:24:02 ok 86324866 Broadcast: screen share (screen, window or Chrome tab) as a TV source with its own SLOT, sharp (text) or smooth (video); help updated
 2026-11-02T07:25:05 ok da642091 LIVE panel: the screen share shows with its SLOT while it is on
 2026-11-02T07:31:15 ok 384f787e Screen share follows the connection: same bitrate ceiling as the cameras, text = sharp 15 fps, video = 720p 30 fps
+2026-11-02T07:36:23 ok 1ca40360 LIVE panel: Screen share row always shown with its SLOT
