@@ -767,7 +767,7 @@ class Engine:
         except Exception: self.aux = {"1": [], "2": []}
         self.dj = getattr(self, "dj", False); self.deck = getattr(self, "deck", None); self.faders = {}; self.parked = None
         self.sgroups = planner.get_setting(c0, "scene_groups", [])
-        self.cam_layout = planner.get_setting(c0, "cam_layout", None)
+        self.layouts = {t: planner.get_setting(c0, t + "_layout", None) for t in ("cam", "pip", "media")}
         try:   # after a restart: the song that is still playing
             c = dbc(); r = c.execute("SELECT path, started, scene FROM asrun ORDER BY id DESC LIMIT 1").fetchone()
             if r:
@@ -1562,9 +1562,10 @@ class Engine:
                     else: self.screen.add(None, f, 0.0, 6 * 3600, d.get("where") or "all", manual=True)
                 else: return {"ok": False, "error": "file not found in branding/screen"}
             elif action == "cam_layout":     # the Cameras grid as you arranged it ('' = an empty place); hidden = scenes you took off
-                L = {"cells": [str(x)[:40] for x in (d.get("cells") or [])][:120], "hidden": [str(x)[:40] for x in (d.get("hidden") or [])][:120]}
+                L = {"cells": [str(x)[:80] for x in (d.get("cells") or [])][:120], "hidden": [str(x)[:80] for x in (d.get("hidden") or [])][:120]}
                 if d.get("reset"): L = None
-                planner.set_setting(c, "cam_layout", L); self.cam_layout = L
+                tab = d.get("tab") if d.get("tab") in ("cam", "pip", "media") else "cam"     # Cameras / PIP / MEDIA each keep their own grid
+                planner.set_setting(c, tab + "_layout", L); self.layouts[tab] = L
             elif action == "scene_groups":   # your own groups of scenes (e.g. per show)
                 G = []
                 for g in (d.get("groups") or [])[:30]:
@@ -1751,7 +1752,7 @@ class Engine:
             self.tv.ll_on = bool(planner.get_setting(c, "live_layer", True))
             cid = planner.clock_for(c, time.time()); cname = c.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() if cid else None
             return {"show": SHOW["title"], "clock": cname[0] if cname else None, "now": n, "elapsed": round(el, 1), "upcoming": upcoming, "history": hist, "auto": self.auto,
-                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "cam_layout": getattr(self, "cam_layout", None),
+                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
                     "tv_sound": "clip" if self.tv.split else "radio", "live_layer": bool(planner.get_setting(c, "live_layer", True)),
                     "time": time.strftime("%H:%M:%S"), "server_time": time.time()}
 

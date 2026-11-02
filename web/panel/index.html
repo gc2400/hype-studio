@@ -616,9 +616,14 @@ const CAMS = [...CAMROWS.flat().filter(Boolean), ...CAMMORE];
 // MEDIA tab: the same layout as the Cameras grid – M = the media window in place of the video
 const MROWS = [['MEDIA FULL', '', '', ''], ['CAM 1 M', 'CAM 1 2 M', 'CAM 1 2 3 M', ''], ['CAM 1 M G', '', 'CAM 1 2 3 M G', ''], ['M 1', 'M 1 2', 'M 1 2 3', 'M 1 2 3 4'], ['CAM 1 M PIP', 'M 1 LIVE MIX', '', '']];
 const MSC = MROWS.flat().filter(Boolean);
-let CAMEDIT = null, CAMPICK = -1;    // editing the Cameras grid: {cells, hidden}; CAMPICK = the place you clicked first (click another to swap)
-function camLayout() {      // your own arrangement (saved on the server) – scenes it doesn't know yet go at the end
-  const L = CAMEDIT || (S && S.cam_layout) || {cells: [...CAMROWS.flat(), ...CAMMORE], hidden: []};
+let CAMEDIT = null, CAMPICK = -1;    // editing the Cameras / PIP / MEDIA grid: {tab, cells, hidden}; CAMPICK = the place you clicked first (click another to swap)
+const scName = n => n.startsWith('PIP@') ? 'PIP · ' + n.slice(4).replace(/^PIP_/, '').replace(/\.png$/i, '') : n;
+const LTAB = () => SG === -2 ? 'pip' : SG === -3 ? 'media' : 'cam';
+function tabScenes(t) { return t === 'pip' ? ((S && S.pip_frames) || []).map(f => 'PIP@' + f) : t === 'media' ? MSC : CAMS; }
+function tabDefault(t) { if (t === 'media') return MROWS.flat(); if (t === 'pip') return tabScenes('pip'); return [...CAMROWS.flat(), ...CAMMORE]; }
+function camLayout(t = LTAB()) {      // your own arrangement (saved on the server) – scenes it doesn't know yet go at the end
+  const CAMS = tabScenes(t);
+  const L = (CAMEDIT && CAMEDIT.tab === t ? CAMEDIT : null) || (S && S.layouts && S.layouts[t]) || {cells: tabDefault(t), hidden: []};
   const have = new Set([...L.cells, ...L.hidden]), cells = [...L.cells, ...CAMS.filter(n => !have.has(n))];
   return {cells: cells.filter(n => !n || CAMS.includes(n)), hidden: L.hidden.filter(n => CAMS.includes(n))};
 }
@@ -633,25 +638,24 @@ function renderScenes() {
   if ($('#scenes').dataset.h !== sb) { $('#scenes').innerHTML = sb; $('#scenes').dataset.h = sb;
     $('#bLL').onclick = () => { const on = !(S.live_layer !== false); cmd('live_layer', {on}).then(() => { S.live_layer = on; $('#scenes').dataset.h = ''; renderScenes(); toast(on ? 'Live Layer on' : 'Live Layer off – back on at Music video, Hype Screen, Branding or AUTO'); }); }; }
   const G = SGEDIT ? SGEDIT.list : groups(); if (SG >= G.length || SG < -3) SG = -1;
-  const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras ${SG === -1 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP ${SG === -2 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA ${SG === -3 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)} ${SG === i ? (SGHIDE ? '▸' : '▾') : ''}</button>`).join('') + (SGEDIT ? '' : '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ GROUP</button>') + (!SGEDIT && SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">✎</button>' : '') + (!SGEDIT && !CAMEDIT && SG === -1 && !SGHIDE ? '<button class="btn sm" data-camedit title="Arrange the camera scenes: move, remove, add back">✎</button>' : '');
+  const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras ${SG === -1 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP ${SG === -2 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA ${SG === -3 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)} ${SG === i ? (SGHIDE ? '▸' : '▾') : ''}</button>`).join('') + (SGEDIT ? '' : '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ GROUP</button>') + (!SGEDIT && SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">✎</button>' : '') + (!SGEDIT && !CAMEDIT && SG < 0 && !SGHIDE ? '<button class="btn sm" data-camedit title="Arrange these scenes: move, remove, add back">✎</button>' : '');
   if ($('#sgTabs').dataset.h !== tabs) { $('#sgTabs').innerHTML = tabs; $('#sgTabs').dataset.h = tabs;
     $$('#sgTabs [data-sg]').forEach(b => b.onclick = () => { const n = +b.dataset.sg;
       if (n === SG && !SGEDIT) SGHIDE = !SGHIDE; else { SG = n; SGHIDE = false; }      // click the open group again = fold it away
       try { localStorage.setItem('hypeSG', SG); localStorage.setItem('hypeSGhide', SGHIDE ? '1' : '0'); } catch (e) {} if (SGEDIT) SGEDIT.i = SG; $('#sgTabs').dataset.h = ''; renderScenes(); });
     const nw = $('#sgTabs [data-sgnew]'); if (nw) nw.onclick = () => { const n = prompt('Name of the new group (e.g. a show):'); if (!n) return; SGEDIT = {list: JSON.parse(JSON.stringify(groups()))}; SGEDIT.list.push({name: n.slice(0, 30), scenes: []}); SG = SGEDIT.i = SGEDIT.list.length - 1; renderScenes(); };
-    const ce = $('#sgTabs [data-camedit]'); if (ce) ce.onclick = () => { CAMEDIT = JSON.parse(JSON.stringify(camLayout())); CAMPICK = -1; $('#sgTabs').dataset.h = ''; renderScenes(); };
+    const ce = $('#sgTabs [data-camedit]'); if (ce) ce.onclick = () => { CAMEDIT = Object.assign(JSON.parse(JSON.stringify(camLayout())), {tab: LTAB()}); CAMPICK = -1; $('#sgTabs').dataset.h = ''; renderScenes(); };
     const ed = $('#sgTabs [data-sgedit]'); if (ed) ed.onclick = () => { SGEDIT = {list: JSON.parse(JSON.stringify(groups())), i: SG}; renderScenes(); };
   }
   $('#sgEdit').hidden = !SGEDIT; if (SGEDIT && SG >= 0 && document.activeElement !== $('#sgName')) $('#sgName').value = (G[SG] || {}).name || '';
   const PIPS = (S.pip_frames || []).map(f => 'PIP@' + f);
   const list = SGEDIT && SG >= 0 ? [...SCENES.map(x => x[0]), ...CAMS, ...PIPS, ...MSC] : SG === -1 ? CAMS : SG === -2 ? PIPS : SG === -3 ? MSC : ((G[SG] || {}).scenes || []);
-  const scName = n => n.startsWith('PIP@') ? 'PIP · ' + n.slice(4).replace(/^PIP_/, '').replace(/\.png$/i, '') : n;
   const scLive = n => n.startsWith('PIP@') ? S.scene === 'PIP' && S.pip === n.slice(4) : S.scene === n;
   const inG = SGEDIT && SG >= 0 ? new Set(G[SG].scenes) : null;
   const btn = n => `<button class="btn scene ${scLive(n) ? 'live' : ''} ${inG && inG.has(n) ? 'ing' : ''}" data-scene="${esc(n)}">${esc(scName(n))}</button>`;
-  const mx = (SG === -1 || SG === -3) && !SGEDIT, CL = SG === -3 ? {cells: MROWS.flat(), hidden: []} : camLayout();
-  if (SG !== -1 && CAMEDIT) CAMEDIT = null;
-  const html = mx && CAMEDIT ? CL.cells.map((n, i) => n ? `<div class="camc ${CAMPICK === i ? 'pick' : ''}" draggable="true" data-ci="${i}"><span class="btn scene">${esc(n)}</span><button class="camx" data-cx="${i}" aria-label="Remove ${esc(n)}" title="Take it off the grid">×</button></div>`
+  const mx = SG < 0 && !SGEDIT; if (CAMEDIT && (SG >= 0 || CAMEDIT.tab !== LTAB())) CAMEDIT = null;
+  const CL = mx ? camLayout() : null;
+  const html = mx && CAMEDIT ? CL.cells.map((n, i) => n ? `<div class="camc ${CAMPICK === i ? 'pick' : ''}" draggable="true" data-ci="${i}"><span class="btn scene">${esc(scName(n))}</span><button class="camx" data-cx="${i}" aria-label="Remove ${esc(scName(n))}" title="Take it off the grid">×</button></div>`
         : `<div class="camc empty ${CAMPICK === i ? 'pick' : ''}" data-ci="${i}"></div>`).join('')
     : mx ? CL.cells.map(n => n ? btn(n) : '<span></span>').join('')
     : list.map(btn).join('') || '<span class="muted" style="grid-column:1/-1">Empty group – press ✎ and click scenes to add them.</span>';
@@ -665,7 +669,7 @@ function renderScenes() {
 function camEditBind() {
   const L = CAMEDIT, swap = (a, b) => { if (a === b || a < 0 || b < 0) return; [L.cells[a], L.cells[b]] = [L.cells[b], L.cells[a]]; };
   const redo = () => { $('#camScenes').dataset.h = ''; renderScenes(); };
-  const hh = L.hidden.length ? '<span class="muted" style="font-size:12px">Add back:</span>' + L.hidden.map((n, i) => `<button class="btn sm" data-ch="${i}" title="Put it back on the grid (first empty place)">+ ${esc(n)}</button>`).join('') : '';
+  const hh = L.hidden.length ? '<span class="muted" style="font-size:12px">Add back:</span>' + L.hidden.map((n, i) => `<button class="btn sm" data-ch="${i}" title="Put it back on the grid (first empty place)">+ ${esc(scName(n))}</button>`).join('') : '';
   if ($('#camHidden').dataset.h !== hh) { $('#camHidden').innerHTML = hh; $('#camHidden').dataset.h = hh; }
   $$('#camHidden [data-ch]').forEach(b => b.onclick = () => { const n = L.hidden.splice(+b.dataset.ch, 1)[0], e = L.cells.indexOf('');
     if (e >= 0) L.cells[e] = n; else L.cells.push(n); redo(); });
@@ -678,10 +682,10 @@ function camEditBind() {
     el.ondrop = e => { e.preventDefault(); const t = e.dataTransfer.getData('text/plain'); if (t.startsWith('cam:')) { swap(+t.slice(4), i); CAMPICK = -1; redo(); } }; });
 }
 $('#camRow').onclick = () => { CAMEDIT.cells.push('', '', '', ''); $('#camScenes').dataset.h = ''; renderScenes(); };
-$('#camReset').onclick = () => { if (!confirm('Back to the standard Cameras grid?')) return; CAMEDIT = {cells: [...CAMROWS.flat(), ...CAMMORE], hidden: []}; CAMPICK = -1; $('#camScenes').dataset.h = ''; renderScenes(); };
+$('#camReset').onclick = () => { if (!confirm('Back to the standard grid?')) return; CAMEDIT = {tab: CAMEDIT.tab, cells: tabDefault(CAMEDIT.tab), hidden: []}; CAMPICK = -1; $('#camScenes').dataset.h = ''; renderScenes(); };
 $('#camCancel').onclick = () => { CAMEDIT = null; CAMPICK = -1; $('#sgTabs').dataset.h = ''; $('#camScenes').dataset.h = ''; renderScenes(); };
 $('#camDone').onclick = () => { const c = [...CAMEDIT.cells]; while (c.length && c.slice(-4).every(x => !x) && c.length % 4 === 0) c.splice(-4);      // empty rows at the end go
-  const L = {cells: c, hidden: CAMEDIT.hidden}; cmd('cam_layout', L).then(() => { S.cam_layout = L; CAMEDIT = null; CAMPICK = -1; $('#sgTabs').dataset.h = ''; $('#camScenes').dataset.h = ''; renderScenes(); toast('Cameras grid saved'); }); };
+  const t = CAMEDIT.tab, L = {cells: c, hidden: CAMEDIT.hidden}; cmd('cam_layout', Object.assign({tab: t}, L)).then(() => { S.layouts = Object.assign({}, S.layouts, {[t]: L}); CAMEDIT = null; CAMPICK = -1; $('#sgTabs').dataset.h = ''; $('#camScenes').dataset.h = ''; renderScenes(); toast('Grid saved'); }); };
 $('#sgName').oninput = () => { if (SGEDIT && SGEDIT.list[SG]) { SGEDIT.list[SG].name = $('#sgName').value.slice(0, 30); $('#sgTabs').dataset.h = ''; renderScenes(); } };
 $('#sgDel').onclick = () => { if (!SGEDIT || SG < 0 || !confirm('Delete group "' + SGEDIT.list[SG].name + '"? (the scenes stay)')) return; SGEDIT.list.splice(SG, 1); SG = -1; $('#sgDone').click(); };
 $('#sgDone').onclick = () => { const list = SGEDIT.list.filter(g => g.name.trim()); SGEDIT = null; cmd('scene_groups', {groups: list}).then(() => { $('#sgTabs').dataset.h = ''; toast('Groups saved'); }); };
