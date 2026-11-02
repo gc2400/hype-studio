@@ -1,26 +1,19 @@
 {
- "time": "2026-11-02T22:28:48",
+ "time": "2026-11-02T22:32:00",
  "result": "conflict",
- "commit": "34f8a67b2ae846cfc889bffb69cff8317d67e323",
- "subject": "Lab test: also checks 6 s of pure silence first (NaN at start-up never reaches the air)",
+ "commit": "4764d07acdaabb96503d3925469d07fcba44cba6",
+ "subject": "Updater: after a radio restart wait up to 2 more minutes for the first song before calling it silent (the engine needs ~1 min to start; that caused false rollbacks)",
  "log": [
-  "22:28:48 update 94bcbff7 \u2192 34f8a67b \u00b7 4 file(s): engine/engine.py, radio/radio.liq, web/panel/help.html, web/panel/settings.html",
-  "22:28:48 CONFLICT: /etc/hype/radio.liq was changed on the server \u2013 run deploy/export.py + push first"
+  "22:32:00 update 94bcbff7 \u2192 4764d07a \u00b7 5 file(s): deploy/updater.py, engine/engine.py, radio/radio.liq, web/panel/help.html, web/panel/settings.html",
+  "22:32:00 CONFLICT: /opt/hype/updater.py was changed on the server \u2013 run deploy/export.py + push first"
  ],
  "guard": {
   "song": "Jezzy x Arcangel \u2013 Que Sensaci\u00f3n (Remix)",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.2,
-  "problems": [
-   {
-    "id": "radio_hls",
-    "text": "Radio HLS stream stalled",
-    "since": 1793654911.634513,
-    "level": "bad"
-   }
-  ],
-  "ok": false
+  "seg_age": 1.9,
+  "problems": [],
+  "ok": true
  },
  "services": {
   "hype-radio": "active",
