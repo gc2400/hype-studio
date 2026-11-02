@@ -754,8 +754,8 @@ let PVC = null, pvFails = 0, pvWait = null;
 function pvLive() {      // never two at once: one connection, one waiting retry
   clearTimeout(pvWait); pvWait = null; if (PVC || PVSTOP) return;
   if (!(typeof HypeRTC !== 'undefined') || !LV || !LV.studio_key) { pvWait = setTimeout(pvLive, 1500); return; }
-  // light by default (360p, ~0.6 Mbps, no sound): it hardly uses your internet while you broadcast; sound on = the full preview (720p + sound)
-  PVC = HypeRTC.keep('program', async alive => { const r = await HypeRTC.play($('#pvv').muted ? 'guestview' : 'preview', {key: LV.studio_key, video: true, videoBufferMs: 150}); if (!alive()) return r; $('#pvv').srcObject = r.stream; $('#pvv').play().catch(() => {}); return r; },
+  // always the light picture (360p, ~0.6 Mbps): it hardly uses your internet while you broadcast; sound on = the same 360p with the sound
+  PVC = HypeRTC.keep('program', async alive => { const r = await HypeRTC.play($('#pvv').muted ? 'guestview' : 'preview', {key: LV.studio_key, video: true, videoBufferMs: 50}); if (!alive()) return r; $('#pvv').srcObject = r.stream; $('#pvv').play().catch(() => {}); return r; },
     (n, st) => { if (st === 'connected') { pvFails = 0; $('#pvv').hidden = false; $('#pv').hidden = true; $('#pvv').volume = +$('#pvVol').value; }
       else if (/error|failed/.test(st) && ++pvFails === 3) { $('#pvv').hidden = true; $('#pv').hidden = false; $('#pvInfo').textContent = 'Preview: a picture every second'; pv(); } });
 }
