@@ -115,9 +115,10 @@ class Live:
         paths = mtx_paths()
         with self.tv.olock:
             cl = self.tv.client()
-            if now - getattr(self, "_bk_map_t", 0) > 120 or not getattr(self, "_bk_map", None):
-                m = []
-                for sc in cl.get_scene_list().scenes:
+            scl = cl.get_scene_list().scenes; names = tuple(x["sceneName"] for x in scl)
+            if now - getattr(self, "_bk_map_t", 0) > 120 or not getattr(self, "_bk_map", None) or names != getattr(self, "_bk_names", None):
+                m = []; self._bk_names = names    # scenes added/renamed: look again right away (a new scene never shows a black window)
+                for sc in scl:
                     items = sorted(cl.get_scene_item_list(sc["sceneName"]).scene_items, key=lambda i: i["sceneItemIndex"])
                     for k, it in enumerate(items):
                         if it["sourceName"] == "Cam black" and k + 1 < len(items) and items[k + 1]["sourceName"].endswith(" feed"):

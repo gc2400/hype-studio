@@ -1391,6 +1391,10 @@ class Engine:
             except Exception as e: log.warning("history over: %s", e)
         threading.Timer(max(0.0, offset), go).start()
     # ---------- panel commands ----------
+    def _live_layer_back(self, c):
+        """Live Layer off is temporary: back to Music video, Hype Screen or AUTO SCENES turns it on again."""
+        if not planner.get_setting(c, "live_layer", True):
+            planner.set_setting(c, "live_layer", True); self.tv.live_layer(True); log.info("Live Layer back on")
     def cmd(self, action, d):
         with LOCK:
             c = dbc()
@@ -1450,9 +1454,11 @@ class Engine:
                 self.push_next(c)
             elif action == "scene":
                 self.tv.auto = False; self.tv.set_scene(d["scene"])
+                if d["scene"] in ("Music video", "Hype Screen"): self._live_layer_back(c)
             elif action == "live_layer":      # the Hype Live Layer (shoutouts, polls, chat …) on / off in every scene
                 on = bool(d.get("on")); planner.set_setting(c, "live_layer", on); self.tv.live_layer(on)
             elif action == "autoscene":
+                self._live_layer_back(c)
                 self.tv.auto = True; self.tv.scene = None
                 if self.now: self.tv.set_scene(self.now.get("scene") or "Hype Screen")
             elif action == "media_play":
