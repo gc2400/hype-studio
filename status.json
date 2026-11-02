@@ -1,18 +1,18 @@
 {
- "time": "2026-11-02T19:49:35",
+ "time": "2026-11-02T19:53:26",
  "result": "ok",
- "commit": "96d846216f43851a1d695b7f0ea885691c93e70b",
- "subject": "Preview as live as possible: ladder reads without buffer, preview encoders async_depth 1, preview always 360p (with sound when on), browser buffer 50 ms",
+ "commit": "e283aa0881f53e0383bb664ccbc4d6d35590107e",
+ "subject": "Preview: don't hold the picture back for the sound (max 0.1 s interleave)",
  "log": [
-  "19:48:50 update d3a9354a \u2192 96d84621 \u00b7 2 file(s): tv/ladder.sh, web/panel/index.html",
-  "19:48:50 restart hype-ladder",
-  "19:49:35 installed OK \u00b7 restarted: hype-ladder"
+  "19:52:41 update 96d84621 \u2192 e283aa08 \u00b7 1 file(s): tv/ladder.sh",
+  "19:52:41 restart hype-ladder",
+  "19:53:26 installed OK \u00b7 restarted: hype-ladder"
  ],
  "guard": {
-  "song": "Issairo x Jaido x Soundflow \u2013 LORA WAK MI",
+  "song": "FARLY X 2SYNC \u2013 #CHYNA",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },

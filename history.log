@@ -188,3 +188,4 @@
 2026-11-02T19:31:24 ok 0000524a Media upload shows at once; Planning: empty 'Choose…' box as tall as the list next to it
 2026-11-02T19:32:27 ok d3a9354a Planning: same text spacing in both 'Choose … on the left' boxes
 2026-11-02T19:49:35 ok 96d84621 Preview as live as possible: ladder reads without buffer, preview encoders async_depth 1, preview always 360p (with sound when on), browser buffer 50 ms
+2026-11-02T19:53:26 ok e283aa08 Preview: don't hold the picture back for the sound (max 0.1 s interleave)
