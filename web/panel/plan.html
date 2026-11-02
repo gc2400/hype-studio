@@ -586,7 +586,12 @@ let pqT; $('#pickQ').oninput = () => { clearTimeout(pqT); pqT = setTimeout(fillP
 $('#plRotate').onchange = () => renderSources();
 $('#plQ').oninput = () => renderPL(); $('#ckQ').oninput = () => renderCK();
 // the playlists / clocks box ends at the bottom of the window (so the page itself does not scroll because of it)
-function fitSides() { if (innerWidth < 760) { $$('.split > .side, .shwrap > .shlist').forEach(el => el.style.maxHeight = ''); return; }
+function fitEmpty() {   // "Choose … on the left": the empty box is as tall as the list next to it
+  const wide = innerWidth >= 760, pe = $('#plEmpty'), ps = pe && pe.parentNode.querySelector('.side'), sh = $('#shHead'), sl = $('.shlist'), se = $('#shMain') && $('#shMain').classList.contains('empty');
+  if (pe) pe.style.height = wide && ps && ps.offsetHeight ? ps.offsetHeight + 'px' : '';
+  if (sh) sh.style.height = wide && se && sl && sl.offsetHeight ? sl.offsetHeight + 'px' : '';
+}
+function fitSides() { setTimeout(fitEmpty, 0); if (innerWidth < 760) { $$('.split > .side, .shwrap > .shlist').forEach(el => el.style.maxHeight = ''); return; }
   $$('.split > .side, .shwrap > .shlist').forEach(el => { if (el.offsetParent === null) return; el.style.maxHeight = Math.max(240, innerHeight - Math.max(72, el.getBoundingClientRect().top) - 14) + 'px'; }); }
 addEventListener('resize', fitSides); addEventListener('scroll', fitSides, {passive: true}); setTimeout(fitSides, 50); setTimeout(fitSides, 600);
 $$('.tab').forEach(b => b.addEventListener('click', () => setTimeout(fitSides, 30)));
@@ -1017,7 +1022,7 @@ function shRender() {
   shFilter();
   $$('#shOther [data-ck]').forEach(b => b.onclick = () => { SHSEL = {clock: +b.dataset.ck}; shRender(); });
   // right side
-  $('#shMain').classList.toggle('empty', !SHSEL);
+  $('#shMain').classList.toggle('empty', !SHSEL); setTimeout(fitEmpty, 0);
   if (!SHSEL) { $('#shHead').innerHTML = '<div class="muted" style="grid-column:1/-1;padding:30px 4px;font-size:14px">Choose a show or an hour plan on the left.</div>'; $('#shPlans').innerHTML = ''; SHC = null; shSlots(); return; }
   const s = SHSEL && SHSEL.show ? shows.find(x => x.title === SHSEL.show) : null;
   let cid = SHSEL && SHSEL.clock ? SHSEL.clock : s ? s.main : null;

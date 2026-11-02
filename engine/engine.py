@@ -1885,6 +1885,8 @@ def up_chunk(qs, rfile, n):
         import pwd, grp; os.chown(dst, pwd.getpwnam("upload").pw_uid, grp.getgrnam("hype").gr_gid)
     except Exception: pass
     os.chmod(dst, 0o664)
+    if os.path.dirname(dst) == MEDIA_DIR:       # complete already: the media pads may show it at once (they skip files changed < 20 s ago)
+        t = time.time() - 30; os.utime(dst, (t, t))
     rel = os.path.relpath(dst, ROOT)
     try: jdump({"path": rel, "size": have}, os.path.join(UP_DIR, uid + ".done"))   # a retried last piece / status check gets "done" (no 2nd copy)
     except Exception as e: log.warning("upload done note: %s", e)
