@@ -157,6 +157,7 @@ def process(~meter=false, ~light=false, x) =
   cb = compress(attack=snd_attack, release=snd_release, threshold=snd_thresh, ratio={if mb() or not con() then 1. else snd_ratio() end}, knee=6., x)
   x = cb
   let (x, mbg) = hype_mb(wet={if mb() and con() then 1. else 0. end}, x)
+  x = limit(x)       # the gentle pre-limiter the old chain always had here (−2 dB, 20:1, 50 ms): keeps the peaks into the main limiter tame
   # compressor off: about the same loudness as on, so you compare the sound, not the volume
   x = amplify(override=null(), {if con() then 1. else lin_of_dB(-3.8) end}, x)
   x = hype_width(x)
