@@ -325,7 +325,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         </div>
         <div id="auxNext" style="padding:0 6px"></div>
         <div class="log aux ulist" id="aux"></div>
-        <span class="muted" style="font-size:11px;padding:0 6px 4px">AUX 1 plays top to bottom, then AUX 2. Both empty → the clock keeps the music going. Press ▶ PLAY or AUTO to go back to the programming.</span>
+        <span class="muted" style="font-size:11px;padding:0 6px 4px">AUX 1 plays top to bottom, then AUX 2. Both empty → the hour plan keeps the music going. Press ▶ PLAY or AUTO to go back to the programming.</span>
         <div class="row" style="gap:5px;padding:6px 6px 2px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:2px">
           <select id="auxLoad" hidden aria-label="Load a playlist into this AUX" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 6px;max-width:170px"><option value="">Load playlist…</option></select>
           <button class="btn sm" id="auxSave">Save as playlist</button>
@@ -483,7 +483,7 @@ function render() {
   $('#bLoop').classList.toggle('on', !!S.loop);
   $('#bSae').classList.toggle('redon', S.stop_at_end); $('#bStop').classList.toggle('redon', S.stopped);
   $('#stRadio').className = 'chip ' + (S.stopped ? 'bad' : 'ok'); $('#stTv').className = 'chip ' + (S.scene ? 'ok' : 'bad');
-  $('#stClock').textContent = '◷ ' + (S.clock || 'no clock');
+  $('#stClock').textContent = '◷ ' + (S.clock || 'no hour plan');
   $('#npOnair').textContent = '● ' + String(S.show || S.clock || 'ON AIR').toUpperCase();
   $('#npTitle').textContent = n.title || '–'; $('#npArtist').textContent = n.artist || '';
   $('#npFolder').textContent = n.folder || '–'; const [bt, bc] = badge(n.mode); $('#npMode').textContent = bt; $('#npMode').className = 'chip ' + bc;
@@ -553,7 +553,7 @@ function renderAux() {
   $('#auxInfo').textContent = L.length ? L.length + ' songs · ' + fmt(tot) : '';
   $$('[data-auxtab]').forEach(b => { const n = ((S.aux || {})[b.dataset.auxtab] || []).length; b.classList.toggle('on', b.dataset.auxtab === AUX); b.textContent = 'AUX ' + b.dataset.auxtab + (n ? ' · ' + n : ''); });
   const nx = (S.upcoming || [])[0];
-  const nxh = nx ? `<div class="li next"><span class="ic" style="color:var(--y)">▸</span><div class="tx"><b>${nx.artist ? esc(nx.artist) + ' – ' : ''}${esc(nx.title)}</b><span>NEXT · ${nx.src === 'clock' ? 'from the clock (AUX empty)' : nx.deck ? 'from AUX ' + nx.deck : esc(nx.folder)}</span></div><button class="x" style="opacity:1" data-nxrm="${nx.id}" aria-label="Remove the next song">×</button></div>` : '';
+  const nxh = nx ? `<div class="li next"><span class="ic" style="color:var(--y)">▸</span><div class="tx"><b>${nx.artist ? esc(nx.artist) + ' – ' : ''}${esc(nx.title)}</b><span>NEXT · ${nx.src === 'clock' ? 'from the hour plan (AUX empty)' : nx.deck ? 'from AUX ' + nx.deck : esc(nx.folder)}</span></div><button class="x" style="opacity:1" data-nxrm="${nx.id}" aria-label="Remove the next song">×</button></div>` : '';
   if ($('#auxNext').dataset.h !== nxh) { $('#auxNext').dataset.h = nxh; $('#auxNext').innerHTML = nxh; const nb = $('#auxNext [data-nxrm]'); if (nb) nb.onclick = () => cmd('remove', {id: nb.dataset.nxrm}); }
   const sig = AUX + JSON.stringify(L.map(u => u.id)); if (sig === auxSig) return; auxSig = sig;
   $('#aux').innerHTML = L.length ? L.map((u, i) => { const jg = (u.mode || '').startsWith('jingle');
@@ -594,7 +594,7 @@ fillAuxLoad();
 $('#bLoop').onclick = () => cmd('loop', {on: !(S && S.loop)}).then(() => toast(S && S.loop ? 'Loop on: this song plays again' : 'Loop off'));
 $('#bPlay').onclick = () => { const back = S && !S.auto && !(S.dj && S.dj.on) && !S.stopped; cmd('play').then(() => back && toast('Back to the normal programming')); }; $('#bNext').onclick = () => cmd('next');
 $('#bSae').onclick = () => cmd('stop_at_end'); $('#bStop').onclick = () => { if (confirm('Stop the music now? The radio goes silent until you press PLAY.')) cmd('stop'); };
-$('#bAuto').onclick = () => cmd('auto', {on: true}).then(() => { if (MODE === 'dj') applyMode('onair'); toast('AUTO: the clocks and programming'); });
+$('#bAuto').onclick = () => cmd('auto', {on: true}).then(() => { if (MODE === 'dj') applyMode('onair'); toast('AUTO: the hour plans and programming'); });
 $('#bManual').onclick = () => cmd('auto', {on: false}).then(() => toast('MANUAL: your AUX plays – the radio keeps going'));
 $('#bAutoScene').onclick = () => cmd('autoscene'); $('#bPadStop').onclick = () => cmd('pads_stop').then(() => { Object.keys(PLAYING).forEach(k => delete PLAYING[k]); });
 // ---------- scenes ----------
@@ -825,17 +825,18 @@ $('#bDuck').onclick = () => { DUCK = !DUCK; try { localStorage.setItem('hypeDuck
 // ---------- library ----------
 let SEC = 'music', GENRE = '', FOLDER = '', SEL = null, LIB = null, LSORT = 'az';
 try { LSORT = localStorage.getItem('hypeLibSort') || 'az'; } catch (e) {}
-const SECS = [['music', 'Music'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['recordings', 'Recordings'], ['playlists', 'Playlists'], ['clocks', 'Clocks']];
+const SECS = [['music', 'Music'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['recordings', 'Recordings'], ['playlists', 'Playlists'], ['clocks', 'Hour plans']];
 const nfx = t => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-let PLC = {pl: [], ck: []};
+let PLC = {pl: [], ck: []}, PLCN = {};   // PLCN: how many playlists / hour plans (shown on the tabs)
+function plcCount() { return Promise.all([api('playlists'), api('clocks')]).then(([pl, ck]) => { PLCN = {playlists: pl.length, clocks: ck.length}; $$('#secs [data-sec="playlists"] span, #secs [data-sec="clocks"] span').forEach(el => el.textContent = PLCN[el.parentNode.dataset.sec]); }).catch(() => {}); }
 // AUX buttons on library rows: in DJ mode they are the decks A / B (in the deck colours)
 function auxBtns(attr) {
   if (MODE === 'dj') return `<span class="auxbtn" title="Add to deck A or deck B"><button data-${attr}="aux" data-aux="1" aria-label="Add to deck A" style="color:var(--b);font-weight:900">A</button><button data-${attr}="aux" data-aux="2" aria-label="Add to deck B" style="color:#FF9D3D;font-weight:900">B</button></span>`;
   return `<span class="auxbtn" title="Add to AUX 1 or AUX 2"><span class="lbl">AUX</span><button data-${attr}="aux" data-aux="1" aria-label="Add to AUX 1">1</button><button data-${attr}="aux" data-aux="2" aria-label="Add to AUX 2">2</button></span>`;
 }
-function libPlan() {     // the Playlists / Clocks tabs of the library card
+function libPlan() {     // the Playlists / Hour plans tabs of the library card
   Promise.all([api('playlists'), api('clocks')]).then(([pl, ck]) => {
-    PLC = {pl, ck}; const cnt = Object.assign({}, (LIB && LIB.counts) || {}, {playlists: pl.length, clocks: ck.length});
+    PLC = {pl, ck}; PLCN = {playlists: pl.length, clocks: ck.length}; const cnt = Object.assign({}, (LIB && LIB.counts) || {}, PLCN);
     $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="${k === SEC ? 'on' : ''}" data-sec="${k}" role="tab" aria-selected="${k === SEC}">${n}<span>${cnt[k] ?? ''}</span></button>`).join('');
     $('#secs').querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     $('#folders').innerHTML = ''; $('#subfolders').hidden = true; const q = nfx($('#q').value);
@@ -859,8 +860,8 @@ function libPlan() {     // the Playlists / Clocks tabs of the library card
       });
     } else {
       const L = ck.filter(c => !q || nfx(c.name).includes(q));
-      $('#res').innerHTML = L.map(c => `<div class="ri" data-ck="${c.id}"><span class="dot" style="background:${esc(c.color)};width:12px;height:12px;border-radius:4px;flex:none"></span><div class="tx"><b>${esc(c.name)}</b><span>${c.slots.length} slots</span></div>
-        <div class="acts"><button class="btn sm" data-run title="This clock takes over for the rest of this hour; the next hour follows the schedule again">▶ Run now</button></div></div>`).join('') || '<div class="muted" style="padding:10px">No clocks found.</div>';
+      $('#res').innerHTML = L.map(c => `<div class="ri" data-ck="${c.id}"><span class="dot" style="background:${esc(c.color)};width:12px;height:12px;border-radius:4px;flex:none"></span><div class="tx"><b>${esc(c.name)}</b><span>${c.slots.length} rows</span></div>
+        <div class="acts"><button class="btn sm" data-run title="This hour plan takes over for the rest of this hour; the next hour follows the schedule again">▶ Run now</button></div></div>`).join('') || '<div class="muted" style="padding:10px">No hour plans found.</div>';
       $('#res').querySelectorAll('[data-ck]').forEach(el => el.querySelector('[data-run]').onclick = e => { e.stopPropagation();
         cmd('run_clock', {id: +el.dataset.ck}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('"' + (ck.find(c => c.id == el.dataset.ck) || {}).name + '" runs until the next hour – see Up next')); });
     }
@@ -876,7 +877,8 @@ function lib() {
   const keepTop = lib.more ? $('#res').scrollTop : null; lib.more = false; lib.busy = true;
   api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + LSORT + '&limit=' + LIBN).then(d => {
     lib.busy = false; LIB = d; if (keepTop != null) setTimeout(() => { $('#res').scrollTop = keepTop; }, 0);
-    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="${k === SEC ? 'on' : ''}" data-sec="${k}" role="tab" aria-selected="${k === SEC}">${n}<span>${d.counts[k] ?? ''}</span></button>`).join('');
+    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="${k === SEC ? 'on' : ''}" data-sec="${k}" role="tab" aria-selected="${k === SEC}">${n}<span>${Object.assign({}, d.counts, PLCN)[k] ?? ''}</span></button>`).join('');
+    if (!('clocks' in PLCN)) plcCount();
     $('#secs').querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
     // level 1: genre folders · level 2: the subfolders of the chosen genre
     const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];
@@ -1081,7 +1083,7 @@ function xNow() {      // DJ page: a song from the programming (AUTO / the clock
   const show = !!n.path && !n.deck; box.hidden = !show; if (!show) return;
   const left = (n.started + (n.air || ((n.cue_mix || n.duration || 0) - (n.cue_start || 0)))) - (Date.now() / 1000 - skew);
   const decks = ((S.aux || {})['1'] || []).length + ((S.aux || {})['2'] || []).length;
-  const html = `<span class="chip" style="background:var(--r);color:#1A0207">ON AIR</span><b>${n.artist ? esc(n.artist) + ' – ' : ''}${esc(n.title)}</b><span class="muted">${S.auto ? 'AUTO · the decks start when you press MIX / NOW' : decks ? 'then the decks' : 'then the clock (decks empty)'}</span><span class="mono">-${fmt(left)}</span>`;
+  const html = `<span class="chip" style="background:var(--r);color:#1A0207">ON AIR</span><b>${n.artist ? esc(n.artist) + ' – ' : ''}${esc(n.title)}</b><span class="muted">${S.auto ? 'AUTO · the decks start when you press MIX / NOW' : decks ? 'then the decks' : 'then the hour plan (decks empty)'}</span><span class="mono">-${fmt(left)}</span>`;
   if (box.innerHTML !== html) box.innerHTML = html;
 }
 function renderDecks() {
