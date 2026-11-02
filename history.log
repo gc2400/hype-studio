@@ -178,3 +178,4 @@
 2026-11-02T08:57:03 ok 07d7fb51 Cameras grid: arrange it yourself (drag or click-click to move, × to take off, add back, + row, reset) – saved on the server
 2026-11-02T09:11:07 ok 08356f7d CAM 1 2 3 B → CAM 3 1 2 B (CAM 3 big, CAM 1 + 2 on the right); scheduled scenes (PIP) skip while scenes are on manual
 2026-11-02T16:35:00 ok b839609d Media scenes: every camera layout with a video window now has an M version (media in place of the video); MEDIA tab laid out like the Cameras grid
+2026-11-02T16:44:59 ok 616e396b ✎ arrange grid for PIP and MEDIA too (each tab keeps its own layout)

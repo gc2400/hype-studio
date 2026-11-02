@@ -1,18 +1,18 @@
 {
- "time": "2026-11-02T16:35:00",
+ "time": "2026-11-02T16:44:59",
  "result": "ok",
- "commit": "b839609df4c9204cd8cda08b43ff17bd61ce85b6",
- "subject": "Media scenes: every camera layout with a video window now has an M version (media in place of the video); MEDIA tab laid out like the Cameras grid",
+ "commit": "616e396bc9c66378f7ae67bf2664ef6d078887c7",
+ "subject": "\u270e arrange grid for PIP and MEDIA too (each tab keeps its own layout)",
  "log": [
-  "16:34:15 update 08356f7d \u2192 b839609d \u00b7 4 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html, web/panel/plan.html",
-  "16:34:15 restart hype-engine",
-  "16:35:00 installed OK \u00b7 restarted: hype-engine"
+  "16:44:14 update b839609d \u2192 616e396b \u00b7 3 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html",
+  "16:44:14 restart hype-engine",
+  "16:44:59 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "PJ Scoolio x Rich Kalashh \u2013 HJB Dicht",
-  "listeners": 1,
+  "song": "KYBBA X STYLO G X KALIBWOY \u2013 HAMMA",
+  "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 2.0,
   "problems": [],
   "ok": true
  },
