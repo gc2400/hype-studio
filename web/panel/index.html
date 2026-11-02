@@ -394,17 +394,15 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
       <div class="card" id="cPads">
         <div class="row between"><span class="lab">Pads</span><button class="btn sm" id="padEdit" title="Add banks, add or remove pads">✎ EDIT</button></div>
         <div class="banks" id="padBanks"></div>
-        <div class="row" id="mediaEditBar" hidden style="gap:6px;flex-wrap:wrap"><span class="muted" style="flex:1;font-size:12px">× deletes a picture or video from branding/media</span><button class="btn sm yellow" id="mediaDone">Done</button></div>
         <div class="row" id="padEditBar" hidden style="gap:6px;flex-wrap:wrap">
           <input id="bankName" type="text" aria-label="Bank name" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;width:150px">
           <button class="btn sm" id="bankNew">+ Bank</button><button class="btn sm red" id="bankDel">Delete bank</button>
-          <span class="muted" style="flex:1;font-size:12px;min-width:140px">Drag from the library · drag to reorder</span>
           <button class="btn sm yellow" id="padSave">Save pads</button>
         </div>
         <div class="row" id="mediaBar" hidden style="gap:6px;flex-wrap:wrap">
           <select id="mScene" aria-label="Media scene" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px"></select>
           <span class="row" style="gap:3px" id="mSound"><button class="btn sm" data-ms="mute" title="The video plays without sound">Mute</button><button class="btn sm" data-ms="duck" title="The video's sound plays, the music goes down">Duck</button><button class="btn sm" data-ms="off" title="The video's sound plays, the music is off">Music off</button></span>
-          <button class="btn sm red" id="mStop">STOP MEDIA</button>
+          <button class="btn sm red" id="mStop">STOP MEDIA</button><button class="btn sm yellow" id="mediaDone" hidden title="Stop editing">Done</button>
         </div>
         <div class="grid4 pads" id="pads"></div>
         <label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label>
@@ -798,7 +796,7 @@ function renderPads() {
   $('#padBanks').innerHTML = `<button class="btn sm ${bank === -1 ? 'on' : ''}" data-bank="-1" title="Pictures and videos from branding/media">MEDIA</button>` + BANKS.map((b, i) => { const nv = b.items.filter(p => p.voice && !p.played).length; return `<button class="btn sm ${i === bank ? 'on' : ''}" data-bank="${i}">${esc(b.name.replace(/^[^A-Za-z0-9]+\s*/u, ''))}${nv ? ` <b style="background:#FFE000;color:#061423;border-radius:8px;padding:0 5px;font-size:10px">${nv}</b>` : ''}</button>`; }).join('');
   $$('#padBanks [data-bank]').forEach(b => b.onclick = () => { bank = +b.dataset.bank; if (bank === -1) loadMedia(); renderPads(); });
   $('#mediaBar').hidden = bank !== -1;
-  $('#mediaEditBar').hidden = !(PEDIT && bank === -1);
+  $('#mediaDone').hidden = !(PEDIT && bank === -1);
   if (bank === -1) { $('#padEditBar').hidden = true; return renderMediaPads(); }
   const B = BANKS[bank] || {items: []}; $('#bankName').value = B.name || ''; $('#pads').classList.toggle('edit', PEDIT); $('#padEditBar').hidden = !PEDIT;
   $('#pads').innerHTML = B.items.map((p, i) => `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE RADIO\s*[-–]\s*/i, '').replace(/^[^A-Za-z0-9]+\s*/u, ''))}<small>${fmt(p.duration)}${p.voice ? (p.played ? ' · ✓ played' : ' · NEW') : ''}${p.has_video ? ' · video' : ''}${p.missing ? ' · not found' : ''}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmpad="${i}" title="Remove">×</span>` : ''}</button>`).join('')
