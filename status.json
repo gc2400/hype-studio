@@ -1,18 +1,17 @@
 {
- "time": "2026-11-02T19:31:24",
+ "time": "2026-11-02T19:32:27",
  "result": "ok",
- "commit": "0000524aad284944bd363f707aa5b1907a84f6a6",
- "subject": "Media upload shows at once; Planning: empty 'Choose\u2026' box as tall as the list next to it",
+ "commit": "d3a9354a1a250d087c073fd1f22cf2582f031d19",
+ "subject": "Planning: same text spacing in both 'Choose \u2026 on the left' boxes",
  "log": [
-  "19:30:39 update c8aca38b \u2192 0000524a \u00b7 2 file(s): engine/engine.py, web/panel/plan.html",
-  "19:30:39 restart hype-engine",
-  "19:31:24 installed OK \u00b7 restarted: hype-engine"
+  "19:32:27 update 0000524a \u2192 d3a9354a \u00b7 1 file(s): web/panel/plan.html",
+  "19:32:27 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Benzo \u2013 Whine & Dance",
+  "song": "Chimbala X Secreto El Famoso Biberon X Crazy Desing X Albert Diamond \u2013 Banana (Remix)",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
