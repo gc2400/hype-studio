@@ -1,18 +1,17 @@
 {
- "time": "2026-11-02T16:44:59",
+ "time": "2026-11-02T18:58:49",
  "result": "ok",
- "commit": "616e396bc9c66378f7ae67bf2664ef6d078887c7",
- "subject": "\u270e arrange grid for PIP and MEDIA too (each tab keeps its own layout)",
+ "commit": "72c369bffe3f7c4c229a685e5e3d7382ba008f29",
+ "subject": "Lower third: Style C full width always shows full width",
  "log": [
-  "16:44:14 update b839609d \u2192 616e396b \u00b7 3 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html",
-  "16:44:14 restart hype-engine",
-  "16:44:59 installed OK \u00b7 restarted: hype-engine"
+  "18:58:49 update 616e396b \u2192 72c369bf \u00b7 3 file(s): web/overlay/lower.html, web/panel/help.html, web/panel/index.html",
+  "18:58:49 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "KYBBA X STYLO G X KALIBWOY \u2013 HAMMA",
+  "song": "Sean Paul \u2013 Press Back",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
