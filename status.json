@@ -1,19 +1,17 @@
 {
- "time": "2026-11-02T23:31:09",
+ "time": "2026-11-02T23:45:30",
  "result": "ok",
- "commit": "f81402d8c77c8d564e0c3864a732d83044558cca",
- "subject": "Classic sound: Rumble cut slider (20\u201340 Hz, default 25 \u2013 keeps more of the deep 808) and Low mids slider (300 Hz); chain otherwise unchanged \u2013 8/8 lab runs incl. the silence test",
+ "commit": "64da2da63599539084c1cabc7a417db3e316911d",
+ "subject": "Settings \u2192 Sound: sliders in chain order (EQ \u00b7 Compressor \u00b7 Limiter with headings); presets re-tuned after measuring each in the lab (compressor 2\u20134 dB instead of 4\u20137, never red); AGC text never wraps (no jumping box)",
  "log": [
-  "23:28:04 update da709d3b \u2192 f81402d8 \u00b7 2 file(s): radio/radio.liq, web/panel/settings.html",
-  "23:28:49 lab: PASS (6/6 good readings)",
-  "23:28:49 restart hype-radio",
-  "23:31:09 installed OK \u00b7 restarted: hype-radio"
+  "23:45:30 update f81402d8 \u2192 64da2da6 \u00b7 1 file(s): web/panel/settings.html",
+  "23:45:30 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "HYPE RADIO \u2013 Sweep Hottest Sound In Town",
+  "song": "Bryan Mg \u2013 Hier Moet Je Zijn",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
