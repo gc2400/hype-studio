@@ -2354,7 +2354,10 @@ class H(BaseHTTPRequestHandler):
         if p.startswith("/live/"):
             a = p[6:]; L = E.live
             try:
-                if a == "on": L.set_live(True)
+                if a == "on":
+                    if not L.live and not L.status().get("studio_online"):    # never on air without the studio: that would be silence / the automation
+                        return self.send(409, dict(L.status(), error="The studio is not connected – open Broadcast and connect the studio first"))
+                    L.set_live(True)
                 elif a == "off":
                     L.set_live(False)
                     E.cmd("autoscene", {})        # END LIVE: the TV follows the music again (no camera left on screen)

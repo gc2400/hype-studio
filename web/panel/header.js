@@ -33,6 +33,7 @@ html{scrollbar-gutter:stable}
 #hhead .hlive{display:inline-flex;align-items:center;gap:6px;border:1px solid #FF4D5E;background:transparent;color:#FF8A97;border-radius:10px;padding:0 11px;height:32px;cursor:pointer;font:800 11px Inter,system-ui,sans-serif;letter-spacing:.06em;white-space:nowrap}
 #hhead .hlive:hover{background:#2A1420;color:#fff}#hhead .hlive.ask{background:#FFE000;border-color:#FFE000;color:#061423}
 #hhead .hlive.on{background:#FF4D5E;color:#fff}#hhead .hlive.on:hover{background:#FF6676}#hhead .hlive.on.ask{background:#FFE000;border-color:#FFE000;color:#061423}
+#hhead .hlive.off{opacity:.45;cursor:not-allowed}#hhead .hlive.off:hover{background:transparent;color:#FF8A97}
 #hhead .hlive .t{font:700 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 #hhead #hRecT:empty,#hhead #hLiveT:empty,#hhead .hrec b:empty{display:none}   /* no time shown = no empty space on the right */
 #hhead #hRecT{font:700 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
@@ -134,14 +135,19 @@ html{scrollbar-gutter:stable}
   function recLoad() { fetch('/api/live').then(r => r.json()).then(d => { REC = d.rec; LVH = d; recPaint(); livePaint(); }).catch(() => {}); }
   // ---- GO LIVE / END LIVE: always a second click (going live or ending by accident would be worse than one extra click) ----
   const lb = h.querySelector('#hLive'); let LVH = null, liveAsk = 0;
+  const hTip = t => { if (typeof window.toast === 'function') return window.toast(t, 1);      // the page's own message, else a small one here
+    let d = document.getElementById('hTipBox'); if (!d) { d = document.createElement('div'); d.id = 'hTipBox'; d.setAttribute('role', 'status');
+      d.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0F2B44;border:1px solid #23496B;color:#F2F6FA;padding:10px 16px;border-radius:12px;font:600 13px Inter,system-ui,sans-serif;z-index:99'; document.body.appendChild(d); }
+    d.textContent = t; d.hidden = false; clearTimeout(hTip.t); hTip.t = setTimeout(() => { d.hidden = true; }, 3500); };
   function livePaint() {
     const on = !!(LVH && LVH.live), ask = liveAsk && Date.now() < liveAsk; if (!ask) liveAsk = 0;
-    lb.classList.toggle('on', on); lb.classList.toggle('ask', !!ask);
-    lb.querySelector('b').textContent = ask ? (on ? 'END LIVE?' : (LVH && !LVH.studio_online ? 'OFFLINE – GO?' : 'GO LIVE?')) : (on ? 'LIVE' : 'GO LIVE');
+    lb.classList.toggle('on', on); lb.classList.toggle('ask', !!ask); lb.classList.toggle('off', !on && !(LVH && LVH.studio_online));
+    lb.querySelector('b').textContent = ask ? (on ? 'END LIVE?' : 'GO LIVE?') : (on ? 'LIVE' : 'GO LIVE');
     h.querySelector('#hLiveT').textContent = on && LVH.live_since && !ask ? fmtT(Date.now() / 1000 - LVH.live_since) : '';
-    lb.title = on ? 'You are LIVE – click twice to END LIVE (back to the automation)' : (LVH && !LVH.studio_online ? 'The studio is not connected (Broadcast page) – going live now puts the automation on until it connects' : 'GO LIVE: your studio mix goes on air (click twice)');
+    lb.title = on ? 'You are LIVE – click twice to END LIVE (back to the automation)' : (LVH && !LVH.studio_online ? 'The studio is not connected – connect it on Broadcast first' : 'GO LIVE: your studio mix goes on air (click twice)');
   }
   lb.onclick = () => {
+    if (!(LVH && LVH.live) && !(LVH && LVH.studio_online)) { liveAsk = 0; hTip('Connect the studio first (Broadcast) – then you can go live'); return; }   // never live without the studio
     if (!(liveAsk && Date.now() < liveAsk)) { liveAsk = Date.now() + 3000; livePaint(); return; }
     const on = !!(LVH && LVH.live); liveAsk = 0;
     fetch('/api/live/' + (on ? 'off' : 'on'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'}).then(r => r.json()).then(d => { LVH = d; REC = d.rec; livePaint(); recPaint(); if (window.hypeLiveChanged) hypeLiveChanged(d); }).catch(() => {});
