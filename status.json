@@ -1,18 +1,18 @@
 {
- "time": "2026-11-02T07:59:40",
+ "time": "2026-11-02T08:10:40",
  "result": "ok",
- "commit": "8d8882bf5d3608625cd2952ca7dfb071ad986a11",
- "subject": "Live Layer on/off button for all scenes; CAM 1 in the Cameras group; MEDIA scene removed (MEDIA FULL default)",
+ "commit": "43f37a805db747123293f88ed1371bc284e65e64",
+ "subject": "Live Layer off is temporary: Music video, Hype Screen or AUTO SCENES turns it back on; cam black map refreshes when scenes change",
  "log": [
-  "07:58:54 update eeef7d1c \u2192 8d8882bf \u00b7 3 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html",
-  "07:58:55 restart hype-engine",
-  "07:59:40 installed OK \u00b7 restarted: hype-engine"
+  "08:09:54 update 8d8882bf \u2192 43f37a80 \u00b7 4 file(s): engine/engine.py, engine/live.py, web/panel/help.html, web/panel/index.html",
+  "08:09:55 restart hype-engine",
+  "08:10:40 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Keys The Prince x Mayorkun \u2013 Left Right (Remix)",
+  "song": "Ryan Castro x Kapo \u2013 LA VILLA",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
