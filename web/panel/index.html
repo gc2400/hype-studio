@@ -403,7 +403,6 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         <div class="row" id="mediaBar" hidden style="gap:6px;flex-wrap:wrap">
           <select id="mScene" aria-label="Media scene" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px"></select>
           <span class="row" style="gap:3px" id="mSound"><button class="btn sm" data-ms="mute" title="The video plays without sound">Mute</button><button class="btn sm" data-ms="duck" title="The video's sound plays, the music goes down">Duck</button><button class="btn sm" data-ms="off" title="The video's sound plays, the music is off">Music off</button></span>
-          <span class="muted" id="mNow" style="flex:1;font-size:12px;min-width:120px"></span>
           <button class="btn sm red" id="mStop">STOP MEDIA</button>
         </div>
         <div class="grid4 pads" id="pads"></div>
@@ -828,7 +827,7 @@ let MEDIA = {files: [], scenes: MSC}, MSOUND = 'duck', MSCENE = 'MEDIA FULL';
 try { MSOUND = localStorage.getItem('hypeMSound') || 'duck'; MSCENE = localStorage.getItem('hypeMScene') || 'MEDIA FULL'; if (MSCENE === 'MEDIA') MSCENE = 'MEDIA FULL'; } catch (e) {}
 function loadMedia() { return api('media').then(d => { MEDIA = d; if (bank === -1) renderPads(); }).catch(() => {}); }
 function renderMediaPads() {
-  $('#mScene').innerHTML = MEDIA.scenes.map(n => `<option ${n === MSCENE ? 'selected' : ''}>${esc(n)}</option>`).join('');
+  $('#mScene').innerHTML = `<option value="manual" ${MSCENE === 'manual' ? 'selected' : ''}>Manual – I pick the scene</option>` + MEDIA.scenes.map(n => `<option ${n === MSCENE ? 'selected' : ''}>${esc(n)}</option>`).join('');
   $$('#mSound [data-ms]').forEach(b => b.classList.toggle('on', b.dataset.ms === MSOUND));
   const cur = (S && S.media) || null;
   $('#pads').classList.remove('edit');
@@ -837,12 +836,12 @@ function renderMediaPads() {
   $$('#pads [data-mf]').forEach(b => b.onclick = () => { const m = MEDIA.files[+b.dataset.mf], cur_ = S && S.media;
     if (cur_ && cur_.file === m.file) return cmd('media_stop', {}).then(() => toast('Media off – back to the automatic scene'));
     b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit');
-    cmd('media_play', {file: m.file, scene: MSCENE, sound: MSOUND, loop: PLOOP}).then(r => r && r.ok === false ? toast(r.error, 1) : toast(m.file + ' on ' + MSCENE + (m.kind === 'video' ? (PLOOP ? ' · loops' : ' · stays on the last frame') : ''))); });
-  $('#mNow').textContent = cur ? '● ' + cur.file + (cur.kind === 'video' ? (cur.loop ? ' · loop' : cur.ended ? ' · ended (last frame)' : ' · playing') + ' · sound ' + cur.sound : '') + ' · ' + cur.scene : 'Tap a picture or video to put it on screen';
+    cmd('media_play', {file: m.file, scene: MSCENE, sound: MSOUND, loop: PLOOP}).then(r => r && r.ok === false ? toast(r.error, 1) : toast(m.file + (MSCENE === 'manual' ? ' loaded – pick an M scene yourself' : ' on ' + MSCENE) + (m.kind === 'video' ? (PLOOP ? ' · loops' : ' · stays on the last frame') : ''))); });
+  $('#mStop').title = cur ? cur.file + (cur.kind === 'video' ? (cur.loop ? ' · loop' : cur.ended ? ' · ended (last frame)' : ' · playing') : '') : 'No media on';
 }
 $('#mScene').onchange = () => { MSCENE = $('#mScene').value; try { localStorage.setItem('hypeMScene', MSCENE); } catch (e) {} };
 $$('#mSound [data-ms]').forEach(b => b.onclick = () => { MSOUND = b.dataset.ms; try { localStorage.setItem('hypeMSound', MSOUND); } catch (e) {} renderMediaPads(); });
-$('#mStop').onclick = () => cmd('media_stop', {}).then(() => toast('Media off – back to the automatic scene'));
+$('#mStop').onclick = () => cmd('media_stop', {}).then(() => toast(MSCENE === 'manual' ? 'Media off' : 'Media off – back to the automatic scene'));
 setInterval(() => { if (bank === -1 && !document.hidden) { loadMedia(); } }, 20000);
 setInterval(() => { if (bank === -1) { const k = JSON.stringify((S && S.media) || null); if (k !== renderMediaPads._k) { renderMediaPads._k = k; renderMediaPads(); } } }, 1000);
 function padTick() {   // the playing bar on each pad

@@ -2490,10 +2490,11 @@ class Media:
                 cl.set_input_mute("Media video", True)
                 cl.trigger_media_input_action("Media video", "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
                 cl.set_scene_item_enabled("Media window", vid, True); cl.set_scene_item_enabled("Media window", pic, False)
-        sc = d.get("scene") or (tv.scene if tv.scene in MEDIA_SCENES else "MEDIA FULL")
-        if sc in MEDIA_SCENES:
+        manual = d.get("scene") == "manual"      # Manual: only load the media window – you switch the scenes yourself
+        sc = (tv.scene or "") if manual else d.get("scene") or (tv.scene if tv.scene in MEDIA_SCENES else "MEDIA FULL")
+        if not manual and sc in MEDIA_SCENES:
             with LOCK: tv.auto = False; tv.set_scene(sc)
-        self.cur = {"file": f, "kind": info["kind"], "sound": sound, "loop": loop, "started": time.time(), "duration": info["duration"], "scene": sc}
+        self.cur = {"file": f, "kind": info["kind"], "sound": sound, "loop": loop, "started": time.time(), "duration": info["duration"], "scene": "manual" if manual else sc, "manual": manual}
         if info["kind"] == "video" and info["audio"] and sound != "mute":
             ln = max(1.0, info["duration"]); gain = 0.0 if info["lufs"] is None else max(-12.0, min(12.0, -14.0 - info["lufs"]))
             ann = f'annotate:liq_cue_in="0",liq_amplify="{gain:.2f} dB",hype_fade="0":{full}'
@@ -2511,6 +2512,7 @@ class Media:
         log.info("media on: %s (%s, sound %s%s) in %s", f, info["kind"], sound, ", loop" if loop else "", sc)
         return self.cur
     def stop(self, eng, keep_scene=False):
+        if self.cur and self.cur.get("manual"): keep_scene = True     # Manual: the scene stays where you put it
         had_sound = bool(self.cur and self.cur.get("kind") == "video" and self.cur.get("sound") != "mute")
         self.token = None; self.cur = None
         if had_sound:
