@@ -1,18 +1,18 @@
 {
- "time": "2026-11-02T19:28:34",
+ "time": "2026-11-02T19:31:24",
  "result": "ok",
- "commit": "c8aca38b1c0e9886e15207e2c77cdc06c76ba832",
- "subject": "Media pads edit: drop pictures/videos (or click to choose) \u2013 uploaded in pieces to branding/media",
+ "commit": "0000524aad284944bd363f707aa5b1907a84f6a6",
+ "subject": "Media upload shows at once; Planning: empty 'Choose\u2026' box as tall as the list next to it",
  "log": [
-  "19:27:48 update fa14823a \u2192 c8aca38b \u00b7 3 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html",
-  "19:27:48 restart hype-engine",
-  "19:28:34 installed OK \u00b7 restarted: hype-engine"
+  "19:30:39 update c8aca38b \u2192 0000524a \u00b7 2 file(s): engine/engine.py, web/panel/plan.html",
+  "19:30:39 restart hype-engine",
+  "19:31:24 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Kybba x Lion Fiah x Rafa Pabon x Citriem x Kensel Tell Them \u2013 CLASE",
+  "song": "Benzo \u2013 Whine & Dance",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
