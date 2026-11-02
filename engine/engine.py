@@ -1541,6 +1541,7 @@ class Engine:
             elif action == "pads_stop":
                 self.pad_loops.clear(); self.duck_until = 0
                 self.liq.cmd("pads.stop"); self.pad_video_off()
+                if self.media.cur: self.media.stop(self)      # STOP PADS also takes the media (picture / video) off
             elif action.startswith("aux_"):
                 return self.aux_cmd(c, action, d)
             elif action == "dj":     # DJ mode on/off: AUX 1 = deck A, AUX 2 = deck B; off = back to the clock
