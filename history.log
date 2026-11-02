@@ -168,3 +168,4 @@
 2026-11-02T07:31:15 ok 384f787e Screen share follows the connection: same bitrate ceiling as the cameras, text = sharp 15 fps, video = 720p 30 fps
 2026-11-02T07:36:23 ok 1ca40360 LIVE panel: Screen share row always shown with its SLOT
 2026-11-02T07:52:45 ok eeef7d1c Scene lists: v4 camera scenes (CAM 1 2 3 V, CAM 1 2 3 4 B/R/G, VID 1 2 3 4)
+2026-11-02T07:59:40 ok 8d8882bf Live Layer on/off button for all scenes; CAM 1 in the Cameras group; MEDIA scene removed (MEDIA FULL default)

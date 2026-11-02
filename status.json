@@ -1,17 +1,18 @@
 {
- "time": "2026-11-02T07:52:45",
+ "time": "2026-11-02T07:59:40",
  "result": "ok",
- "commit": "eeef7d1cca245d96bead52285d5851d0580a4b86",
- "subject": "Scene lists: v4 camera scenes (CAM 1 2 3 V, CAM 1 2 3 4 B/R/G, VID 1 2 3 4)",
+ "commit": "8d8882bf5d3608625cd2952ca7dfb071ad986a11",
+ "subject": "Live Layer on/off button for all scenes; CAM 1 in the Cameras group; MEDIA scene removed (MEDIA FULL default)",
  "log": [
-  "07:52:45 update 1ca40360 \u2192 eeef7d1c \u00b7 2 file(s): web/panel/index.html, web/panel/plan.html",
-  "07:52:45 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "07:58:54 update eeef7d1c \u2192 8d8882bf \u00b7 3 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html",
+  "07:58:55 restart hype-engine",
+  "07:59:40 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Aidonia \u2013 Like How Yuh Feel",
+  "song": "Keys The Prince x Mayorkun \u2013 Left Right (Remix)",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
