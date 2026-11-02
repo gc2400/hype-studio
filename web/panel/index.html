@@ -253,11 +253,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .subbox input,.subbox select{background:var(--card2);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:34px;padding:0 8px;font:inherit;font-size:13px}
 .elchip{display:inline-flex;align-items:center;gap:6px}
 .camgrid .scene{min-height:40px;font-size:12px;padding:4px 8px}
-.camgrid.mx{grid-template-columns:30px repeat(4,minmax(0,1fr))}   /* Cameras: columns = 1-4 cams, rows = layout type */
-.camgrid .mxh{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);text-align:center;padding:2px 0 0}
-.camgrid .mxr{font-size:10px;font-weight:800;color:var(--mut);display:flex;align-items:center;justify-content:flex-end;padding-right:2px;white-space:nowrap}
-.camgrid .mxm{text-transform:uppercase;letter-spacing:.04em;font-size:9px}
-.camgrid .mxe{border:1px dashed var(--line);border-radius:10px;opacity:.5;min-height:40px}
+.camgrid.mx .scene{font-size:12px}
 .lt-form{display:grid;grid-template-columns:1fr 1fr 150px;gap:6px}
 .lt-form input,.lt-form select{width:100%;min-width:0}
 .lt-recent{display:flex;gap:5px;flex-wrap:wrap}
@@ -604,11 +600,11 @@ $('#bManual').onclick = () => cmd('auto', {on: false}).then(() => toast('MANUAL:
 $('#bAutoScene').onclick = () => cmd('autoscene'); $('#bPadStop').onclick = () => cmd('pads_stop').then(() => { Object.keys(PLAYING).forEach(k => delete PLAYING[k]); });
 // ---------- scenes ----------
 const SCENES = [['Music video', 'auto · clips'], ['Hype Screen', 'auto · audio only'], ['Branding', 'auto · jingles']];
-// Cameras grid: a column per number of cameras, a row per layout type; the rest at the end
-const CAMROWS = [['', ['CAM 1', 'CAM 1 2', 'CAM 1 2 3', 'CAM 1 2 3 4']], ['V', ['CAM 1 V', 'CAM 1 2 V', 'CAM 1 2 3 V', '']], ['G', ['CAM 1 G', 'CAM 1 2 G', 'CAM 1 2 3 G', 'CAM 1 2 3 4 G']],
-  ['V G', ['CAM 1 V G', '', 'CAM 1 2 3 V G', '']], ['VID', ['VID 1', 'VID 1 2', 'VID 1 2 3', 'VID 1 2 3 4']], ['B', ['', '', 'CAM 1 2 3 B', 'CAM 1 2 3 4 B']], ['R', ['', '', 'CAM 1 2 3 R', 'CAM 1 2 3 4 R']]];
-const CAMMORE = ['CAM 2', 'CAM 3', 'CAM 4', 'CAM 1 V PIP', 'VID 1 LIVE MIX'];
-const CAMS = [...CAMROWS.flatMap(r => r[1]).filter(Boolean), ...CAMMORE];
+// Cameras grid: first the full-screen cameras, then a column per number of cameras (1-4) and a row per layout type; the rest at the end
+const CAMROWS = [['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'], ['', 'CAM 1 2', 'CAM 1 2 3', 'CAM 1 2 3 4'], ['CAM 1 V', 'CAM 1 2 V', 'CAM 1 2 3 V', ''], ['CAM 1 G', 'CAM 1 2 G', 'CAM 1 2 3 G', 'CAM 1 2 3 4 G'],
+  ['CAM 1 V G', '', 'CAM 1 2 3 V G', ''], ['VID 1', 'VID 1 2', 'VID 1 2 3', 'VID 1 2 3 4'], ['', '', 'CAM 1 2 3 B', 'CAM 1 2 3 4 B'], ['', '', 'CAM 1 2 3 R', 'CAM 1 2 3 4 R']];
+const CAMMORE = ['CAM 1 V PIP', 'VID 1 LIVE MIX'];
+const CAMS = [...CAMROWS.flat().filter(Boolean), ...CAMMORE];
 let SG = -1, SGEDIT = null, SGHIDE = false;
 try { SGHIDE = localStorage.getItem('hypeSGhide') === '1'; } catch (e) {}   // -1 = Cameras (all layouts); n = your group n
 try { SG = +(localStorage.getItem('hypeSG') ?? -1); } catch (e) {}
@@ -637,9 +633,7 @@ function renderScenes() {
   const inG = SGEDIT && SG >= 0 ? new Set(G[SG].scenes) : null;
   const btn = n => `<button class="btn scene ${scLive(n) ? 'live' : ''} ${inG && inG.has(n) ? 'ing' : ''}" data-scene="${esc(n)}">${esc(scName(n))}</button>`;
   const mx = SG === -1 && !SGEDIT;
-  const html = mx ? '<span></span>' + ['1 cam', '2 cams', '3 cams', '4 cams'].map(h => `<span class="mxh">${h}</span>`).join('') +
-      CAMROWS.map(([t, r]) => `<span class="mxr">${t}</span>` + r.map(n => n ? btn(n) : '<span class="mxe"></span>').join('')).join('') +
-      '<span class="mxr mxm">more</span>' + CAMMORE.map((n, i) => (i && i % 4 === 0 ? '<span></span>' : '') + btn(n)).join('')
+  const html = mx ? CAMROWS.flat().map(n => n ? btn(n) : '<span></span>').join('') + CAMMORE.map(btn).join('')
     : list.map(btn).join('') || '<span class="muted" style="grid-column:1/-1">Empty group – press ✎ and click scenes to add them.</span>';
   const cg = $('#camScenes'); cg.hidden = SGHIDE && !SGEDIT; cg.classList.toggle('mx', mx); if (cg.dataset.h !== html) { cg.innerHTML = html; cg.dataset.h = html; }
   $$('#scenes [data-scene], #camScenes [data-scene]').forEach(b => b.onclick = () => {
