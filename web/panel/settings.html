@@ -246,7 +246,7 @@ const SL = [
   ['snd_attack', 'Attack', 'slower = more punch on the beat', 1, 100, 1, 'ms'],
   ['snd_release', 'Release', 'how fast it lets go', 50, 1000, 10, 'ms'],
   ['snd_ceiling', 'Ceiling', 'loudest peak allowed', -3, -0.1, 0.1, 'dB'],
-  ['snd_hpf', 'Sub cut', 'rumble below this is filtered out – lower = more deep 808', 20, 40, 1, 'Hz'],
+  ['snd_hpf', 'Rumble cut', 'everything below this is filtered out – lower = more of the deep 808, higher = tighter + a bit louder', 20, 40, 1, 'Hz'],
   ['snd_width', 'Stereo width', 'only above 300 Hz (the bass stays in the centre) – 0 = original', 0, 50, 5, '%']];
 const PRESETS = {   // Classic chain; target: loud enough to keep the energy, never tiring (ceiling −1 dB)
   'Warm & punchy': {tip: 'the all-round Hype sound: warm bass, light compression', snd_drive: 5, snd_bass: 3, snd_bass_f: 85, snd_mid: -1, snd_treble: -0.5, snd_ratio: 2, snd_thresh: -16, snd_attack: 30, snd_release: 220, snd_ceiling: -1},
@@ -293,11 +293,11 @@ function render() {
     post('settings', req).then(d => { ST = d; render(); toast('Removed ' + n); }); });
   if ($('#pBack')) $('#pBack').onclick = () => post('settings', {sound_presets_hidden: []}).then(d => { ST = d; render(); toast('Built-in presets back'); });
   const pro = ((ST && ST.sound && ST.sound.snd_punch) || 0) > 0.25, proOk = ST.sound.snd_width != null;   // Hype Pro only when the radio runs the Pro chain
-  $('#sndMode [data-m="0.5"]').hidden = !proOk;
+  $('#sndMode').hidden = !proOk;      // one chain (Classic) running: no mode choice to show
   $$('#sndMode [data-m]').forEach(b => { const m = +b.dataset.m; b.classList.toggle('on', m ? pro : !pro);
     b.onclick = () => { pend = {snd_punch: m}; sendSound().then(() => { render(); toast(m ? 'Hype Pro on – listen, switch back to Classic to compare' : 'Classic sound'); }); }; });
   $('#sndModeTip').textContent = pro ? 'Hype Pro: bass, low mids, mids and highs are compressed on their own. The Compression sliders drive all 4 bands; the meter shows the band that works hardest.' : 'Classic: one compressor for the whole mix.';
-  $$('#presets [data-p]').forEach(b => b.onclick = () => { const P_ = Object.assign({}, allPresets()[b.dataset.p]); delete P_.tip; pend = Object.assign({snd_punch: 0, snd_mid: 0, snd_lowmid: 0, snd_hpf: 30, snd_width: 0}, P_); sendSound().then(() => { render(); toast('Preset: ' + b.dataset.p); }); });
+  $$('#presets [data-p]').forEach(b => b.onclick = () => { const P_ = Object.assign({}, allPresets()[b.dataset.p]); delete P_.tip; pend = Object.assign({snd_punch: 0, snd_mid: 0, snd_lowmid: 0, snd_hpf: 25}, P_); sendSound().then(() => { render(); toast('Preset: ' + b.dataset.p); }); });
   const ok = ST.sound.snd_drive != null; $('#sndState').textContent = ok ? 'radio engine connected' : 'radio engine not reachable'; $('#sndState').style.color = ok ? 'var(--g)' : 'var(--r)';
   ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always', 'smart_mix', 'id_intro'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
   $('#tv_clip_offset').value = ST.tv_clip_offset; $('#tv_clip_offset_v').textContent = fmtv(ST.tv_clip_offset, 'dB');

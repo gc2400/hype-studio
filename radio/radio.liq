@@ -26,6 +26,8 @@ snd_ceiling  = interactive.float("snd_ceiling", min=-3., max=-0.1, description="
 snd_comp     = interactive.float("snd_comp", min=0., max=1., description="Compressor on (1) / off (0) – the limiter always stays on", 1.)
 snd_monob    = interactive.float("snd_monob", min=0., max=1., description="Mono bass below 120 Hz on (1) / off (0)", 0.)
 snd_mid      = interactive.float("snd_mid", min=-4., max=3., description="Upper mids 3.5 kHz (dB, minus = less harsh)", 0.)
+snd_lowmid   = interactive.float("snd_lowmid", min=-4., max=2., description="Low mids 300 Hz (dB, minus = less muddy / boxy)", 0.)
+snd_hpf      = interactive.float("snd_hpf", min=20., max=40., description="Rumble cut (Hz): everything below is filtered out", 25.)
 # --- faders (panel): music, pads + sweepers, the studio while LIVE (1.0 = 0 dB) ---
 vol_music  = interactive.float("vol_music", min=0., max=1.6, description="Music fader", 1.)
 vol_pads   = interactive.float("vol_pads", min=0., max=1.6, description="Pads fader", 1.)
@@ -117,7 +119,7 @@ def hype_multiband(~limit=true, ~wet=getter(1.), s, l)
 end
 def process(~meter=false, ~light=false, x) =
   p = fun () -> snd_punch() > 0.75     # 1 = Hype Punch
-  x = filter.iir.eq.high(frequency=30., q=0.7, x)
+  x = filter.iir.eq.high(frequency=snd_hpf, q=0.7, x)     # rumble cut (slider, 20–40 Hz)
   # mono bass: below 120 Hz left and right become the same (Linkwitz-Riley crossover) – off = the original signal, untouched
   # (only on the music + studio chains – the pads chain for the TV does not need it: saves CPU)
   x = if true then x else
@@ -127,6 +129,7 @@ def process(~meter=false, ~light=false, x) =
     add(normalize=false, [amplify(override=null(), {if snd_monob() > 0.5 then 0. else 1. end}, x), amplify(override=null(), {if snd_monob() > 0.5 then 1. else 0. end}, mbx)])
   end
   x = filter.iir.eq.peak(frequency={if p() then 100. else snd_bass_f() end}, gain={if p() then 2. else snd_bass() end}, q=0.75, x)
+  x = filter.iir.eq.peak(frequency=300., gain={if p() then 0. else snd_lowmid() end}, q=0.9, x)
   x = filter.iir.eq.peak(frequency=3500., gain={if p() then 1.5 else snd_mid() end}, q=0.9, x)
   x = filter.iir.eq.peak(frequency=9500., gain={if p() then 1. else snd_treble() end}, q=0.7, x)
   con = fun () -> snd_comp() > 0.5     # compressor switch (Settings → Sound)
