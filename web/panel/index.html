@@ -598,7 +598,7 @@ $('#bManual').onclick = () => cmd('auto', {on: false}).then(() => toast('MANUAL:
 $('#bAutoScene').onclick = () => cmd('autoscene'); $('#bPadStop').onclick = () => cmd('pads_stop').then(() => { Object.keys(PLAYING).forEach(k => delete PLAYING[k]); });
 // ---------- scenes ----------
 const SCENES = [['Music video', 'auto · clips'], ['Hype Screen', 'auto · audio only'], ['Branding', 'auto · jingles'], ['CAM 1', 'full screen']];
-const CAMS = ['CAM 2', 'CAM 3', 'CAM 4', 'CAM 1 V', 'CAM 1 G', 'VID 1', 'CAM 1 2', 'CAM 1 2 V', 'CAM 1 2 G', 'VID 1 2', 'CAM 1 2 3', 'CAM 1 2 3 V G', 'CAM 1 2 3 G', 'VID 1 2 3', 'CAM 1 2 3 B', 'CAM 1 2 3 R', 'CAM 1 V G', 'CAM 1 V PIP', 'VID 1 LIVE MIX', 'CAM 1 2 3 4', 'CAM 1 2 3 4 V'];
+const CAMS = ['CAM 2', 'CAM 3', 'CAM 4', 'CAM 1 V', 'CAM 1 G', 'VID 1', 'CAM 1 2', 'CAM 1 2 V', 'CAM 1 2 G', 'VID 1 2', 'CAM 1 2 3', 'CAM 1 2 3 V G', 'CAM 1 2 3 G', 'VID 1 2 3', 'CAM 1 2 3 B', 'CAM 1 2 3 R', 'CAM 1 V G', 'CAM 1 V PIP', 'VID 1 LIVE MIX', 'CAM 1 2 3 4', 'CAM 1 2 3 V', 'CAM 1 2 3 4 B', 'CAM 1 2 3 4 R', 'CAM 1 2 3 4 G', 'VID 1 2 3 4'];
 let SG = -1, SGEDIT = null, SGHIDE = false;
 try { SGHIDE = localStorage.getItem('hypeSGhide') === '1'; } catch (e) {}   // -1 = Cameras (all layouts); n = your group n
 try { SG = +(localStorage.getItem('hypeSG') ?? -1); } catch (e) {}
