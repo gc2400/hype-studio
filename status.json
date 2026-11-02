@@ -1,18 +1,17 @@
 {
- "time": "2026-11-02T19:14:41",
+ "time": "2026-11-02T19:16:46",
  "result": "ok",
- "commit": "4f72932c0a66d27290889775cab5d1a963f60d4f",
- "subject": "Pads MEDIA edit: delete pictures/videos (to branding/media/.deleted), no bank bar there; shorter pad edit hint",
+ "commit": "d689b01aba0c71730fee788a1d5a2e10b5ebf183",
+ "subject": "Pads edit bars: hint texts removed, Save pads / Done inline with the buttons",
  "log": [
-  "19:13:56 update 3d6e1fa2 \u2192 4f72932c \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
-  "19:13:56 restart hype-engine",
-  "19:14:41 installed OK \u00b7 restarted: hype-engine"
+  "19:16:46 update 4f72932c \u2192 d689b01a \u00b7 1 file(s): web/panel/index.html",
+  "19:16:46 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "GXSZ X TY X JEON \u2013 SAK BAI PIKI",
+  "song": "Bokoesam x Yssi SB \u2013 20 Backshot",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
