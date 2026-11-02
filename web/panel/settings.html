@@ -267,7 +267,7 @@ Object.assign(PRESETS, PRO);
 const PKEYS = ['snd_drive', 'snd_bass', 'snd_bass_f', 'snd_lowmid', 'snd_mid', 'snd_treble', 'snd_ratio', 'snd_thresh', 'snd_attack', 'snd_release', 'snd_ceiling', 'snd_hpf', 'snd_width'];
 const MINE = () => (ST && ST.sound_presets) || {};
 const HIDDEN = () => (ST && ST.sound_presets_hidden) || [];
-function allPresets() { const o = Object.assign({}, PRESETS); HIDDEN().forEach(n => delete o[n]); Object.entries(MINE()).forEach(([n, v]) => { o['★ ' + n] = Object.assign({tip: 'your own preset'}, v); }); return o; }
+function allPresets() { const o = Object.assign({}, PRESETS); if (!(ST && ST.sound && ST.sound.snd_width != null)) Object.keys(PRO).forEach(n => delete o[n]); HIDDEN().forEach(n => delete o[n]); Object.entries(MINE()).forEach(([n, v]) => { o['★ ' + n] = Object.assign({tip: 'your own preset'}, v); }); return o; }
 function presetNow() { const S_ = (ST && ST.sound) || {}, P = allPresets();
   const same = n => Math.abs((P[n].snd_punch || 0) - (S_.snd_punch || 0)) < 0.2 && PKEYS.every(k => P[n][k] === undefined || Math.abs((S_[k] ?? 1e9) - P[n][k]) < 0.06);
   return Object.keys(P).find(same) || null; }
@@ -275,8 +275,9 @@ let ST = null, sT = null, pend = {};
 function fmtv(v, u) { return (Math.round(v * 10) / 10) + (u === ':1' ? ':1' : ' ' + u); }
 function render() {
   paintSw();
-  $('#sliders').innerHTML = SL.map(([k, l, h, mi, ma, st, u]) => `<div class="sl"><label for="${k}">${l}<small>${h}</small></label><input type="range" id="${k}" min="${mi}" max="${ma}" step="${st}" value="${ST.sound[k] ?? mi}"><span class="v" id="${k}_v">${ST.sound[k] == null ? '?' : fmtv(ST.sound[k], u)}</span></div>`).join('');
-  SL.forEach(([k, , , , , , u]) => { const e = $('#' + k); e.oninput = () => { $('#' + k + '_v').textContent = fmtv(+e.value, u); pend[k] = +e.value; clearTimeout(sT); sT = setTimeout(sendSound, 250); }; });
+  const HAS = k => ST.sound[k] != null || !['snd_lowmid', 'snd_hpf', 'snd_width'].includes(k);   // sliders the running radio chain knows
+  $('#sliders').innerHTML = SL.filter(([k]) => HAS(k)).map(([k, l, h, mi, ma, st, u]) => `<div class="sl"><label for="${k}">${l}<small>${h}</small></label><input type="range" id="${k}" min="${mi}" max="${ma}" step="${st}" value="${ST.sound[k] ?? mi}"><span class="v" id="${k}_v">${ST.sound[k] == null ? '?' : fmtv(ST.sound[k], u)}</span></div>`).join('');
+  SL.filter(([k]) => HAS(k)).forEach(([k, , , , , , u]) => { const e = $('#' + k); e.oninput = () => { $('#' + k + '_v').textContent = fmtv(+e.value, u); pend[k] = +e.value; clearTimeout(sT); sT = setTimeout(sendSound, 250); }; });
   const cur = presetNow();
   const AP = allPresets();
   $('#presets').innerHTML = '<span class="lab" style="width:auto">Presets</span>' + Object.keys(AP).map(n => `<span class="ltr"><button class="btn sm${n === cur ? ' on' : ''}" data-p="${esc(n)}" title="${esc(AP[n].tip)}">${esc(n)}</button><button class="ltx" data-pdel="${esc(n)}" title="Remove ${esc(n)}" aria-label="Remove ${esc(n)}">×</button></span>`).join('') +
@@ -291,12 +292,13 @@ function render() {
     const req = n.startsWith('★ ') ? (m => { delete m[n.slice(2)]; return {sound_presets: m}; })(Object.assign({}, MINE())) : {sound_presets_hidden: [...new Set([...HIDDEN(), n])]};
     post('settings', req).then(d => { ST = d; render(); toast('Removed ' + n); }); });
   if ($('#pBack')) $('#pBack').onclick = () => post('settings', {sound_presets_hidden: []}).then(d => { ST = d; render(); toast('Built-in presets back'); });
-  const pro = ((ST && ST.sound && ST.sound.snd_punch) || 0) > 0.25;
+  const pro = ((ST && ST.sound && ST.sound.snd_punch) || 0) > 0.25, proOk = ST.sound.snd_width != null;   // Hype Pro only when the radio runs the Pro chain
+  $('#sndMode [data-m="0.5"]').hidden = !proOk;
   $$('#sndMode [data-m]').forEach(b => { const m = +b.dataset.m; b.classList.toggle('on', m ? pro : !pro);
     b.onclick = () => { pend = {snd_punch: m}; sendSound().then(() => { render(); toast(m ? 'Hype Pro on – listen, switch back to Classic to compare' : 'Classic sound'); }); }; });
   $('#sndModeTip').textContent = pro ? 'Hype Pro: bass, low mids, mids and highs are compressed on their own. The Compression sliders drive all 4 bands; the meter shows the band that works hardest.' : 'Classic: one compressor for the whole mix.';
   $$('#presets [data-p]').forEach(b => b.onclick = () => { const P_ = Object.assign({}, allPresets()[b.dataset.p]); delete P_.tip; pend = Object.assign({snd_punch: 0, snd_mid: 0, snd_lowmid: 0, snd_hpf: 30, snd_width: 0}, P_); sendSound().then(() => { render(); toast('Preset: ' + b.dataset.p); }); });
-  const ok = Object.values(ST.sound).every(v => v != null); $('#sndState').textContent = ok ? 'radio engine connected' : 'radio engine not reachable'; $('#sndState').style.color = ok ? 'var(--g)' : 'var(--r)';
+  const ok = ST.sound.snd_drive != null; $('#sndState').textContent = ok ? 'radio engine connected' : 'radio engine not reachable'; $('#sndState').style.color = ok ? 'var(--g)' : 'var(--r)';
   ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always', 'smart_mix', 'id_intro'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
   $('#tv_clip_offset').value = ST.tv_clip_offset; $('#tv_clip_offset_v').textContent = fmtv(ST.tv_clip_offset, 'dB');
   $('#tv_clip_offset').oninput = () => $('#tv_clip_offset_v').textContent = fmtv(+$('#tv_clip_offset').value, 'dB');
