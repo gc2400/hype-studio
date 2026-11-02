@@ -22,11 +22,11 @@ let rev = -1, shown = false;
 function isG(scene) { return / G$/.test(scene || '') || / V G$/.test(scene || ''); }
 function fit(el, max) { el.style.transform = 'translateY(-50%)'; const w = el.scrollWidth; if (w > max) el.style.transform = `translateY(-50%) scale(${max / w})`; }
 function render(L) {
-  const g = isG(L.scene), style = (L.style || 'A').toUpperCase(), wideOk = L.live_layer === false && !g;   // ad box / poll / chat sit at x 1340-1840
+  const g = isG(L.scene), style = (L.style || 'A').toUpperCase();
   const name = $('name'), role = $('role'), hc = $('hc');
   name.textContent = L.name || ''; $('roletx').textContent = L.role || '';
   if (style === 'C') {
-    const xl = (L.size || '').toUpperCase() === 'XL' && wideOk;
+    const xl = (L.size || '').toUpperCase() === 'XL';     // full width = always full width (your choice: it goes over the ad box / poll / chat area)
     const file = xl ? 'Lower_Third_C_XL.png' : 'Lower_Third_C.png', right = xl ? 1810 : 1290;
     $('bg').src = '/lowerthirds/' + file;
     name.style.cssText = 'left:110px;top:973px;font-weight:900'; role.style.cssText = 'left:110px;top:1013px;font-weight:500;color:#D6E8F5';
