@@ -172,3 +172,4 @@
 2026-11-02T08:10:40 ok 43f37a80 Live Layer off is temporary: Music video, Hype Screen or AUTO SCENES turns it back on; cam black map refreshes when scenes change
 2026-11-02T08:19:37 ok 50c59968 Music video / Hype Screen / Branding turn AUTO SCENES back on; camera feed clears its old picture when the camera is not sending (no black window)
 2026-11-02T08:39:48 ok 44436749 Lower thirds v4 (A: S/M/L, C, C_XL full width only with the Live Layer off); a lower third on = the ticker steps aside
+2026-11-02T08:41:53 ok 54e9167f Library: counts on Playlists / Hour plans tabs; Clocks → Hour plans wording on the main page

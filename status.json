@@ -1,18 +1,17 @@
 {
- "time": "2026-11-02T08:39:48",
+ "time": "2026-11-02T08:41:53",
  "result": "ok",
- "commit": "4443674956a571a3644e90075053afdf99356c3c",
- "subject": "Lower thirds v4 (A: S/M/L, C, C_XL full width only with the Live Layer off); a lower third on = the ticker steps aside",
+ "commit": "54e9167f3b26ff73dee990114933fada88e43b2e",
+ "subject": "Library: counts on Playlists / Hour plans tabs; Clocks \u2192 Hour plans wording on the main page",
  "log": [
-  "08:39:03 update 50c59968 \u2192 44436749 \u00b7 4 file(s): engine/engine.py, web/overlay/lower.html, web/panel/help.html, web/panel/index.html",
-  "08:39:03 restart hype-engine",
-  "08:39:48 installed OK \u00b7 restarted: hype-engine"
+  "08:41:53 update 44436749 \u2192 54e9167f \u00b7 1 file(s): web/panel/index.html",
+  "08:41:53 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Idaly \u2013 Stars",
+  "song": "Rauw Alejandro x Bad Bunny \u2013 Qu\u00e9 Pasar\u00eda...",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
