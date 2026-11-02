@@ -1,19 +1,17 @@
 {
- "time": "2026-11-02T07:24:02",
+ "time": "2026-11-02T07:25:05",
  "result": "ok",
- "commit": "8632486640bbe88bf39a88e6d334ff850b80d7ba",
- "subject": "Broadcast: screen share (screen, window or Chrome tab) as a TV source with its own SLOT, sharp (text) or smooth (video); help updated",
+ "commit": "da642091be655f9706cde5489cd731589d3ce38b",
+ "subject": "LIVE panel: the screen share shows with its SLOT while it is on",
  "log": [
-  "07:23:17 update c3222c3c \u2192 86324866 \u00b7 5 file(s): engine/hype_auth.py, engine/live.py, web/panel/help.html, web/panel/hype-rtc.js, web/panel/studio.html",
-  "07:23:17 restart hype-auth",
-  "07:23:17 restart hype-engine",
-  "07:24:02 installed OK \u00b7 restarted: hype-auth, hype-engine"
+  "07:25:05 update 86324866 \u2192 da642091 \u00b7 1 file(s): web/panel/index.html",
+  "07:25:05 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Rvssian x Rauw Alejandro x Wizkid \u2013 PONGO",
+  "song": "Kapo \u2013 ALOH ALOH",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },

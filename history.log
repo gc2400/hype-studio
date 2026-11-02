@@ -164,3 +164,4 @@
 2026-11-01T22:32:26 ok 4babd2ea TV: 360p (650 kbps + 96k audio) as a 4th quality for slow connections
 2026-11-01T22:49:50 ok c3222c3c Schedule: MIXTAPE tag on hours that play a mixtape from MIXES/Mixtapes
 2026-11-02T07:24:02 ok 86324866 Broadcast: screen share (screen, window or Chrome tab) as a TV source with its own SLOT, sharp (text) or smooth (video); help updated
+2026-11-02T07:25:05 ok da642091 LIVE panel: the screen share shows with its SLOT while it is on
