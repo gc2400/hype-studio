@@ -109,9 +109,12 @@ def deploy(cur, new):
         try: g = json.load(open("/var/lib/hype/guard.json")); gok = time.time() - g.get("t", 0) < 30
         except Exception: g, gok = {}, False
         if "hype-radio" in units and gok and (g.get("level") or 0) < 0.01:
-            time.sleep(15)
-            try: g = json.load(open("/var/lib/hype/guard.json"))
-            except Exception: pass
+            # after a radio restart the engine restarts too and needs up to ~1 min before the first song plays: wait up to 2 min more
+            for _ in range(24):
+                time.sleep(5)
+                try: g = json.load(open("/var/lib/hype/guard.json"))
+                except Exception: pass
+                if (g.get("level") or 0) >= 0.01: break
             if (g.get("level") or 0) < 0.01: bad.append("radio silent after the update")
         if bad:
             log("PROBLEM after install:", bad, "→ rolling back"); install(files, None); restart(files); git("checkout", "-q", "--detach", cur)
