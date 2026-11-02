@@ -254,6 +254,10 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .elchip{display:inline-flex;align-items:center;gap:6px}
 .camgrid .scene{min-height:40px;font-size:12px;padding:4px 8px}
 .camgrid.mx .scene{font-size:12px}
+.camgrid.cedit .camc{position:relative;min-height:40px;border-radius:10px;cursor:grab}.camgrid.cedit .camc .scene{width:100%;height:100%;display:flex;align-items:center;pointer-events:none}
+.camgrid.cedit .camc.empty{border:1px dashed var(--line2);cursor:pointer}.camgrid.cedit .camc.over{box-shadow:0 0 0 2px var(--y)}.camgrid.cedit .camc.pick .scene{border-color:var(--y);color:var(--y)}.camgrid.cedit .camc.drag{opacity:.4}
+.camx{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line2);background:var(--card2);color:var(--soft);font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.camx:hover{background:#C8283A;border-color:#C8283A;color:#fff}
 .lt-form{display:grid;grid-template-columns:1fr 1fr 150px;gap:6px}
 .lt-form input,.lt-form select{width:100%;min-width:0}
 .lt-recent{display:flex;gap:5px;flex-wrap:wrap}
@@ -370,6 +374,10 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         <div class="sgtabs" id="sgTabs"></div>
         <div class="subbox" id="sgEdit" hidden>
           <div class="row" style="gap:6px;flex-wrap:wrap"><input id="sgName" type="text" maxlength="30" aria-label="Group name" style="width:160px"><span class="muted" style="flex:1;font-size:12px">Click scenes to put them in / out of this group</span><button class="btn sm red" id="sgDel">Delete group</button><button class="btn sm yellow" id="sgDone">Done</button></div>
+        </div>
+        <div class="subbox" id="camEdit" hidden>
+          <div class="row" style="gap:6px;flex-wrap:wrap"><span class="muted" style="flex:1;font-size:12px;min-width:180px">Drag a scene to another place (or click one, then click where it goes). × takes it off.</span><button class="btn sm" id="camRow">+ Row</button><button class="btn sm" id="camReset">Reset</button><button class="btn sm" id="camCancel">Cancel</button><button class="btn sm yellow" id="camDone">Done</button></div>
+          <div class="row" id="camHidden" style="gap:5px;flex-wrap:wrap"></div>
         </div>
         <div class="camgrid" id="camScenes"></div>
       </div>
@@ -605,6 +613,12 @@ const CAMROWS = [['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'], ['', 'CAM 1 2', 'CAM 1 2 
   ['CAM 1 V G', '', 'CAM 1 2 3 V G', ''], ['VID 1', 'VID 1 2', 'VID 1 2 3', 'VID 1 2 3 4'], ['', '', 'CAM 1 2 3 B', 'CAM 1 2 3 4 B'], ['', '', 'CAM 1 2 3 R', 'CAM 1 2 3 4 R']];
 const CAMMORE = ['CAM 1 V PIP', 'VID 1 LIVE MIX'];
 const CAMS = [...CAMROWS.flat().filter(Boolean), ...CAMMORE];
+let CAMEDIT = null, CAMPICK = -1;    // editing the Cameras grid: {cells, hidden}; CAMPICK = the place you clicked first (click another to swap)
+function camLayout() {      // your own arrangement (saved on the server) – scenes it doesn't know yet go at the end
+  const L = CAMEDIT || (S && S.cam_layout) || {cells: [...CAMROWS.flat(), ...CAMMORE], hidden: []};
+  const have = new Set([...L.cells, ...L.hidden]), cells = [...L.cells, ...CAMS.filter(n => !have.has(n))];
+  return {cells: cells.filter(n => !n || CAMS.includes(n)), hidden: L.hidden.filter(n => CAMS.includes(n))};
+}
 let SG = -1, SGEDIT = null, SGHIDE = false;
 try { SGHIDE = localStorage.getItem('hypeSGhide') === '1'; } catch (e) {}   // -1 = Cameras (all layouts); n = your group n
 try { SG = +(localStorage.getItem('hypeSG') ?? -1); } catch (e) {}
@@ -616,12 +630,13 @@ function renderScenes() {
   if ($('#scenes').dataset.h !== sb) { $('#scenes').innerHTML = sb; $('#scenes').dataset.h = sb;
     $('#bLL').onclick = () => { const on = !(S.live_layer !== false); cmd('live_layer', {on}).then(() => { S.live_layer = on; $('#scenes').dataset.h = ''; renderScenes(); toast(on ? 'Live Layer on' : 'Live Layer off – back on at Music video, Hype Screen, Branding or AUTO'); }); }; }
   const G = SGEDIT ? SGEDIT.list : groups(); if (SG >= G.length || SG < -3) SG = -1;
-  const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras ${SG === -1 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP ${SG === -2 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA ${SG === -3 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)} ${SG === i ? (SGHIDE ? '▸' : '▾') : ''}</button>`).join('') + (SGEDIT ? '' : '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ GROUP</button>') + (!SGEDIT && SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">✎</button>' : '');
+  const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras ${SG === -1 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP ${SG === -2 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA ${SG === -3 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)} ${SG === i ? (SGHIDE ? '▸' : '▾') : ''}</button>`).join('') + (SGEDIT ? '' : '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ GROUP</button>') + (!SGEDIT && SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">✎</button>' : '') + (!SGEDIT && !CAMEDIT && SG === -1 && !SGHIDE ? '<button class="btn sm" data-camedit title="Arrange the camera scenes: move, remove, add back">✎</button>' : '');
   if ($('#sgTabs').dataset.h !== tabs) { $('#sgTabs').innerHTML = tabs; $('#sgTabs').dataset.h = tabs;
     $$('#sgTabs [data-sg]').forEach(b => b.onclick = () => { const n = +b.dataset.sg;
       if (n === SG && !SGEDIT) SGHIDE = !SGHIDE; else { SG = n; SGHIDE = false; }      // click the open group again = fold it away
       try { localStorage.setItem('hypeSG', SG); localStorage.setItem('hypeSGhide', SGHIDE ? '1' : '0'); } catch (e) {} if (SGEDIT) SGEDIT.i = SG; $('#sgTabs').dataset.h = ''; renderScenes(); });
     const nw = $('#sgTabs [data-sgnew]'); if (nw) nw.onclick = () => { const n = prompt('Name of the new group (e.g. a show):'); if (!n) return; SGEDIT = {list: JSON.parse(JSON.stringify(groups()))}; SGEDIT.list.push({name: n.slice(0, 30), scenes: []}); SG = SGEDIT.i = SGEDIT.list.length - 1; renderScenes(); };
+    const ce = $('#sgTabs [data-camedit]'); if (ce) ce.onclick = () => { CAMEDIT = JSON.parse(JSON.stringify(camLayout())); CAMPICK = -1; $('#sgTabs').dataset.h = ''; renderScenes(); };
     const ed = $('#sgTabs [data-sgedit]'); if (ed) ed.onclick = () => { SGEDIT = {list: JSON.parse(JSON.stringify(groups())), i: SG}; renderScenes(); };
   }
   $('#sgEdit').hidden = !SGEDIT; if (SGEDIT && SG >= 0 && document.activeElement !== $('#sgName')) $('#sgName').value = (G[SG] || {}).name || '';
@@ -632,14 +647,39 @@ function renderScenes() {
   const scLive = n => n.startsWith('PIP@') ? S.scene === 'PIP' && S.pip === n.slice(4) : S.scene === n;
   const inG = SGEDIT && SG >= 0 ? new Set(G[SG].scenes) : null;
   const btn = n => `<button class="btn scene ${scLive(n) ? 'live' : ''} ${inG && inG.has(n) ? 'ing' : ''}" data-scene="${esc(n)}">${esc(scName(n))}</button>`;
-  const mx = SG === -1 && !SGEDIT;
-  const html = mx ? CAMROWS.flat().map(n => n ? btn(n) : '<span></span>').join('') + CAMMORE.map(btn).join('')
+  const mx = SG === -1 && !SGEDIT, CL = camLayout();
+  if (SG !== -1 && CAMEDIT) CAMEDIT = null;
+  const html = mx && CAMEDIT ? CL.cells.map((n, i) => n ? `<div class="camc ${CAMPICK === i ? 'pick' : ''}" draggable="true" data-ci="${i}"><span class="btn scene">${esc(n)}</span><button class="camx" data-cx="${i}" aria-label="Remove ${esc(n)}" title="Take it off the grid">×</button></div>`
+        : `<div class="camc empty ${CAMPICK === i ? 'pick' : ''}" data-ci="${i}"></div>`).join('')
+    : mx ? CL.cells.map(n => n ? btn(n) : '<span></span>').join('')
     : list.map(btn).join('') || '<span class="muted" style="grid-column:1/-1">Empty group – press ✎ and click scenes to add them.</span>';
-  const cg = $('#camScenes'); cg.hidden = SGHIDE && !SGEDIT; cg.classList.toggle('mx', mx); if (cg.dataset.h !== html) { cg.innerHTML = html; cg.dataset.h = html; }
+  const cg = $('#camScenes'); cg.hidden = SGHIDE && !SGEDIT; cg.classList.toggle('mx', mx); cg.classList.toggle('cedit', !!CAMEDIT); if (cg.dataset.h !== html) { cg.innerHTML = html; cg.dataset.h = html; }
+  $('#camEdit').hidden = !CAMEDIT;
+  if (CAMEDIT) camEditBind();
   $$('#scenes [data-scene], #camScenes [data-scene]').forEach(b => b.onclick = () => {
     if (SGEDIT && SG >= 0 && b.closest('#camScenes')) { const g = SGEDIT.list[SG], n = b.dataset.scene; g.scenes = g.scenes.includes(n) ? g.scenes.filter(x => x !== n) : [...g.scenes, n]; return renderScenes(); }
     cmd('scene', {scene: b.dataset.scene}).then(() => toast('Scene held: press AUTO SCENES to follow the music again')); });
 }
+function camEditBind() {
+  const L = CAMEDIT, swap = (a, b) => { if (a === b || a < 0 || b < 0) return; [L.cells[a], L.cells[b]] = [L.cells[b], L.cells[a]]; };
+  const redo = () => { $('#camScenes').dataset.h = ''; renderScenes(); };
+  const hh = L.hidden.length ? '<span class="muted" style="font-size:12px">Add back:</span>' + L.hidden.map((n, i) => `<button class="btn sm" data-ch="${i}" title="Put it back on the grid (first empty place)">+ ${esc(n)}</button>`).join('') : '';
+  if ($('#camHidden').dataset.h !== hh) { $('#camHidden').innerHTML = hh; $('#camHidden').dataset.h = hh; }
+  $$('#camHidden [data-ch]').forEach(b => b.onclick = () => { const n = L.hidden.splice(+b.dataset.ch, 1)[0], e = L.cells.indexOf('');
+    if (e >= 0) L.cells[e] = n; else L.cells.push(n); redo(); });
+  $$('#camScenes [data-cx]').forEach(b => b.onclick = e => { e.stopPropagation(); const i = +b.dataset.cx; L.hidden.push(L.cells[i]); L.cells[i] = ''; CAMPICK = -1; redo(); });
+  $$('#camScenes [data-ci]').forEach(el => { const i = +el.dataset.ci;
+    el.onclick = () => { if (CAMPICK < 0) { if (L.cells[i]) CAMPICK = i; } else { swap(CAMPICK, i); CAMPICK = -1; } redo(); };      // click, click = swap (also on a phone)
+    el.ondragstart = e => { e.dataTransfer.setData('text/plain', 'cam:' + i); e.dataTransfer.effectAllowed = 'move'; el.classList.add('drag'); };
+    el.ondragend = () => el.classList.remove('drag');
+    el.ondragover = e => { e.preventDefault(); el.classList.add('over'); }; el.ondragleave = () => el.classList.remove('over');
+    el.ondrop = e => { e.preventDefault(); const t = e.dataTransfer.getData('text/plain'); if (t.startsWith('cam:')) { swap(+t.slice(4), i); CAMPICK = -1; redo(); } }; });
+}
+$('#camRow').onclick = () => { CAMEDIT.cells.push('', '', '', ''); $('#camScenes').dataset.h = ''; renderScenes(); };
+$('#camReset').onclick = () => { if (!confirm('Back to the standard Cameras grid?')) return; CAMEDIT = {cells: [...CAMROWS.flat(), ...CAMMORE], hidden: []}; CAMPICK = -1; $('#camScenes').dataset.h = ''; renderScenes(); };
+$('#camCancel').onclick = () => { CAMEDIT = null; CAMPICK = -1; $('#sgTabs').dataset.h = ''; $('#camScenes').dataset.h = ''; renderScenes(); };
+$('#camDone').onclick = () => { const c = [...CAMEDIT.cells]; while (c.length && c.slice(-4).every(x => !x) && c.length % 4 === 0) c.splice(-4);      // empty rows at the end go
+  const L = {cells: c, hidden: CAMEDIT.hidden}; cmd('cam_layout', L).then(() => { S.cam_layout = L; CAMEDIT = null; CAMPICK = -1; $('#sgTabs').dataset.h = ''; $('#camScenes').dataset.h = ''; renderScenes(); toast('Cameras grid saved'); }); };
 $('#sgName').oninput = () => { if (SGEDIT && SGEDIT.list[SG]) { SGEDIT.list[SG].name = $('#sgName').value.slice(0, 30); $('#sgTabs').dataset.h = ''; renderScenes(); } };
 $('#sgDel').onclick = () => { if (!SGEDIT || SG < 0 || !confirm('Delete group "' + SGEDIT.list[SG].name + '"? (the scenes stay)')) return; SGEDIT.list.splice(SG, 1); SG = -1; $('#sgDone').click(); };
 $('#sgDone').onclick = () => { const list = SGEDIT.list.filter(g => g.name.trim()); SGEDIT = null; cmd('scene_groups', {groups: list}).then(() => { $('#sgTabs').dataset.h = ''; toast('Groups saved'); }); };
