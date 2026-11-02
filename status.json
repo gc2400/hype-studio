@@ -1,19 +1,18 @@
 {
- "time": "2026-11-02T21:33:31",
- "result": "ok",
- "commit": "94bcbff7c01e9936c0d89019df87049d536469f1",
- "subject": "Safety: NaN level from the radio counts as silence (guard repairs it) and is never passed on by the AGC",
+ "time": "2026-11-02T21:57:40",
+ "result": "lab-failed",
+ "commit": "e48160354d3e518caa5840b0aa872b8cf8ba5d06",
+ "subject": "Sound: old 3-band multiband + Hype Punch removed; new \u2605 Hype Pro (4 bands split by subtraction, driven by the sliders) next to Classic; Low mids, Sub cut and Stereo width (above 300 Hz, M/S) sliders; Pro presets; meter = real band gain reduction",
  "log": [
-  "21:32:46 update 4c5b5961 \u2192 94bcbff7 \u00b7 2 file(s): engine/engine.py, engine/guard.py",
-  "21:32:46 restart hype-guard",
-  "21:32:46 restart hype-engine",
-  "21:33:31 installed OK \u00b7 restarted: hype-engine, hype-guard"
+  "21:57:02 update 94bcbff7 \u2192 e4816035 \u00b7 4 file(s): engine/engine.py, radio/radio.liq, web/panel/help.html, web/panel/settings.html",
+  "21:57:40 lab: FAIL: silent or NaN in the lab (0/6)",
+  "21:57:40 lab levels: | -nan -nan 1.05260033424 0. -nan -15.1865406162 -16.3788268405 -90. | -nan -nan 0.880904914903 0. -nan -15.1865406162 -16.3788268405 -90. | -nan -nan 1.55454373348 0. -nan -14.7307238973 -15.8981670082 -90. | -nan -nan 1.59967953189 0. -nan -14.7307238973 -15.8981670082 -90. | -nan -nan 1.51512240213 0. -nan -14.7307238973 -15.8981670082 -90. | -nan -nan 1.64952203893 0. -nan -13.8465144723 -15.4110225638 -90.\nFAIL: silent or NaN in the lab (0/6)"
  ],
  "guard": {
-  "song": "Dopebwoy x Jonna Fraser \u2013 Erop Eraf",
+  "song": "DENNIS x MC Kevin o Chris x Maluma x Karol G \u2013 Ta OK (Remix)",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
