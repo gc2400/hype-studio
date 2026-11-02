@@ -1,22 +1,22 @@
 {
- "time": "2026-11-02T22:10:25",
+ "time": "2026-11-02T22:23:16",
  "result": "rolled-back",
- "commit": "01acbc06725bd6b893795be2c695fe0f05a61d05",
- "subject": "Hype Pro: keep the gentle pre-limiter the chain always had before the main limiter (both modes) \u2013 tested 4/4 in the lab",
+ "commit": "34f8a67b2ae846cfc889bffb69cff8317d67e323",
+ "subject": "Lab test: also checks 6 s of pure silence first (NaN at start-up never reaches the air)",
  "log": [
-  "22:08:43 update 94bcbff7 \u2192 01acbc06 \u00b7 4 file(s): engine/engine.py, radio/radio.liq, web/panel/help.html, web/panel/settings.html",
-  "22:09:24 lab: PASS (6/6 good readings)",
-  "22:09:24 restart hype-engine",
-  "22:09:24 restart hype-radio",
-  "22:10:24 PROBLEM after install: ['radio silent after the update'] \u2192 rolling back",
-  "22:10:24 restart hype-engine",
-  "22:10:24 restart hype-radio"
+  "22:21:28 update 94bcbff7 \u2192 34f8a67b \u00b7 4 file(s): engine/engine.py, radio/radio.liq, web/panel/help.html, web/panel/settings.html",
+  "22:22:14 lab: PASS (6/6 good readings)",
+  "22:22:14 restart hype-engine",
+  "22:22:14 restart hype-radio",
+  "22:23:15 PROBLEM after install: ['radio silent after the update'] \u2192 rolling back",
+  "22:23:15 restart hype-engine",
+  "22:23:15 restart hype-radio"
  ],
  "guard": {
-  "song": "Jonna Fraser x $hirak \u2013 We're All Gonna Make It",
+  "song": "Tekno \u2013 Press Button",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
