@@ -1472,6 +1472,14 @@ class Engine:
                 return {"ok": True, "media": self.media.play(self, d)}
             elif action == "media_stop":
                 self.media.stop(self, keep_scene=bool(d.get("keep_scene"))); return {"ok": True}
+            elif action == "media_delete":     # Pads → MEDIA → ✎ EDIT → ×: the file goes to branding/media/.deleted (can be put back by hand)
+                f = os.path.basename(str(d.get("file") or ""))
+                src = os.path.join(MEDIA_DIR, f)
+                if not f or not os.path.isfile(src): return {"ok": False, "error": "file not found"}
+                if self.media.cur and self.media.cur.get("file") == f: self.media.stop(self)
+                os.makedirs(os.path.join(MEDIA_DIR, ".deleted"), exist_ok=True)
+                os.replace(src, os.path.join(MEDIA_DIR, ".deleted", time.strftime("%Y%m%d-%H%M%S-") + f)); log.info("media deleted: %s", f)
+                return {"ok": True}
             elif action == "pad_unloop":
                 self.pad_loops.pop(d.get("path"), None); self.duck_until = 0; self.liq.cmd("pads.stop"); self.pad_video_off()
             elif action == "pad":

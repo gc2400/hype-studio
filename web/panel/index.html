@@ -394,10 +394,11 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
       <div class="card" id="cPads">
         <div class="row between"><span class="lab">Pads</span><button class="btn sm" id="padEdit" title="Add banks, add or remove pads">✎ EDIT</button></div>
         <div class="banks" id="padBanks"></div>
+        <div class="row" id="mediaEditBar" hidden style="gap:6px;flex-wrap:wrap"><span class="muted" style="flex:1;font-size:12px">× deletes a picture or video from branding/media</span><button class="btn sm yellow" id="mediaDone">Done</button></div>
         <div class="row" id="padEditBar" hidden style="gap:6px;flex-wrap:wrap">
           <input id="bankName" type="text" aria-label="Bank name" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;width:150px">
           <button class="btn sm" id="bankNew">+ Bank</button><button class="btn sm red" id="bankDel">Delete bank</button>
-          <span class="muted" style="flex:1;font-size:12px">Drag jingles (or songs) from the library onto the pads · drag pads to reorder</span>
+          <span class="muted" style="flex:1;font-size:12px;min-width:140px">Drag from the library · drag to reorder</span>
           <button class="btn sm yellow" id="padSave">Save pads</button>
         </div>
         <div class="row" id="mediaBar" hidden style="gap:6px;flex-wrap:wrap">
@@ -797,7 +798,8 @@ function renderPads() {
   $('#padBanks').innerHTML = `<button class="btn sm ${bank === -1 ? 'on' : ''}" data-bank="-1" title="Pictures and videos from branding/media">MEDIA</button>` + BANKS.map((b, i) => { const nv = b.items.filter(p => p.voice && !p.played).length; return `<button class="btn sm ${i === bank ? 'on' : ''}" data-bank="${i}">${esc(b.name.replace(/^[^A-Za-z0-9]+\s*/u, ''))}${nv ? ` <b style="background:#FFE000;color:#061423;border-radius:8px;padding:0 5px;font-size:10px">${nv}</b>` : ''}</button>`; }).join('');
   $$('#padBanks [data-bank]').forEach(b => b.onclick = () => { bank = +b.dataset.bank; if (bank === -1) loadMedia(); renderPads(); });
   $('#mediaBar').hidden = bank !== -1;
-  if (bank === -1) return renderMediaPads();
+  $('#mediaEditBar').hidden = !(PEDIT && bank === -1);
+  if (bank === -1) { $('#padEditBar').hidden = true; return renderMediaPads(); }
   const B = BANKS[bank] || {items: []}; $('#bankName').value = B.name || ''; $('#pads').classList.toggle('edit', PEDIT); $('#padEditBar').hidden = !PEDIT;
   $('#pads').innerHTML = B.items.map((p, i) => `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE RADIO\s*[-–]\s*/i, '').replace(/^[^A-Za-z0-9]+\s*/u, ''))}<small>${fmt(p.duration)}${p.voice ? (p.played ? ' · ✓ played' : ' · NEW') : ''}${p.has_video ? ' · video' : ''}${p.missing ? ' · not found' : ''}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmpad="${i}" title="Remove">×</span>` : ''}</button>`).join('')
     + (PEDIT ? '<button class="padadd" id="padDrop">drop here</button>' : '') || '<span class="muted">This bank is empty. Press ✎ EDIT and drag jingles from the library onto it.</span>';
@@ -830,10 +832,11 @@ function renderMediaPads() {
   $('#mScene').innerHTML = `<option value="manual" ${MSCENE === 'manual' ? 'selected' : ''}>Manual – I pick the scene</option>` + MEDIA.scenes.map(n => `<option ${n === MSCENE ? 'selected' : ''}>${esc(n)}</option>`).join('');
   $$('#mSound [data-ms]').forEach(b => b.classList.toggle('on', b.dataset.ms === MSOUND));
   const cur = (S && S.media) || null;
-  $('#pads').classList.remove('edit');
-  $('#pads').innerHTML = MEDIA.files.map((m, i) => `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}">${esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span></button>`).join('')
+  $('#pads').innerHTML = MEDIA.files.map((m, i) => `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}">${esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('')
     || '<span class="muted">Upload pictures (png, jpg) and videos (mp4, mov) to <b>branding/media</b>, then they show here.</span>';
-  $$('#pads [data-mf]').forEach(b => b.onclick = () => { const m = MEDIA.files[+b.dataset.mf], cur_ = S && S.media;
+  $('#pads').classList.toggle('edit', PEDIT);
+  $$('#pads [data-mf]').forEach(b => b.onclick = e => { const m = MEDIA.files[+b.dataset.mf], cur_ = S && S.media;
+    if (PEDIT) { if (e.target.dataset.rmmedia !== undefined && confirm('Delete "' + m.file + '" from branding/media?')) cmd('media_delete', {file: m.file}).then(r => { if (r && r.ok === false) return toast(r.error, 1); toast(m.file + ' deleted'); loadMedia(); }); return; }
     if (cur_ && cur_.file === m.file) return cmd('media_stop', {}).then(() => toast('Media off – back to the automatic scene'));
     b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit');
     cmd('media_play', {file: m.file, scene: MSCENE, sound: MSOUND, loop: PLOOP}).then(r => r && r.ok === false ? toast(r.error, 1) : toast(m.file + (MSCENE === 'manual' ? ' loaded – pick an M scene yourself' : ' on ' + MSCENE) + (m.kind === 'video' ? (PLOOP ? ' · loops' : ' · stays on the last frame') : ''))); });
@@ -854,7 +857,8 @@ function padTick() {   // the playing bar on each pad
     b.querySelector('.bar').style.width = on ? (100 * (end - now) / len) + '%' : '0'; });
 }
 setInterval(padTick, 100);
-$('#padEdit').onclick = () => { PEDIT = !PEDIT; $('#padEdit').classList.toggle('on', PEDIT); if (!PEDIT) loadPads(); else renderPads(); if (PEDIT) toast('Edit pads: drag jingles from the library onto the pads, then Save'); };
+$('#mediaDone').onclick = () => { PEDIT = false; $('#padEdit').classList.remove('on'); renderPads(); };
+$('#padEdit').onclick = () => { if (bank === -1) { PEDIT = !PEDIT; $('#padEdit').classList.toggle('on', PEDIT); return renderPads(); } PEDIT = !PEDIT; $('#padEdit').classList.toggle('on', PEDIT); if (!PEDIT) loadPads(); else renderPads(); if (PEDIT) toast('Edit pads: drag jingles from the library onto the pads, then Save'); };
 $('#bankName').oninput = () => { if (BANKS[bank]) BANKS[bank].name = $('#bankName').value; };
 $('#bankNew').onclick = () => { BANKS.push({name: 'Bank ' + (BANKS.length + 1), items: []}); bank = BANKS.length - 1; renderPads(); };
 $('#bankDel').onclick = () => { if (BANKS[bank] && confirm('Delete bank "' + BANKS[bank].name + '"? (the jingles stay in the library)')) { BANKS.splice(bank, 1); bank = 0; renderPads(); } };
