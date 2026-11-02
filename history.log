@@ -181,3 +181,4 @@
 2026-11-02T16:44:59 ok 616e396b ✎ arrange grid for PIP and MEDIA too (each tab keeps its own layout)
 2026-11-02T18:58:49 ok 72c369bf Lower third: Style C full width always shows full width
 2026-11-02T19:07:46 ok 3d6e1fa2 Media: Manual mode (only loads the media, no scene switch on play or stop); STOP MEDIA next to the sound buttons
+2026-11-02T19:14:41 ok 4f72932c Pads MEDIA edit: delete pictures/videos (to branding/media/.deleted), no bank bar there; shorter pad edit hint
