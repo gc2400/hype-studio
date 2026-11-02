@@ -1,18 +1,20 @@
 {
- "time": "2026-11-02T20:30:01",
- "result": "ok",
- "commit": "4c5b5961a86a8a9333210c533bc10f521774d615",
- "subject": "GO LIVE only with the studio connected: header button dimmed + message, server refuses live/on while the studio is offline",
+ "time": "2026-11-02T21:21:43",
+ "result": "rolled-back",
+ "commit": "8ec16cc0873ecbd9ae26e5859b847dc4f0319d1b",
+ "subject": "Multiband fixed: 4 bands split by subtraction (adds up exactly \u2013 the old one had \u221218 dB holes at 120 Hz and 4 kHz), driven by the sliders/presets; compressor meter = real gain reduction of the busiest band; no extra hidden limiter",
  "log": [
-  "20:29:16 update c2a797a9 \u2192 4c5b5961 \u00b7 3 file(s): engine/engine.py, web/panel/header.js, web/panel/help.html",
-  "20:29:16 restart hype-engine",
-  "20:30:01 installed OK \u00b7 restarted: hype-engine"
+  "21:20:04 update 4c5b5961 \u2192 8ec16cc0 \u00b7 2 file(s): radio/radio.liq, web/panel/settings.html",
+  "21:20:42 lab: PASS (6/6 good readings)",
+  "21:20:42 restart hype-radio",
+  "21:21:43 PROBLEM after install: ['radio silent after the update'] \u2192 rolling back",
+  "21:21:43 restart hype-radio"
  ],
  "guard": {
-  "song": "Jeon \u2013 Padel",
+  "song": "Sean Paul x Seanizzle \u2013 Face Card",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
