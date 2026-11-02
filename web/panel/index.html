@@ -613,6 +613,9 @@ const CAMROWS = [['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'], ['', 'CAM 1 2', 'CAM 1 2 
   ['CAM 1 V G', '', 'CAM 1 2 3 V G', ''], ['VID 1', 'VID 1 2', 'VID 1 2 3', 'VID 1 2 3 4'], ['', '', 'CAM 3 1 2 B', 'CAM 1 2 3 4 B'], ['', '', 'CAM 1 2 3 R', 'CAM 1 2 3 4 R']];
 const CAMMORE = ['CAM 1 V PIP', 'VID 1 LIVE MIX'];
 const CAMS = [...CAMROWS.flat().filter(Boolean), ...CAMMORE];
+// MEDIA tab: the same layout as the Cameras grid – M = the media window in place of the video
+const MROWS = [['MEDIA FULL', '', '', ''], ['CAM 1 M', 'CAM 1 2 M', 'CAM 1 2 3 M', ''], ['CAM 1 M G', '', 'CAM 1 2 3 M G', ''], ['M 1', 'M 1 2', 'M 1 2 3', 'M 1 2 3 4'], ['CAM 1 M PIP', 'M 1 LIVE MIX', '', '']];
+const MSC = MROWS.flat().filter(Boolean);
 let CAMEDIT = null, CAMPICK = -1;    // editing the Cameras grid: {cells, hidden}; CAMPICK = the place you clicked first (click another to swap)
 function camLayout() {      // your own arrangement (saved on the server) – scenes it doesn't know yet go at the end
   const L = CAMEDIT || (S && S.cam_layout) || {cells: [...CAMROWS.flat(), ...CAMMORE], hidden: []};
@@ -641,13 +644,12 @@ function renderScenes() {
   }
   $('#sgEdit').hidden = !SGEDIT; if (SGEDIT && SG >= 0 && document.activeElement !== $('#sgName')) $('#sgName').value = (G[SG] || {}).name || '';
   const PIPS = (S.pip_frames || []).map(f => 'PIP@' + f);
-  const MSC = ['MEDIA FULL', 'CAM 1 + MEDIA', 'CAM 1 2 + MEDIA'];
   const list = SGEDIT && SG >= 0 ? [...SCENES.map(x => x[0]), ...CAMS, ...PIPS, ...MSC] : SG === -1 ? CAMS : SG === -2 ? PIPS : SG === -3 ? MSC : ((G[SG] || {}).scenes || []);
   const scName = n => n.startsWith('PIP@') ? 'PIP · ' + n.slice(4).replace(/^PIP_/, '').replace(/\.png$/i, '') : n;
   const scLive = n => n.startsWith('PIP@') ? S.scene === 'PIP' && S.pip === n.slice(4) : S.scene === n;
   const inG = SGEDIT && SG >= 0 ? new Set(G[SG].scenes) : null;
   const btn = n => `<button class="btn scene ${scLive(n) ? 'live' : ''} ${inG && inG.has(n) ? 'ing' : ''}" data-scene="${esc(n)}">${esc(scName(n))}</button>`;
-  const mx = SG === -1 && !SGEDIT, CL = camLayout();
+  const mx = (SG === -1 || SG === -3) && !SGEDIT, CL = SG === -3 ? {cells: MROWS.flat(), hidden: []} : camLayout();
   if (SG !== -1 && CAMEDIT) CAMEDIT = null;
   const html = mx && CAMEDIT ? CL.cells.map((n, i) => n ? `<div class="camc ${CAMPICK === i ? 'pick' : ''}" draggable="true" data-ci="${i}"><span class="btn scene">${esc(n)}</span><button class="camx" data-cx="${i}" aria-label="Remove ${esc(n)}" title="Take it off the grid">×</button></div>`
         : `<div class="camc empty ${CAMPICK === i ? 'pick' : ''}" data-ci="${i}"></div>`).join('')
@@ -818,7 +820,7 @@ function padDrop(d, pos) {
     B.items.splice(pos, 0, {path, label: it.title || path.split('/').pop(), duration: it.duration, has_video: it.has_video}); renderPads(); }
 }
 // ---------- media pads: a picture or video from branding/media in the MEDIA scenes ----------
-let MEDIA = {files: [], scenes: ['MEDIA FULL', 'CAM 1 + MEDIA', 'CAM 1 2 + MEDIA']}, MSOUND = 'duck', MSCENE = 'MEDIA FULL';
+let MEDIA = {files: [], scenes: MSC}, MSOUND = 'duck', MSCENE = 'MEDIA FULL';
 try { MSOUND = localStorage.getItem('hypeMSound') || 'duck'; MSCENE = localStorage.getItem('hypeMScene') || 'MEDIA FULL'; if (MSCENE === 'MEDIA') MSCENE = 'MEDIA FULL'; } catch (e) {}
 function loadMedia() { return api('media').then(d => { MEDIA = d; if (bank === -1) renderPads(); }).catch(() => {}); }
 function renderMediaPads() {

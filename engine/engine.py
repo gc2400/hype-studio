@@ -2419,7 +2419,7 @@ def ensure_adbox():
         except Exception as e: log.warning("ad box source: %s", e); E.tv.cl = None
 
 MEDIA_DIR = "/srv/hype/branding/media"
-MEDIA_SCENES = ["MEDIA FULL", "CAM 1 + MEDIA", "CAM 1 2 + MEDIA"]
+MEDIA_SCENES = ["MEDIA FULL", "CAM 1 M", "CAM 1 2 M", "CAM 1 2 3 M", "CAM 1 M G", "CAM 1 2 3 M G", "M 1", "M 1 2", "M 1 2 3", "M 1 2 3 4", "CAM 1 M PIP", "M 1 LIVE MIX"]   # M = the media window in place of the video
 MEDIA_CACHE = "/var/lib/hype/media_cache.json"
 _MC = {}
 def media_files():
@@ -2465,7 +2465,7 @@ def media_files():
     return out
 
 class Media:
-    """What plays in the 'Media window' (used by the scenes MEDIA, MEDIA FULL, CAM 1 + MEDIA, CAM 1 2 + MEDIA).
+    """What plays in the 'Media window' (used by MEDIA FULL and the M scenes: the camera layouts with media in place of the video).
     The video's sound goes through the radio (pads queue), so radio and TV hear it. Sound: mute | duck (music down) | off (music off).
     Without loop a video stays on its last frame."""
     def __init__(self): self.cur = None; self.token = None
