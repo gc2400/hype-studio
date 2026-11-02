@@ -276,6 +276,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 @media (max-width:640px){.cdt{flex-wrap:wrap}.cdt .pos{margin-left:auto}.cues .cueset{font-size:11px;letter-spacing:.03em;padding:0 6px}}
 @media (hover:none) and (max-width:640px){.keys{display:none}}
 @media (max-width:640px){#cGuests>.row.between,#cGuests>.row.between>.row,.gcard .row{flex-wrap:wrap!important}.gcard{grid-template-columns:1fr}.gcard video{width:100%}.cdf{flex-wrap:wrap}.cdf .ovb .sel{max-width:100%}}
+.scene.llbtn{border-style:dashed}.scene.llbtn.llon{border-style:solid;border-color:var(--g)}.scene.llbtn.llon small{color:var(--g)}
 </style>
 </head>
 <body>
@@ -597,15 +598,18 @@ $('#bAuto').onclick = () => cmd('auto', {on: true}).then(() => { if (MODE === 'd
 $('#bManual').onclick = () => cmd('auto', {on: false}).then(() => toast('MANUAL: your AUX plays – the radio keeps going'));
 $('#bAutoScene').onclick = () => cmd('autoscene'); $('#bPadStop').onclick = () => cmd('pads_stop').then(() => { Object.keys(PLAYING).forEach(k => delete PLAYING[k]); });
 // ---------- scenes ----------
-const SCENES = [['Music video', 'auto · clips'], ['Hype Screen', 'auto · audio only'], ['Branding', 'auto · jingles'], ['CAM 1', 'full screen']];
-const CAMS = ['CAM 2', 'CAM 3', 'CAM 4', 'CAM 1 V', 'CAM 1 G', 'VID 1', 'CAM 1 2', 'CAM 1 2 V', 'CAM 1 2 G', 'VID 1 2', 'CAM 1 2 3', 'CAM 1 2 3 V G', 'CAM 1 2 3 G', 'VID 1 2 3', 'CAM 1 2 3 B', 'CAM 1 2 3 R', 'CAM 1 V G', 'CAM 1 V PIP', 'VID 1 LIVE MIX', 'CAM 1 2 3 4', 'CAM 1 2 3 V', 'CAM 1 2 3 4 B', 'CAM 1 2 3 4 R', 'CAM 1 2 3 4 G', 'VID 1 2 3 4'];
+const SCENES = [['Music video', 'auto · clips'], ['Hype Screen', 'auto · audio only'], ['Branding', 'auto · jingles']];
+const CAMS = ['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4', 'CAM 1 V', 'CAM 1 G', 'VID 1', 'CAM 1 2', 'CAM 1 2 V', 'CAM 1 2 G', 'VID 1 2', 'CAM 1 2 3', 'CAM 1 2 3 V G', 'CAM 1 2 3 G', 'VID 1 2 3', 'CAM 1 2 3 B', 'CAM 1 2 3 R', 'CAM 1 V G', 'CAM 1 V PIP', 'VID 1 LIVE MIX', 'CAM 1 2 3 4', 'CAM 1 2 3 V', 'CAM 1 2 3 4 B', 'CAM 1 2 3 4 R', 'CAM 1 2 3 4 G', 'VID 1 2 3 4'];
 let SG = -1, SGEDIT = null, SGHIDE = false;
 try { SGHIDE = localStorage.getItem('hypeSGhide') === '1'; } catch (e) {}   // -1 = Cameras (all layouts); n = your group n
 try { SG = +(localStorage.getItem('hypeSG') ?? -1); } catch (e) {}
 function groups() { return (S && S.scene_groups) || []; }
 function renderScenes() {
-  const sb = SCENES.map(([n, s]) => `<button class="btn scene ${S.scene === n ? 'live' : ''}" data-scene="${n}">${n}<small>${s}</small></button>`).join('');
-  if ($('#scenes').dataset.h !== sb) { $('#scenes').innerHTML = sb; $('#scenes').dataset.h = sb; }
+  const ll = S.live_layer !== false;
+  const sb = SCENES.map(([n, s]) => `<button class="btn scene ${S.scene === n ? 'live' : ''}" data-scene="${n}">${n}<small>${s}</small></button>`).join('') +
+    `<button class="btn scene llbtn ${ll ? 'llon' : ''}" id="bLL" aria-pressed="${ll}" title="Shoutouts, polls, chat, photos … from Hype Live on every scene">Live Layer<small>${ll ? 'on · all scenes' : 'off'}</small></button>`;
+  if ($('#scenes').dataset.h !== sb) { $('#scenes').innerHTML = sb; $('#scenes').dataset.h = sb;
+    $('#bLL').onclick = () => { const on = !(S.live_layer !== false); cmd('live_layer', {on}).then(() => { S.live_layer = on; $('#scenes').dataset.h = ''; renderScenes(); toast(on ? 'Live Layer on' : 'Live Layer off – Hype Live is hidden on TV'); }); }; }
   const G = SGEDIT ? SGEDIT.list : groups(); if (SG >= G.length || SG < -3) SG = -1;
   const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras ${SG === -1 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP ${SG === -2 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA ${SG === -3 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)} ${SG === i ? (SGHIDE ? '▸' : '▾') : ''}</button>`).join('') + (SGEDIT ? '' : '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ GROUP</button>') + (!SGEDIT && SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">✎</button>' : '');
   if ($('#sgTabs').dataset.h !== tabs) { $('#sgTabs').innerHTML = tabs; $('#sgTabs').dataset.h = tabs;
@@ -617,7 +621,7 @@ function renderScenes() {
   }
   $('#sgEdit').hidden = !SGEDIT; if (SGEDIT && SG >= 0 && document.activeElement !== $('#sgName')) $('#sgName').value = (G[SG] || {}).name || '';
   const PIPS = (S.pip_frames || []).map(f => 'PIP@' + f);
-  const MSC = ['MEDIA', 'MEDIA FULL', 'CAM 1 + MEDIA', 'CAM 1 2 + MEDIA'];
+  const MSC = ['MEDIA FULL', 'CAM 1 + MEDIA', 'CAM 1 2 + MEDIA'];
   const list = SGEDIT && SG >= 0 ? [...SCENES.map(x => x[0]), ...CAMS, ...PIPS, ...MSC] : SG === -1 ? CAMS : SG === -2 ? PIPS : SG === -3 ? MSC : ((G[SG] || {}).scenes || []);
   const scName = n => n.startsWith('PIP@') ? 'PIP · ' + n.slice(4).replace(/^PIP_/, '').replace(/\.png$/i, '') : n;
   const scLive = n => n.startsWith('PIP@') ? S.scene === 'PIP' && S.pip === n.slice(4) : S.scene === n;
@@ -766,8 +770,8 @@ function padDrop(d, pos) {
     B.items.splice(pos, 0, {path, label: it.title || path.split('/').pop(), duration: it.duration, has_video: it.has_video}); renderPads(); }
 }
 // ---------- media pads: a picture or video from branding/media in the MEDIA scenes ----------
-let MEDIA = {files: [], scenes: ['MEDIA', 'MEDIA FULL', 'CAM 1 + MEDIA', 'CAM 1 2 + MEDIA']}, MSOUND = 'duck', MSCENE = 'MEDIA';
-try { MSOUND = localStorage.getItem('hypeMSound') || 'duck'; MSCENE = localStorage.getItem('hypeMScene') || 'MEDIA'; } catch (e) {}
+let MEDIA = {files: [], scenes: ['MEDIA FULL', 'CAM 1 + MEDIA', 'CAM 1 2 + MEDIA']}, MSOUND = 'duck', MSCENE = 'MEDIA FULL';
+try { MSOUND = localStorage.getItem('hypeMSound') || 'duck'; MSCENE = localStorage.getItem('hypeMScene') || 'MEDIA FULL'; if (MSCENE === 'MEDIA') MSCENE = 'MEDIA FULL'; } catch (e) {}
 function loadMedia() { return api('media').then(d => { MEDIA = d; if (bank === -1) renderPads(); }).catch(() => {}); }
 function renderMediaPads() {
   $('#mScene').innerHTML = MEDIA.scenes.map(n => `<option ${n === MSCENE ? 'selected' : ''}>${esc(n)}</option>`).join('');

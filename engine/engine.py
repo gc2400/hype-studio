@@ -464,6 +464,13 @@ class TV:
             try: self.prog = self.cl.get_current_program_scene().current_program_scene_name   # what OBS really shows now
             except Exception: self.prog = None
         return self.cl
+    def live_layer(self, on):
+        """Show / hide the 'Live Layer' item in every scene (OBS keeps it that way, also after a restart)."""
+        with self.olock:
+            cl = self.client()
+            for sc in cl.get_scene_list().scenes:
+                for it in cl.get_scene_item_list(sc["sceneName"]).scene_items:
+                    if it["sourceName"] == "Live Layer" and it["sceneItemEnabled"] != on: cl.set_scene_item_enabled(sc["sceneName"], it["sceneItemId"], on)
     def set_scene(self, scene):
       with self.olock:
         try:
@@ -1443,6 +1450,8 @@ class Engine:
                 self.push_next(c)
             elif action == "scene":
                 self.tv.auto = False; self.tv.set_scene(d["scene"])
+            elif action == "live_layer":      # the Hype Live Layer (shoutouts, polls, chat …) on / off in every scene
+                on = bool(d.get("on")); planner.set_setting(c, "live_layer", on); self.tv.live_layer(on)
             elif action == "autoscene":
                 self.tv.auto = True; self.tv.scene = None
                 if self.now: self.tv.set_scene(self.now.get("scene") or "Hype Screen")
@@ -1725,7 +1734,7 @@ class Engine:
             cid = planner.clock_for(c, time.time()); cname = c.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() if cid else None
             return {"show": SHOW["title"], "clock": cname[0] if cname else None, "now": n, "elapsed": round(el, 1), "upcoming": upcoming, "history": hist, "auto": self.auto,
                     "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups,
-                    "tv_sound": "clip" if self.tv.split else "radio",
+                    "tv_sound": "clip" if self.tv.split else "radio", "live_layer": bool(planner.get_setting(c, "live_layer", True)),
                     "time": time.strftime("%H:%M:%S"), "server_time": time.time()}
 
 def pair_clip(c, clip_path):
@@ -2392,7 +2401,7 @@ def ensure_adbox():
         except Exception as e: log.warning("ad box source: %s", e); E.tv.cl = None
 
 MEDIA_DIR = "/srv/hype/branding/media"
-MEDIA_SCENES = ["MEDIA", "MEDIA FULL", "CAM 1 + MEDIA", "CAM 1 2 + MEDIA"]
+MEDIA_SCENES = ["MEDIA FULL", "CAM 1 + MEDIA", "CAM 1 2 + MEDIA"]
 MEDIA_CACHE = "/var/lib/hype/media_cache.json"
 _MC = {}
 def media_files():
@@ -2462,7 +2471,7 @@ class Media:
                 cl.set_input_mute("Media video", True)
                 cl.trigger_media_input_action("Media video", "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
                 cl.set_scene_item_enabled("Media window", vid, True); cl.set_scene_item_enabled("Media window", pic, False)
-        sc = d.get("scene") or (tv.scene if tv.scene in MEDIA_SCENES else "MEDIA")
+        sc = d.get("scene") or (tv.scene if tv.scene in MEDIA_SCENES else "MEDIA FULL")
         if sc in MEDIA_SCENES:
             with LOCK: tv.auto = False; tv.set_scene(sc)
         self.cur = {"file": f, "kind": info["kind"], "sound": sound, "loop": loop, "started": time.time(), "duration": info["duration"], "scene": sc}
