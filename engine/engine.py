@@ -1827,11 +1827,14 @@ def up_check(qs):
     uid = qs.get("id", [""])[0]
     if not re.fullmatch(r"[a-f0-9]{16,64}", uid): raise ValueError("bad upload id")
     folder = os.path.normpath(qs.get("folder", [""])[0]).strip("/"); parts = folder.split("/")
-    if parts[0] not in UP_SECTIONS or ".." in parts or folder.startswith("."): raise ValueError("choose a library folder")
+    media = folder == "branding/media"          # Pads → MEDIA → ✎ EDIT: drop pictures / videos for the media pads
+    if (parts[0] not in UP_SECTIONS and not media) or ".." in parts or folder.startswith("."): raise ValueError("choose a library folder")
     d = os.path.join(ROOT, folder)
     if not os.path.isdir(d): raise ValueError("folder not found")
     name = os.path.basename(qs.get("name", [""])[0]).replace("\x00", "").strip()
-    if not name or name.startswith(".") or os.path.splitext(name)[1].lower() not in UP_EXT: raise ValueError("only audio / video files")
+    ext = os.path.splitext(name)[1].lower()
+    if media and ext not in (".png", ".jpg", ".jpeg", ".webp", ".mp4", ".mov", ".webm", ".mkv", ".m4v"): raise ValueError("only pictures (png, jpg, webp) or videos (mp4, mov, webm)")
+    if not name or name.startswith(".") or (not media and ext not in UP_EXT): raise ValueError("only audio / video files")
     if BAD_NAME.search(name): raise ValueError("the file name has control characters (e.g. a line break) - rename it")
     total = int(qs.get("total", ["0"])[0] or 0)
     if total <= 0 or total > 8 * 1024 ** 3: raise ValueError("file too big (max 8 GB)")
