@@ -2045,7 +2045,9 @@ def agc_loop():
             n += 1
             v = ask("radio.level").split()
             if len(v) < 6: continue
-            lvl = float(v[5]); AGC["level"] = lvl
+            lvl = float(v[5])
+            if lvl != lvl or AGC["db"] != AGC["db"]: AGC["db"] = 0.0; continue    # NaN from the radio: never pass it on as a gain
+            AGC["level"] = lvl
             st = AGC["strength"]; up_max, down_max = min(6.0, 8.0 * st), -6.0 * st
             g = AGC["db"]; state = "ride"
             lift = AGC["lift"]

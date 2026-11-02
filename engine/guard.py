@@ -114,6 +114,7 @@ class Guard:
         level = None
         try:
             v = telnet("radio.level").split(); level = max(float(v[0]), float(v[1]))
+            if level != level: level = 0.0      # NaN (broken audio in the chain) = silence: the normal silence repair runs
         except Exception: pass
         st["liq"] = level is not None; st["level"] = level
         silent = level is not None and level < 0.003 and not stopped
