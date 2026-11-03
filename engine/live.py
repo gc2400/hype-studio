@@ -239,6 +239,8 @@ class Live:
                     self._gn_prev[p] = {"id": x.get("id"), "got": got, "lost": lost, "b": b, "t": now}
                 for p in list(self.gnet):
                     if p not in seen: self.gnet.pop(p, None); self._gn_prev.pop(p, None)
+                for p in list(self.gmeas):
+                    if p not in seen: self.gmeas.pop(p, None)      # the guest left: a next guest in this slot is measured fresh
             except Exception: pass
             if n % 4: continue
             try:
