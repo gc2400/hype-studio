@@ -1,17 +1,18 @@
 {
- "time": "2026-11-03T09:36:25",
+ "time": "2026-11-03T18:02:31",
  "result": "ok",
- "commit": "01995983783f6c3d85372bec196840b39b6d167a",
- "subject": "Stream protection tighter: 5 requests/s (burst 20) and 8 at once per address \u2013 one address can take at most ~5 viewers' worth of TV",
+ "commit": "f7ce34264ddf207b3235c1a9b4d4db7ea7c827c2",
+ "subject": "Clip start: if OBS refuses the seek (clip stopped), start the clip and seek again instead of leaving the TV black",
  "log": [
-  "09:36:25 update b62a9f93 \u2192 01995983 \u00b7 1 file(s): system/nginx-hype.conf",
-  "09:36:25 installed OK \u00b7 restarted: nginx-reload"
+  "18:01:46 update 01995983 \u2192 f7ce3426 \u00b7 1 file(s): engine/engine.py",
+  "18:01:46 restart hype-engine",
+  "18:02:31 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": " \u2013 Hype SWP Old School",
+  "song": "Frenna \u2013 STARLIFE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
