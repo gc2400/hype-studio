@@ -107,6 +107,7 @@ dyn_mid = ref(fun () -> 0.)
 dyn_post = ref(fun () -> 0.)
 dyn_cg = ref(fun () -> 0.)
 dyn_lg = ref(fun () -> 0.)
+dyn_mm = ref(fun () -> (0., 0.))   # master_me: (compressor, limiter) dB, estimated from before / after the plugin
 # 3-band compressor = Liquidsoap's compress.multiband, but its dry/wet mix no longer re-applies the song gain:
 # the built-in one uses amplify() WITH the liq_amplify override, so every song's loudness correction was applied twice
 def hype_multiband(~limit=true, ~wet=getter(1.), s, l)
@@ -122,6 +123,7 @@ def hype_multiband(~limit=true, ~wet=getter(1.), s, l)
   if false then () else list.hd(l) end
   limiter(s)
 end
+def db_m(v) = if v < 0.00003 then -90. else dB_of_lin(v) end end
 def process(~meter=false, ~light=false, x) =
   p = fun () -> snd_punch() > 0.75     # 1 = Hype Punch
   x = filter.iir.eq.high(frequency=snd_hpf, q=0.7, x)     # rumble cut (slider, 20–40 Hz)
@@ -166,6 +168,10 @@ def process(~meter=false, ~light=false, x) =
     dyn_lg := fun () -> lm.gain() + cs.gain()
   end
   if light then r3 else      # the TV pads chain always uses Classic (saves CPU)
+    # master_me gets r1 (after the EQ, measured): so the AGC's measurement also runs in master_me mode
+    # (before: r1 sat only in the Classic branch, which is not computed then -> the AGC saw a frozen level and boosted)
+    mi3 = rms(duration=3., r1)
+    mi = peak(duration=0.3, mi3)
     mmx = ladspa.master_me(target={int_of_float(mm_target())}, kneecomp_strength={int_of_float(mm_comp())},
             low_strength={int_of_float(mm_mb())}, high_strength={int_of_float(mm_mb())}, limiter_strength={int_of_float(mm_lim())},
             brickwall_ceiling={snd_ceiling() - 0.2}, eq_highpass_freq=snd_hpf,
@@ -173,8 +179,21 @@ def process(~meter=false, ~light=false, x) =
             kneecomp_tar_thresh=-4., kneecomp_attack=20., kneecomp_release=200., kneecomp_knee=6., kneecomp_link=60,
             low_crossover=60., low_tar_thresh=-3., low_attack=15., low_release=150., low_knee=12., low_link=70,
             high_crossover=8000., high_tar_thresh=-12., high_attack=8., high_release=30., high_knee=12., high_link=30,
-            makeup=1., limiter_tar_thresh=3., limiter_attack=3., limiter_release=40., limiter_knee=3., brickwall_release=75., xeq)
+            makeup=1., limiter_tar_thresh=3., limiter_attack=3., limiter_release=40., limiter_knee=3., brickwall_release=75., mi)
     mmx = ladspa.fastlookaheadlimiter(input_gain=0., limit={snd_ceiling() - 0.2}, release_time=0.08, mmx)   # the same last safety as Classic
+    mo1 = rms(duration=0.3, mmx)
+    mo3 = rms(duration=3., mo1)
+    mmx = peak(duration=0.3, mo3)
+    if meter then
+      # meters (the plugin's own meters are not reachable from Liquidsoap), from before / after master_me:
+      # compressor = how much the loud moments (0.3 s) are squeezed against the 3 s average
+      # limiter    = how much the peaks are squeezed against the 0.3 s level
+      dyn_mm := fun () -> begin
+        ir = db_m(r1.rms()); il = db_m(mi3.rms()); ip = db_m(mi.peak())
+        orr = db_m(mo1.rms()); ol = db_m(mo3.rms()); op = db_m(mmx.peak())
+        (max(0., (ir - il) - (orr - ol)), max(0., (ip - ir) - (op - orr)))
+      end
+    end
     switch(track_sensitive=false, [({snd_punch() > 0.25}, mmx), ({true}, r3)])   # only the one in use is computed
   end
 end
@@ -205,8 +224,11 @@ def meter_level(_) =
   fcg = dyn_cg()
   flg = dyn_lg()
   # classic: the compressor's own gain reduction; multiband: estimated from the level before / after (+ its make-up gain)
-  comp = if snd_comp() < 0.5 or quiet or snd_punch() > 0.25 then 0. else max(0., 0. - fcg()) end   # master_me: no meter yet
-  lim = if quiet then 0. else max(0., 0. - flg()) end
+  fmm = dyn_mm()
+  let (mc, ml) = fmm()
+  mmode = snd_punch() > 0.25
+  comp = if quiet then 0. elsif mmode then mc elsif snd_comp() < 0.5 then 0. else max(0., 0. - fcg()) end
+  lim = if quiet then 0. elsif mmode then ml else max(0., 0. - flg()) end
   "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a}"
 end
 server.register(namespace="radio", "level", meter_level)
