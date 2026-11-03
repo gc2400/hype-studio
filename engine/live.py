@@ -101,7 +101,15 @@ class Live:
             try:
                 a = (self.liq.cmd("live.source") or "").split()[0]
                 if self.live and self.air == "studio" and a != "studio": self.drops += 1; log.warning("LIVE: studio signal dropped – automation on air")
+                if self.live and self.air != "studio" and a == "studio" and self.drops: log.info("LIVE: studio signal back")
                 self.air = a
+                # the TV's sound follows what is really on air: your internet drops -> the radio plays the automation, and the TV
+                # takes the radio's sound too (else the TV would be silent); the studio is back -> your mix again
+                eff = bool(self.live and a == "studio")
+                if eff: self._off_t = None
+                elif self.live and getattr(self, "_off_t", None) is None: self._off_t = time.time()
+                if eff != bool(self.tv.live) and (eff or not self.live or time.time() - (self._off_t or 0) >= 1.0):
+                    self.tv.live = eff; self.tv.route_audio(force=True)
             except Exception: pass
             time.sleep(0.5)
             try: self.black_tick()
