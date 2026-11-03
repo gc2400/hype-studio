@@ -1,4 +1,4 @@
-"""Guest lip sync, measured (not guessed).
+"""Guest lip sync, measured (not guessed) – installed to /opt/hype by the updater (deploy/files.txt).
 
 A guest's picture goes guest -> server -> OBS. Their voice takes a longer road: guest -> server -> your laptop ->
 Mixcast -> your laptop -> server ("studio") -> OBS. How much longer depends on your laptop, the Mixcast and both
