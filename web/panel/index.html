@@ -130,7 +130,9 @@ body.dj .auxbtn,body.dj.is-auto .auxbtn{display:inline-flex}body.dj .auxbtn butt
 #padBanks [data-bank="-1"]:hover{background:#3a3200}#padBanks [data-bank="-1"].on{background:#FFE000;color:#061423}
 .ri .acts button{min-height:34px;min-width:38px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center}
 .ri .acts svg{width:18px;height:18px}
-dialog#cueDlg{background:var(--card);color:var(--txt);border:1px solid var(--line2);border-radius:16px;padding:14px 16px;width:min(900px,96vw);max-height:94vh;overflow:auto}
+dialog#cueDlg{box-sizing:border-box;background:var(--card);color:var(--txt);border:1px solid var(--line2);border-radius:16px;padding:14px 16px;width:min(900px,calc(100vw - 16px));max-width:calc(100vw - 16px);max-height:94vh;overflow-x:hidden;overflow-y:auto}
+#cueDlg *{box-sizing:border-box;min-width:0}   /* nothing in the song settings may be wider than the phone */
+@media (max-width:640px){dialog#cueDlg{padding:12px 10px;max-height:92vh}.cdf .muted{display:none}.cdf .ovb{flex:1 1 100%}.cdf .ovb .sel{max-width:none;flex:1}.cdf #ovBox{width:100%}.cdt .zm{order:5}}
 dialog#cueDlg::backdrop{background:rgba(2,8,16,.7)}
 .cdh{display:flex;align-items:flex-start;gap:10px}.cdh .t{flex:1;min-width:0}
 .cdh .t b{display:block;font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
