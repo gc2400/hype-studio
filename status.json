@@ -1,18 +1,17 @@
 {
- "time": "2026-11-03T09:27:09",
+ "time": "2026-11-03T09:30:15",
  "result": "ok",
- "commit": "537528ff1984a0b237b7a9af09b0d293369d73e7",
- "subject": "Phone preview: on iPhone / iPad, a VP9 / AV1 / 10-bit video in the song settings gets a small H.264 copy (made once, ~30 s) so the picture shows \u2013 the original and the TV are untouched",
+ "commit": "b62a9f931c19f29e2898b29fa6676930317737be",
+ "subject": "Stream protection (stream.hyperadio.nl): max 4 radio streams and 16 TV requests at once per address, 15 requests/s per address, total caps (3000 radio, 800 TV) \u2013 trusted addresses (IPTV partners) can be added without limits",
  "log": [
-  "09:26:24 update 492a08c3 \u2192 537528ff \u00b7 3 file(s): engine/engine.py, system/nginx-hype.conf, web/panel/index.html",
-  "09:26:24 restart hype-engine",
-  "09:27:09 installed OK \u00b7 restarted: hype-engine, nginx-reload"
+  "09:30:15 update 537528ff \u2192 b62a9f93 \u00b7 1 file(s): system/nginx-hype.conf",
+  "09:30:15 installed OK \u00b7 restarted: nginx-reload"
  ],
  "guard": {
-  "song": "Young Jonn \u2013 Glass in the Air",
+  "song": "Da Ridlaz x Wowi \u2013 Pull Up",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
