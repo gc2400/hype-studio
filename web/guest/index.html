@@ -36,6 +36,8 @@ body.incall .wrap{max-width:1100px}
 .turn{display:flex;align-items:center;gap:12px;background:var(--y);color:var(--bg);border-radius:16px;padding:12px 14px}
 .turn .ic{flex:none}.turn div{flex:1;display:flex;flex-direction:column;gap:2px}.turn b{font-size:16px;font-weight:900}.turn span{font-size:12px;font-weight:600}
 .turn .btn{width:auto;min-height:44px;padding:0 14px;font-size:14px;background:var(--bg);color:var(--y)}
+.hp{flex-direction:row;align-items:flex-start;gap:10px;font-size:13px;line-height:1.4;cursor:pointer}.hp input{width:22px;height:22px;flex:none;margin:0;accent-color:var(--y)}.hp b{color:var(--txt)}
+p.small{font-size:12px}p.small b{color:var(--txt)}
 .meter{height:8px;border-radius:5px;background:var(--deep);overflow:hidden}.meter i{display:block;height:100%;width:0;background:var(--g)}
 </style>
 </head>
@@ -52,6 +54,8 @@ body.incall .wrap{max-width:1100px}
       <label>Microphone<select id="mic"></select></label>
       <label id="spkL">Headphones / speaker<select id="spk"></select></label>
       <div class="meter"><i id="lvl"></i></div>
+      <label class="hp"><input type="checkbox" id="hp" checked><span><b>I'm wearing headphones / earbuds</b> – your voice goes out clean, in full quality. Untick only when you use speakers (then the browser filters out the echo, and you sound more like a phone call).</span></label>
+      <p class="small">Best sound: a wired headset, or your phone / laptop microphone. <b>Bluetooth earbuds</b> make your voice sound like a phone call – fine for listening, but choose another microphone above if you can.</p>
     </div>
     <div class="row" id="joinRow"><button class="btn y" id="joinV">Join with video</button><button class="btn o" id="joinA">Audio only</button></div>
     <div class="card" id="inCall" hidden>
@@ -69,6 +73,7 @@ const T = new URLSearchParams(location.search).get('t') || '';
 let ME = null, stream = null, pub = null, ret = null, air = null, others = {}, muted = false, othersT = null, lvlM = null;
 function fail(m) { $('#bad').hidden = false; $('#ok').hidden = true; $('#badMsg').textContent = m; }
 async function info() { const r = await fetch('/api/guest_info?t=' + encodeURIComponent(T), {cache: 'no-store'}); const j = await r.json(); if (!r.ok) { const e = new Error(j.error || 'not valid'); e.ended = r.status >= 400 && r.status < 500; throw e; } return j; }
+const HP = () => $('#hp').checked;      // headphones: no echo canceller / noise filter / auto gain = the voice in full quality (those filters are what makes a call sound like a phone)
 const SINK_OK = 'setSinkId' in HTMLMediaElement.prototype;      // choosing the output works in Chrome / Edge / Firefox (on iPhone the phone decides)
 let KNOWN = null;
 async function devices() {
@@ -96,7 +101,7 @@ navigator.mediaDevices.addEventListener('devicechange', async () => { const ch =
 async function preview(video = true) {
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = await navigator.mediaDevices.getUserMedia({
-    audio: {deviceId: $('#mic').value ? {exact: $('#mic').value} : undefined, echoCancellation: true, noiseSuppression: true, autoGainControl: true},
+    audio: Object.assign({deviceId: $('#mic').value ? {exact: $('#mic').value} : undefined}, HP() ? {echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1, sampleRate: 48000} : {echoCancellation: true, noiseSuppression: true, autoGainControl: true}),
     video: video ? {deviceId: $('#cam').value ? {exact: $('#cam').value} : undefined, width: {ideal: 1280}, height: {ideal: 720}, frameRate: {ideal: 30}} : false});
   $('#me').srcObject = stream; $('#me').hidden = !video;
   if (lvlM) lvlM.stop(); lvlM = HypeRTC.meter(stream, v => { $('#lvl').style.width = Math.min(100, v * 120) + '%'; });      // one meter (a new device replaces it)
@@ -109,7 +114,7 @@ function state(name, s) {
 async function join(video) {
   try { await preview(video); } catch (e) { return alert('Please allow ' + (video ? 'camera and ' : '') + 'microphone.'); }
   $('#joinRow').hidden = true; $('#inCall').hidden = false;      // the device choices stay: switch headphones / mic during the call
-  pub = HypeRTC.keep('me', () => HypeRTC.publish(ME.slot, stream, {key: T, videoKbps: 1800, audioKbps: 64, stereo: false}), state);
+  pub = HypeRTC.keep('me', () => HypeRTC.publish(ME.slot, stream, {key: T, videoKbps: 1800, audioKbps: 96, stereo: false}), state);
   // what you hear: the studio (mix-minus) + the other guests
   ret = HypeRTC.keep('studio', async () => { const r = await HypeRTC.play('mixminus', {key: T}); $('#studio').srcObject = r.stream; applySink(); $('#studio').play().catch(() => {}); return r; }, () => {});
   clearInterval(othersT); othersT = setInterval(listenOthers, 2000); listenOthers();
@@ -120,7 +125,7 @@ async function join(video) {
 }
 async function listenOthers() {
   let j; try { j = await info(); } catch (e) {
-    if (e.ended && othersT) { $('#leave').onclick(); fail('Your link has ended – thank you for being on the show!'); }   // the host removed you / the link expired: stop, don't keep reconnecting
+    if (e.ended && othersT) { $('#leave').onclick(); fail('Your link has ended – thank you' + (ME && ME.name ? ', ' + ME.name : '') + ', for being on the show! 🙌'); }   // the host removed you / the link expired: stop, don't keep reconnecting
     return; }
   if (!othersT) return;      // left meanwhile
   if (j.live) $('#dot').className = 'dot live';
@@ -138,7 +143,10 @@ $('#turnBtn').onclick = async () => { try { await document.documentElement.reque
 $('#airFs').onclick = () => { const v = $('#air'); (v.requestFullscreen ? v.requestFullscreen() : v.webkitEnterFullscreen ? v.webkitEnterFullscreen() : $('#airBox').requestFullscreen()).catch?.(() => {}); };
 $('#joinV').onclick = () => join(true); $('#joinA').onclick = () => join(false);
 $('#mute').onclick = () => { muted = !muted; stream.getAudioTracks().forEach(t => t.enabled = !muted); $('#mute').textContent = muted ? 'Unmute mic' : 'Mute mic'; $('#mute').className = 'btn ' + (muted ? 'y' : 'o'); };
-$('#leave').onclick = () => { pub && pub.close(); ret && ret.close(); air && air.close(); air = null; $('#airBox').hidden = true; document.body.classList.remove('incall'); clearInterval(othersT); othersT = null; Object.values(others).forEach(o => { o.c.close(); o.a.srcObject = null; o.a.remove(); }); others = {}; stream && stream.getTracks().forEach(t => t.stop()); $('#inCall').hidden = true; $('#joinRow').hidden = false; $('#setup').hidden = false; $('#tip').textContent = ''; };
+$('#leave').onclick = () => { pub && pub.close(); ret && ret.close(); air && air.close(); air = null; $('#airBox').hidden = true; document.body.classList.remove('incall'); clearInterval(othersT); othersT = null; Object.values(others).forEach(o => { o.c.close(); o.a.srcObject = null; o.a.remove(); }); others = {}; stream && stream.getTracks().forEach(t => t.stop()); $('#inCall').hidden = true;
+  fail('Thank you' + (ME && ME.name ? ', ' + ME.name : '') + ', for being on the show! 🙌 Want to join again? Refresh this page.'); };
+try { if (localStorage.getItem('hype_hp') === '0') $('#hp').checked = false; } catch (e) {}
+$('#hp').onchange = () => { try { localStorage.setItem('hype_hp', HP() ? '1' : '0'); } catch (e) {} useDevices().catch(() => {}); };
 $('#cam').onchange = () => useDevices().catch(() => {}); $('#mic').onchange = () => useDevices().catch(() => {}); $('#spk').onchange = applySink;
 info().then(async j => { ME = j; $('#ok').hidden = false; $('#gName').textContent = j.name; $('#gShow').textContent = j.show || 'Hype Radio TV';
   const audioOnly = j.mode === 'audio';   // the host invited you as a phone-style (audio only) guest

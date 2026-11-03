@@ -209,8 +209,13 @@ class Live:
                 self.sync_audio(cl)
             except Exception as e: log.warning("cams: %s", e); self.tv.cl = None
     def cam_delay(self, cl, cam):
-        """Lip sync: < 0 = the picture waits (Render Delay, max 500 ms), > 0 = the sound waits (audio sync offset)."""
-        ms = max(0, min(500, -int(self.st.get("lip_sync", 0))))
+        """Lip sync: < 0 = the picture waits (Render Delay, max 500 ms), > 0 = the sound waits (audio sync offset).
+        Guests: their voice takes a longer road (guest → server → your laptop → Mixcast → your laptop → server) than their
+        picture (guest → server → OBS), so a guest's picture also waits "guest_sync" ms."""
+        ms = max(0, -int(self.st.get("lip_sync", 0)))
+        src = next((v for k, v in self.st["cams"].items() if feed(k) == cam), "")
+        if str(src).startswith("guest"): ms += int(self.st.get("guest_sync", 300))
+        ms = max(0, min(500, ms))
         try: cl.set_source_filter_settings(cam, "Delay", {"delay_ms": ms})
         except Exception:
             try: cl.create_source_filter(cam, "Delay", "gpu_delay", {"delay_ms": ms})
@@ -290,7 +295,7 @@ class Live:
         return {
             "live": self.live, "live_since": self.live_since, "studio_online": on("studio"), "return_online": on("return"),
             "sources": {s: {"online": on(s), "name": (g.get(s) or {}).get("name") if s.startswith("guest") else {"cam1": "Studio cam 1", "cam2": "Studio cam 2", "cam3": "Studio cam 3", "screen": "Screen share"}[s]} for s in SOURCES},
-            "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "air": self.air, "drops": self.drops, "auto_record": self.st.get("auto_record", True), "rec_what": self.st.get("rec_what", "both"),
+            "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "guest_sync": self.st.get("guest_sync", 300), "air": self.air, "drops": self.drops, "auto_record": self.st.get("auto_record", True), "rec_what": self.st.get("rec_what", "both"),
             "guests": {s: {"name": i["name"], "token": i["token"], "exp": i["exp"], "online": on(s), "vol": i.get("vol", 1.0), "muted": bool(i.get("muted")), "mode": i.get("mode", "video")} for s, i in g.items()},
             "rec": {"since": self.rec["start"], "file": self.rec["file"], "ok": self.rec_alive()} if self.rec else None,
             "restream": {k: {"name": d["name"], "on": k in self.rest and not self.rest[k].stop_, "ok": k in self.rest and self.rest[k].healthy(),
@@ -300,8 +305,9 @@ class Live:
     def settings(self, d):
         if "auto_record" in d: self.st["auto_record"] = bool(d["auto_record"])
         if d.get("rec_what") in ("both", "video", "audio"): self.st["rec_what"] = d["rec_what"]
-        if "lip_sync" in d:
-            self.st["lip_sync"] = max(-500, min(1500, int(d["lip_sync"])))
+        if "lip_sync" in d or "guest_sync" in d:
+            if "lip_sync" in d: self.st["lip_sync"] = max(-500, min(1500, int(d["lip_sync"])))
+            if "guest_sync" in d: self.st["guest_sync"] = max(0, min(500, int(d["guest_sync"])))
             with self.tv.olock:
                 try:
                     cl = self.tv.client()

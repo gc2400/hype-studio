@@ -72,6 +72,7 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
 .camseg button{width:36px;border:0;background:transparent;color:var(--soft);font:inherit;font-size:13px;font-weight:800;cursor:pointer;padding:0}
 .camseg button+button{border-left:1px solid var(--line2)}.camseg button:hover:not(.on){background:var(--line2);color:#fff}.camseg button.on{background:var(--y);color:#061423}
 .btn.ic{width:34px;height:32px;min-height:32px;padding:0;justify-content:center;font-size:16px;flex:none}.btn.mute.on{background:#3A0E18;color:#FF8A97;border-color:var(--r)}.btn.wa{color:#25D366}.btn.wa:hover{border-color:#25D366}
+.camhealth{font-size:12px;line-height:1.5;padding:8px 10px;border-radius:10px;background:var(--deep);color:var(--mut)}.camhealth b{color:var(--txt)}.camhealth .bad{color:#FFB547;font-weight:700}
 #guests .chip{font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border:0;color:var(--mut)}#guests .chip.ok{color:var(--g)}
 </style>
 </head>
@@ -101,6 +102,7 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
         <div class="camcol"><div class="vbox"><video id="vCam1" muted playsinline autoplay></video><span class="ph" id="phCam1">Camera 1: choose your USB cam below</span></div><label class="camsel"><b>Camera 1</b><select id="dCam1"></select></label><div class="row camrow"><span class="lab">SLOT</span><div class="camseg" data-src="cam1" role="group" aria-label="Studio cam 1 on TV in"></div></div></div>
         <div class="camcol"><div class="vbox"><video id="vCam2" muted playsinline autoplay></video><span class="ph" id="phCam2">Camera 2: none</span></div><label class="camsel"><b>Camera 2</b><select id="dCam2"></select></label><div class="row camrow"><span class="lab">SLOT</span><div class="camseg" data-src="cam2" role="group" aria-label="Studio cam 2 on TV in"></div></div></div>
         <div class="camcol"><div class="vbox"><video id="vScreen" muted playsinline autoplay></video><span class="ph" id="phScreen">Screen: share your screen, a window or a browser tab</span></div><div class="camsel"><button class="btn" id="scrBtn" type="button">Share screen</button><select id="scrHint" aria-label="What you share" style="flex:1;min-width:0"><option value="motion">Video, moving picture</option><option value="detail">Text, slides, websites</option></select></div><div class="row camrow"><span class="lab">SLOT</span><div class="camseg" data-src="screen" role="group" aria-label="Screen share on TV in"></div></div></div></div>
+      <div id="camHealth" class="camhealth" hidden></div>
     </section>
   <section class="card">
     <div class="row" style="flex-wrap:nowrap;gap:10px"><span class="lab" style="white-space:nowrap">Guests · max 6</span>
@@ -134,6 +136,7 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
         <b>Frames per second</b><select id="qFps"><option value="25">25 fps (recommended, = the TV)</option><option value="30">30 fps</option></select>
         <b>Camera bitrate</b><select id="qVkbps"><option value="1000">1 Mbps – very weak connection</option><option value="1500">1.5 Mbps</option><option value="2000">2 Mbps</option><option value="2500">2.5 Mbps – wifi, busy network</option><option value="3000">3 Mbps</option><option value="3500">3.5 Mbps</option><option value="4000">4 Mbps (recommended – wifi)</option><option value="4500">4.5 Mbps (= the TV's best quality)</option><option value="5000">5 Mbps</option><option value="6000">6 Mbps (recommended – network cable)</option><option value="7000">7 Mbps</option><option value="8000">8 Mbps</option><option value="10000">10 Mbps</option><option value="12000">12 Mbps</option><option value="15000">15 Mbps (max)</option></select>
         <b>Lip sync (TV)</b><div class="gvol"><input type="range" id="qSync" min="-500" max="800" step="20" aria-label="Lip sync"><span class="mono" id="qSyncV">0 ms</span></div>
+        <b title="A guest's voice takes a longer road (via your laptop and the Mixcast) than their picture – their picture waits this long. Voice later than the lips: higher.">Guest lip sync</b><div class="gvol"><input type="range" id="qGSync" min="0" max="500" step="20" aria-label="Guest lip sync"><span class="mono" id="qGSyncV">300 ms</span></div>
       </div>
       <span class="muted" style="font-size:12px">Lip sync: you hear a word <b>before</b> your lips move (picture late)? Move it <b>right</b> – the sound waits. Your lips move <b>before</b> you hear it (sound late)? Move it <b>left</b> – the picture waits. 0 = straight through.</span>
       <span class="muted" style="font-size:12px" id="qNote"></span>
@@ -200,6 +203,28 @@ const rawAudio = id => ({audio: {deviceId: id ? {exact: id} : undefined, echoCan
 const METERS = {};      // one meter per bar (+ per guest): a reconnect replaces the old one instead of stacking AudioContexts
 function meterTo(stream, id, k = '') { meterOff(id + k); METERS[id + k] = HypeRTC.meter(stream, v => { $('#' + id).style.width = Math.min(100, v * 110) + '%'; }); }
 function meterOff(k) { if (METERS[k]) { METERS[k].stop(); delete METERS[k]; } }
+
+// ---------- camera health: what the browser really sends, and what holds it back ----------
+// "cpu" = the laptop is too busy to encode the picture (lower the camera picture to 720p, close other programs),
+// "bandwidth" = the internet is too slow / unstable for the bitrate (lower the camera bitrate)
+const HEALTH = {};
+setInterval(async () => {
+  const box = $('#camHealth'); if (!connected) { box.hidden = true; return; }
+  const lines = [];
+  for (const [n, label] of [['cam1', 'Camera 1'], ['cam2', 'Camera 2']]) {
+    const c = conns[n], pc = c && c.pc; if (!pc) continue;
+    let st; try { st = await pc.getStats(); } catch (e) { continue; }
+    st.forEach(r => { if (r.type !== 'outbound-rtp' || r.kind !== 'video') return;
+      const h = HEALTH[n] || {}, now = r.timestamp, kbps = h.t ? (r.bytesSent - h.b) * 8 / (now - h.t) : 0;
+      HEALTH[n] = {t: now, b: r.bytesSent};
+      const why = r.qualityLimitationReason || 'none', fps = Math.round(r.framesPerSecond || 0), want = Q().fps;
+      const msg = why === 'cpu' ? '<span class="bad">⚠ laptop too busy – choose 720p below, close other programs</span>'
+        : why === 'bandwidth' ? '<span class="bad">⚠ internet too slow – choose a lower camera bitrate below</span>'
+        : fps && fps < want - 4 ? '<span class="bad">⚠ camera gives only ' + fps + ' fps – more light, or another USB port</span>' : '✓ smooth';
+      lines.push(`<b>${label}</b> ${r.frameHeight || '?'}p · ${fps} fps · ${(kbps / 1000).toFixed(1)} Mbps · ${msg}`); });
+  }
+  box.hidden = !lines.length; box.innerHTML = lines.join('<br>');
+}, 2000);
 
 // ---------- connect the studio ----------
 async function connect() {
@@ -286,7 +311,7 @@ function renderGuests(force) {
   Object.entries(G).forEach(([s, g]) => {
     if (g.online && connected && !guestEls[s]) {
       const E = guestEls[s] = {};
-      E.conn = HypeRTC.keep(s, async alive => { const r = await HypeRTC.play(s, {key: KEY, video: true}); if (!alive()) return r;      // removed meanwhile: keep() closes it
+      E.conn = HypeRTC.keep(s, async alive => { const r = await HypeRTC.play(s, {key: KEY, video: true, bufferMs: 150});      // voice: a smaller buffer than music = less delay into the show (lip sync) if (!alive()) return r;      // removed meanwhile: keep() closes it
         E.stream = r.stream; showGuest(s, r.stream);
         // the voice goes through a gain (0–200 %) to the Mixcast TRRS output
         try { E.ac && E.ac.close(); } catch (e) {}
@@ -350,12 +375,15 @@ function render() {
   $('#airTitle').textContent = studioAir ? 'On air: ONLY your studio mix – radio + TV' : L.live ? 'LIVE, but your studio signal is not arriving – the automation fills in' : 'On air: the automation';
   $('#airSub').textContent = studioAir ? 'TV sound comes straight from your studio stream (in sync with the cameras); no clip sound.' : L.live ? 'Check Connect studio and the "studio" row in Connection.' : 'When you are LIVE this turns green: only your studio mix is on the radio and the TV (no clip sound).';
   $('#airDrops').hidden = !L.live; $('#airDrops').textContent = L.drops ? L.drops + ' drop-out' + (L.drops > 1 ? 's' : '') + ' this show' : 'no drop-outs'; $('#airDrops').className = 'chip ' + (L.drops ? 'wait' : 'ok');
+  if (document.activeElement !== $('#qGSync')) { const g = L.guest_sync ?? 300; $('#qGSync').value = g; $('#qGSyncV').textContent = g + ' ms'; }
   if (document.activeElement !== $('#qSync')) { $('#qSync').value = L.lip_sync || 0; $('#qSyncV').textContent = (L.lip_sync > 0 ? '+' : '') + (L.lip_sync || 0) + ' ms'; }
   $('#stRec').textContent = L.rec ? 'REC ● ' + L.rec.file : 'REC off'; $('#stRec').className = 'chip ' + (L.rec ? 'bad' : '');
   renderSlots();
   renderGuests();
 }
 $('#qSync').oninput = () => { const v = +$('#qSync').value; $('#qSyncV').textContent = (v > 0 ? '+' : '') + v + ' ms'; };
+$('#qGSync').oninput = () => { $('#qGSyncV').textContent = $('#qGSync').value + ' ms'; };
+$('#qGSync').onchange = () => post('live/settings', {guest_sync: +$('#qGSync').value}).then(d => { L = d; toast('Guest lip sync set – the guest picture waits ' + d.guest_sync + ' ms'); });
 $('#qSync').onchange = () => post('live/settings', {lip_sync: +$('#qSync').value}).then(d => { L = d; toast('Lip sync set'); });
 function refresh() { return get('live').then(d => { L = d; KEY = d.studio_key; render(); window.hypeRec && hypeRec(d.rec, d); }).catch(() => {}); }      // also feeds the header's REC button (no second poll)
 refresh().then(listDevices); setInterval(refresh, 2000);
