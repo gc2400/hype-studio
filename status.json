@@ -1,19 +1,20 @@
 {
- "time": "2026-11-03T23:11:03",
+ "time": "2026-11-03T23:29:58",
  "result": "ok",
- "commit": "cd3fad1e6b942e65270e670d5a869832f28f8deb",
- "subject": "Sound: AGC measured a frozen level in master_me mode (its meter sat only in the Classic branch, which is not computed then) -> it boosted to ~+6 dB; master_me now takes the measured signal. Compressor + Limiter bars now work in master_me mode (estimated from before/after the plugin). Lab: both modes PASS",
+ "commit": "bee5ddfc61b5a99f2eaca7de3dc301e653ada8fc",
+ "subject": "Sound: master_me full controls \u2013 leveler speed; compressor threshold/attack/release; bass side and treble side of the multiband each with strength, crossover, threshold, attack, release; limiter attack/release. Presets set all of them. Lab: PASS",
  "log": [
-  "23:09:33 update b038a636 \u2192 cd3fad1e \u00b7 1 file(s): radio/radio.liq",
-  "23:10:18 lab: PASS (6/6 good readings)",
-  "23:10:18 restart hype-radio",
-  "23:11:03 installed OK \u00b7 restarted: hype-radio"
+  "23:28:28 update cd3fad1e \u2192 bee5ddfc \u00b7 3 file(s): engine/engine.py, radio/radio.liq, web/panel/settings.html",
+  "23:29:13 lab: PASS (6/6 good readings)",
+  "23:29:13 restart hype-engine",
+  "23:29:13 restart hype-radio",
+  "23:29:58 installed OK \u00b7 restarted: hype-engine, hype-radio"
  ],
  "guard": {
-  "song": "Rich Kalashh x Shermain3 \u2013 Bai foi Moda",
+  "song": "Jey One x Yaisel LM \u2013 Bo De Bo De Bo",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
