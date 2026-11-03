@@ -207,3 +207,4 @@
 2026-11-03T09:17:10 ok 492a08c3 Song settings (cue points) fit on a phone: border-box, no sideways scroll, intro sweeper full width, shortcut hint hidden on small screens
 2026-11-03T09:27:09 ok 537528ff Phone preview: on iPhone / iPad, a VP9 / AV1 / 10-bit video in the song settings gets a small H.264 copy (made once, ~30 s) so the picture shows – the original and the TV are untouched
 2026-11-03T09:30:15 ok b62a9f93 Stream protection (stream.hyperadio.nl): max 4 radio streams and 16 TV requests at once per address, 15 requests/s per address, total caps (3000 radio, 800 TV) – trusted addresses (IPTV partners) can be added without limits
+2026-11-03T09:36:25 ok 01995983 Stream protection tighter: 5 requests/s (burst 20) and 8 at once per address – one address can take at most ~5 viewers' worth of TV

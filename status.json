@@ -1,17 +1,17 @@
 {
- "time": "2026-11-03T09:30:15",
+ "time": "2026-11-03T09:36:25",
  "result": "ok",
- "commit": "b62a9f931c19f29e2898b29fa6676930317737be",
- "subject": "Stream protection (stream.hyperadio.nl): max 4 radio streams and 16 TV requests at once per address, 15 requests/s per address, total caps (3000 radio, 800 TV) \u2013 trusted addresses (IPTV partners) can be added without limits",
+ "commit": "01995983783f6c3d85372bec196840b39b6d167a",
+ "subject": "Stream protection tighter: 5 requests/s (burst 20) and 8 at once per address \u2013 one address can take at most ~5 viewers' worth of TV",
  "log": [
-  "09:30:15 update 537528ff \u2192 b62a9f93 \u00b7 1 file(s): system/nginx-hype.conf",
-  "09:30:15 installed OK \u00b7 restarted: nginx-reload"
+  "09:36:25 update b62a9f93 \u2192 01995983 \u00b7 1 file(s): system/nginx-hype.conf",
+  "09:36:25 installed OK \u00b7 restarted: nginx-reload"
  ],
  "guard": {
-  "song": "Da Ridlaz x Wowi \u2013 Pull Up",
+  "song": " \u2013 Hype SWP Old School",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
