@@ -216,3 +216,4 @@
 2026-11-04T00:44:02 ok 96d522ce Live: guest lip sync measured automatically (guest's own voice vs the same voice in the studio mix, GCC-PHAT) and applied per guest; fine-tune slider; guest connection on the Broadcast page (loss on their line, voice gaps here, measured lip sync) + logged; guest video steps down by itself on a lossy line (voice stays clean); paired clip: never its own sound while LIVE (was double audio); library 'added' shows minutes
 2026-11-04T00:46:07 ok 6ef830b6 Deploy: install guestsync.py
 2026-11-04T00:49:58 ok d5c991db guestsync: note (so the updater installs it)
+2026-11-04T00:53:49 ok 2c2bb1de Guest lip sync: a guest who leaves is forgotten (the next one in that slot is measured fresh)

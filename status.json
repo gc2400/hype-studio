@@ -1,18 +1,18 @@
 {
- "time": "2026-11-04T00:49:58",
+ "time": "2026-11-04T00:53:49",
  "result": "ok",
- "commit": "d5c991db7350b6ea3350aea226a3d80a5900440e",
- "subject": "guestsync: note (so the updater installs it)",
+ "commit": "2c2bb1dea70b8dfff9f385b3570c3b574abd104c",
+ "subject": "Guest lip sync: a guest who leaves is forgotten (the next one in that slot is measured fresh)",
  "log": [
-  "00:49:13 update 6ef830b6 \u2192 d5c991db \u00b7 1 file(s): engine/guestsync.py",
-  "00:49:13 restart hype-engine",
-  "00:49:58 installed OK \u00b7 restarted: hype-engine"
+  "00:53:04 update d5c991db \u2192 2c2bb1de \u00b7 1 file(s): engine/live.py",
+  "00:53:04 restart hype-engine",
+  "00:53:49 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "YG Marley \u2013 Praise Jah In The Moonlight",
+  "song": "6ix9ine x Yailin La M\u00e1s Viral \u2013 Pa Ti",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
