@@ -609,7 +609,14 @@ class TV:
                             cl2 = self.client()
                             if sound: cl2.set_input_mute(nxt, False)
                             if seek_k is not None:
-                                cl2.set_media_input_cursor(nxt, int(seek_k * 1000)); t_seek = time.time()
+                                try: cl2.set_media_input_cursor(nxt, int(seek_k * 1000))
+                                except Exception as e:      # OBS: "the media must be playing" (the clip was stopped) – start it, seek again; never leave the TV black
+                                    log.warning("clip seek: %s – restarting the clip", e)
+                                    try:
+                                        cl2.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY")
+                                        time.sleep(0.15); cl2.set_media_input_cursor(nxt, int(seek_k * 1000))
+                                    except Exception as e2: log.warning("clip seek again: %s", e2)
+                                t_seek = time.time()
                                 def verify(nxt=nxt, k0=seek_k, t1=t_seek, g=gen):
                                     # OBS sometimes ignores a seek (the picture then runs late/early for the whole song):
                                     # check where the clip really is and put it right once more
