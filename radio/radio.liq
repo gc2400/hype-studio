@@ -28,6 +28,11 @@ snd_monob    = interactive.float("snd_monob", min=0., max=1., description="Mono 
 snd_mid      = interactive.float("snd_mid", min=-4., max=3., description="Upper mids 3.5 kHz (dB, minus = less harsh)", 0.)
 snd_lowmid   = interactive.float("snd_lowmid", min=-4., max=2., description="Low mids 300 Hz (dB, minus = less muddy / boxy)", 0.)
 snd_hpf      = interactive.float("snd_hpf", min=20., max=40., description="Rumble cut (Hz): everything below is filtered out", 25.)
+# --- master_me (Settings → Sound → master_me): the open-source streaming processor, a second choice next to Classic (snd_punch 0.5) ---
+mm_target    = interactive.float("mm_target", min=-20., max=-8., description="master_me target loudness (LUFS)", -12.)
+mm_comp      = interactive.float("mm_comp", min=0., max=100., description="master_me compressor strength (%)", 25.)
+mm_mb        = interactive.float("mm_mb", min=0., max=100., description="master_me multiband strength (%)", 25.)
+mm_lim       = interactive.float("mm_lim", min=0., max=100., description="master_me limiter strength (%)", 70.)
 # --- faders (panel): music, pads + sweepers, the studio while LIVE (1.0 = 0 dB) ---
 vol_music  = interactive.float("vol_music", min=0., max=1.6, description="Music fader", 1.)
 vol_pads   = interactive.float("vol_pads", min=0., max=1.6, description="Pads fader", 1.)
@@ -132,8 +137,9 @@ def process(~meter=false, ~light=false, x) =
   x = filter.iir.eq.peak(frequency=300., gain={if p() then 0. else snd_lowmid() end}, q=0.9, x)
   x = filter.iir.eq.peak(frequency=3500., gain={if p() then 1.5 else snd_mid() end}, q=0.9, x)
   x = filter.iir.eq.peak(frequency=9500., gain={if p() then 1. else snd_treble() end}, q=0.7, x)
+  xeq = x      # after the EQ: Classic (below) or master_me
   con = fun () -> snd_comp() > 0.5     # compressor switch (Settings → Sound)
-  mb = fun () -> snd_punch() > 0.25      # 0.5 = the Classic sliders with multiband compression (bass, mids, highs each on their own)
+  mb = fun () -> false      # the old 3-band multiband is off for good (it had holes at 120 Hz and 4 kHz); 0.5 now = master_me
   r1 = rms(duration=0.3, x)
   x = r1
   cb = compress(attack=snd_attack, release=snd_release, threshold=snd_thresh, ratio={if mb() or not con() then 1. else snd_ratio() end}, knee=6., x)
@@ -159,7 +165,18 @@ def process(~meter=false, ~light=false, x) =
     dyn_cg := cb.gain
     dyn_lg := fun () -> lm.gain() + cs.gain()
   end
-  r3
+  if light then r3 else      # the TV pads chain always uses Classic (saves CPU)
+    mmx = ladspa.master_me(target={int_of_float(mm_target())}, kneecomp_strength={int_of_float(mm_comp())},
+            low_strength={int_of_float(mm_mb())}, high_strength={int_of_float(mm_mb())}, limiter_strength={int_of_float(mm_lim())},
+            brickwall_ceiling={snd_ceiling() - 0.2}, eq_highpass_freq=snd_hpf,
+            gate_bypass=true, dc_blocker=true, leveler_speed=20, leveler_max=10., leveler_max__=10., leveler_brake_threshold=-20.,
+            kneecomp_tar_thresh=-4., kneecomp_attack=20., kneecomp_release=200., kneecomp_knee=6., kneecomp_link=60,
+            low_crossover=60., low_tar_thresh=-3., low_attack=15., low_release=150., low_knee=12., low_link=70,
+            high_crossover=8000., high_tar_thresh=-12., high_attack=8., high_release=30., high_knee=12., high_link=30,
+            makeup=1., limiter_tar_thresh=3., limiter_attack=3., limiter_release=40., limiter_knee=3., brickwall_release=75., xeq)
+    mmx = ladspa.fastlookaheadlimiter(input_gain=0., limit={snd_ceiling() - 0.2}, release_time=0.08, mmx)   # the same last safety as Classic
+    switch(track_sensitive=false, [({snd_punch() > 0.25}, mmx), ({true}, r3)])   # only the one in use is computed
+  end
 end
 prog = mksafe(process(meter=true, s))
 
@@ -188,7 +205,7 @@ def meter_level(_) =
   fcg = dyn_cg()
   flg = dyn_lg()
   # classic: the compressor's own gain reduction; multiband: estimated from the level before / after (+ its make-up gain)
-  comp = if snd_comp() < 0.5 or quiet then 0. elsif snd_punch() > 0.25 then max(0., a - b + 4.5) else max(0., 0. - fcg()) end
+  comp = if snd_comp() < 0.5 or quiet or snd_punch() > 0.25 then 0. else max(0., 0. - fcg()) end   # master_me: no meter yet
   lim = if quiet then 0. else max(0., 0. - flg()) end
   "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a}"
 end

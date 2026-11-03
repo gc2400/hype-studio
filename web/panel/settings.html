@@ -132,7 +132,7 @@ table{border-collapse:collapse;width:100%}
     <div class="scont">
     <section class="card sec" data-sec="sound">
       <div class="row between"><span class="lab">Sound · radio + TV · changes are live</span><span class="chip" id="sndState">–</span></div>
-      <div class="row" id="sndMode" style="gap:6px"><span class="lab" style="width:auto">Sound</span><button class="btn sm" data-m="0" title="One compressor for the whole mix – the sound you know, to compare with">Classic</button><button class="btn sm" data-m="0.5" title="4 bands (bass · low mids · mids · highs) each compressed on their own: a hard kick never pushes the vocals down, the highs never get harsh">★ Hype Pro</button><span class="muted" style="font-size:12px" id="sndModeTip"></span></div>
+      <div class="row" id="sndMode" style="gap:6px"><span class="lab" style="width:auto">Sound</span><button class="btn sm" data-m="0" title="One compressor for the whole mix – the sound you know, to compare with">Classic</button><button class="btn sm" data-m="0.5" title="master_me: the open-source processor for live streams – leveler, compressor, multiband and limiter in one">master_me</button><span class="muted" style="font-size:12px" id="sndModeTip"></span></div>
       <div class="row" id="presets"></div>
       <div id="dynBox" style="background:#071A2B;border:1px solid #17344F;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px">
         <div class="row between"><span class="lab" style="width:auto">On air now · what the processing does</span><span class="muted" style="font-size:11px" id="dynTip">listen + watch: good = compressor 2–4 dB, limiter 0–2 dB on loud parts</span></div>
@@ -245,13 +245,18 @@ const SL = [   // in the order the sound goes through the chain: EQ (tone) → c
   ['snd_lowmid', 'Low mids (300 Hz)', 'body – minus = less muddy / boxy, clearer next to heavy bass', -4, 2, 0.5, 'dB'],
   ['snd_mid', 'Upper mids (3.5 kHz)', 'presence – minus = less harsh / tiring, plus = more presence', -4, 3, 0.5, 'dB'],
   ['snd_treble', 'Treble (9.5 kHz)', 'air and hi-hats – minus = warmer, plus = brighter', -4, 4, 0.5, 'dB'],
-  ['#', 'Compressor · dynamics', 'one compressor for the whole mix: evens out loud and soft moments'],
-  ['snd_ratio', 'Compression', '1 = none, 2 = light, 4 = strong', 1, 6, 0.1, ':1'],
-  ['snd_thresh', 'Compression starts at', 'lower = more compression', -30, 0, 1, 'dB'],
-  ['snd_attack', 'Attack', 'slower = more punch on the beat', 1, 100, 1, 'ms'],
-  ['snd_release', 'Release', 'how fast it lets go', 50, 1000, 10, 'ms'],
+  ['#', 'Compressor · dynamics', 'one compressor for the whole mix: evens out loud and soft moments', , , , , 'c'],
+  ['snd_ratio', 'Compression', '1 = none, 2 = light, 4 = strong', 1, 6, 0.1, ':1', 'c'],
+  ['snd_thresh', 'Compression starts at', 'lower = more compression', -30, 0, 1, 'dB', 'c'],
+  ['snd_attack', 'Attack', 'slower = more punch on the beat', 1, 100, 1, 'ms', 'c'],
+  ['snd_release', 'Release', 'how fast it lets go', 50, 1000, 10, 'ms', 'c'],
+  ['#', 'master_me · dynamics + loudness', 'leveler, compressor, multiband and limiter in one', , , , , 'm'],
+  ['mm_target', 'Target loudness', 'how loud master_me aims for – −10 is about as loud as CLOSE', -20, -8, 0.5, 'LUFS', 'm'],
+  ['mm_comp', 'Compressor', 'how much it evens out loud and soft moments', 0, 100, 5, '%', 'm'],
+  ['mm_mb', 'Multiband', 'bass and highs compressed on their own (keeps the kick from pumping, the highs from going harsh)', 0, 100, 5, '%', 'm'],
+  ['mm_lim', 'Limiter', 'how hard it catches the peaks', 0, 100, 5, '%', 'm'],
   ['#', 'Limiter · loudness', 'the last step: how loud, and the highest peak allowed'],
-  ['snd_drive', 'Loudness', 'how hard it hits the limiter', 0, 10, 0.5, 'dB'],
+  ['snd_drive', 'Loudness', 'how hard it hits the limiter', 0, 10, 0.5, 'dB', 'c'],
   ['snd_ceiling', 'Ceiling', 'loudest peak allowed', -3, -0.1, 0.1, 'dB'],
   ['snd_width', 'Stereo width', 'only above 300 Hz (the bass stays in the centre) – 0 = original', 0, 50, 5, '%']];
 const PRESETS = {   // Classic chain; target: loud enough to keep the energy, never tiring (ceiling −1 dB)
@@ -270,10 +275,15 @@ const PRO = {   // Hype Pro (4 bands): balanced, never tiring, but fun – the C
   'Pro Party': {tip: 'weekend / club: more drive and punch, a bit wider – check it does not tire', snd_punch: 0.5, snd_drive: 5, snd_bass: 3, snd_bass_f: 65, snd_lowmid: -1, snd_mid: -0.5, snd_treble: 0.5, snd_ratio: 2.5, snd_thresh: -18, snd_attack: 20, snd_release: 180, snd_ceiling: -1, snd_hpf: 25, snd_width: 15},
   'Pro Easy Ears': {tip: 'hours of listening (shops, offices): gentle, soft highs, still full', snd_punch: 0.5, snd_drive: 3.5, snd_bass: 2, snd_bass_f: 80, snd_lowmid: -1, snd_mid: -2, snd_treble: -1, snd_ratio: 1.8, snd_thresh: -15, snd_attack: 30, snd_release: 260, snd_ceiling: -1.2, snd_hpf: 25, snd_width: 0}};
 Object.assign(PRESETS, PRO);
-const PKEYS = ['snd_drive', 'snd_bass', 'snd_bass_f', 'snd_lowmid', 'snd_mid', 'snd_treble', 'snd_ratio', 'snd_thresh', 'snd_attack', 'snd_release', 'snd_ceiling', 'snd_hpf', 'snd_width'];
+const MMP = {   // master_me presets (your EQ stays as it is)
+  'master_me Balanced ★': {tip: 'master_me all-round: even, full, about as loud as most web stations', snd_punch: 0.5, mm_target: -12, mm_comp: 25, mm_mb: 25, mm_lim: 70, snd_ceiling: -1},
+  'master_me Loud': {tip: 'as loud as CLOSE, more density – check that it does not tire', snd_punch: 0.5, mm_target: -10, mm_comp: 35, mm_mb: 35, mm_lim: 80, snd_ceiling: -1},
+  'master_me Gentle': {tip: 'open and dynamic, light touch – for chill / night', snd_punch: 0.5, mm_target: -13, mm_comp: 15, mm_mb: 15, mm_lim: 60, snd_ceiling: -1}};
+Object.assign(PRESETS, MMP);
+const PKEYS = ['snd_drive', 'snd_bass', 'snd_bass_f', 'snd_lowmid', 'snd_mid', 'snd_treble', 'snd_ratio', 'snd_thresh', 'snd_attack', 'snd_release', 'snd_ceiling', 'snd_hpf', 'snd_width', 'mm_target', 'mm_comp', 'mm_mb', 'mm_lim'];
 const MINE = () => (ST && ST.sound_presets) || {};
 const HIDDEN = () => (ST && ST.sound_presets_hidden) || [];
-function allPresets() { const o = Object.assign({}, PRESETS); if (!(ST && ST.sound && ST.sound.snd_width != null)) Object.keys(PRO).forEach(n => delete o[n]); HIDDEN().forEach(n => delete o[n]); Object.entries(MINE()).forEach(([n, v]) => { o['★ ' + n] = Object.assign({tip: 'your own preset'}, v); }); return o; }
+function allPresets() { const o = Object.assign({}, PRESETS); Object.keys(PRO).forEach(n => delete o[n]); if (!(ST && ST.sound && ST.sound.mm_target != null)) Object.keys(MMP).forEach(n => delete o[n]); HIDDEN().forEach(n => delete o[n]); Object.entries(MINE()).forEach(([n, v]) => { o['★ ' + n] = Object.assign({tip: 'your own preset'}, v); }); return o; }
 function presetNow() { const S_ = (ST && ST.sound) || {}, P = allPresets();
   const same = n => Math.abs((P[n].snd_punch || 0) - (S_.snd_punch || 0)) < 0.2 && PKEYS.every(k => P[n][k] === undefined || Math.abs((S_[k] ?? 1e9) - P[n][k]) < 0.06);
   return Object.keys(P).find(same) || null; }
@@ -281,9 +291,10 @@ let ST = null, sT = null, pend = {};
 function fmtv(v, u) { return (Math.round(v * 10) / 10) + (u === ':1' ? ':1' : ' ' + u); }
 function render() {
   paintSw();
-  const HAS = k => ST.sound[k] != null || !['snd_lowmid', 'snd_hpf', 'snd_width'].includes(k);   // sliders the running radio chain knows
-  $('#sliders').innerHTML = SL.filter(([k]) => k === '#' || HAS(k)).map(([k, l, h, mi, ma, st, u]) => k === '#' ? `<div class="slgrp"><b>${l}</b><small>${h}</small></div>` : `<div class="sl"><label for="${k}">${l}<small>${h}</small></label><input type="range" id="${k}" min="${mi}" max="${ma}" step="${st}" value="${ST.sound[k] ?? mi}"><span class="v" id="${k}_v">${ST.sound[k] == null ? '?' : fmtv(ST.sound[k], u)}</span></div>`).join('');
-  SL.filter(([k]) => k !== '#' && HAS(k)).forEach(([k, , , , , , u]) => { const e = $('#' + k); e.oninput = () => { $('#' + k + '_v').textContent = fmtv(+e.value, u); pend[k] = +e.value; clearTimeout(sT); sT = setTimeout(sendSound, 250); }; });
+  const HAS = k => ST.sound[k] != null || !['snd_lowmid', 'snd_hpf', 'snd_width', 'mm_target', 'mm_comp', 'mm_mb', 'mm_lim'].includes(k);   // sliders the running radio chain knows
+  const MODE = ((ST.sound.snd_punch || 0) > 0.25) ? 'm' : 'c', SHOW = r => !r[7] || r[7] === MODE;   // Classic-only / master_me-only rows
+  $('#sliders').innerHTML = SL.filter(r => SHOW(r) && (r[0] === '#' || HAS(r[0]))).map(([k, l, h, mi, ma, st, u]) => k === '#' ? `<div class="slgrp"><b>${l}</b><small>${h}</small></div>` : `<div class="sl"><label for="${k}">${l}<small>${h}</small></label><input type="range" id="${k}" min="${mi}" max="${ma}" step="${st}" value="${ST.sound[k] ?? mi}"><span class="v" id="${k}_v">${ST.sound[k] == null ? '?' : fmtv(ST.sound[k], u)}</span></div>`).join('');
+  SL.filter(r => SHOW(r) && r[0] !== '#' && HAS(r[0])).forEach(([k, , , , , , u]) => { const e = $('#' + k); e.oninput = () => { $('#' + k + '_v').textContent = fmtv(+e.value, u); pend[k] = +e.value; clearTimeout(sT); sT = setTimeout(sendSound, 250); }; });
   const cur = presetNow();
   const AP = allPresets();
   $('#presets').innerHTML = '<span class="lab" style="width:auto">Presets</span>' + Object.keys(AP).map(n => `<span class="ltr"><button class="btn sm${n === cur ? ' on' : ''}" data-p="${esc(n)}" title="${esc(AP[n].tip)}">${esc(n)}</button><button class="ltx" data-pdel="${esc(n)}" title="Remove ${esc(n)}" aria-label="Remove ${esc(n)}">×</button></span>`).join('') +
@@ -298,12 +309,12 @@ function render() {
     const req = n.startsWith('★ ') ? (m => { delete m[n.slice(2)]; return {sound_presets: m}; })(Object.assign({}, MINE())) : {sound_presets_hidden: [...new Set([...HIDDEN(), n])]};
     post('settings', req).then(d => { ST = d; render(); toast('Removed ' + n); }); });
   if ($('#pBack')) $('#pBack').onclick = () => post('settings', {sound_presets_hidden: []}).then(d => { ST = d; render(); toast('Built-in presets back'); });
-  const pro = ((ST && ST.sound && ST.sound.snd_punch) || 0) > 0.25, proOk = ST.sound.snd_width != null;   // Hype Pro only when the radio runs the Pro chain
-  $('#sndMode').hidden = !proOk;      // one chain (Classic) running: no mode choice to show
+  const pro = ((ST && ST.sound && ST.sound.snd_punch) || 0) > 0.25, proOk = ST.sound.mm_target != null;   // master_me only when the radio has it
+  $('#sndMode').hidden = !proOk;
   $$('#sndMode [data-m]').forEach(b => { const m = +b.dataset.m; b.classList.toggle('on', m ? pro : !pro);
-    b.onclick = () => { pend = {snd_punch: m}; sendSound().then(() => { render(); toast(m ? 'Hype Pro on – listen, switch back to Classic to compare' : 'Classic sound'); }); }; });
-  $('#sndModeTip').textContent = pro ? 'Hype Pro: bass, low mids, mids and highs are compressed on their own. The Compression sliders drive all 4 bands; the meter shows the band that works hardest.' : 'Classic: one compressor for the whole mix.';
-  $$('#presets [data-p]').forEach(b => b.onclick = () => { const P_ = Object.assign({}, allPresets()[b.dataset.p]); delete P_.tip; pend = Object.assign({snd_punch: 0, snd_mid: 0, snd_lowmid: 0, snd_hpf: 25}, P_); sendSound().then(() => { render(); toast('Preset: ' + b.dataset.p); }); });
+    b.onclick = () => { pend = {snd_punch: m}; sendSound().then(() => { render(); toast(m ? 'master_me on – listen, switch back to Classic to compare' : 'Classic sound'); }); }; });
+  $('#sndModeTip').textContent = pro ? 'master_me: its own leveler, compressor, multiband and limiter – set them below. Your EQ and the Ceiling still work.' : 'Classic: one compressor for the whole mix.';
+  $$('#presets [data-p]').forEach(b => b.onclick = () => { const P_ = Object.assign({}, allPresets()[b.dataset.p]); delete P_.tip; pend = (P_.snd_punch || 0) > 0.25 ? P_ : Object.assign({snd_punch: 0, snd_mid: 0, snd_lowmid: 0, snd_hpf: 25}, P_); sendSound().then(() => { render(); toast('Preset: ' + b.dataset.p); }); });
   const ok = ST.sound.snd_drive != null; $('#sndState').textContent = ok ? 'radio engine connected' : 'radio engine not reachable'; $('#sndState').style.color = ok ? 'var(--g)' : 'var(--r)';
   ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always', 'smart_mix', 'id_intro'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
   $('#tv_clip_offset').value = ST.tv_clip_offset; $('#tv_clip_offset_v').textContent = fmtv(ST.tv_clip_offset, 'dB');
