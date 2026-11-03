@@ -114,7 +114,8 @@ function state(name, s) {
 async function join(video) {
   try { await preview(video); } catch (e) { return alert('Please allow ' + (video ? 'camera and ' : '') + 'microphone.'); }
   $('#joinRow').hidden = true; $('#inCall').hidden = false;      // the device choices stay: switch headphones / mic during the call
-  pub = HypeRTC.keep('me', () => HypeRTC.publish(ME.slot, stream, {key: T, videoKbps: 1800, audioKbps: 96, stereo: false}), state);
+  pub = HypeRTC.keep('me', () => HypeRTC.publish(ME.slot, stream, {key: T, videoKbps: STEPS[0], audioKbps: 96, stereo: false}), state);
+  adaptStart();
   // what you hear: the studio (mix-minus) + the other guests
   ret = HypeRTC.keep('studio', async () => { const r = await HypeRTC.play('mixminus', {key: T}); $('#studio').srcObject = r.stream; applySink(); $('#studio').play().catch(() => {}); return r; }, () => {});
   clearInterval(othersT); othersT = setInterval(listenOthers, 2000); listenOthers();
@@ -122,6 +123,31 @@ async function join(video) {
   document.body.classList.add('incall'); $('#airBox').hidden = false;
   air = HypeRTC.keep('air', async () => { const r = await HypeRTC.play('guestview', {key: T, video: true, audio: false}); $('#air').srcObject = r.stream; $('#air').play().catch(() => {});
     $('#air').onplaying = () => { $('#airWait').hidden = true; }; return r; }, () => {});
+}
+// adapting to YOUR connection: the server tells us how many packets did not arrive. Packets lost (or a very slow line)
+// -> the video steps down at once, so the voice always gets through clean; a clean line for 15 s -> one step up again
+const STEPS = [1800, 1200, 800, 500, 300];        // kbps; the last two also send a smaller picture
+let step = 0, adaptT = null, prevS = null, cleanSince = 0, lastDown = 0, lastPc = null;
+function adaptStart() { clearInterval(adaptT); adaptT = setInterval(adapt, 3000); }
+async function setStep(pc, i) {
+  step = i; const s = pc.getSenders().find(x => x.track && x.track.kind === 'video'); if (!s) return;
+  const p = s.getParameters(); p.encodings = p.encodings && p.encodings.length ? p.encodings : [{}];
+  p.encodings[0].maxBitrate = STEPS[i] * 1000; p.encodings[0].scaleResolutionDownBy = i >= 4 ? 2 : i >= 3 ? 1.5 : 1;
+  try { await s.setParameters(p); } catch (e) {}
+}
+async function adapt() {
+  const pc = pub && pub.pc; if (!pc) return;
+  if (pc !== lastPc) { lastPc = pc; prevS = null; if (step) setStep(pc, step); }      // reconnected: keep the step we were on
+  let st; try { st = await pc.getStats(); } catch (e) { return; }
+  let lost = 0, sent = 0, rtt = 0;
+  st.forEach(r => { if (r.type === 'remote-inbound-rtp') { lost += r.packetsLost || 0; rtt = Math.max(rtt, r.roundTripTime || 0); }
+    if (r.type === 'outbound-rtp') sent += r.packetsSent || 0; });
+  const now = Date.now();
+  if (prevS) { const dl = lost - prevS.lost, ds = sent - prevS.sent, loss = ds > 0 ? 100 * dl / ds : 0;
+    if ((loss > 3 || rtt > 0.45) && step < STEPS.length - 1 && now - lastDown > 2500) { lastDown = now; cleanSince = now; setStep(pc, step + 1); }
+    else if (loss < 0.5 && rtt < 0.25) { if (!cleanSince) cleanSince = now; if (step > 0 && now - cleanSince > 15000) { cleanSince = now; setStep(pc, step - 1); } }
+    else cleanSince = now; }
+  prevS = {lost, sent};
 }
 async function listenOthers() {
   let j; try { j = await info(); } catch (e) {
@@ -143,7 +169,7 @@ $('#turnBtn').onclick = async () => { try { await document.documentElement.reque
 $('#airFs').onclick = () => { const v = $('#air'); (v.requestFullscreen ? v.requestFullscreen() : v.webkitEnterFullscreen ? v.webkitEnterFullscreen() : $('#airBox').requestFullscreen()).catch?.(() => {}); };
 $('#joinV').onclick = () => join(true); $('#joinA').onclick = () => join(false);
 $('#mute').onclick = () => { muted = !muted; stream.getAudioTracks().forEach(t => t.enabled = !muted); $('#mute').textContent = muted ? 'Unmute mic' : 'Mute mic'; $('#mute').className = 'btn ' + (muted ? 'y' : 'o'); };
-$('#leave').onclick = () => { pub && pub.close(); ret && ret.close(); air && air.close(); air = null; $('#airBox').hidden = true; document.body.classList.remove('incall'); clearInterval(othersT); othersT = null; Object.values(others).forEach(o => { o.c.close(); o.a.srcObject = null; o.a.remove(); }); others = {}; stream && stream.getTracks().forEach(t => t.stop()); $('#inCall').hidden = true;
+$('#leave').onclick = () => { clearInterval(adaptT); pub && pub.close(); ret && ret.close(); air && air.close(); air = null; $('#airBox').hidden = true; document.body.classList.remove('incall'); clearInterval(othersT); othersT = null; Object.values(others).forEach(o => { o.c.close(); o.a.srcObject = null; o.a.remove(); }); others = {}; stream && stream.getTracks().forEach(t => t.stop()); $('#inCall').hidden = true;
   fail('Thank you' + (ME && ME.name ? ', ' + ME.name : '') + ', for being on the show! 🙌 Want to join again? Refresh this page.'); };
 try { if (localStorage.getItem('hype_hp') === '0') $('#hp').checked = false; } catch (e) {}
 $('#hp').onchange = () => { try { localStorage.setItem('hype_hp', HP() ? '1' : '0'); } catch (e) {} useDevices().catch(() => {}); };

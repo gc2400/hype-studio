@@ -80,6 +80,8 @@ class Live:
         self.st["cams"].setdefault("CAM 4", "guest2"); self.st.setdefault("lip_sync", 0)
         self.drops = 0; self.air = "automation"
         threading.Thread(target=self.watch_air, daemon=True).start()
+        self.gmeas = {}; self.gnet = {}; self._gn_prev = {}
+        threading.Thread(target=self.watch_guests, daemon=True).start()
         self.rec = None; self.rest = {}; self.live_since = None
         self.rec_restore()
         self.live = self.liq_live()
@@ -208,13 +210,66 @@ class Live:
                 for cam in self.st["cams"]: self.cam_delay(cl, feed(cam))
                 self.sync_audio(cl)
             except Exception as e: log.warning("cams: %s", e); self.tv.cl = None
+    # ---------- guests: lip sync (measured) + connection ----------
+    def guest_sync_ms(self, slot):
+        """The measured delay of this guest's voice in the studio mix (median of the last good measurements), else the default."""
+        m = self.gmeas.get(slot) or []
+        return int(sorted(m)[len(m) // 2]) if m else 300
+    def watch_guests(self):
+        """Every 5 s: each guest's connection (packets lost on the way to the server, bitrate) from MediaMTX.
+        Every ~20 s, while the studio and a guest are connected: measure that guest's lip sync (guestsync.py) and put the
+        guest's picture right (only when it changed by more than 25 ms: every change is a small jump in the picture)."""
+        n = 0; turn = 0
+        while True:
+            time.sleep(5); n += 1
+            try:
+                with urllib.request.urlopen("http://127.0.0.1:9997/v3/webrtcsessions/list", timeout=2) as r: ses = json.loads(r.read()).get("items", [])
+                now = time.time(); seen = set()
+                for x in ses:
+                    p = x.get("path", "")
+                    if x.get("state") != "publish" or not re.fullmatch(r"guest\d+", p): continue
+                    seen.add(p); got, lost, b = x.get("rtpPacketsReceived", 0), x.get("rtpPacketsLost", 0), x.get("bytesReceived", 0)
+                    pr = self._gn_prev.get(p)
+                    if pr and pr["id"] == x.get("id") and now > pr["t"]:
+                        dg, dl = got - pr["got"], lost - pr["lost"]
+                        loss = 100.0 * dl / max(1, dg + dl); kbps = (b - pr["b"]) * 8 / 1000 / (now - pr["t"])
+                        g = self.gnet.get(p, {})
+                        self.gnet[p] = {"loss": round(loss, 1), "kbps": int(kbps), "t": now, "worst": max(loss, g.get("worst", 0) * 0.9)}
+                        if loss >= 2: log.warning("guest %s connection: %.1f %% packets lost, %d kbps", p, loss, kbps)
+                    self._gn_prev[p] = {"id": x.get("id"), "got": got, "lost": lost, "b": b, "t": now}
+                for p in list(self.gnet):
+                    if p not in seen: self.gnet.pop(p, None); self._gn_prev.pop(p, None)
+            except Exception: pass
+            if n % 4: continue
+            try:
+                paths = mtx_paths()
+                if not paths.get("studio", {}).get("ready"): continue
+                slots = sorted(s for s, v in paths.items() if re.fullmatch(r"guest\d+", s) and v.get("ready"))
+                if not slots: continue
+                slot = slots[turn % len(slots)]; turn += 1
+                import guestsync
+                ms, why = guestsync.measure(slot)
+                if ms is None: continue
+                hist = (self.gmeas.get(slot) or [])[-4:] + [ms]
+                old = self.guest_sync_ms(slot) if self.gmeas.get(slot) else None
+                self.gmeas[slot] = hist
+                new = self.guest_sync_ms(slot)
+                log.info("guest %s lip sync measured: voice %d ms after the picture (conf %.0f) -> using %d ms", slot, ms, why, new)
+                if old is None or abs(new - old) > 25:
+                    with self.tv.olock:
+                        try:
+                            cl = self.tv.client()
+                            for cam, src in self.st["cams"].items():
+                                if src == slot: self.cam_delay(cl, feed(cam))
+                        except Exception: self.tv.cl = None
+            except Exception as e: log.warning("guest sync: %s", e)
     def cam_delay(self, cl, cam):
         """Lip sync: < 0 = the picture waits (Render Delay, max 500 ms), > 0 = the sound waits (audio sync offset).
         Guests: their voice takes a longer road (guest → server → your laptop → Mixcast → your laptop → server) than their
         picture (guest → server → OBS), so a guest's picture also waits "guest_sync" ms."""
         ms = max(0, -int(self.st.get("lip_sync", 0)))
         src = next((v for k, v in self.st["cams"].items() if feed(k) == cam), "")
-        if str(src).startswith("guest"): ms += int(self.st.get("guest_sync", 300))
+        if str(src).startswith("guest"): ms += self.guest_sync_ms(src) + int(self.st.get("guest_adj", 0)) + max(0, int(self.st.get("lip_sync", 0)))   # measured + your fine-tune (+ the studio sound's own wait)
         ms = max(0, min(500, ms))
         try: cl.set_source_filter_settings(cam, "Delay", {"delay_ms": ms})
         except Exception:
@@ -295,7 +350,7 @@ class Live:
         return {
             "live": self.live, "live_since": self.live_since, "studio_online": on("studio"), "return_online": on("return"),
             "sources": {s: {"online": on(s), "name": (g.get(s) or {}).get("name") if s.startswith("guest") else {"cam1": "Studio cam 1", "cam2": "Studio cam 2", "cam3": "Studio cam 3", "screen": "Screen share"}[s]} for s in SOURCES},
-            "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "guest_sync": self.st.get("guest_sync", 300), "air": self.air, "drops": self.drops, "auto_record": self.st.get("auto_record", True), "rec_what": self.st.get("rec_what", "both"),
+            "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "guest_adj": self.st.get("guest_adj", 0), "guest_sync": {s: self.guest_sync_ms(s) for s in self.gmeas}, "guest_net": {s: {k: v for k, v in d.items() if k != "t"} for s, d in self.gnet.items()}, "air": self.air, "drops": self.drops, "auto_record": self.st.get("auto_record", True), "rec_what": self.st.get("rec_what", "both"),
             "guests": {s: {"name": i["name"], "token": i["token"], "exp": i["exp"], "online": on(s), "vol": i.get("vol", 1.0), "muted": bool(i.get("muted")), "mode": i.get("mode", "video")} for s, i in g.items()},
             "rec": {"since": self.rec["start"], "file": self.rec["file"], "ok": self.rec_alive()} if self.rec else None,
             "restream": {k: {"name": d["name"], "on": k in self.rest and not self.rest[k].stop_, "ok": k in self.rest and self.rest[k].healthy(),
@@ -305,9 +360,9 @@ class Live:
     def settings(self, d):
         if "auto_record" in d: self.st["auto_record"] = bool(d["auto_record"])
         if d.get("rec_what") in ("both", "video", "audio"): self.st["rec_what"] = d["rec_what"]
-        if "lip_sync" in d or "guest_sync" in d:
+        if "lip_sync" in d or "guest_adj" in d:
             if "lip_sync" in d: self.st["lip_sync"] = max(-500, min(1500, int(d["lip_sync"])))
-            if "guest_sync" in d: self.st["guest_sync"] = max(0, min(500, int(d["guest_sync"])))
+            if "guest_adj" in d: self.st["guest_adj"] = max(-200, min(200, int(d["guest_adj"])))
             with self.tv.olock:
                 try:
                     cl = self.tv.client()

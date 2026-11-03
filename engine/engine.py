@@ -607,7 +607,7 @@ class TV:
                         if gen != self.gen: return          # a newer song already took over
                         try:
                             cl2 = self.client()
-                            if sound: cl2.set_input_mute(nxt, False)
+                            if sound and not getattr(self, "live", False): cl2.set_input_mute(nxt, False)   # LIVE: only the studio mix (the music is in it already) – never the clip's own sound on top
                             if seek_k is not None:
                                 try: cl2.set_media_input_cursor(nxt, int(seek_k * 1000))
                                 except Exception as e:      # OBS: "the media must be playing" (the clip was stopped) – start it, seek again; never leave the TV black
