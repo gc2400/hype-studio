@@ -1,17 +1,15 @@
 {
- "time": "2026-11-03T23:29:58",
+ "time": "2026-11-04T00:19:46",
  "result": "ok",
- "commit": "bee5ddfc61b5a99f2eaca7de3dc301e653ada8fc",
- "subject": "Sound: master_me full controls \u2013 leveler speed; compressor threshold/attack/release; bass side and treble side of the multiband each with strength, crossover, threshold, attack, release; limiter attack/release. Presets set all of them. Lab: PASS",
+ "commit": "bc8700d6c8f5734c1b39546e55ca34fbbba8e883",
+ "subject": "Live: guest voice in full quality (headphones mode: no echo canceller / noise filter / auto gain, 96 kbps), Bluetooth tip; guest lip sync (guest picture waits, default 300 ms) + smaller voice buffer; camera health line on the Broadcast page (fps, bitrate, laptop busy / internet slow); guest Leave shows a thank-you with their name and 'refresh to join again'",
  "log": [
-  "23:28:28 update cd3fad1e \u2192 bee5ddfc \u00b7 3 file(s): engine/engine.py, radio/radio.liq, web/panel/settings.html",
-  "23:29:13 lab: PASS (6/6 good readings)",
-  "23:29:13 restart hype-engine",
-  "23:29:13 restart hype-radio",
-  "23:29:58 installed OK \u00b7 restarted: hype-engine, hype-radio"
+  "00:19:01 update bee5ddfc \u2192 bc8700d6 \u00b7 3 file(s): engine/live.py, web/guest/index.html, web/panel/studio.html",
+  "00:19:01 restart hype-engine",
+  "00:19:46 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Jey One x Yaisel LM \u2013 Bo De Bo De Bo",
+  "song": "MAUVAIS DJO \u2013 Maladie",
   "listeners": 0,
   "obs": true,
   "seg_age": 1.6,
