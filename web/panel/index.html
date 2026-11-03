@@ -1020,6 +1020,16 @@ meterTick();
 // ---------- song settings: cue points with video preview ----------
 let CUE = null, cuePeaks = [], dragM = null, cueStop = null;
 const M = () => $('#cueMedia');
+const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function pvPhone(it, tries = 0) {
+  api('pvclip?path=' + encodeURIComponent(it.path)).then(r => {
+    if (SEL !== it || !r || r.original) return;
+    const m = M();
+    if (r.ready) { const t = m.currentTime, play = !m.paused; m.src = r.url; m.addEventListener('loadedmetadata', () => { m.currentTime = t; if (play) m.play().catch(() => {}); }, {once: true}); $('#tvInfo').dataset.pv = ''; return; }
+    if (!tries) toast('This video is ' + (r.codec || 'a format') + ' – making a phone version (about half a minute)…');
+    if (tries < 40) setTimeout(() => pvPhone(it, tries + 1), 3000);
+  }).catch(() => {});
+}
 function openCueDlg(it) {
   SEL = it; const D = $('#cueDlg');
   $('#dTitle').textContent = (it.artist ? it.artist + ' – ' : '') + it.title;
@@ -1029,6 +1039,7 @@ function openCueDlg(it) {
   cuePeaks = []; cw.reset(); fillCue(); drawCue(); smartFetch();
   api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { cuePeaks = p; cw.setPeaks(p); } });
   const m = M(); m.pause(); m.src = '../media/' + it.path.split('/').map(encodeURIComponent).join('/');
+  if (it.has_video && IOS) pvPhone(it);      // iPhone / iPad: VP9 / AV1 videos get a phone copy (else only the sound plays)
   m.style.display = it.has_video ? 'block' : 'none'; $('#cdg').classList.toggle('novid', !it.has_video); m.currentTime = CUE.s;
   openOverlay(it); if (!D.open) D.showModal();
 }

@@ -1907,6 +1907,39 @@ def wave_zoom(path, t0, dur=6.0):
     a = array.array("h"); a.frombytes(p.stdout[: len(p.stdout) // 2 * 2])
     return {"t0": t0, "step": 0.01, "p": [round(max((abs(x) for x in a[i:i + 80]), default=0) / 32768, 3) for i in range(0, len(a) - 79, 80)]}
 
+# ---------- phone preview: iPhone / iPad Safari cannot show VP9 / AV1 / 10-bit video (only the sound plays) ----------
+PVCLIP = "/srv/hype-data/pvclip"; _PV = {"busy": set()}
+def pvclip(path):
+    """A small H.264 copy (480p, with sound) of a video the phone cannot play – made once, then served by nginx (/pvclip/)."""
+    full = lib_file(path)
+    try: pr = json.loads(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=codec_name,pix_fmt", "-of", "json", full],
+                                        capture_output=True, text=True, timeout=15).stdout or "{}")
+    except Exception: pr = {}
+    st = (pr.get("streams") or [{}])[0]
+    if st.get("codec_name") == "h264" and st.get("pix_fmt") in ("yuv420p", "yuvj420p"): return {"ok": True, "original": True}
+    h = hashlib.sha1((path + "|" + str(int(os.path.getmtime(full)))).encode()).hexdigest()[:16]
+    out = os.path.join(PVCLIP, h + ".mp4")
+    if os.path.exists(out): return {"ok": True, "ready": True, "url": "/pvclip/" + h + ".mp4"}
+    if h not in _PV["busy"] and len(_PV["busy"]) < 2:
+        _PV["busy"].add(h); os.makedirs(PVCLIP, exist_ok=True)
+        def run(h=h, full=full, out=out):
+            tmp = out + ".part.mp4"
+            try:
+                subprocess.run(["nice", "-n", "15", "ffmpeg", "-v", "error", "-y", "-i", full, "-map", "0:v:0", "-map", "0:a:0?", "-vf", "scale=-2:480",
+                                "-c:v", "libx264", "-preset", "veryfast", "-crf", "26", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
+                                "-movflags", "+faststart", tmp], timeout=900, check=True)
+                os.replace(tmp, out)
+                for f in sorted(os.listdir(PVCLIP), key=lambda f: os.path.getmtime(os.path.join(PVCLIP, f)))[:-150]:   # keep the newest 150
+                    try: os.remove(os.path.join(PVCLIP, f))
+                    except OSError: pass
+            except Exception as e:
+                log.warning("phone preview %s: %s", path, e)
+                try: os.remove(tmp)
+                except OSError: pass
+            finally: _PV["busy"].discard(h)
+        threading.Thread(target=run, daemon=True).start()
+    return {"ok": True, "ready": False, "codec": st.get("codec_name")}
+
 def waveform(path):
     full = lib_file(path); os.makedirs(WAVES, exist_ok=True)
     f = os.path.join(WAVES, hashlib.sha1(path.encode()).hexdigest()[:16] + "_1600.json")
@@ -2236,6 +2269,7 @@ class H(BaseHTTPRequestHandler):
                 for r in reversed(h["items"]): w.writerow([h["day"], r["time"], r["artist"], r["title"], r["folder"], r["type"], r["len"], r["scene"], r["path"], r.get("over", "")])
                 return self.send(200, ("\ufeff" + b.getvalue()).encode("utf-8"), "text/csv; charset=utf-8")
             if p == "/wave": return self.send(200, waveform(qs["path"][0]))
+            if p == "/pvclip": return self.send(200, pvclip(qs["path"][0]))
             if p == "/wavezoom": return self.send(200, wave_zoom(qs["path"][0], float(qs.get("t", ["0"])[0]), float(qs.get("d", ["6"])[0])))
             if p == "/preview.jpg": return self.send(200, E.tv.screenshot(int(qs.get("w", ["640"])[0])), "image/jpeg")
             if p == "/playlists": return self.send(200, planner.api_playlists(dbc()))
