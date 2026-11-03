@@ -1,17 +1,18 @@
 {
- "time": "2026-11-04T00:46:07",
+ "time": "2026-11-04T00:49:58",
  "result": "ok",
- "commit": "6ef830b6ed1adb19b51373a61324fcf7ef702f60",
- "subject": "Deploy: install guestsync.py",
+ "commit": "d5c991db7350b6ea3350aea226a3d80a5900440e",
+ "subject": "guestsync: note (so the updater installs it)",
  "log": [
-  "00:46:07 update 96d522ce \u2192 6ef830b6 \u00b7 0 file(s): none (not server files)",
-  "00:46:07 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "00:49:13 update 6ef830b6 \u2192 d5c991db \u00b7 1 file(s): engine/guestsync.py",
+  "00:49:13 restart hype-engine",
+  "00:49:58 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Kybba x J Balvin x Rytikal \u2013 I Love It",
+  "song": "YG Marley \u2013 Praise Jah In The Moonlight",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
