@@ -33,6 +33,22 @@ mm_target    = interactive.float("mm_target", min=-20., max=-8., description="ma
 mm_comp      = interactive.float("mm_comp", min=0., max=100., description="master_me compressor strength (%)", 25.)
 mm_mb        = interactive.float("mm_mb", min=0., max=100., description="master_me multiband strength (%)", 25.)
 mm_lim       = interactive.float("mm_lim", min=0., max=100., description="master_me limiter strength (%)", 70.)
+mm_lev       = interactive.float("mm_lev", min=0.0, max=100.0, description="master_me Leveler speed (%)", 20.0)
+mm_kc_th     = interactive.float("mm_kc_th", min=-12.0, max=6.0, description="master_me Compressor starts at (dB)", -4.0)
+mm_kc_att    = interactive.float("mm_kc_att", min=1.0, max=100.0, description="master_me Compressor attack (ms)", 20.0)
+mm_kc_rel    = interactive.float("mm_kc_rel", min=20.0, max=1000.0, description="master_me Compressor release (ms)", 200.0)
+mm_lo_str    = interactive.float("mm_lo_str", min=0.0, max=100.0, description="master_me Bass strength (%)", 25.0)
+mm_lo_f      = interactive.float("mm_lo_f", min=30.0, max=250.0, description="master_me Bass up to (Hz)", 60.0)
+mm_lo_th     = interactive.float("mm_lo_th", min=-12.0, max=12.0, description="master_me Bass starts at (dB)", -3.0)
+mm_lo_att    = interactive.float("mm_lo_att", min=1.0, max=100.0, description="master_me Bass attack (ms)", 15.0)
+mm_lo_rel    = interactive.float("mm_lo_rel", min=20.0, max=1000.0, description="master_me Bass release (ms)", 150.0)
+mm_hi_str    = interactive.float("mm_hi_str", min=0.0, max=100.0, description="master_me Treble strength (%)", 25.0)
+mm_hi_f      = interactive.float("mm_hi_f", min=5000.0, max=12000.0, description="master_me Treble from (Hz)", 8000.0)
+mm_hi_th     = interactive.float("mm_hi_th", min=-12.0, max=12.0, description="master_me Treble starts at (dB)", -12.0)
+mm_hi_att    = interactive.float("mm_hi_att", min=1.0, max=100.0, description="master_me Treble attack (ms)", 8.0)
+mm_hi_rel    = interactive.float("mm_hi_rel", min=10.0, max=1000.0, description="master_me Treble release (ms)", 30.0)
+mm_lim_att   = interactive.float("mm_lim_att", min=0.5, max=20.0, description="master_me Limiter attack (ms)", 3.0)
+mm_lim_rel   = interactive.float("mm_lim_rel", min=10.0, max=400.0, description="master_me Limiter release (ms)", 40.0)
 # --- faders (panel): music, pads + sweepers, the studio while LIVE (1.0 = 0 dB) ---
 vol_music  = interactive.float("vol_music", min=0., max=1.6, description="Music fader", 1.)
 vol_pads   = interactive.float("vol_pads", min=0., max=1.6, description="Pads fader", 1.)
@@ -172,14 +188,15 @@ def process(~meter=false, ~light=false, x) =
     # (before: r1 sat only in the Classic branch, which is not computed then -> the AGC saw a frozen level and boosted)
     mi3 = rms(duration=3., r1)
     mi = peak(duration=0.3, mi3)
-    mmx = ladspa.master_me(target={int_of_float(mm_target())}, kneecomp_strength={int_of_float(mm_comp())},
-            low_strength={int_of_float(mm_mb())}, high_strength={int_of_float(mm_mb())}, limiter_strength={int_of_float(mm_lim())},
+    mmx = ladspa.master_me(target={int_of_float(mm_target())}, leveler_speed={int_of_float(mm_lev())},
+            kneecomp_strength={int_of_float(mm_comp())}, kneecomp_tar_thresh=mm_kc_th, kneecomp_attack=mm_kc_att, kneecomp_release=mm_kc_rel,
+            low_strength={int_of_float(mm_lo_str())}, low_crossover=mm_lo_f, low_tar_thresh=mm_lo_th, low_attack=mm_lo_att, low_release=mm_lo_rel,
+            high_strength={int_of_float(mm_hi_str())}, high_crossover=mm_hi_f, high_tar_thresh=mm_hi_th, high_attack=mm_hi_att, high_release=mm_hi_rel,
+            limiter_strength={int_of_float(mm_lim())}, limiter_attack=mm_lim_att, limiter_release=mm_lim_rel,
             brickwall_ceiling={snd_ceiling() - 0.2}, eq_highpass_freq=snd_hpf,
-            gate_bypass=true, dc_blocker=true, leveler_speed=20, leveler_max=10., leveler_max__=10., leveler_brake_threshold=-20.,
-            kneecomp_tar_thresh=-4., kneecomp_attack=20., kneecomp_release=200., kneecomp_knee=6., kneecomp_link=60,
-            low_crossover=60., low_tar_thresh=-3., low_attack=15., low_release=150., low_knee=12., low_link=70,
-            high_crossover=8000., high_tar_thresh=-12., high_attack=8., high_release=30., high_knee=12., high_link=30,
-            makeup=1., limiter_tar_thresh=3., limiter_attack=3., limiter_release=40., limiter_knee=3., brickwall_release=75., mi)
+            gate_bypass=true, dc_blocker=true, leveler_max=10., leveler_max__=10., leveler_brake_threshold=-20.,
+            kneecomp_knee=6., kneecomp_link=60, low_knee=12., low_link=70, high_knee=12., high_link=30,
+            makeup=1., limiter_tar_thresh=3., limiter_knee=3., brickwall_release=75., mi)
     mmx = ladspa.fastlookaheadlimiter(input_gain=0., limit={snd_ceiling() - 0.2}, release_time=0.08, mmx)   # the same last safety as Classic
     mo1 = rms(duration=0.3, mmx)
     mo3 = rms(duration=3., mo1)

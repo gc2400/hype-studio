@@ -2026,7 +2026,7 @@ def watch_show():
             except Exception as e: log.warning("weather: %s", e)
         time.sleep(60)
 
-SOUND_VARS = ["snd_drive", "snd_bass", "snd_bass_f", "snd_treble", "snd_mid", "snd_lowmid", "snd_hpf", "snd_width", "snd_comp", "snd_monob", "snd_agc", "snd_ratio", "snd_thresh", "snd_attack", "snd_release", "snd_ceiling", "snd_punch", "mm_target", "mm_comp", "mm_mb", "mm_lim", "mix_out", "mix_in"]
+SOUND_VARS = ["snd_drive", "snd_bass", "snd_bass_f", "snd_treble", "snd_mid", "snd_lowmid", "snd_hpf", "snd_width", "snd_comp", "snd_monob", "snd_agc", "snd_ratio", "snd_thresh", "snd_attack", "snd_release", "snd_ceiling", "snd_punch", "mm_target", "mm_comp", "mm_mb", "mm_lim", "mm_lev", "mm_kc_th", "mm_kc_att", "mm_kc_rel", "mm_lo_str", "mm_lo_f", "mm_lo_th", "mm_lo_att", "mm_lo_rel", "mm_hi_str", "mm_hi_f", "mm_hi_th", "mm_hi_att", "mm_hi_rel", "mm_lim_att", "mm_lim_rel", "mix_out", "mix_in"]
 def load_rotation():
     """Artist / song separation and the longest overlap, from Settings."""
     global ARTIST_SEP, TITLE_SEP, MIX_MAX, JINGLE_FADE, JINGLE_DB, ADBOX_ALWAYS, SMART_MIX, AV_LAG
