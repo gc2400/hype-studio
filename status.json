@@ -1,17 +1,18 @@
 {
- "time": "2026-11-03T09:17:10",
+ "time": "2026-11-03T09:27:09",
  "result": "ok",
- "commit": "492a08c3bc8c72e711cf052e153d8e001218a9c1",
- "subject": "Song settings (cue points) fit on a phone: border-box, no sideways scroll, intro sweeper full width, shortcut hint hidden on small screens",
+ "commit": "537528ff1984a0b237b7a9af09b0d293369d73e7",
+ "subject": "Phone preview: on iPhone / iPad, a VP9 / AV1 / 10-bit video in the song settings gets a small H.264 copy (made once, ~30 s) so the picture shows \u2013 the original and the TV are untouched",
  "log": [
-  "09:17:10 update 64da2da6 \u2192 492a08c3 \u00b7 1 file(s): web/panel/index.html",
-  "09:17:10 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "09:26:24 update 492a08c3 \u2192 537528ff \u00b7 3 file(s): engine/engine.py, system/nginx-hype.conf, web/panel/index.html",
+  "09:26:24 restart hype-engine",
+  "09:27:09 installed OK \u00b7 restarted: hype-engine, nginx-reload"
  ],
  "guard": {
-  "song": "KM X Jonna Fraser X SRNO \u2013 Your Season",
+  "song": "Young Jonn \u2013 Glass in the Air",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },

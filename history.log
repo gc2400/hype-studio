@@ -205,3 +205,4 @@
 2026-11-02T23:31:09 ok f81402d8 Classic sound: Rumble cut slider (20–40 Hz, default 25 – keeps more of the deep 808) and Low mids slider (300 Hz); chain otherwise unchanged – 8/8 lab runs incl. the silence test
 2026-11-02T23:45:30 ok 64da2da6 Settings → Sound: sliders in chain order (EQ · Compressor · Limiter with headings); presets re-tuned after measuring each in the lab (compressor 2–4 dB instead of 4–7, never red); AGC text never wraps (no jumping box)
 2026-11-03T09:17:10 ok 492a08c3 Song settings (cue points) fit on a phone: border-box, no sideways scroll, intro sweeper full width, shortcut hint hidden on small screens
+2026-11-03T09:27:09 ok 537528ff Phone preview: on iPhone / iPad, a VP9 / AV1 / 10-bit video in the song settings gets a small H.264 copy (made once, ~30 s) so the picture shows – the original and the TV are untouched
