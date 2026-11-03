@@ -1,18 +1,20 @@
 {
- "time": "2026-11-03T18:02:31",
+ "time": "2026-11-03T22:53:11",
  "result": "ok",
- "commit": "f7ce34264ddf207b3235c1a9b4d4db7ea7c827c2",
- "subject": "Clip start: if OBS refuses the seek (clip stopped), start the clip and seek again instead of leaving the TV black",
+ "commit": "b038a636a05c1d0df4a33fda59c28160b466a94a",
+ "subject": "Sound: master_me as a second choice next to Classic (Settings \u2192 Sound): leveler, compressor, multiband and limiter from the open-source master_me plugin; controls for target loudness, compressor, multiband, limiter; 3 presets; old 3-band multiband off for good. Lab: 7/7 runs incl. silence start in both modes, ~35 % CPU",
  "log": [
-  "18:01:46 update 01995983 \u2192 f7ce3426 \u00b7 1 file(s): engine/engine.py",
-  "18:01:46 restart hype-engine",
-  "18:02:31 installed OK \u00b7 restarted: hype-engine"
+  "22:51:30 update f7ce3426 \u2192 b038a636 \u00b7 3 file(s): engine/engine.py, radio/radio.liq, web/panel/settings.html",
+  "22:52:15 lab: PASS (6/6 good readings)",
+  "22:52:15 restart hype-engine",
+  "22:52:15 restart hype-radio",
+  "22:53:11 installed OK \u00b7 restarted: hype-engine, hype-radio"
  ],
  "guard": {
-  "song": "Frenna \u2013 STARLIFE",
+  "song": "Ryan Castro \u2013 que te vaya bien",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
