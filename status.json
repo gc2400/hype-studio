@@ -1,18 +1,17 @@
 {
- "time": "2026-11-04T00:44:02",
+ "time": "2026-11-04T00:46:07",
  "result": "ok",
- "commit": "96d522ce36b3702c53662ef3f873a524a1af5296",
- "subject": "Live: guest lip sync measured automatically (guest's own voice vs the same voice in the studio mix, GCC-PHAT) and applied per guest; fine-tune slider; guest connection on the Broadcast page (loss on their line, voice gaps here, measured lip sync) + logged; guest video steps down by itself on a lossy line (voice stays clean); paired clip: never its own sound while LIVE (was double audio); library 'added' shows minutes",
+ "commit": "6ef830b6ed1adb19b51373a61324fcf7ef702f60",
+ "subject": "Deploy: install guestsync.py",
  "log": [
-  "00:43:17 update bc8700d6 \u2192 96d522ce \u00b7 5 file(s): engine/engine.py, engine/live.py, web/guest/index.html, web/panel/library.html, web/panel/studio.html",
-  "00:43:17 restart hype-engine",
-  "00:44:02 installed OK \u00b7 restarted: hype-engine"
+  "00:46:07 update 96d522ce \u2192 6ef830b6 \u00b7 0 file(s): none (not server files)",
+  "00:46:07 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Priceless \u2013 Balance",
+  "song": "Kybba x J Balvin x Rytikal \u2013 I Love It",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
