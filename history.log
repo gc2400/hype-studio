@@ -204,3 +204,4 @@
 2026-11-02T22:57:24 ok da709d3b Settings → Sound: Hype Pro, its presets and the new sliders only show when the radio runs that chain (now: Classic)
 2026-11-02T23:31:09 ok f81402d8 Classic sound: Rumble cut slider (20–40 Hz, default 25 – keeps more of the deep 808) and Low mids slider (300 Hz); chain otherwise unchanged – 8/8 lab runs incl. the silence test
 2026-11-02T23:45:30 ok 64da2da6 Settings → Sound: sliders in chain order (EQ · Compressor · Limiter with headings); presets re-tuned after measuring each in the lab (compressor 2–4 dB instead of 4–7, never red); AGC text never wraps (no jumping box)
+2026-11-03T09:17:10 ok 492a08c3 Song settings (cue points) fit on a phone: border-box, no sideways scroll, intro sweeper full width, shortcut hint hidden on small screens

@@ -1,17 +1,17 @@
 {
- "time": "2026-11-02T23:45:30",
+ "time": "2026-11-03T09:17:10",
  "result": "ok",
- "commit": "64da2da63599539084c1cabc7a417db3e316911d",
- "subject": "Settings \u2192 Sound: sliders in chain order (EQ \u00b7 Compressor \u00b7 Limiter with headings); presets re-tuned after measuring each in the lab (compressor 2\u20134 dB instead of 4\u20137, never red); AGC text never wraps (no jumping box)",
+ "commit": "492a08c3bc8c72e711cf052e153d8e001218a9c1",
+ "subject": "Song settings (cue points) fit on a phone: border-box, no sideways scroll, intro sweeper full width, shortcut hint hidden on small screens",
  "log": [
-  "23:45:30 update f81402d8 \u2192 64da2da6 \u00b7 1 file(s): web/panel/settings.html",
-  "23:45:30 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "09:17:10 update 64da2da6 \u2192 492a08c3 \u00b7 1 file(s): web/panel/index.html",
+  "09:17:10 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Bryan Mg \u2013 Hier Moet Je Zijn",
+  "song": "KM X Jonna Fraser X SRNO \u2013 Your Season",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
