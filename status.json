@@ -1,18 +1,18 @@
 {
- "time": "2026-11-04T00:53:49",
+ "time": "2026-11-04T01:00:44",
  "result": "ok",
- "commit": "2c2bb1dea70b8dfff9f385b3570c3b574abd104c",
- "subject": "Guest lip sync: a guest who leaves is forgotten (the next one in that slot is measured fresh)",
+ "commit": "9743f4394bac47219d1511376de59e5157a723f2",
+ "subject": "LIVE: the TV's sound follows what is really on air \u2013 your internet drops -> TV plays the automation's sound (was silent), studio back -> your mix again",
  "log": [
-  "00:53:04 update d5c991db \u2192 2c2bb1de \u00b7 1 file(s): engine/live.py",
-  "00:53:04 restart hype-engine",
-  "00:53:49 installed OK \u00b7 restarted: hype-engine"
+  "00:59:59 update 2c2bb1de \u2192 9743f439 \u00b7 1 file(s): engine/live.py",
+  "00:59:59 restart hype-engine",
+  "01:00:44 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "6ix9ine x Yailin La M\u00e1s Viral \u2013 Pa Ti",
+  "song": "Darkoo \u2013 Focus On Me (All The Sexy Girls In The Club)",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
