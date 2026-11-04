@@ -1,18 +1,18 @@
 {
- "time": "2026-11-05T00:49:39",
+ "time": "2026-11-05T00:52:29",
  "result": "ok",
- "commit": "a0b1d90fbadde429e04b6096cd09848e003110a3",
- "subject": "TV stream: every quality carries the same (copied) sound \u2013 the re-encoded 128k/96k sound of 480p/360p made an audio hiccup at every quality switch (iPhone: a few s after start); BANDWIDTH in master.m3u8 includes the sound; old pieces cleaned at start",
+ "commit": "5985e4e053746b66dd25b2394e03ff2a486575a8",
+ "subject": "ladder: correct the BANDWIDTH of the new master.m3u8 (not the old one)",
  "log": [
-  "00:48:54 update 50f0cdf9 \u2192 a0b1d90f \u00b7 1 file(s): tv/ladder.sh",
-  "00:48:54 restart hype-ladder",
-  "00:49:39 installed OK \u00b7 restarted: hype-ladder"
+  "00:51:44 update a0b1d90f \u2192 5985e4e0 \u00b7 1 file(s): tv/ladder.sh",
+  "00:51:44 restart hype-ladder",
+  "00:52:29 installed OK \u00b7 restarted: hype-ladder"
  ],
  "guard": {
-  "song": "J Balvin x Ryan Castro \u2013 Pal Agua",
+  "song": "B'jay \u2013 Prisella",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 2.0,
   "problems": [],
   "ok": true
  },
