@@ -1,18 +1,17 @@
 {
- "time": "2026-11-04T11:23:13",
- "result": "ok",
- "commit": "b97539fbeb11ef3d22d8858b8354a35790449a33",
- "subject": "TV without sound since 4 Nov 06:53 (the audio bus restarted after OBS, OBS stayed connected to nothing): guard measures the TV sound every 30 s and reconnects it (radio or OBS) after 60 s; radio + OBS now restart with the audio bus (PartOf)",
+ "time": "2026-11-04T11:24:41",
+ "result": "error",
+ "commit": "",
+ "subject": "",
  "log": [
-  "11:22:28 update abe3c7ca \u2192 b97539fb \u00b7 3 file(s): engine/guard.py, system/hype-obs.service, system/hype-radio.service",
-  "11:22:28 restart hype-guard",
-  "11:23:13 installed OK \u00b7 restarted: hype-guard"
+  "11:24:41 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
  ],
+ "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "Kybba x Kapo x Busy Signal \u2013 GIMIDI",
+  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
