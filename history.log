@@ -233,3 +233,4 @@
 2026-11-04T11:23:13 ok b97539fb TV without sound since 4 Nov 06:53 (the audio bus restarted after OBS, OBS stayed connected to nothing): guard measures the TV sound every 30 s and reconnects it (radio or OBS) after 60 s; radio + OBS now restart with the audio bus (PartOf)
 2026-11-04T11:24:41 error  
 2026-11-04T11:30:59 error  
+2026-11-04T11:37:27 error  
