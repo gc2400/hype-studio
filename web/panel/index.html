@@ -606,7 +606,7 @@ $('#bPlay').onclick = () => { const back = S && !S.auto && !(S.dj && S.dj.on) &&
 $('#bSae').onclick = () => cmd('stop_at_end'); $('#bStop').onclick = () => { if (confirm('Stop the music now? The radio goes silent until you press PLAY.')) cmd('stop'); };
 $('#bAuto').onclick = () => cmd('auto', {on: true}).then(() => { if (MODE === 'dj') applyMode('onair'); toast('AUTO: the hour plans and programming'); });
 $('#bManual').onclick = () => cmd('auto', {on: false}).then(() => toast('MANUAL: your AUX plays – the radio keeps going'));
-$('#bAutoScene').onclick = () => cmd('autoscene'); $('#bPadStop').onclick = () => cmd('pads_stop').then(() => { Object.keys(PLAYING).forEach(k => delete PLAYING[k]); });
+$('#bAutoScene').onclick = () => cmd('autoscene').then(r => toast(r && r.auto === false ? 'AUTO SCENES off – the scene stays until you change it' : 'AUTO SCENES on – the TV follows the music')); $('#bPadStop').onclick = () => cmd('pads_stop').then(() => { Object.keys(PLAYING).forEach(k => delete PLAYING[k]); });
 // ---------- scenes ----------
 const SCENES = [['Music video', 'auto · clips'], ['Hype Screen', 'auto · audio only'], ['Branding', 'auto · jingles']];
 // Cameras grid: first the full-screen cameras, then a column per number of cameras (1-4) and a row per layout type; the rest at the end
@@ -665,7 +665,7 @@ function renderScenes() {
   if (CAMEDIT) camEditBind();
   $$('#scenes [data-scene], #camScenes [data-scene]').forEach(b => b.onclick = () => {
     if (SGEDIT && SG >= 0 && b.closest('#camScenes')) { const g = SGEDIT.list[SG], n = b.dataset.scene; g.scenes = g.scenes.includes(n) ? g.scenes.filter(x => x !== n) : [...g.scenes, n]; return renderScenes(); }
-    cmd('scene', {scene: b.dataset.scene}).then(() => toast('Scene held: press AUTO SCENES to follow the music again')); });
+    cmd('scene', {scene: b.dataset.scene}).then(r => toast(r && r.auto ? b.dataset.scene + ' – AUTO SCENES on, the TV follows the music' : r && r.hold ? b.dataset.scene + ' held for this song – the next song is automatic again (AUTO SCENES off = keep it)' : 'Scene held: press AUTO SCENES to follow the music again')); });
 }
 function camEditBind() {
   const L = CAMEDIT, swap = (a, b) => { if (a === b || a < 0 || b < 0) return; [L.cells[a], L.cells[b]] = [L.cells[b], L.cells[a]]; };

@@ -1336,6 +1336,8 @@ class Engine:
             if mode == "jingle-video" or mode == "clip": clip_file, start_at, kf = tv_file(c, path), it["cue_start"] or 0, keyframes(c, path)
             elif mode == "pair" and it["clip_path"]:
                 clip_file, start_at, sound, gain = pair_clip(c, it["clip_path"])
+            if getattr(self.tv, "hold_song", False):      # a scene you held for the last song: this song is automatic again
+                self.tv.hold_song = False; self.tv.auto = True; self.tv.scene = None
             scene = self.tv.show(mode, clip_file, start_at, sound, gain, kf)
             if mode == "pair" and it["clip_path"]:
                 cd = c.execute("SELECT duration FROM items WHERE path=?", (it["clip_path"],)).fetchone()
@@ -1485,15 +1487,24 @@ class Engine:
                 self.push_next(c)
             elif action == "scene":
                 if d["scene"] in ("Music video", "Hype Screen", "Branding"):
-                    # back from the cameras / media: AUTO SCENES on again (the next song picks Music video / Hype Screen by itself)
-                    self._live_layer_back(c); self.tv.auto = True; self.tv.set_scene(d["scene"])
-                else: self.tv.auto = False; self.tv.set_scene(d["scene"])
+                    # the scene that fits what plays now (e.g. Music video during a clip, back from the cameras): AUTO SCENES on.
+                    # another one (e.g. Hype Screen during a clip): held for THIS song, the next song is automatic again
+                    self._live_layer_back(c)
+                    want = (self.now or {}).get("scene") or "Hype Screen"
+                    hold = d["scene"] != want
+                    self.tv.auto = not hold; self.tv.hold_song = hold; self.tv.set_scene(d["scene"])
+                    return {"ok": True, "auto": not hold, "hold": hold}
+                else: self.tv.auto = False; self.tv.hold_song = False; self.tv.set_scene(d["scene"])
             elif action == "live_layer":      # the Hype Live Layer (shoutouts, polls, chat …) on / off in every scene
                 on = bool(d.get("on")); planner.set_setting(c, "live_layer", on); self.tv.live_layer(on)
-            elif action == "autoscene":
+            elif action == "autoscene":      # the AUTO SCENES button: on <-> off (off = manual: the scene stays until you change it)
+                if self.tv.auto and not d.get("on"):
+                    self.tv.auto = False; self.tv.hold_song = False
+                    return {"ok": True, "auto": False}
                 self._live_layer_back(c)
-                self.tv.auto = True; self.tv.scene = None
+                self.tv.auto = True; self.tv.hold_song = False; self.tv.scene = None
                 if self.now: self.tv.set_scene(self.now.get("scene") or "Hype Screen")
+                return {"ok": True, "auto": True}
             elif action == "media_play":
                 return {"ok": True, "media": self.media.play(self, d)}
             elif action == "media_stop":
@@ -2422,7 +2433,7 @@ class H(BaseHTTPRequestHandler):
                     L.set_live(True)
                 elif a == "off":
                     L.set_live(False)
-                    E.cmd("autoscene", {})        # END LIVE: the TV follows the music again (no camera left on screen)
+                    E.cmd("autoscene", {"on": True})        # END LIVE: the TV follows the music again (no camera left on screen)
                 elif a == "guest_add": slot, g = L.guest_add(d.get("name"), d.get("slot"), int(d.get("hours") or 12), d.get("mode") or "video"); return self.send(200, {"ok": True, "slot": slot, "token": g["token"]})
                 elif a == "guest_remove": L.guest_remove(d["slot"])
                 elif a == "cam": L.set_cam(d["cam"], d["src"])
