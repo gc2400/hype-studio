@@ -26,3 +26,5 @@ Hype Radio TV's own playout (radio + TV) on the Hetzner server `88.99.105.186`.
 | `deploy/` | `files.txt` (repo ↔ server paths + what to restart), updater, export, lab test |
 
 No passwords or keys are stored here: `/etc/hype/*.json`, `mediamtx.yml` and OBS `service.json` stay on the server only.
+
+master_me: the LADSPA plugin is in `radio/ladspa/` (1.3.1); `deploy/master_me.sh ensure` puts it back before every radio start when it is missing, `deploy/master_me.sh build` builds it from source.
