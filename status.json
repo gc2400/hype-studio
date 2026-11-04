@@ -1,18 +1,17 @@
 {
- "time": "2026-11-04T10:03:19",
- "result": "ok",
- "commit": "0d774798695391e4d1ae7fa98836532674554834",
- "subject": "Dead air on 4 Nov 06:53-06:56: Ubuntu's automatic updates (needrestart) restarted radio, audio bus, OBS, nginx and the engine several times. needrestart now never restarts Hype's services; and the engine queues the next song at once when the radio is empty and silent for 5 s (it waited for the end of the song it remembered)",
+ "time": "2026-11-04T10:14:36",
+ "result": "ok-restart-updater",
+ "commit": "43a3de2578c78009d5400e962f4d1eebf005db32",
+ "subject": "master_me safe: the plugin (1.3.1, same controls as the installed one) is in the repo + deploy/master_me.sh (ensure = put it back when missing, before every radio start; build = from the official source); updater: status push to GitHub forced + its error logged",
  "log": [
-  "10:02:33 update 0447775b \u2192 0d774798 \u00b7 2 file(s): engine/engine.py, system/needrestart-hype.conf",
-  "10:02:34 restart hype-engine",
-  "10:03:19 installed OK \u00b7 restarted: hype-engine"
+  "10:14:35 update 0d774798 \u2192 43a3de25 \u00b7 2 file(s): deploy/updater.py, system/hype-radio.service.d/master_me.conf",
+  "10:14:36 installed OK \u00b7 restarted: hype-updater"
  ],
  "guard": {
-  "song": "Wisin x Kapo \u2013 Mu\u00e9velo Pa' M\u00ed",
+  "song": "Topperig x Chavante \u2013 BAAGAA",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
