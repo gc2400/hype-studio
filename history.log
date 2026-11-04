@@ -219,3 +219,4 @@
 2026-11-04T00:53:49 ok 2c2bb1de Guest lip sync: a guest who leaves is forgotten (the next one in that slot is measured fresh)
 2026-11-04T01:00:44 ok 9743f439 LIVE: the TV's sound follows what is really on air – your internet drops -> TV plays the automation's sound (was silent), studio back -> your mix again
 2026-11-04T01:04:35 ok 0447775b LIVE drop-out: studio gone 8 s -> TV on the automatic scenes (music video / Hype Screen); studio back for 3 s -> the scene you had (unless you picked another meanwhile)
+2026-11-04T10:03:19 ok 0d774798 Dead air on 4 Nov 06:53-06:56: Ubuntu's automatic updates (needrestart) restarted radio, audio bus, OBS, nginx and the engine several times. needrestart now never restarts Hype's services; and the engine queues the next song at once when the radio is empty and silent for 5 s (it waited for the end of the song it remembered)

@@ -1,18 +1,18 @@
 {
- "time": "2026-11-04T01:04:35",
+ "time": "2026-11-04T10:03:19",
  "result": "ok",
- "commit": "0447775b6a0b51a127b04a0c94eefc32c95ec1e5",
- "subject": "LIVE drop-out: studio gone 8 s -> TV on the automatic scenes (music video / Hype Screen); studio back for 3 s -> the scene you had (unless you picked another meanwhile)",
+ "commit": "0d774798695391e4d1ae7fa98836532674554834",
+ "subject": "Dead air on 4 Nov 06:53-06:56: Ubuntu's automatic updates (needrestart) restarted radio, audio bus, OBS, nginx and the engine several times. needrestart now never restarts Hype's services; and the engine queues the next song at once when the radio is empty and silent for 5 s (it waited for the end of the song it remembered)",
  "log": [
-  "01:03:50 update 9743f439 \u2192 0447775b \u00b7 2 file(s): engine/engine.py, engine/live.py",
-  "01:03:50 restart hype-engine",
-  "01:04:35 installed OK \u00b7 restarted: hype-engine"
+  "10:02:33 update 0447775b \u2192 0d774798 \u00b7 2 file(s): engine/engine.py, system/needrestart-hype.conf",
+  "10:02:34 restart hype-engine",
+  "10:03:19 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Jeon x Dindi Spray \u2013 Pege (Remix)",
+  "song": "Wisin x Kapo \u2013 Mu\u00e9velo Pa' M\u00ed",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
