@@ -1,18 +1,18 @@
 {
- "time": "2026-11-04T22:16:12",
+ "time": "2026-11-04T22:23:07",
  "result": "ok",
- "commit": "5eb6cf3b4b6a98afca1a04d482e24cebcd50b6fc",
- "subject": "Scenes: Hype Screen during a music video (or another scene that doesn't fit what plays) is held for this song, the next song is automatic again (it jumped back to Music video within seconds); AUTO SCENES button switches on AND off (off = manual)",
+ "commit": "6a1336b1a3cdac5c702fcfd67f782f98111141b4",
+ "subject": "Live Layer: transparent background in OBS instead of the magenta colour key (the key ate the pink holiday graphics); scene transition set on every switch (OBS could keep the stinger when the engine's memory of it was off)",
  "log": [
-  "22:15:27 update d9af9544 \u2192 5eb6cf3b \u00b7 3 file(s): engine/engine.py, web/panel/help.html, web/panel/index.html",
-  "22:15:27 restart hype-engine",
-  "22:16:12 installed OK \u00b7 restarted: hype-engine"
+  "22:22:22 update 5eb6cf3b \u2192 6a1336b1 \u00b7 1 file(s): engine/engine.py",
+  "22:22:22 restart hype-engine",
+  "22:23:07 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Broederliefde x Eranio \u2013 Allerlaatste Kus",
+  "song": "Jeon x Issa Beach \u2013 Sak Pa Bo Lora",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
