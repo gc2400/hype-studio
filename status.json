@@ -1,17 +1,17 @@
 {
- "time": "2026-11-04T10:17:44",
- "result": "ok",
- "commit": "b1adc4c6e2cc0f50d1e043e0b636ff3cf7ceb6c2",
- "subject": "README: master_me note",
+ "time": "2026-11-04T10:37:10",
+ "result": "error",
+ "commit": "",
+ "subject": "",
  "log": [
-  "10:17:44 update 43a3de25 \u2192 b1adc4c6 \u00b7 0 file(s): none (not server files)",
-  "10:17:44 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "10:37:10 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
  ],
+ "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "Skillibeng x Johnny Wonder x Adde Instrumentals \u2013 Inna Di Dance",
+  "song": "Victony \u2013 SLICK",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
