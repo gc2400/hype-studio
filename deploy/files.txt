@@ -59,3 +59,4 @@ system/hype-backup.sh|/opt/hype/hype-backup.sh|755|-
 system/hype-backup.service|/etc/systemd/system/hype-backup.service|644|daemon-reload
 system/hype-backup.timer|/etc/systemd/system/hype-backup.timer|644|daemon-reload
 system/needrestart-hype.conf|/etc/needrestart/conf.d/hype.conf|644|-
+system/hype-radio.service.d/master_me.conf|/etc/systemd/system/hype-radio.service.d/master_me.conf|644|daemon-reload

@@ -44,7 +44,9 @@ def write_status(result, commit, extra=None):
         json.dump(st, open(os.path.join(STATUS_WT, "status.json"), "w"), indent=1)
         with open(os.path.join(STATUS_WT, "history.log"), "a") as f: f.write(f'{st["time"]} {result} {commit[:8] if commit else ""} {st["subject"]}\n')
         git("add", "-A", cwd=STATUS_WT); git("-c", "user.name=Hype Studio server", "-c", "user.email=server@hype-studio", "commit", "-q", "-m", f"{result} {commit[:8] if commit else ''}", cwd=STATUS_WT, check=False)
-        git("push", "-q", "origin", "HEAD:status", cwd=STATUS_WT, check=False)
+        # the status branch is only the server's own log: force it (pushes have failed silently since 31 Oct – now the reason is logged)
+        r = subprocess.run(["git", "push", "-q", "-f", "origin", "HEAD:status"], cwd=STATUS_WT, env=ENV, capture_output=True, text=True, timeout=120)
+        if r.returncode: print("status push failed:", r.stderr.strip()[:300], flush=True)
     except Exception as e: print("status:", e, flush=True)
 
 def deploy(cur, new):
