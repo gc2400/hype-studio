@@ -1,18 +1,18 @@
 {
- "time": "2026-11-04T01:00:44",
+ "time": "2026-11-04T01:04:35",
  "result": "ok",
- "commit": "9743f4394bac47219d1511376de59e5157a723f2",
- "subject": "LIVE: the TV's sound follows what is really on air \u2013 your internet drops -> TV plays the automation's sound (was silent), studio back -> your mix again",
+ "commit": "0447775b6a0b51a127b04a0c94eefc32c95ec1e5",
+ "subject": "LIVE drop-out: studio gone 8 s -> TV on the automatic scenes (music video / Hype Screen); studio back for 3 s -> the scene you had (unless you picked another meanwhile)",
  "log": [
-  "00:59:59 update 2c2bb1de \u2192 9743f439 \u00b7 1 file(s): engine/live.py",
-  "00:59:59 restart hype-engine",
-  "01:00:44 installed OK \u00b7 restarted: hype-engine"
+  "01:03:50 update 9743f439 \u2192 0447775b \u00b7 2 file(s): engine/engine.py, engine/live.py",
+  "01:03:50 restart hype-engine",
+  "01:04:35 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Darkoo \u2013 Focus On Me (All The Sexy Girls In The Club)",
+  "song": "Jeon x Dindi Spray \u2013 Pege (Remix)",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },

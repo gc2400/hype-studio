@@ -218,3 +218,4 @@
 2026-11-04T00:49:58 ok d5c991db guestsync: note (so the updater installs it)
 2026-11-04T00:53:49 ok 2c2bb1de Guest lip sync: a guest who leaves is forgotten (the next one in that slot is measured fresh)
 2026-11-04T01:00:44 ok 9743f439 LIVE: the TV's sound follows what is really on air – your internet drops -> TV plays the automation's sound (was silent), studio back -> your mix again
+2026-11-04T01:04:35 ok 0447775b LIVE drop-out: studio gone 8 s -> TV on the automatic scenes (music video / Hype Screen); studio back for 3 s -> the scene you had (unless you picked another meanwhile)
