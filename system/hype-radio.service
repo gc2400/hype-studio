@@ -1,6 +1,8 @@
 [Unit]
 Description=Hype radio engine (Liquidsoap)
 After=hype-pulse.service icecast2.service
+# the audio bus restarts -> the radio restarts right after it (its sound to the TV goes through the audio bus)
+PartOf=hype-pulse.service
 [Service]
 ExecStartPre=/bin/mkdir -p -m 700 /run/hype
 Environment=HOME=/root

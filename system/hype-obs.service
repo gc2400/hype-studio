@@ -1,6 +1,8 @@
 [Unit]
 Description=Hype TV picture (OBS, headless)
 After=hype-sway.service hype-pulse.service hype-mediamtx.service
+# the audio bus restarts -> OBS restarts right after it (4 Nov: OBS stayed connected to the old one = a TV without sound)
+PartOf=hype-pulse.service
 Requires=hype-sway.service
 [Service]
 ExecStartPre=/bin/mkdir -p -m 700 /run/hype

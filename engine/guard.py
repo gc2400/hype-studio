@@ -13,6 +13,8 @@ Repairs (each part at most 3 times per 30 minutes, then it only alarms):
   engine not answering 30 s     → restart the engine
   OBS not streaming 20 s        → start streaming; OBS not answering 60 s → restart OBS
   no new TV pieces 20 s         → restart the TV ladder
+  TV without sound 60 s (the radio plays, not LIVE) → reconnect the sound: restart the radio when it no longer sends to the
+                                  audio bus, else OBS (4 Nov: after the audio bus restarted, OBS stayed connected to nothing)
 Every 60 s a heartbeat goes to Hype Live (when a key is set): https://hyperadio.nl/?hype_studio=KEY (JSON).
 Pause (deploys): touch /run/hype/guard_pause  (ignored when older than 15 min).
 Status for the panel: /var/lib/hype/guard.json · settings: /var/lib/hype/guard_conf.json
@@ -65,6 +67,26 @@ def seg_age():
         t = max((os.path.getmtime(os.path.join(d, f)) for f in os.listdir(d) if f.endswith(".ts")), default=0)
         return round(time.time() - t, 1) if t else None
     except OSError: return None
+
+def tv_sound_db():
+    """Loudness of the newest piece of the TV stream (~2 s): what TV viewers hear right now. None = not measurable."""
+    d = "/dev/shm/hls/v0"
+    try:
+        f = max((os.path.join(d, x) for x in os.listdir(d) if x.endswith(".ts")), key=os.path.getmtime)
+        r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", f, "-vn", "-af", "volumedetect", "-f", "null", "-"],
+                           capture_output=True, text=True, timeout=20)
+        for line in r.stderr.splitlines():
+            if "mean_volume:" in line: return float(line.split("mean_volume:")[1].split()[0])
+    except Exception: pass
+    return None
+
+def pulse_clients():
+    """Who is connected to the audio bus: (Liquidsoap's outputs, OBS's captures)."""
+    env = dict(os.environ, XDG_RUNTIME_DIR="/run/hype")
+    def n(kind):
+        try: return len([l for l in subprocess.run(["pactl", "list", "short", kind], capture_output=True, text=True, timeout=10, env=env).stdout.splitlines() if l.strip()])
+        except Exception: return -1
+    return n("sink-inputs"), n("source-outputs")
 
 def systemctl(*a):
     return subprocess.run(["systemctl", *a], capture_output=True, text=True, timeout=60).returncode == 0
@@ -162,6 +184,17 @@ class Guard:
         sa = st["seg_age"]
         t = self.bad("hls_late", bool(obs_on) and (sa is None or sa > 20))
         if t > 20: self.restart("ladder", "hype-ladder", f"TV stream: no new pieces for {sa} s"); self.since["hls_late"] = time.time()
+        # --- TV sound (every 30 s): the TV must sound like the radio – not while LIVE (then it is your studio mix)
+        if time.time() - getattr(self, "_tvs_t", 0) >= 30:
+            self._tvs_t = time.time(); self._tvs = tv_sound_db()
+        st["tv_db"] = getattr(self, "_tvs", None)
+        tv_mute = st["tv_db"] is not None and st["tv_db"] < -70 and not silent and level is not None and not live and bool(obs_on)
+        t = self.bad("tv_silent", tv_mute)
+        if t > 60:
+            sinks, caps = pulse_clients()
+            if 0 <= sinks < 2: self.restart("radio", "hype-radio", "TV has no sound: the radio no longer sends to the audio bus")
+            else: self.restart("obs", "hype-obs", "TV has no sound" + (" (OBS not connected to the audio bus)" if caps == 0 else ""))
+            self.since["tv_silent"] = time.time()
         self.bad("mount", not st["mount"])
         ra = st.get("radio_hls_age")
         t = self.bad("radio_hls", ra is None or ra > 20)
@@ -213,8 +246,8 @@ class Guard:
             self.hb = {"ok": False, "t": time.time(), "answer": str(e)[:80]}
 
 PIDS = {"silence": "Silence on air", "liq_down": "Radio engine not answering", "engine_down": "Playout engine not answering",
-        "obs_down": "OBS not answering", "obs_off": "OBS not streaming", "hls_late": "TV stream stalled", "mount": "Radio stream (MP3) missing", "radio_hls": "Radio HLS stream stalled"}
-MIN_SHOW = {"silence": 15, "mount": 30}
+        "obs_down": "OBS not answering", "obs_off": "OBS not streaming", "hls_late": "TV stream stalled", "mount": "Radio stream (MP3) missing", "radio_hls": "Radio HLS stream stalled", "tv_silent": "TV has no sound"}
+MIN_SHOW = {"silence": 15, "mount": 30, "tv_silent": 45}
 
 if __name__ == "__main__":
     g = Guard(); g.event("ok", "guard started")
