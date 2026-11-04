@@ -78,7 +78,8 @@ class Live:
         self.liq, self.tv, self.show_title = liq, tv, show_title
         conf(); self.st = load(STATE, {"cams": {"CAM 1": "cam1", "CAM 2": "cam2", "CAM 3": "guest1", "CAM 4": "guest2"}, "auto_record": True, "lip_sync": 0})
         self.st["cams"].setdefault("CAM 4", "guest2"); self.st.setdefault("lip_sync", 0)
-        self.drops = 0; self.air = "automation"
+        self.drops = 0; self.air = "automation"; self._off_t = None; self._drop = None; self._back_t = None
+        self.song_scene = lambda: "Hype Screen"      # (the engine gives the scene of the song that plays now)
         threading.Thread(target=self.watch_air, daemon=True).start()
         self.gmeas = {}; self.gnet = {}; self._gn_prev = {}
         threading.Thread(target=self.watch_guests, daemon=True).start()
@@ -110,12 +111,39 @@ class Live:
                 elif self.live and getattr(self, "_off_t", None) is None: self._off_t = time.time()
                 if eff != bool(self.tv.live) and (eff or not self.live or time.time() - (self._off_t or 0) >= 1.0):
                     self.tv.live = eff; self.tv.route_audio(force=True)
+                self.drop_scene(a)
             except Exception: pass
             time.sleep(0.5)
             try: self.black_tick()
             except Exception as e: log.warning("cam black: %s", e)
             try: self.guest_sweep()
             except Exception as e: log.warning("guest sweep: %s", e)
+    DROP_S, BACK_S = 8.0, 3.0
+    def drop_scene(self, a):
+        """Your studio is gone for 8 s while LIVE (a real drop-out, not a hiccup): the TV goes to the automatic scenes
+        (music video / Hype Screen, following the songs), so viewers don't look at "waiting for signal". When your studio
+        has been back for 3 s: the scene you had. If you choose a scene yourself in the meantime, that one stays."""
+        now = time.time(); d = getattr(self, "_drop", None)
+        if self.live and a != "studio":
+            self._back_t = None
+            if not d and self._off_t and now - self._off_t >= self.DROP_S:
+                if self.tv.auto: self._drop = {"scene": None}; return       # already on the automatic scenes: nothing to do
+                self._drop = {"scene": self.tv.scene}
+                self.tv.auto = True; self.tv.scene = None
+                try: self.tv.set_scene(self.song_scene())
+                except Exception as e: log.warning("drop-out scene: %s", e)
+                self._drop["set"] = self.tv.scene
+                log.warning("LIVE: studio gone %d s – TV on the automatic scenes until you are back", int(now - self._off_t))
+            return
+        if not d: return
+        if self.live and a == "studio":
+            if getattr(self, "_back_t", None) is None: self._back_t = now
+            if now - self._back_t < self.BACK_S: return
+        self._drop = None; self._back_t = None
+        if self.live and d.get("scene") and self.tv.auto:      # (you picked a scene yourself meanwhile: tv.auto is off -> leave it)
+            self.tv.auto = False
+            try: self.tv.set_scene(d["scene"]); log.info("LIVE: studio back – TV back to %s", d["scene"])
+            except Exception as e: log.warning("back scene: %s", e)
     def black_tick(self):
         """Behind every camera there is a black box: a portrait phone camera shows upright on black (never stretched).
         It is only shown while that camera is sending - otherwise the CAM slate behind it shows, as before."""

@@ -744,6 +744,7 @@ class Engine:
         c0.execute("UPDATE items SET mtime=0 WHERE folder LIKE 'MIXES%' AND problem LIKE 'no artist%'"); c0.commit()   # mixes need no artist: index again
         self.live = live.Live(self.liq, self.tv, lambda: SHOW.get("title") or "show")
         self.tv.live = self.live.live; self.tv.route_audio(force=True)
+        self.live.song_scene = lambda: (self.now or {}).get("scene") or "Hype Screen"     # the automatic scene for what plays now (studio drop-out)
         load_rotation()
         global MIX_OUT
         try: MIX_OUT = float(self.liq.cmd("var.get mix_out").split()[-1])
