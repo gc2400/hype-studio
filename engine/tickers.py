@@ -1,6 +1,7 @@
 """Hype Studio – tickers (news, traffic, showbizz, agenda, weather …) for the Graphics page.
 A ticker = an RSS/Atom feed, or a Hype Live ticker link (text between [[HYPE]] … [[/HYPE]], items split by •).
-Fetched every 10 minutes in the background; when a feed fails, the last good items stay."""
+Each ticker is fetched as often as set ("every" minutes: news + traffic 10, the others 60 – they are shown about once an hour);
+when a feed fails, the last good items stay and it is tried again within 10 minutes."""
 import os, json, re, time, html, threading, logging, urllib.request, urllib.parse
 from xml.etree import ElementTree as ET
 from email.utils import parsedate_to_datetime
@@ -9,7 +10,8 @@ log = logging.getLogger("tickers")
 CONF = "/var/lib/hype/tickers.json"
 SCREEN_DIR = "/srv/hype/branding/screen"
 BARS = {"news": "08_NewsBar.png", "weather": "10_WeatherBar.png", "traffic": "12_TrafficBar.png", "showbiz": "13_ShowbizBar.png", "agenda": "15_AgendaBar.png"}
-EVERY = 600
+EVERY_DEF = {"news": 10, "traffic": 10}      # minutes; every other ticker: 60
+LAST = {}          # id -> when it was last fetched (or tried)
 BLOCK_NEWS = ("dood, doden, dode, omgekomen, overleden, moord, vermoord, doodgeschoten, schietpartij, schietincident, steekpartij, "
               "neergestoken, aanslag, terreur, oorlog, bombardement, verkracht, misbruik, ontvoerd, lijk, zelfdoding, gewond, "
               "explosie, vliegtuigcrash, ongeluk, drama")
@@ -30,6 +32,7 @@ def config():
     except Exception: c = [dict(t) for t in DEFAULT]
     for t in c:      # the bar graphic: Gianno's PNG (branding/screen) when there is one for this ticker
         if "bar" not in t: t["bar"] = BARS.get(t["id"], "")
+        if not t.get("every"): t["every"] = EVERY_DEF.get(t["id"], 60)
     return c
 
 _AREA = {}
@@ -70,7 +73,7 @@ def save(lst):
         clean.append({"id": tid, "label": str(t.get("label") or tid).strip()[:24].upper(), "sub": str(t.get("sub") or "").strip()[:28].upper(),
                       "url": str(t.get("url") or "").strip()[:500], "always": [str(s)[:40] for s in (t.get("always") or [])][:10],
                       "max": max(1, min(30, int(t.get("max") or 12))), "hours": max(0, min(168, int(t.get("hours") or 0))),
-                      "block": str(t.get("block") or "")[:2000], "on": bool(t.get("on", True)), "bar": os.path.basename(str(t.get("bar") or ""))[:120]})
+                      "block": str(t.get("block") or "")[:2000], "every": max(5, min(1440, int(t.get("every") or EVERY_DEF.get(tid, 60)))), "on": bool(t.get("on", True)), "bar": os.path.basename(str(t.get("bar") or ""))[:120]})
     json.dump(clean, open(CONF, "w"), indent=1); _wake.set(); return clean
 
 def clean_text(s):
@@ -114,21 +117,27 @@ def fetch(t):
         seen.add(k); items.append(title)
     return items[: t["max"]]
 
-def refresh_all():
+def refresh_all(force=False):
+    now = time.time()
     for t in config():
         if not t.get("on") or not t.get("url"): continue
+        every = t["every"] * 60
+        if not force and now - LAST.get(t["id"], 0) < every: continue
+        LAST[t["id"]] = now
         try:
             items = fetch(t)
             if items: DATA[t["id"]] = {"items": items, "at": time.time(), "err": ""}
             else: DATA.setdefault(t["id"], {"items": [], "at": 0})["err"] = "no items"
         except Exception as e:
             DATA.setdefault(t["id"], {"items": [], "at": 0})["err"] = str(e)[:120]; log.warning("ticker %s: %s", t["id"], e)
+            if every > 600: LAST[t["id"]] = now - every + 600       # failed: try again in 10 minutes, not in an hour
 
 def run():
+    force = True          # at start: all of them
     while True:
-        try: refresh_all()
+        try: refresh_all(force)
         except Exception as e: log.warning("tickers: %s", e)
-        _wake.wait(EVERY); _wake.clear()
+        force = _wake.wait(60); _wake.clear()      # saved in Settings → Tickers: all of them again at once
 
 def start():
     threading.Thread(target=run, daemon=True).start()

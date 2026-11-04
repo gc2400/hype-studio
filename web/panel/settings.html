@@ -181,7 +181,7 @@ table{border-collapse:collapse;width:100%}
     </section>
     <section class="card sec" data-sec="tickers">
       <div class="row between"><span class="lab">Tickers · the scrolling bar at the bottom of the TV</span><button class="btn sm" id="tkAdd">+ Ticker</button></div>
-      <p class="muted" style="margin:0">A ticker reads an <b>RSS feed</b> (e.g. nu.nl/rss) or a <b>Hype Live ticker link</b> (hyperadio.nl/?hype_ticker=traffic …) every 10 minutes. Show it with <b>Planning → ON SCREEN</b> (e.g. "At a time *:20 → ▤ Ticker: TRAFFIC, 60 s"), or tick "always on the Hype Screen". A planned ticker goes over the always-on one; the bar gives way to the Now Playing box.</p>
+      <p class="muted" style="margin:0">A ticker reads an <b>RSS feed</b> (e.g. nu.nl/rss) or a <b>Hype Live ticker link</b> (hyperadio.nl/?hype_ticker=traffic …) as often as you set per ticker ("fetch every"). Show it with <b>Planning → ON SCREEN</b> (e.g. "At a time *:20 → ▤ Ticker: TRAFFIC, 60 s"), or tick "always on the Hype Screen". A planned ticker goes over the always-on one; the bar gives way to the Now Playing box.</p>
       <div id="tkRows" style="display:flex;flex-direction:column;gap:10px"></div>
       <div class="row"><button class="btn sm yellow" id="tkSave">Save tickers</button><span class="muted" style="font-size:12px" id="tkInfo"></span></div>
     </section>
@@ -403,17 +403,17 @@ function renderTk() {
         <span style="flex:1"></span><button class="btn sm" data-tdel="${i}" aria-label="Remove ticker">×</button></div>
       <div class="row" style="gap:8px;font-size:13px"><span class="muted">Bar graphic</span><select data-t="${i}" data-k="bar" style="min-height:34px;background:var(--card);border:1px solid var(--line2);border-radius:8px;color:var(--txt);padding:0 8px"><option value="">drawn (no PNG)</option>${(TKF || []).filter(f => /\.png$/i.test(f)).map(f => `<option ${t.bar === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select></div>
       <input data-t="${i}" data-k="url" value="${esc(t.url)}" placeholder="RSS or ticker link, e.g. https://www.nu.nl/rss" style="width:100%" aria-label="Link">
-      <div class="row" style="gap:8px;flex-wrap:wrap;font-size:13px"><span class="muted">max.</span><input type="number" min="1" max="30" data-t="${i}" data-k="max" value="${t.max}" style="width:64px"><span class="muted">items · only the last</span><input type="number" min="0" max="168" data-t="${i}" data-k="hours" value="${t.hours}" style="width:64px"><span class="muted">h (0 = all)</span></div>
+      <div class="row" style="gap:8px;flex-wrap:wrap;font-size:13px"><span class="muted">max.</span><input type="number" min="1" max="30" data-t="${i}" data-k="max" value="${t.max}" style="width:64px"><span class="muted">items · only the last</span><input type="number" min="0" max="168" data-t="${i}" data-k="hours" value="${t.hours}" style="width:64px"><span class="muted">h (0 = all) · fetch every</span><input type="number" min="5" max="1440" step="5" data-t="${i}" data-k="every" value="${t.every || 60}" style="width:64px" title="How often the feed is read again (minutes). News / traffic: 10, a ticker shown about once an hour: 60"><span class="muted">min</span></div>
       <details><summary class="muted" style="cursor:pointer;font-size:12px">Never show headlines with these words</summary><textarea data-t="${i}" data-k="block" rows="3" style="width:100%;margin-top:6px">${esc(t.block || '')}</textarea></details>
       <div class="muted" style="font-size:12px">${st}</div></div>`; }).join('');
   $$('#tkRows [data-t]').forEach(el => el.onchange = () => { const t = TKS[+el.dataset.t], k = el.dataset.k;
-    if (k === 'on') t.on = el.checked; else if (k === 'always') t.always = el.checked ? ['Hype Screen'] : []; else if (k === 'max' || k === 'hours') t[k] = +el.value; else t[k] = el.value;
+    if (k === 'on') t.on = el.checked; else if (k === 'always') t.always = el.checked ? ['Hype Screen'] : []; else if (k === 'max' || k === 'hours' || k === 'every') t[k] = +el.value; else t[k] = el.value;
     if (k === 'always' && el.checked) TKS.forEach((o, j) => { if (j !== +el.dataset.t) o.always = []; });   // one always-on ticker
     if (k === 'always') renderTk(); });
   $$('#tkRows [data-tdel]').forEach(b => b.onclick = () => { TKS.splice(+b.dataset.tdel, 1); renderTk(); });
 }
 function loadTk() { get('screenrules').then(d => { TKF = d.files || []; }).catch(() => {}).finally(() => get('tickers').then(d => { TKS = d.tickers; TKD = d.data || {}; renderTk(); }).catch(() => {})); }
-$('#tkAdd').onclick = () => { TKS.push({id: 'tk' + Date.now().toString(36), label: 'NEW', sub: '', url: '', always: [], max: 12, hours: 24, block: '', on: true}); renderTk(); };
+$('#tkAdd').onclick = () => { TKS.push({id: 'tk' + Date.now().toString(36), label: 'NEW', sub: '', url: '', always: [], max: 12, hours: 24, every: 60, block: '', on: true}); renderTk(); };
 $('#tkSave').onclick = () => post('tickers', {tickers: TKS.map(t => Object.assign({}, t, {id: t.id.startsWith('tk') ? t.label : t.id}))}).then(d => { TKS = d.tickers; TKD = d.data || {}; renderTk(); toast('Saved – fetching the feeds now'); setTimeout(loadTk, 6000); });
 loadTk();
 function paintSw() {
