@@ -1,17 +1,18 @@
 {
- "time": "2026-11-04T12:23:04",
- "result": "error",
- "commit": "",
- "subject": "",
+ "time": "2026-11-04T20:54:45",
+ "result": "ok",
+ "commit": "d9af9544aa4cd8c8d77afbe522c5d9540fa4cc04",
+ "subject": "Tickers: fetch interval per ticker (Settings \u2192 Tickers \u2192 fetch every \u2026 min): news + traffic 10 min, the others 60 min by default; a failed fetch is tried again within 10 min",
  "log": [
-  "12:23:04 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
+  "20:54:00 update b97539fb \u2192 d9af9544 \u00b7 2 file(s): engine/tickers.py, web/panel/settings.html",
+  "20:54:00 restart hype-engine",
+  "20:54:45 installed OK \u00b7 restarted: hype-engine"
  ],
- "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "FS Green x Adam Port x Stryv x Orso x Malachiii \u2013 Move FS Green Edit",
+  "song": "Dior \u2013 Go Mama",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
