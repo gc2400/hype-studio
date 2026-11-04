@@ -242,3 +242,4 @@
 2026-11-04T12:17:01 error  
 2026-11-04T12:23:04 error  
 2026-11-04T20:54:45 ok d9af9544 Tickers: fetch interval per ticker (Settings → Tickers → fetch every … min): news + traffic 10 min, the others 60 min by default; a failed fetch is tried again within 10 min
+2026-11-04T22:16:12 ok 5eb6cf3b Scenes: Hype Screen during a music video (or another scene that doesn't fit what plays) is held for this song, the next song is automatic again (it jumped back to Music video within seconds); AUTO SCENES button switches on AND off (off = manual)
