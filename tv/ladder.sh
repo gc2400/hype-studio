@@ -6,6 +6,7 @@
 find /dev/shm/hls -name '*.ts' -mmin +10 -delete 2>/dev/null    # pieces left over from an earlier run
 # the copied sound is not counted in the BANDWIDTH ffmpeg writes in master.m3u8 (it only knows the video bitrate): add it
 # (OBS AAC 320k ≈ 352 kbps with overhead), so a player on a slow line doesn't pick a quality it can't keep up with
+rm -f /dev/shm/hls/master.m3u8      # (wait for the NEW one ffmpeg writes)
 ( for i in $(seq 1 30); do sleep 1; [ -s /dev/shm/hls/master.m3u8 ] && grep -q BANDWIDTH /dev/shm/hls/master.m3u8 && break; done; sleep 1
   awk -F'BANDWIDTH=' 'NF>1 { split($2, r, ","); $0 = $1 "BANDWIDTH=" (r[1] + 352000) substr($2, length(r[1]) + 1) } { print }' /dev/shm/hls/master.m3u8 > /dev/shm/hls/master.tmp && mv /dev/shm/hls/master.tmp /dev/shm/hls/master.m3u8 ) &
 exec ffmpeg -hide_banner -loglevel warning -fflags nobuffer -flags low_delay -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi -i rtmp://127.0.0.1/live/program \
