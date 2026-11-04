@@ -1,17 +1,17 @@
 {
- "time": "2026-11-04T12:04:34",
+ "time": "2026-11-04T12:10:53",
  "result": "error",
  "commit": "",
  "subject": "",
  "log": [
-  "12:04:34 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
+  "12:10:53 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
  ],
  "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "Sean Paul x Seanizzle \u2013 Face Card",
+  "song": "Rich Kalashh \u2013 Lolaki (Jules Bouyon Edit)",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
