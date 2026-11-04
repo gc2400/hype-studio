@@ -1,17 +1,17 @@
 {
- "time": "2026-11-04T11:50:33",
+ "time": "2026-11-04T11:57:58",
  "result": "error",
  "commit": "",
  "subject": "",
  "log": [
-  "11:50:33 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
+  "11:57:58 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
  ],
  "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "FARLY X ANGO \u2013 PEIKI SIMPEL",
+  "song": "JMANI x Adje x JZyNo x Lucky Jones \u2013 LIKE 2 DANCE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
