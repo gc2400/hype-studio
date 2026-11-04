@@ -1,18 +1,18 @@
 {
- "time": "2026-11-04T23:40:28",
+ "time": "2026-11-05T00:49:39",
  "result": "ok",
- "commit": "50f0cdf9692b145f2883af73fd7931ed22459904",
- "subject": "Live Layer on top in every scene (Hype Live 2.25.2: full-screen New Year countdown, Merry Christmas, GOAL must cover the On Air box, logo, clock, Now Playing) \u2013 the engine keeps it there whenever it connects to OBS",
+ "commit": "a0b1d90fbadde429e04b6096cd09848e003110a3",
+ "subject": "TV stream: every quality carries the same (copied) sound \u2013 the re-encoded 128k/96k sound of 480p/360p made an audio hiccup at every quality switch (iPhone: a few s after start); BANDWIDTH in master.m3u8 includes the sound; old pieces cleaned at start",
  "log": [
-  "23:39:43 update 6a1336b1 \u2192 50f0cdf9 \u00b7 1 file(s): engine/engine.py",
-  "23:39:43 restart hype-engine",
-  "23:40:28 installed OK \u00b7 restarted: hype-engine"
+  "00:48:54 update 50f0cdf9 \u2192 a0b1d90f \u00b7 1 file(s): tv/ladder.sh",
+  "00:48:54 restart hype-ladder",
+  "00:49:39 installed OK \u00b7 restarted: hype-ladder"
  ],
  "guard": {
-  "song": "LA$$A x Cristian D x Frsh \u2013 Alles Is Ok\u00e9",
+  "song": "J Balvin x Ryan Castro \u2013 Pal Agua",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
