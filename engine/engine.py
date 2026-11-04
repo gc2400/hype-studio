@@ -1258,6 +1258,7 @@ class Engine:
             except Exception as ex: log.warning("refill: %s", ex)      # whatever goes wrong in planning, the queue below still runs
             if self.stop_at_end and self.liq_next: self.take_back_next()
             self.recover_stuck()
+            self.dead_air(c)
             self.push_next(c)
             if self.liq_next and "pushed" not in self.liq_next: self.liq_next["pushed"] = time.time()
             self.save_plan()
@@ -1266,6 +1267,23 @@ class Engine:
                 self._up_w = up
                 try: jdump(up, "/var/lib/hype/upcoming.json")
                 except Exception: pass
+    def dead_air(self, c):
+        """The radio is empty while the engine thinks a song is still playing: after the radio (Liquidsoap) and/or the engine
+        restarted (e.g. Ubuntu's automatic updates restart services), the engine waits for the end of the song it remembers,
+        but nothing plays. Nothing queued + Liquidsoap's queue empty + no sound for 5 s -> queue the next item now
+        (on a silent radio it starts at once; if a song does play after all, the next one simply waits in the queue)."""
+        now = time.time()
+        quiet = (AGC.get("level") is not None and AGC["level"] < -55 and now - AGC.get("t", 0) < 3)
+        if self.liq_next or self.stopped or self.stop_at_end or getattr(self.live, "live", False) or not quiet:
+            self._dead_t = None; return
+        if getattr(self, "_dead_t", None) is None: self._dead_t = now; return
+        if now - self._dead_t < 5: return
+        try:
+            if self.liq.queue_len() != 0: return
+        except Exception: return
+        self._dead_t = None
+        log.warning("dead air: the radio is empty (restarted?) – queuing the next item now")
+        self.push_next(c, force=True)
     def recover_stuck(self):
         """The queued item never started (Liquidsoap dropped it: file unreadable, a failed request …): without this the
         engine would wait for it forever (dead air). Only when the song on air should have changed 10+ s ago (the estimate
