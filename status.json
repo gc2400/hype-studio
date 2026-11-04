@@ -1,17 +1,17 @@
 {
- "time": "2026-11-04T10:56:23",
- "result": "error",
- "commit": "",
- "subject": "",
+ "time": "2026-11-04T11:02:36",
+ "result": "ok",
+ "commit": "abe3c7ca5d4606ce98796d018da268139dcc67fa",
+ "subject": "Weekly maintenance (Mon 04:00): restart, in a safe order, the Hype services that still run an old library (Ubuntu's updates no longer do that themselves); reboot only when an update asks for it; never while LIVE or during an update; guard paused meanwhile",
  "log": [
-  "10:56:23 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
+  "11:02:36 update b1adc4c6 \u2192 abe3c7ca \u00b7 2 file(s): system/hype-maintenance.service, system/hype-maintenance.timer",
+  "11:02:36 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
- "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "Jeon \u2013 Baila",
+  "song": "FRENNA \u2013 FALL IN LOVE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
