@@ -465,7 +465,21 @@ class TV:
             except Exception: pass
             try: self.prog = self.cl.get_current_program_scene().current_program_scene_name   # what OBS really shows now
             except Exception: self.prog = None
+            self._tr = None
+            try: self.layer_alpha(self.cl)
+            except Exception as e: log.warning("Live Layer transparency: %s", e)
         return self.cl
+    LAYER_CSS = "html,body{background:transparent!important}:root{--key:transparent!important}"
+    def layer_alpha(self, cl):
+        """The Hype Live Layer page has a magenta background for a colour key (CLOSE could not do transparency). OBS can:
+        the page's background is made transparent and the magenta key is switched off – a key also eats every pink /
+        purple in the graphics (4 Nov: the holiday edges came out blotchy and see-through)."""
+        s = cl.get_input_settings("Live Layer").input_settings
+        if s.get("css") != self.LAYER_CSS:
+            cl.set_input_settings("Live Layer", {"css": self.LAYER_CSS}, True); log.info("Live Layer: transparent background (no magenta key)")
+        for f in cl.get_source_filter_list("Live Layer").filters:
+            if "key" in f["filterKind"] and f["filterEnabled"]:
+                cl.set_source_filter_enabled("Live Layer", f["filterName"], False); log.info("Live Layer: %s off", f["filterName"])
     def live_layer(self, on):
         """Show / hide the 'Live Layer' item in every scene (OBS keeps it that way, also after a restart)."""
         with self.olock:
@@ -485,9 +499,8 @@ class TV:
                 # the Hype stinger (logo transition) only going into the Hype Screen / PIP scene; leaving it = the normal fade
                 prev = getattr(self, "prog", None)     # the scene really on air (self.scene is sometimes reset to force a switch)
                 tr = "Hype Stinger" if prev and scene in STINGER_SCENES else "Fade"   # only going INTO the Hype Screen / PIP
-                if getattr(self, "_tr", None) != tr:
-                    try: cl.set_current_scene_transition(tr); self._tr = tr
-                    except Exception as e: log.warning("transition %s: %s", tr, e)
+                try: cl.set_current_scene_transition(tr); self._tr = tr     # every time (OBS may have another one set, e.g. after its restart)
+                except Exception as e: log.warning("transition %s: %s", tr, e)
                 if prev != scene: cl.set_current_program_scene(scene)
                 if prev == "PIP" and scene != "PIP": self.pip_done()
                 if scene == "PIP" and prev != "PIP": self._pip_t = time.time(); self._pip_f = getattr(self, "pip", None)
