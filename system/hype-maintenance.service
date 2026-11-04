@@ -1,0 +1,8 @@
+[Unit]
+Description=Hype Studio weekly maintenance (restart what runs old libraries, reboot only when an update asks for it)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /srv/hype-repo/deploy/maintenance.sh
+TimeoutStartSec=10min

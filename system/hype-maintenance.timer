@@ -1,0 +1,9 @@
+[Unit]
+Description=Hype Studio weekly maintenance – Monday 04:00
+
+[Timer]
+OnCalendar=Mon *-*-* 04:00:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target
