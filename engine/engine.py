@@ -468,7 +468,20 @@ class TV:
             self._tr = None
             try: self.layer_alpha(self.cl)
             except Exception as e: log.warning("Live Layer transparency: %s", e)
+            try: self.layer_top(self.cl)
+            except Exception as e: log.warning("Live Layer on top: %s", e)
         return self.cl
+    def layer_top(self, cl):
+        """The Hype Live Layer is the top layer in every scene (above Graphics, the On Air box, logo, clock, Now Playing,
+        the show intro): from Hype Live 2.25.2 it shows full-screen moments that must cover everything (New Year countdown,
+        Merry Christmas, GOAL on match days). The rest of the time it is transparent."""
+        moved = []
+        for sc in cl.get_scene_list().scenes:
+            items = cl.get_scene_item_list(sc["sceneName"]).scene_items
+            ll = next((i for i in items if i["sourceName"] == "Live Layer"), None)
+            if ll and ll["sceneItemIndex"] != len(items) - 1:
+                cl.set_scene_item_index(sc["sceneName"], ll["sceneItemId"], len(items) - 1); moved.append(sc["sceneName"])
+        if moved: log.info("Live Layer moved to the top in %d scene(s)", len(moved))
     LAYER_CSS = "html,body{background:transparent!important}:root{--key:transparent!important}"
     def layer_alpha(self, cl):
         """The Hype Live Layer page has a magenta background for a colour key (CLOSE could not do transparency). OBS can:
