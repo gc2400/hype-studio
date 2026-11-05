@@ -1,18 +1,18 @@
 {
- "time": "2026-11-05T10:14:04",
+ "time": "2026-11-05T10:17:56",
  "result": "ok",
- "commit": "37a849378270a06382710870022ff77cf49099b3",
- "subject": "TV stream: one piece numbering for all qualities and the audio track (+ program date-time) \u2013 the epoch numbering gave the separate audio track other numbers than the pictures: sound ~3 s out of sync in players that pair by number",
+ "commit": "a13aa90f51f6f71ed0da8002938eafca1a90f733",
+ "subject": "TV stream: -copyts \u2013 the separate audio track's clock was started apart from the pictures' (3.5 s off in players)",
  "log": [
-  "10:13:19 update 6e248b33 \u2192 37a84937 \u00b7 1 file(s): tv/ladder.sh",
-  "10:13:19 restart hype-ladder",
-  "10:14:04 installed OK \u00b7 restarted: hype-ladder"
+  "10:17:10 update 37a84937 \u2192 a13aa90f \u00b7 1 file(s): tv/ladder.sh",
+  "10:17:10 restart hype-ladder",
+  "10:17:56 installed OK \u00b7 restarted: hype-ladder"
  ],
  "guard": {
-  "song": "Frenna X Mula B \u2013 Broski\u2019s",
+  "song": "Fireboy DML \u2013 ONE MAN REGIMENT",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
