@@ -1,18 +1,17 @@
 {
- "time": "2026-11-05T10:52:48",
+ "time": "2026-11-05T11:13:15",
  "result": "ok",
- "commit": "fe93e1222588c27da93c51c8a530f35420a053d3",
- "subject": "Music videos start the tested way (method B): the next clip is preloaded in the free player, paused at its keyframe; at the song's start only PLAY (no seek at that moment) \u2013 test bench: start spread 38 ms instead of 166 ms; av_lag may be negative",
+ "commit": "2d46495c75b71b2a760c930612b04d66237a5aea",
+ "subject": "Ticker 100 px/s: whole pixels per frame at the Graphics source's 50 fps (OBS gets a fresh frame every TV frame; at 25 fps the browser's frames fell between OBS's: 0 / 10 px jumps)",
  "log": [
-  "10:52:03 update 480067ca \u2192 fe93e122 \u00b7 1 file(s): engine/engine.py",
-  "10:52:03 restart hype-engine",
-  "10:52:48 installed OK \u00b7 restarted: hype-engine"
+  "11:13:15 update fe93e122 \u2192 2d46495c \u00b7 1 file(s): web/overlay/index.html",
+  "11:13:15 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Titai x Joeboy \u2013 Backa Butty",
+  "song": "Devi Dev x Rich Kalashh \u2013 Riba Chest",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
