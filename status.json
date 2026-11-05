@@ -1,17 +1,18 @@
 {
- "time": "2026-11-05T01:06:36",
+ "time": "2026-11-05T01:39:02",
  "result": "ok",
- "commit": "6dbecfdbf03c787be4905c4035111f3b27fe029a",
- "subject": "radio.mp3: Accept-Ranges: none (iPhone players probe a live MP3 stream with byte-range requests and reconnect several times before playing)",
+ "commit": "06ed4f635a3c33f17bbcf340e6798a2a6c0e541e",
+ "subject": "OBS: Hype Live pages opened on www.hyperadio.nl (their time sync fetches www \u2013 blocked as another site from hyperadio.nl)",
  "log": [
-  "01:06:36 update 6e699a43 \u2192 6dbecfdb \u00b7 1 file(s): system/nginx-hype.conf",
-  "01:06:36 installed OK \u00b7 restarted: nginx-reload"
+  "01:38:17 update 6dbecfdb \u2192 06ed4f63 \u00b7 1 file(s): engine/engine.py",
+  "01:38:17 restart hype-engine",
+  "01:39:02 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Jonna Fraser x Lil Kleine \u2013 Don Julio Daddy",
+  "song": "Kybba x J Balvin x Rytikal \u2013 I Love It",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },

@@ -249,3 +249,4 @@
 2026-11-05T00:52:29 ok 5985e4e0 ladder: correct the BANDWIDTH of the new master.m3u8 (not the old one)
 2026-11-05T01:02:28 ok 6e699a43 TV sound 192k AAC (OBS Track1Bitrate, was 320k – above YouTube's 128k and Apple's 160k guideline, lighter for slow lines): BANDWIDTH in master.m3u8 corrected to match
 2026-11-05T01:06:36 ok 6dbecfdb radio.mp3: Accept-Ranges: none (iPhone players probe a live MP3 stream with byte-range requests and reconnect several times before playing)
+2026-11-05T01:39:02 ok 06ed4f63 OBS: Hype Live pages opened on www.hyperadio.nl (their time sync fetches www – blocked as another site from hyperadio.nl)
