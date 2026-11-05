@@ -3,7 +3,6 @@ engine/engine.py|/opt/hype/engine.py|644|hype-engine
 engine/planner.py|/opt/hype/planner.py|644|hype-engine
 engine/live.py|/opt/hype/live.py|644|hype-engine
 engine/guestsync.py|/opt/hype/guestsync.py|644|hype-engine
-engine/clipsync.py|/opt/hype/clipsync.py|644|hype-engine
 engine/tickers.py|/opt/hype/tickers.py|644|hype-engine
 engine/close_import.py|/opt/hype/close_import.py|644|hype-engine
 engine/indexer.py|/opt/hype/indexer.py|755|hype-indexer

@@ -1316,36 +1316,6 @@ class Engine:
         self._dead_t = None
         log.warning("dead air: the radio is empty (restarted?) – queuing the next item now")
         self.push_next(c, force=True)
-    _cs_lock = threading.Lock()
-    def clip_sync(self, song_file, tv_file, cue, started, gen):
-        """Lip sync per music video (clipsync.py): 5 s after the start, measure picture vs sound in OBS's output and move
-        the clip by the difference (max. 2 corrections; only when the measurement is clear and the difference real)."""
-        import clipsync
-        if not self._cs_lock.acquire(blocking=False): return
-        try:
-            time.sleep(5)
-            for step in range(3):
-                if self.tv.gen != gen or self.tv.scene != "Music video" or getattr(self.live, "live", False): return
-                r = clipsync.measure(song_file, tv_file, cue, started)
-                if not r: return
-                off, am, pm = r
-                if self.tv.gen != gen: return
-                if pm < 0.85 or am < 0.3:
-                    log.info("lip sync %s: not measurable (sound %.2f, picture %.2f)", os.path.basename(song_file), am, pm); return
-                if abs(off) < 60 or step == 2:
-                    log.info("lip sync %s: picture %+d ms vs sound%s", os.path.basename(song_file), off, " – fine" if abs(off) < 60 else ""); return
-                if abs(off) > 1000: log.info("lip sync %s: %+d ms – too far off to trust, left alone", os.path.basename(song_file), off); return
-                with self.tv.olock:
-                    if self.tv.gen != gen: return
-                    try:
-                        cl = self.tv.client(); n_ = self.tv.cur
-                        cur = cl.get_media_input_status(n_).media_cursor or 0
-                        cl.set_media_input_cursor(n_, int(max(0, cur - off)))    # picture late (−) -> forward, early (+) -> back
-                    except Exception as e: log.warning("lip sync: %s", e); self.tv.cl = None; return
-                log.info("lip sync %s: picture was %+d ms vs sound – clip moved", os.path.basename(song_file), off)
-                time.sleep(3)
-        except Exception as e: log.warning("lip sync: %s", e)
-        finally: self._cs_lock.release()
     def recover_stuck(self):
         """The queued item never started (Liquidsoap dropped it: file unreadable, a failed request …): without this the
         engine would wait for it forever (dead air). Only when the song on air should have changed 10+ s ago (the estimate
@@ -1408,9 +1378,6 @@ class Engine:
             c.execute("INSERT INTO asrun(started,path,artist,title,folder,mode,clip,scene,kind) VALUES(?,?,?,?,?,?,?,?,?)",
                       (time.time(), path, it["artist"], it["title"], it["folder"], mode, it["clip_path"], scene, it["section"])); c.commit()
             self.now = dict(it, started=time.time(), scene=scene)
-            if mode == "clip" and clip_file and not getattr(self.live, "live", False):
-                g_ = self.tv.gen; t_ = self.now["started"]
-                threading.Thread(target=self.clip_sync, args=(os.path.join(ROOT, path), clip_file, it["cue_start"] or 0, t_, g_), daemon=True).start()
             if it["section"] == "music":   # loudness map for the AGC intro lift
                 try:
                     lm = c.execute("SELECT lmap FROM items WHERE path=?", (path,)).fetchone()
