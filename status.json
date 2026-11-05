@@ -1,18 +1,19 @@
 {
- "time": "2026-11-05T18:53:41",
+ "time": "2026-11-05T19:50:38",
  "result": "ok",
- "commit": "2f7324a59acbf7216d7493acf95483ddd53e238b",
- "subject": "TV stream: the sound back IN every quality (no separate audio track) \u2013 Xyfe's IPTV got no sound with the audio group; numbering, -copyts and 192k stay",
+ "commit": "f1d7492607945532f1ffeaac89c8aec68bd9f648",
+ "subject": "Paired videos start on their START cue: TV copies v3 carry the video's own sound (copied), paired videos use them (keyframe every 0.5 s; the originals have one every ~5 s \u2013 paired videos started up to 5 s late); paired videos' copies are made first",
  "log": [
-  "18:52:56 update 2d46495c \u2192 2f7324a5 \u00b7 1 file(s): tv/ladder.sh",
-  "18:52:56 restart hype-ladder",
-  "18:53:41 installed OK \u00b7 restarted: hype-ladder"
+  "19:49:53 update 2f7324a5 \u2192 f1d74926 \u00b7 2 file(s): engine/engine.py, engine/indexer.py",
+  "19:49:53 restart hype-indexer",
+  "19:49:53 restart hype-engine",
+  "19:50:38 installed OK \u00b7 restarted: hype-engine, hype-indexer"
  ],
  "guard": {
-  "song": "Devi Dev x Rich Kalashh \u2013 Rotterdam",
+  "song": "Kybba x J Balvin x Rytikal \u2013 I Love It",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
