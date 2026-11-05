@@ -247,3 +247,4 @@
 2026-11-04T23:40:28 ok 50f0cdf9 Live Layer on top in every scene (Hype Live 2.25.2: full-screen New Year countdown, Merry Christmas, GOAL must cover the On Air box, logo, clock, Now Playing) – the engine keeps it there whenever it connects to OBS
 2026-11-05T00:49:39 ok a0b1d90f TV stream: every quality carries the same (copied) sound – the re-encoded 128k/96k sound of 480p/360p made an audio hiccup at every quality switch (iPhone: a few s after start); BANDWIDTH in master.m3u8 includes the sound; old pieces cleaned at start
 2026-11-05T00:52:29 ok 5985e4e0 ladder: correct the BANDWIDTH of the new master.m3u8 (not the old one)
+2026-11-05T01:02:28 ok 6e699a43 TV sound 192k AAC (OBS Track1Bitrate, was 320k – above YouTube's 128k and Apple's 160k guideline, lighter for slow lines): BANDWIDTH in master.m3u8 corrected to match

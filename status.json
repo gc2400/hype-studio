@@ -1,18 +1,18 @@
 {
- "time": "2026-11-05T00:52:29",
+ "time": "2026-11-05T01:02:28",
  "result": "ok",
- "commit": "5985e4e053746b66dd25b2394e03ff2a486575a8",
- "subject": "ladder: correct the BANDWIDTH of the new master.m3u8 (not the old one)",
+ "commit": "6e699a43838784d711701c332b2b0cdd9a681cbd",
+ "subject": "TV sound 192k AAC (OBS Track1Bitrate, was 320k \u2013 above YouTube's 128k and Apple's 160k guideline, lighter for slow lines): BANDWIDTH in master.m3u8 corrected to match",
  "log": [
-  "00:51:44 update a0b1d90f \u2192 5985e4e0 \u00b7 1 file(s): tv/ladder.sh",
-  "00:51:44 restart hype-ladder",
-  "00:52:29 installed OK \u00b7 restarted: hype-ladder"
+  "01:01:43 update 5985e4e0 \u2192 6e699a43 \u00b7 1 file(s): tv/ladder.sh",
+  "01:01:43 restart hype-ladder",
+  "01:02:28 installed OK \u00b7 restarted: hype-ladder"
  ],
  "guard": {
-  "song": "B'jay \u2013 Prisella",
+  "song": "Kybba x Ryan Castro x Bad Gyal x TopBoy \u2013 SE LE VE",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
