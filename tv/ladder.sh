@@ -5,10 +5,10 @@
 # + a small 360p picture for the guests ("guestview", 600 kbps, no sound: guests hear the mix-minus)
 find /dev/shm/hls -name '*.ts' -mmin +10 -delete 2>/dev/null    # pieces left over from an earlier run
 # the copied sound is not counted in the BANDWIDTH ffmpeg writes in master.m3u8 (it only knows the video bitrate): add it
-# (OBS AAC 320k ≈ 352 kbps with overhead), so a player on a slow line doesn't pick a quality it can't keep up with
+# (OBS AAC 192k ≈ 212 kbps with overhead), so a player on a slow line doesn't pick a quality it can't keep up with
 rm -f /dev/shm/hls/master.m3u8      # (wait for the NEW one ffmpeg writes)
 ( for i in $(seq 1 30); do sleep 1; [ -s /dev/shm/hls/master.m3u8 ] && grep -q BANDWIDTH /dev/shm/hls/master.m3u8 && break; done; sleep 1
-  awk -F'BANDWIDTH=' 'NF>1 { split($2, r, ","); $0 = $1 "BANDWIDTH=" (r[1] + 352000) substr($2, length(r[1]) + 1) } { print }' /dev/shm/hls/master.m3u8 > /dev/shm/hls/master.tmp && mv /dev/shm/hls/master.tmp /dev/shm/hls/master.m3u8 ) &
+  awk -F'BANDWIDTH=' 'NF>1 { split($2, r, ","); $0 = $1 "BANDWIDTH=" (r[1] + 212000) substr($2, length(r[1]) + 1) } { print }' /dev/shm/hls/master.m3u8 > /dev/shm/hls/master.tmp && mv /dev/shm/hls/master.tmp /dev/shm/hls/master.m3u8 ) &
 exec ffmpeg -hide_banner -loglevel warning -fflags nobuffer -flags low_delay -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi -i rtmp://127.0.0.1/live/program \
  -filter_complex "[0:v]split=6[a][b][c][d][e][f];[a]scale_vaapi=w=1920:h=1080[v1];[b]scale_vaapi=w=1280:h=720[v2];[c]scale_vaapi=w=854:h=480[v3];[d]scale_vaapi=w=640:h=360[pv];[e]scale_vaapi=w=640:h=360[gv];[f]scale_vaapi=w=640:h=360[v4]" \
  -map "[v1]" -map "[v2]" -map "[v3]" -map "[v4]" -map 0:a -map 0:a -map 0:a -map 0:a \
