@@ -94,7 +94,7 @@ function screen() {
   }).catch(() => {}).finally(() => setTimeout(screen, 500));
 }
 // ticker: smooth scroll at a steady speed; a new ticker (or new headlines) slides in; it gives way to the Now Playing box
-const TK = {key: null, sig: null, x: 0, w: 0, last: 0, want: false}, TK_SPEED = 125;   // px per second (= 5 px per TV frame)
+const TK = {key: null, sig: null, x: 0, w: 0, last: 0, want: false}, TK_SPEED = 100;   // px per second: 2 px per browser frame (Graphics runs at 50 fps) = 4 px per TV frame – whole pixels, even steps
 function ticker(t) {
   TK.want = !!t;
   if (!t) return;
