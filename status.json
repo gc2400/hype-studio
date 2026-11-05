@@ -1,19 +1,18 @@
 {
- "time": "2026-11-05T08:57:44",
+ "time": "2026-11-05T10:14:04",
  "result": "ok",
- "commit": "6e248b3361e001cb934cd083c4da4fecc7d62477",
- "subject": "TV stream: the sound is one separate audio track shared by all qualities (EXT-X-MEDIA audio group) \u2013 Safari re-synced the sound at every quality switch (hiccup a few s after start); guard measures the TV sound from that track",
+ "commit": "37a849378270a06382710870022ff77cf49099b3",
+ "subject": "TV stream: one piece numbering for all qualities and the audio track (+ program date-time) \u2013 the epoch numbering gave the separate audio track other numbers than the pictures: sound ~3 s out of sync in players that pair by number",
  "log": [
-  "08:56:59 update 06ed4f63 \u2192 6e248b33 \u00b7 2 file(s): engine/guard.py, tv/ladder.sh",
-  "08:56:59 restart hype-guard",
-  "08:56:59 restart hype-ladder",
-  "08:57:44 installed OK \u00b7 restarted: hype-guard, hype-ladder"
+  "10:13:19 update 6e248b33 \u2192 37a84937 \u00b7 1 file(s): tv/ladder.sh",
+  "10:13:19 restart hype-ladder",
+  "10:14:04 installed OK \u00b7 restarted: hype-ladder"
  ],
  "guard": {
-  "song": "Davido x Victoria Mon\u00e9t \u2013 Offa Me",
-  "listeners": 1,
+  "song": "Frenna X Mula B \u2013 Broski\u2019s",
+  "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
