@@ -263,3 +263,4 @@
 2026-11-05T17:00:39 error  
 2026-11-05T18:53:41 ok 2f7324a5 TV stream: the sound back IN every quality (no separate audio track) – Xyfe's IPTV got no sound with the audio group; numbering, -copyts and 192k stay
 2026-11-05T19:50:38 ok f1d74926 Paired videos start on their START cue: TV copies v3 carry the video's own sound (copied), paired videos use them (keyframe every 0.5 s; the originals have one every ~5 s – paired videos started up to 5 s late); paired videos' copies are made first
+2026-11-05T19:52:27 ok e83999ed Guard: TV picture check every 30 s (newest 360p piece): black 90 s or frozen 2 min (not one pixel changing) -> restart OBS; while LIVE only the alarm
