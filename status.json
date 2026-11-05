@@ -1,18 +1,17 @@
 {
- "time": "2026-11-05T10:37:39",
+ "time": "2026-11-05T10:44:50",
  "result": "ok",
- "commit": "727f52aa86577f7165b7925e48d2ca93fea8960e",
- "subject": "Revert \"Lip sync per music video: 5 s after a clip starts the engine measures picture vs sound in OBS's own output (clipsync.py) and moves the clip by the difference (each clip started 0.1\u20130.2 s early/late, different per song)\"",
+ "commit": "7f42087f9dbd698407bd139ecf27e7ffcc3e7c75",
+ "subject": "Ticker: the same whole number of pixels every frame (5 px = 125 px/s at 25 fps; was 115 px/s = alternating 4/5 px, a restless shiver on calm backgrounds like the Hype Screen)",
  "log": [
-  "10:36:54 update d0e6654a \u2192 727f52aa \u00b7 1 file(s): engine/engine.py",
-  "10:36:54 restart hype-engine",
-  "10:37:39 installed OK \u00b7 restarted: hype-engine"
+  "10:44:50 update 727f52aa \u2192 7f42087f \u00b7 1 file(s): web/overlay/index.html",
+  "10:44:50 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Darell \u2013 Lollipop",
+  "song": " \u2013 Hype Sweeper Dont Stop",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
