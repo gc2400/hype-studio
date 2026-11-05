@@ -13,7 +13,9 @@ rm -f /dev/shm/hls/master.m3u8      # (wait for the NEW one ffmpeg writes)
 # piece numbers: the same for every quality AND the audio track (players pair them by number) – "epoch" numbering gave the
 # audio track other numbers than the pictures (3 s apart, sound out of sync, 5 Nov); START in the name keeps names unique per run
 START=$(date +%s)
-exec ffmpeg -hide_banner -loglevel warning -fflags nobuffer -flags low_delay -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi -i rtmp://127.0.0.1/live/program \
+# -copyts: picture and sound keep OBS's own clock – without it ffmpeg started the audio track's clock separately from the
+# pictures' (the pictures wait for the first keyframe): the separate audio track ran ~3.5 s apart in players (5 Nov)
+exec ffmpeg -hide_banner -loglevel warning -copyts -fflags nobuffer -flags low_delay -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi -i rtmp://127.0.0.1/live/program \
  -filter_complex "[0:v]split=6[a][b][c][d][e][f];[a]scale_vaapi=w=1920:h=1080[v1];[b]scale_vaapi=w=1280:h=720[v2];[c]scale_vaapi=w=854:h=480[v3];[d]scale_vaapi=w=640:h=360[pv];[e]scale_vaapi=w=640:h=360[gv];[f]scale_vaapi=w=640:h=360[v4]" \
  -map "[v1]" -map "[v2]" -map "[v3]" -map "[v4]" -map 0:a \
  -c:v h264_vaapi -g 50 -b:v:0 4500k -maxrate:v:0 4500k -b:v:1 2500k -maxrate:v:1 2500k -b:v:2 1000k -maxrate:v:2 1000k -b:v:3 650k -maxrate:v:3 650k \
