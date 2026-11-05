@@ -1,17 +1,18 @@
 {
- "time": "2026-11-05T17:00:39",
- "result": "error",
- "commit": "",
- "subject": "",
+ "time": "2026-11-05T18:53:41",
+ "result": "ok",
+ "commit": "2f7324a59acbf7216d7493acf95483ddd53e238b",
+ "subject": "TV stream: the sound back IN every quality (no separate audio track) \u2013 Xyfe's IPTV got no sound with the audio group; numbering, -copyts and 192k stay",
  "log": [
-  "17:00:39 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
+  "18:52:56 update 2d46495c \u2192 2f7324a5 \u00b7 1 file(s): tv/ladder.sh",
+  "18:52:56 restart hype-ladder",
+  "18:53:41 installed OK \u00b7 restarted: hype-ladder"
  ],
- "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "Issairo x Jaido x Soundflow \u2013 LORA WAK MI",
+  "song": "Devi Dev x Rich Kalashh \u2013 Rotterdam",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
