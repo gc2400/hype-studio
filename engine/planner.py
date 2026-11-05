@@ -322,7 +322,7 @@ class ClockRunner:
         return None
     def _take(self, c, at, ok, pick_jingle, cid, st, key, kind, ref, start):
         """The item for one slot (None = nothing; "_SKIP_" = mixtape already played this hour: slot passed)."""
-        path = None
+        path = None; self.fixed = False
         if kind in ("playlist", "folder"):
             pid = int(ref) if kind == "playlist" else folder_playlist_id(c, ref)
             left = (at // 3600 + 1) * 3600 - at
@@ -336,6 +336,9 @@ class ClockRunner:
             CTX.update(at=at, fit=left if get_setting(c, "hit_hour", True) and 45 <= left <= 330 else None)
             try: path = take_from_playlist(c, pid, start if st[2] else "continue", ok)
             finally: CTX.update(at=None, fit=None)
+            if path and kind == "playlist":     # "play exactly as listed" / shuffle off (like the Top 10): you placed its jingles yourself
+                r_ = c.execute("SELECT shuffle, strict FROM playlists WHERE id=?", (pid,)).fetchone()
+                self.fixed = bool(r_ and (r_[1] or not r_[0]))
         elif kind == "showjingle":                         # sweeper of the show on air (jingles/SHOWS/<show>), else the fallback folder
             s_ = show_at(at)
             path = (pick_jingle(c, show_folder(c, at, s_)) if s_ else None) or pick_jingle(c, ref or "SWEEPERS")

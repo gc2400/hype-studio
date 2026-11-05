@@ -974,7 +974,7 @@ class Engine:
     def plan_one(self, c):
         """Plan one more item at the end of Up next (refill's loop body). "stop" = nothing to plan."""
         if self.hour_events(c, self.cursor()): return      # a new hour starts with its :00 items (Top of the hour), then its clock
-        self.runner.snap = None; self.runner.pos = None
+        self.runner.snap = None; self.runner.pos = None; self.runner.fixed = False
         hf = getattr(self, "hour_floor", 0)
         if hf and self.cursor() < hf and not any(p_.get("hour_T") == hf for p_ in self.plan + ([self.liq_next] if self.liq_next else [])):
             self.hour_floor = hf = 0      # its top of the hour isn't planned (any more): plan with the clock of the hour we are in
@@ -990,6 +990,7 @@ class Engine:
         if it and touched: self.snaps.append((it["id"], {str(k): v for k, v in touched.items()}))
         if it and self.runner.snap: it["snap"] = self.runner.snap
         if it and self.runner.pos: it["pos"] = self.runner.pos
+        if it and getattr(self.runner, "fixed", False): it["fixed"] = True     # from a fixed-order playlist (Top 10 countdown)
         if it: it["hour_k"] = list(planner.runner_key(at))    # which clock run (hour / show) picked it - kept at the top of the hour
         if not it: it = self.picker.next(c, self.avoid())     # nothing in the clocks: built-in test clock
         if not it: return "stop"
@@ -1110,7 +1111,7 @@ class Engine:
         held = getattr(self, "held", {})
         last = self.last_item()
         after_toh = bool(last and last.get("event") and "TOH" in (last.get("path") or "").upper())
-        if self.is_jingle(it) and self.is_jingle(last) and not after_toh:
+        if self.is_jingle(it) and self.is_jingle(last) and not after_toh and not it.get("fixed"):   # your own playlist order always wins
             log.info("skipped %s – no two jingles in a row", it.get("title")); return
         if it.get("section") == "music":
             sk = song_kind(it)
