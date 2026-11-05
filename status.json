@@ -1,17 +1,17 @@
 {
- "time": "2026-11-05T10:44:50",
+ "time": "2026-11-05T10:46:55",
  "result": "ok",
- "commit": "7f42087f9dbd698407bd139ecf27e7ffcc3e7c75",
- "subject": "Ticker: the same whole number of pixels every frame (5 px = 125 px/s at 25 fps; was 115 px/s = alternating 4/5 px, a restless shiver on calm backgrounds like the Hype Screen)",
+ "commit": "480067ca3ab0c5da86fbd3f7581387dc3dab3a8f",
+ "subject": "Stream limits per address raised (25 req/s, burst 100, 24 connections): the separate audio track doubled the requests per TV viewer \u2013 several devices on one home address got 429s (hiccups, low quality)",
  "log": [
-  "10:44:50 update 727f52aa \u2192 7f42087f \u00b7 1 file(s): web/overlay/index.html",
-  "10:44:50 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "10:46:55 update 7f42087f \u2192 480067ca \u00b7 1 file(s): system/nginx-hype.conf",
+  "10:46:55 installed OK \u00b7 restarted: nginx-reload"
  ],
  "guard": {
-  "song": " \u2013 Hype Sweeper Dont Stop",
+  "song": "Blaqbonez x Asake \u2013 Ikebe 3000",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
