@@ -253,3 +253,4 @@
 2026-11-05T08:57:44 ok 6e248b33 TV stream: the sound is one separate audio track shared by all qualities (EXT-X-MEDIA audio group) – Safari re-synced the sound at every quality switch (hiccup a few s after start); guard measures the TV sound from that track
 2026-11-05T10:14:04 ok 37a84937 TV stream: one piece numbering for all qualities and the audio track (+ program date-time) – the epoch numbering gave the separate audio track other numbers than the pictures: sound ~3 s out of sync in players that pair by number
 2026-11-05T10:17:56 ok a13aa90f TV stream: -copyts – the separate audio track's clock was started apart from the pictures' (3.5 s off in players)
+2026-11-05T10:26:53 ok 6649cdfb Lip sync per music video: 5 s after a clip starts the engine measures picture vs sound in OBS's own output (clipsync.py) and moves the clip by the difference (each clip started 0.1–0.2 s early/late, different per song)

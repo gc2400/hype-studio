@@ -1,18 +1,18 @@
 {
- "time": "2026-11-05T10:17:56",
+ "time": "2026-11-05T10:26:53",
  "result": "ok",
- "commit": "a13aa90f51f6f71ed0da8002938eafca1a90f733",
- "subject": "TV stream: -copyts \u2013 the separate audio track's clock was started apart from the pictures' (3.5 s off in players)",
+ "commit": "6649cdfb9a075e39cf6e1fb10c68f8fa07dc35c1",
+ "subject": "Lip sync per music video: 5 s after a clip starts the engine measures picture vs sound in OBS's own output (clipsync.py) and moves the clip by the difference (each clip started 0.1\u20130.2 s early/late, different per song)",
  "log": [
-  "10:17:10 update 37a84937 \u2192 a13aa90f \u00b7 1 file(s): tv/ladder.sh",
-  "10:17:10 restart hype-ladder",
-  "10:17:56 installed OK \u00b7 restarted: hype-ladder"
+  "10:26:08 update a13aa90f \u2192 6649cdfb \u00b7 2 file(s): engine/clipsync.py, engine/engine.py",
+  "10:26:08 restart hype-engine",
+  "10:26:53 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Fireboy DML \u2013 ONE MAN REGIMENT",
+  "song": "Feid \u2013 A Xon De Que",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
