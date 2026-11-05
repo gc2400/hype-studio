@@ -94,7 +94,7 @@ function screen() {
   }).catch(() => {}).finally(() => setTimeout(screen, 500));
 }
 // ticker: smooth scroll at a steady speed; a new ticker (or new headlines) slides in; it gives way to the Now Playing box
-const TK = {key: null, sig: null, x: 0, w: 0, last: 0, want: false}, TK_SPEED = 115;   // px per second
+const TK = {key: null, sig: null, x: 0, w: 0, last: 0, want: false}, TK_SPEED = 125;   // px per second (= 5 px per TV frame)
 function ticker(t) {
   TK.want = !!t;
   if (!t) return;
@@ -112,11 +112,17 @@ function ticker(t) {
   st.innerHTML = one + one;       // twice: a seamless loop
   TK.w = st.scrollWidth / 2; if (fresh) TK.x = 0;
 }
+// the same whole number of pixels every frame (TV = 25 frames/s): 115 px/s was 4.6 px per frame = steps of 4 and 5,
+// a restless shiver on a calm background. The frame time is measured (smoothed), so the step stays right at any frame rate.
+TK.fdt = 0.04;
 function tkRun(ts) {
   const show = TK.want;     // the ticker may stay on together with the Now Playing box (Gianno)
   $('#tk').classList.toggle('on', show && !TK.png); $('#tkw').classList.toggle('on', show && !!TK.png);
   const dt = TK.last ? Math.min(0.1, (ts - TK.last) / 1000) : 0; TK.last = ts;
-  if (TK.w > 0) { TK.x = (TK.x + TK_SPEED * dt) % TK.w; $('#tkt').style.transform = 'translate3d(' + (-TK.x).toFixed(1) + 'px,0,0)'; }
+  if (dt > 0) TK.fdt += (dt - TK.fdt) * 0.02;                       // the usual time between frames
+  const step = Math.max(1, Math.round(TK_SPEED * TK.fdt));            // whole pixels, the same every frame
+  if (TK.w > 0 && dt > 0) { TK.x = (TK.x + step * Math.max(1, Math.round(dt / TK.fdt))) % TK.w;   // a missed frame: catch up exactly
+    $('#tkt').style.transform = 'translate3d(' + (-Math.round(TK.x)) + 'px,0,0)'; }
   requestAnimationFrame(tkRun);
 }
 requestAnimationFrame(tkRun);
