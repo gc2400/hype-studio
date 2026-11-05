@@ -1,18 +1,18 @@
 {
- "time": "2026-11-05T20:06:30",
+ "time": "2026-11-05T20:56:18",
  "result": "ok",
- "commit": "1edc7bbe9f0b583d0d9af7ede1ec638aa0acad3e",
- "subject": "Top 10: jingles in a fixed-order playlist are never skipped by the no-two-jingles rule",
+ "commit": "d355d23e916d8928a1dcb4d0c5d99515bf5eb004",
+ "subject": "TV copies: only paired videos are redone with their own sound (normal videos keep their v2 copy)",
  "log": [
-  "20:05:45 update e83999ed \u2192 1edc7bbe \u00b7 2 file(s): engine/engine.py, engine/planner.py",
-  "20:05:45 restart hype-engine",
-  "20:06:30 installed OK \u00b7 restarted: hype-engine"
+  "20:55:33 update 1edc7bbe \u2192 d355d23e \u00b7 1 file(s): engine/indexer.py",
+  "20:55:33 restart hype-indexer",
+  "20:56:18 installed OK \u00b7 restarted: hype-indexer"
  ],
  "guard": {
-  "song": "Jey One x Don Miguelo x OG DETRUYELO \u2013 P\u00d3NMELA",
+  "song": "Ir Sais x Rocco Flava x D.A.N.D.O \u2013 ABC",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },

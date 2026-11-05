@@ -265,3 +265,4 @@
 2026-11-05T19:50:38 ok f1d74926 Paired videos start on their START cue: TV copies v3 carry the video's own sound (copied), paired videos use them (keyframe every 0.5 s; the originals have one every ~5 s – paired videos started up to 5 s late); paired videos' copies are made first
 2026-11-05T19:52:27 ok e83999ed Guard: TV picture check every 30 s (newest 360p piece): black 90 s or frozen 2 min (not one pixel changing) -> restart OBS; while LIVE only the alarm
 2026-11-05T20:06:30 ok 1edc7bbe Top 10: jingles in a fixed-order playlist are never skipped by the no-two-jingles rule
+2026-11-05T20:56:18 ok d355d23e TV copies: only paired videos are redone with their own sound (normal videos keep their v2 copy)
