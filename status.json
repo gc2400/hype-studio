@@ -1,14 +1,14 @@
 {
- "time": "2026-11-05T11:13:15",
- "result": "ok",
- "commit": "2d46495c75b71b2a760c930612b04d66237a5aea",
- "subject": "Ticker 100 px/s: whole pixels per frame at the Graphics source's 50 fps (OBS gets a fresh frame every TV frame; at 25 fps the browser's frames fell between OBS's: 0 / 10 px jumps)",
+ "time": "2026-11-05T17:00:39",
+ "result": "error",
+ "commit": "",
+ "subject": "",
  "log": [
-  "11:13:15 update fe93e122 \u2192 2d46495c \u00b7 1 file(s): web/overlay/index.html",
-  "11:13:15 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "17:00:39 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
  ],
+ "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "Devi Dev x Rich Kalashh \u2013 Riba Chest",
+  "song": "Issairo x Jaido x Soundflow \u2013 LORA WAK MI",
   "listeners": 0,
   "obs": true,
   "seg_age": 0.9,
