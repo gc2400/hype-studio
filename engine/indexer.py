@@ -278,8 +278,10 @@ def make_tv_copies(c, upgrades=3):
     try: soon = json.load(open("/var/lib/hype/upcoming.json"))
     except Exception: soon = []
     rank = {p_: i for i, p_ in enumerate(soon)}
-    old = [r[0] for r in c.execute("SELECT path FROM items WHERE has_video=1 AND problem IS NULL AND tv_path<>'' AND COALESCE(tv_v,1)<?", (TV_V,))]
     paired = {r[0] for r in c.execute("SELECT clip_path FROM items WHERE mode='pair' AND clip_path IS NOT NULL")}
+    # a v2 copy is all a normal video needs (the TV plays the radio under it): only PAIRED videos are redone with their own sound
+    old = [r[0] for r in c.execute("SELECT path, COALESCE(tv_v,1) FROM items WHERE has_video=1 AND problem IS NULL AND tv_path<>'' AND COALESCE(tv_v,1)<?", (TV_V,))
+           if r[1] < 2 or r[0] in paired]
     old = sorted(old, key=lambda p_: (p_ not in paired, rank.get(p_, 9999)))[:upgrades + (5 if any(p_ in paired for p_ in old) else 0)]   # paired videos first
     t_end = time.time() + 150      # max ~2.5 min of TV copies per scan, so new uploads are never stuck behind a big batch
     for path in new + old:
