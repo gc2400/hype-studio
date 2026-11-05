@@ -70,7 +70,7 @@ def seg_age():
 
 def tv_sound_db():
     """Loudness of the newest piece of the TV stream (~2 s): what TV viewers hear right now. None = not measurable."""
-    d = "/dev/shm/hls/v0"
+    d = "/dev/shm/hls/vaudio" if os.path.isdir("/dev/shm/hls/vaudio") else "/dev/shm/hls/v0"    # the TV's own audio track
     try:
         f = max((os.path.join(d, x) for x in os.listdir(d) if x.endswith(".ts")), key=os.path.getmtime)
         r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", f, "-vn", "-af", "volumedetect", "-f", "null", "-"],
