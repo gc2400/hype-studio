@@ -487,6 +487,12 @@ class TV:
         """The Hype Live Layer page has a magenta background for a colour key (CLOSE could not do transparency). OBS can:
         the page's background is made transparent and the magenta key is switched off – a key also eats every pink /
         purple in the graphics (4 Nov: the holiday edges came out blotchy and see-through)."""
+        for n in ("Live Layer", "Hype Screen page"):    # open the Hype Live pages on www.hyperadio.nl: they ask www for the exact time
+            try:                                       # (holiday moments) – from hyperadio.nl the browser blocked that as another site
+                u = cl.get_input_settings(n).input_settings.get("url") or ""
+                if u.startswith("https://hyperadio.nl/"):
+                    cl.set_input_settings(n, {"url": "https://www." + u[len("https://"):]}, True); log.info("%s: opened on www.hyperadio.nl", n)
+            except Exception as e: log.warning("%s url: %s", n, e)
         s = cl.get_input_settings("Live Layer").input_settings
         if s.get("css") != self.LAYER_CSS:
             cl.set_input_settings("Live Layer", {"css": self.LAYER_CSS}, True); log.info("Live Layer: transparent background (no magenta key)")
