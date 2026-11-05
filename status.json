@@ -1,18 +1,19 @@
 {
- "time": "2026-11-05T01:39:02",
+ "time": "2026-11-05T08:57:44",
  "result": "ok",
- "commit": "06ed4f635a3c33f17bbcf340e6798a2a6c0e541e",
- "subject": "OBS: Hype Live pages opened on www.hyperadio.nl (their time sync fetches www \u2013 blocked as another site from hyperadio.nl)",
+ "commit": "6e248b3361e001cb934cd083c4da4fecc7d62477",
+ "subject": "TV stream: the sound is one separate audio track shared by all qualities (EXT-X-MEDIA audio group) \u2013 Safari re-synced the sound at every quality switch (hiccup a few s after start); guard measures the TV sound from that track",
  "log": [
-  "01:38:17 update 6dbecfdb \u2192 06ed4f63 \u00b7 1 file(s): engine/engine.py",
-  "01:38:17 restart hype-engine",
-  "01:39:02 installed OK \u00b7 restarted: hype-engine"
+  "08:56:59 update 06ed4f63 \u2192 6e248b33 \u00b7 2 file(s): engine/guard.py, tv/ladder.sh",
+  "08:56:59 restart hype-guard",
+  "08:56:59 restart hype-ladder",
+  "08:57:44 installed OK \u00b7 restarted: hype-guard, hype-ladder"
  ],
  "guard": {
-  "song": "Kybba x J Balvin x Rytikal \u2013 I Love It",
-  "listeners": 0,
+  "song": "Davido x Victoria Mon\u00e9t \u2013 Offa Me",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
