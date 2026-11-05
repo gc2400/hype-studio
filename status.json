@@ -1,18 +1,17 @@
 {
- "time": "2026-11-05T01:02:28",
+ "time": "2026-11-05T01:06:36",
  "result": "ok",
- "commit": "6e699a43838784d711701c332b2b0cdd9a681cbd",
- "subject": "TV sound 192k AAC (OBS Track1Bitrate, was 320k \u2013 above YouTube's 128k and Apple's 160k guideline, lighter for slow lines): BANDWIDTH in master.m3u8 corrected to match",
+ "commit": "6dbecfdbf03c787be4905c4035111f3b27fe029a",
+ "subject": "radio.mp3: Accept-Ranges: none (iPhone players probe a live MP3 stream with byte-range requests and reconnect several times before playing)",
  "log": [
-  "01:01:43 update 5985e4e0 \u2192 6e699a43 \u00b7 1 file(s): tv/ladder.sh",
-  "01:01:43 restart hype-ladder",
-  "01:02:28 installed OK \u00b7 restarted: hype-ladder"
+  "01:06:36 update 6e699a43 \u2192 6dbecfdb \u00b7 1 file(s): system/nginx-hype.conf",
+  "01:06:36 installed OK \u00b7 restarted: nginx-reload"
  ],
  "guard": {
-  "song": "Kybba x Ryan Castro x Bad Gyal x TopBoy \u2013 SE LE VE",
+  "song": "Jonna Fraser x Lil Kleine \u2013 Don Julio Daddy",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
