@@ -1,17 +1,18 @@
 {
- "time": "2026-11-05T10:46:55",
+ "time": "2026-11-05T10:52:48",
  "result": "ok",
- "commit": "480067ca3ab0c5da86fbd3f7581387dc3dab3a8f",
- "subject": "Stream limits per address raised (25 req/s, burst 100, 24 connections): the separate audio track doubled the requests per TV viewer \u2013 several devices on one home address got 429s (hiccups, low quality)",
+ "commit": "fe93e1222588c27da93c51c8a530f35420a053d3",
+ "subject": "Music videos start the tested way (method B): the next clip is preloaded in the free player, paused at its keyframe; at the song's start only PLAY (no seek at that moment) \u2013 test bench: start spread 38 ms instead of 166 ms; av_lag may be negative",
  "log": [
-  "10:46:55 update 7f42087f \u2192 480067ca \u00b7 1 file(s): system/nginx-hype.conf",
-  "10:46:55 installed OK \u00b7 restarted: nginx-reload"
+  "10:52:03 update 480067ca \u2192 fe93e122 \u00b7 1 file(s): engine/engine.py",
+  "10:52:03 restart hype-engine",
+  "10:52:48 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Blaqbonez x Asake \u2013 Ikebe 3000",
+  "song": "Titai x Joeboy \u2013 Backa Butty",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
