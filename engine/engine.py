@@ -470,24 +470,7 @@ class TV:
             except Exception as e: log.warning("Live Layer transparency: %s", e)
             try: self.layer_top(self.cl)
             except Exception as e: log.warning("Live Layer on top: %s", e)
-            try: self.sync_base(self.cl)
-            except Exception as e: log.warning("clip sync base: %s", e)
         return self.cl
-    SYNC_BASE = 250      # ms: the TV's music sound waits this long, and so does a clip's picture (its "Sync delay" filter) –
-                         # room to shift a clip's picture both ways per song, without seeking (clipsync.py measures, clip_sync() sets it)
-    def sync_base(self, cl):
-        for n in ("Radio audio", "FX audio"):
-            if cl.get_input_audio_sync_offset(n).input_audio_sync_offset != self.SYNC_BASE:
-                cl.set_input_audio_sync_offset(n, self.SYNC_BASE); log.info("%s: sound waits %d ms (clip lip sync room)", n, self.SYNC_BASE)
-        for n in ("Clip A", "Clip B"):
-            if not any(f["filterName"] == "Sync delay" for f in cl.get_source_filter_list(n).filters):
-                cl.create_source_filter(n, "Sync delay", "gpu_delay", {"delay_ms": self.SYNC_BASE})
-    def clip_delay(self, cl, name, ms, own_sound=False):
-        """The picture delay of a clip (and, for a paired clip with its own sound, its sound too – same wait as the radio)."""
-        ms = int(max(0, min(500, ms)))
-        cl.set_source_filter_settings(name, "Sync delay", {"delay_ms": ms})
-        if own_sound: cl.set_input_audio_sync_offset(name, self.SYNC_BASE)
-        return ms
     def layer_top(self, cl):
         """The Hype Live Layer is the top layer in every scene (above Graphics, the On Air box, logo, clock, Now Playing,
         the show intro): from Hype Live 2.25.2 it shows full-screen moments that must cover everything (New Year countdown,
@@ -607,8 +590,6 @@ class TV:
                 cl.set_input_settings(nxt, {"local_file": clip_file, "looping": False, "restart_on_activate": False,
                                             "close_when_inactive": False, "hw_decode": True}, True)
                 cl.set_input_mute(nxt, True)          # (its own sound comes on in activate(), once it is at its cue point)
-                try: self.clip_delay(cl, nxt, self.SYNC_BASE, own_sound=bool(sound))
-                except Exception as e: log.warning("clip sync delay: %s", e)
                 if sound: cl.set_input_volume(nxt, vol_db=max(-20.0, min(15.0, gain)))
                 cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
                 cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY")   # never left paused
@@ -704,7 +685,6 @@ class TV:
                                     if c0 is None: c0 = cur
                                     elif cur > c0 + 70: break        # ~2 frames played
                                     time.sleep(0.03)
-                                time.sleep(self.SYNC_BASE / 1000 + 0.05)   # its "Sync delay" filter shows frames only after that wait
                                 with self.olock:
                                     for sc_, oid in h: self._hide(oid, sc_)
                                     try: self.client().set_input_mute(o, True)
@@ -1359,10 +1339,10 @@ class Engine:
                     if self.tv.gen != gen: return
                     try:
                         cl = self.tv.client(); n_ = self.tv.cur
-                        cur = cl.get_source_filter("%s" % n_, "Sync delay").filter_settings.get("delay_ms", self.tv.SYNC_BASE)
-                        new = self.tv.clip_delay(cl, n_, cur + off)       # picture ahead (+) -> waits longer, late (−) -> shorter
+                        cur = cl.get_media_input_status(n_).media_cursor or 0
+                        cl.set_media_input_cursor(n_, int(max(0, cur - off)))    # picture late (−) -> forward, early (+) -> back
                     except Exception as e: log.warning("lip sync: %s", e); self.tv.cl = None; return
-                log.info("lip sync %s: picture was %+d ms vs sound – picture delay %d -> %d ms", os.path.basename(song_file), off, cur, new)
+                log.info("lip sync %s: picture was %+d ms vs sound – clip moved", os.path.basename(song_file), off)
                 time.sleep(3)
         except Exception as e: log.warning("lip sync: %s", e)
         finally: self._cs_lock.release()
