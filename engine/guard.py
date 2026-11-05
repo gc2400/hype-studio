@@ -13,6 +13,7 @@ Repairs (each part at most 3 times per 30 minutes, then it only alarms):
   engine not answering 30 s     → restart the engine
   OBS not streaming 20 s        → start streaming; OBS not answering 60 s → restart OBS
   no new TV pieces 20 s         → restart the TV ladder
+  TV picture black 90 s / frozen 2 min (not LIVE) → restart OBS (the radio is not touched)
   TV without sound 60 s (the radio plays, not LIVE) → reconnect the sound: restart the radio when it no longer sends to the
                                   audio bus, else OBS (4 Nov: after the audio bus restarted, OBS stayed connected to nothing)
 Every 60 s a heartbeat goes to Hype Live (when a key is set): https://hyperadio.nl/?hype_studio=KEY (JSON).
@@ -79,6 +80,20 @@ def tv_sound_db():
             if "mean_volume:" in line: return float(line.split("mean_volume:")[1].split()[0])
     except Exception: pass
     return None
+
+def tv_frame():
+    """A small grey picture of the newest TV piece (360p quality): what viewers see right now. None = not readable."""
+    d = "/dev/shm/hls/v3"
+    try:
+        f = max((os.path.join(d, x) for x in os.listdir(d) if x.endswith(".ts")), key=os.path.getmtime)
+        r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", f, "-frames:v", "1", "-vf", "scale=160:90,format=gray",
+                            "-f", "rawvideo", "-"], capture_output=True, timeout=20)
+        return r.stdout if len(r.stdout) == 160 * 90 else None
+    except Exception: return None
+
+def changed_px(a, b):
+    """How many pixels clearly differ between two pictures (video noise ignored)."""
+    return sum(1 for x, y in zip(a, b) if abs(x - y) > 12)
 
 def pulse_clients():
     """Who is connected to the audio bus: (Liquidsoap's outputs, OBS's captures)."""
@@ -184,6 +199,20 @@ class Guard:
         sa = st["seg_age"]
         t = self.bad("hls_late", bool(obs_on) and (sa is None or sa > 20))
         if t > 20: self.restart("ladder", "hype-ladder", f"TV stream: no new pieces for {sa} s"); self.since["hls_late"] = time.time()
+        # --- TV picture (every 30 s): black for 90 s, or not one pixel changing for 2 min (the clock, ticker, background
+        #     and videos always move something) = OBS is stuck. While LIVE only the alarm (a camera may just be still).
+        if time.time() - getattr(self, "_tvp_t", 0) >= 30:
+            self._tvp_t = time.time(); fr = tv_frame(); snaps = getattr(self, "_tvp", [])
+            if fr: snaps = [x for x in snaps if time.time() - x[0] < 150] + [(time.time(), fr)]
+            self._tvp = snaps
+            self._tv_black = bool(fr) and sum(fr) / len(fr) < 10
+            old = [x for x in snaps if time.time() - x[0] >= 115]
+            self._tv_frozen = bool(fr) and len(snaps) >= 5 and bool(old) and all(changed_px(snaps[i][1], snaps[i + 1][1]) <= 40 for i in range(len(snaps) - 1))
+        st["tv_black"] = getattr(self, "_tv_black", False); st["tv_frozen"] = getattr(self, "_tv_frozen", False)
+        t = self.bad("tv_black", bool(obs_on) and st.get("tv_black", False))
+        if t > 90 and not live: self.restart("obs", "hype-obs", "TV picture black for 90 s"); self.since["tv_black"] = time.time()
+        t = self.bad("tv_frozen", bool(obs_on) and st.get("tv_frozen", False))
+        if t > 0 and not live: self.restart("obs", "hype-obs", "TV picture frozen for 2 min"); self.since["tv_frozen"] = time.time(); self._tvp = []; self._tv_frozen = False
         # --- TV sound (every 30 s): the TV must sound like the radio – not while LIVE (then it is your studio mix)
         if time.time() - getattr(self, "_tvs_t", 0) >= 30:
             self._tvs_t = time.time(); self._tvs = tv_sound_db()
@@ -246,8 +275,8 @@ class Guard:
             self.hb = {"ok": False, "t": time.time(), "answer": str(e)[:80]}
 
 PIDS = {"silence": "Silence on air", "liq_down": "Radio engine not answering", "engine_down": "Playout engine not answering",
-        "obs_down": "OBS not answering", "obs_off": "OBS not streaming", "hls_late": "TV stream stalled", "mount": "Radio stream (MP3) missing", "radio_hls": "Radio HLS stream stalled", "tv_silent": "TV has no sound"}
-MIN_SHOW = {"silence": 15, "mount": 30, "tv_silent": 45}
+        "obs_down": "OBS not answering", "obs_off": "OBS not streaming", "hls_late": "TV stream stalled", "mount": "Radio stream (MP3) missing", "radio_hls": "Radio HLS stream stalled", "tv_silent": "TV has no sound", "tv_black": "TV picture black", "tv_frozen": "TV picture frozen"}
+MIN_SHOW = {"silence": 15, "mount": 30, "tv_silent": 45, "tv_black": 60}
 
 if __name__ == "__main__":
     g = Guard(); g.event("ok", "guard started")
