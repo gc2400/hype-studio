@@ -565,6 +565,25 @@ class TV:
             elif self.cur in ("Clip A", "Clip B"): cl.set_input_mute(self.cur, False)   # back to the video: its sound again (it was muted while away)
             self.split = split; self._live_r = live
         except Exception as e: log.warning("TV audio: %s", e); self.cl = None
+    def preload(self, clip_file, cue_start, kf):
+        """The next song's clip waits in the free player, paused at the keyframe where it will start (≥ 0.3 s after its
+        cue point), so at the song's start it only needs PLAY – no seek at that moment. Test bench 5 Nov: a seek at the
+        moment started the picture 166 ms differently from song to song, PLAY of a preloaded clip only 38 ms."""
+        if not kf: return
+        k = next((x for x in kf if x >= (cue_start or 0) + 0.3), None)
+        if k is None or k - (cue_start or 0) > 3: return
+        time.sleep(max(0.0, 2.0 - (time.time() - getattr(self, "t_show", 0))))   # the free player is hidden ~1.3 s after a switch
+        with self.olock:
+            try:
+                cl = self.client(); nxt = "Clip A" if self.cur == "Clip B" else "Clip B"
+                cl.set_input_settings(nxt, {"local_file": clip_file, "looping": False, "restart_on_activate": False,
+                                            "close_when_inactive": False, "hw_decode": True}, True)
+                cl.set_input_mute(nxt, True)
+                cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART"); time.sleep(0.25)
+                cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PAUSE")
+                cl.set_media_input_cursor(nxt, int(k * 1000))
+                self.pre = {"file": clip_file, "name": nxt, "k": k, "t": time.time()}
+            except Exception as e: log.warning("preload: %s", e); self.cl = None; self.pre = None
     def _wait_open(self, cl, name):
         """Wait until OBS really restarted the new file (its status first still shows the old file)."""
         for i in range(60):
@@ -581,30 +600,39 @@ class TV:
         - sound=True (paired song): the clip plays with its own sound, from its own cue point.
         - otherwise the clip is picture only and must match the radio: when the song starts later in the file (cue point),
           we jump to the next keyframe and start it exactly when the radio gets there (the previous picture stays up till then)."""
-        t0 = time.time()
+        t0 = time.time(); self.t_show = t0
         with self.olock:
           try:
             cl = self.client(); self.gen += 1; gen = self.gen
             if mode in ("clip", "pair", "jingle-video") and clip_file:
                 nxt = "Clip A" if self.cur == "Clip B" else "Clip B"; old = self.cur
-                cl.set_input_settings(nxt, {"local_file": clip_file, "looping": False, "restart_on_activate": False,
-                                            "close_when_inactive": False, "hw_decode": True}, True)
+                # preloaded (preload(): this clip waits paused at its keyframe in this player): only PLAY at the moment
+                pre = getattr(self, "pre", None); self.pre = None
+                use_pre = bool(not sound and pre and pre["file"] == clip_file and pre["name"] == nxt)
+                if use_pre:
+                    when = (pre["k"] - (cue_start or 0)) + AV_LAG - (time.time() - t0)   # the radio reaches the keyframe in OBS then
+                    if when < -0.05: use_pre = False; log.info("preloaded clip too late – started the normal way")
+                if not use_pre:
+                  cl.set_input_settings(nxt, {"local_file": clip_file, "looping": False, "restart_on_activate": False,
+                                              "close_when_inactive": False, "hw_decode": True}, True)
                 cl.set_input_mute(nxt, True)          # (its own sound comes on in activate(), once it is at its cue point)
                 if sound: cl.set_input_volume(nxt, vol_db=max(-20.0, min(15.0, gain)))
-                cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
-                cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY")   # never left paused
-                delay = 0.0; seek_k = None
-                if not (cue_start and cue_start > 0.3):
+                if not use_pre:
+                    cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
+                    cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY")   # never left paused
+                delay = 0.0; seek_k = None; play_k = None
+                if use_pre: play_k = pre["k"]; delay = max(0.0, when)
+                if not use_pre and not (cue_start and cue_start > 0.3):
                     try:
                         st0 = cl.get_media_input_status(nxt)
                         if (st0.media_cursor or 0) > 3000 and st0.media_state == "OBS_MEDIA_STATE_PLAYING": time.sleep(0.3)
                         if (cl.get_media_input_status(nxt).media_cursor or 0) > 3000: cl.set_media_input_cursor(nxt, 0)
                     except Exception: pass
-                if not sound and not (cue_start and cue_start > 0.3):
+                if not use_pre and not sound and not (cue_start and cue_start > 0.3):
                     # picture-only clip from the top: the radio's sound reaches OBS ~AV_LAG later (Liquidsoap + Pulse),
                     # so the picture waits that long (the previous picture stays up) and starts at 0 with it
                     seek_k = 0.0; delay = max(0.0, AV_LAG - (time.time() - t0))
-                if cue_start and cue_start > 0.3 and self._wait_open(cl, nxt):
+                if not use_pre and cue_start and cue_start > 0.3 and self._wait_open(cl, nxt):
                     now_pos = cue_start + (time.time() - t0) - (0.0 if sound else AV_LAG)   # where the sound in OBS is now
                     k = next((x for x in kf if x >= now_pos + 0.3), None) if (kf and not sound) else None
                     if k is not None and k - now_pos < 12:   # jump to that keyframe the moment the radio gets there
@@ -634,12 +662,25 @@ class TV:
                         threading.Timer(0.7, recheck).start()
                 self.cur = nxt; scene = "Music video"
                 self.clip_sound = bool(sound)
-                def activate(nxt=nxt, old=old, seek_k=seek_k, sound=sound):
+                def activate(nxt=nxt, old=old, seek_k=seek_k, sound=sound, play_k=play_k):
                     with self.olock:
                         if gen != self.gen: return          # a newer song already took over
                         try:
                             cl2 = self.client()
-                            if sound and not getattr(self, "live", False): cl2.set_input_mute(nxt, False)   # LIVE: only the studio mix (the music is in it already) – never the clip's own sound on top
+                            if sound and not getattr(self, "live", False): cl2.set_input_mute(nxt, False)
+                            if play_k is not None:       # preloaded: it waits paused at play_k – start it, no seek
+                                cl2.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY")
+                                t_pl = time.time()
+                                def verify_pre(nxt=nxt, k0=play_k, t1=t_pl, g=gen):
+                                    with self.olock:
+                                        if g != self.gen: return
+                                        try:
+                                            cl4 = self.client(); want = k0 + (time.time() - t1)
+                                            cur = (cl4.get_media_input_status(nxt).media_cursor or 0) / 1000
+                                            if abs(cur - want) > 0.5:
+                                                cl4.set_media_input_cursor(nxt, int((want + 0.12) * 1000)); log.info("preloaded clip was %.1f s off – put back", cur - want)
+                                        except Exception: pass
+                                threading.Timer(1.5, verify_pre).start()   # LIVE: only the studio mix (the music is in it already) – never the clip's own sound on top
                             if seek_k is not None:
                                 try: cl2.set_media_input_cursor(nxt, int(seek_k * 1000))
                                 except Exception as e:      # OBS: "the media must be playing" (the clip was stopped) – start it, seek again; never leave the TV black
@@ -1153,6 +1194,11 @@ class Engine:
         except Exception as e:      # not reachable (restarting …): nothing was sent, it stays first in Up next
             log.warning("queue %s – %s failed (%s): stays first in Up next", it.get("artist"), it.get("title"), e); return
         self.plan.pop(0); self.liq_next = it; it["pushed"] = time.time(); warm(c, it)
+        if it.get("mode") in ("clip", "jingle-video"):
+            try:
+                cf, kf_ = tv_file(c, it["path"]), keyframes(c, it["path"])
+                threading.Thread(target=self.tv.preload, args=(cf, it.get("cue_start") or 0, kf_), daemon=True).start()
+            except Exception as e: log.warning("preload: %s", e)
         if it.get("event"):    # a fixed-time item never goes out twice (a copy of the same event + file left in Up next goes)
             ev_ = tuple(it["event"]); n_ = len(self.plan)
             self.plan = [p_ for p_ in self.plan if not (p_.get("event") and tuple(p_["event"]) == ev_ and p_.get("path") == it.get("path"))]
@@ -2098,7 +2144,7 @@ def load_rotation():
     JINGLE_FADE = float(planner.get_setting(c, "jingle_fade", 0.0)); JINGLE_DB = float(planner.get_setting(c, "jingle_db", -3.0))
     ADBOX_ALWAYS = bool(planner.get_setting(c, "adbox_always", True))
     SMART_MIX = bool(planner.get_setting(c, "smart_mix", True))
-    AV_LAG = max(0.0, min(1.0, float(planner.get_setting(c, "av_lag", 0.20))))
+    AV_LAG = max(-0.5, min(1.0, float(planner.get_setting(c, "av_lag", 0.20))))
     MIX_MAX = 8.0     # (the longest-overlap slider is gone: the overlap = the fade-out)
 LEVEL = {"l": 0.0, "r": 0.0, "asked": 0}
 AGC = {"db": 0.0, "lift": 0.0, "level": None, "strength": 0.7, "t": 0}
@@ -2263,7 +2309,7 @@ def set_settings(d):
     if "id_intro_max" in d: planner.set_setting(c, "id_intro_max", max(1, min(12, int(float(d["id_intro_max"])))))
     if "id_intro_gap" in d: planner.set_setting(c, "id_intro_gap", max(0.0, min(60.0, float(d["id_intro_gap"]))))
     if "id_intro_db" in d: planner.set_setting(c, "id_intro_db", max(-15.0, min(6.0, float(d["id_intro_db"]))))
-    if "av_lag" in d: planner.set_setting(c, "av_lag", max(0.0, min(1.0, float(d["av_lag"]))))
+    if "av_lag" in d: planner.set_setting(c, "av_lag", max(-0.5, min(1.0, float(d["av_lag"]))))
     if "jingle_db" in d: planner.set_setting(c, "jingle_db", max(-12.0, min(3.0, float(d["jingle_db"]))))
     if "jingle_fade" in d: planner.set_setting(c, "jingle_fade", max(0.0, min(5.0, float(d["jingle_fade"]))))
     if "pad_duck" in d: planner.set_setting(c, "pad_duck", max(0.05, min(0.8, float(d["pad_duck"]))))
