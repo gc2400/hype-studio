@@ -255,19 +255,21 @@ def index_file(c, path, st):
 
 SCAN_FAIL = {}     # path -> (size, mtime) of a file that made index_file fail (tried again when it changes / after a restart)
 TVDIR = os.environ.get("HYPE_TV", "/srv/hype-data/tv")
-TV_V = 2   # v2 = re-encoded with a keyframe every 0.5 s, so a clip can start (in sync) at any moment, also during a mix
+TV_V = 3   # v2 = re-encoded with a keyframe every 0.5 s, so a clip can start (in sync) at any moment, also during a mix
+           # v3 = + the video's own sound (copied as it is): a PAIRED video plays its own sound on TV and now starts exactly
+           #      on its START cue too (the original files have a keyframe only every ~5 s: paired videos started up to 5 s late)
 LONG = 12 * 60     # longer than this = a mixtape / long video
 TV_FAIL = {}       # path -> time of the last failed TV copy (try again after 6 h, never block the other files)
 def tv_encode(src, tmp, dur=0):
     if dur and dur > LONG:     # mixtape: picture copied as it is (starts at its beginning, so the keyframe steps don't matter)
         return run(["nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-map", "0:v:0", "-an", "-sn", "-dn",
                     "-c:v", "copy", "-f", "matroska", tmp], 1800)
-    return run(["nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-map", "0:v:0", "-an", "-sn", "-dn",
+    return run(["nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-map", "0:v:0", "-map", "0:a:0?", "-c:a", "copy", "-sn", "-dn",
                 "-vf", "scale='min(1920,iw)':-2:flags=bicubic", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
                 "-force_key_frames", "expr:gte(t,n_forced*0.5)", "-sc_threshold", "0", "-threads", "4", "-f", "matroska", tmp], max(1800, int((dur or 0) * 3)))
 
 def make_tv_copies(c, upgrades=3):
-    """Picture-only copy of every video (no sound track) with short keyframe steps. New videos first,
+    """TV copy of every video with short keyframe steps (+ its own sound, for when it is paired). New videos first,
     then older copies are upgraded a few per scan - the songs coming up next on air first."""
     import hashlib
     os.makedirs(TVDIR, exist_ok=True)
@@ -277,7 +279,8 @@ def make_tv_copies(c, upgrades=3):
     except Exception: soon = []
     rank = {p_: i for i, p_ in enumerate(soon)}
     old = [r[0] for r in c.execute("SELECT path FROM items WHERE has_video=1 AND problem IS NULL AND tv_path<>'' AND COALESCE(tv_v,1)<?", (TV_V,))]
-    old = sorted(old, key=lambda p_: rank.get(p_, 9999))[:upgrades]
+    paired = {r[0] for r in c.execute("SELECT clip_path FROM items WHERE mode='pair' AND clip_path IS NOT NULL")}
+    old = sorted(old, key=lambda p_: (p_ not in paired, rank.get(p_, 9999)))[:upgrades + (5 if any(p_ in paired for p_ in old) else 0)]   # paired videos first
     t_end = time.time() + 150      # max ~2.5 min of TV copies per scan, so new uploads are never stuck behind a big batch
     for path in new + old:
         if time.time() > t_end: break

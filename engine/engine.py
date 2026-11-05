@@ -1882,10 +1882,13 @@ class Engine:
 
 def pair_clip(c, clip_path):
     """Paired song: the TV plays the clip itself, with its own sound, from its own start cue, at radio loudness."""
-    r = c.execute("SELECT cue_start, lufs FROM items WHERE path=?", (clip_path,)).fetchone() or (0, None)
+    r = c.execute("SELECT cue_start, lufs, tv_path, COALESCE(tv_v, 1) FROM items WHERE path=?", (clip_path,)).fetchone() or (0, None, None, 1)
     off = float(planner.get_setting(c, "tv_clip_offset", 3.0))
     gain = (TARGET_LUFS - r[1] + off) if r[1] is not None else off
-    return os.path.join(ROOT, clip_path), r[0] or 0, True, gain
+    # the TV copy (v3: keyframe every 0.5 s + the video's own sound) starts exactly on the START cue; the original file
+    # has a keyframe only every few seconds (OBS can only start there: up to 5 s late)
+    src = r[2] if (r[2] and r[3] >= 3 and os.path.exists(r[2])) else os.path.join(ROOT, clip_path)
+    return src, r[0] or 0, True, gain
 
 def keyframes(c, path):
     """Keyframe times of the TV copy (only valid for the TV copy, not the original file)."""
