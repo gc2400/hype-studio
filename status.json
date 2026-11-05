@@ -1,18 +1,18 @@
 {
- "time": "2026-11-05T19:52:27",
+ "time": "2026-11-05T20:06:30",
  "result": "ok",
- "commit": "e83999ed44ed8ced8018981ecb730e79d00e2bbc",
- "subject": "Guard: TV picture check every 30 s (newest 360p piece): black 90 s or frozen 2 min (not one pixel changing) -> restart OBS; while LIVE only the alarm",
+ "commit": "1edc7bbe9f0b583d0d9af7ede1ec638aa0acad3e",
+ "subject": "Top 10: jingles in a fixed-order playlist are never skipped by the no-two-jingles rule",
  "log": [
-  "19:51:41 update f1d74926 \u2192 e83999ed \u00b7 1 file(s): engine/guard.py",
-  "19:51:42 restart hype-guard",
-  "19:52:27 installed OK \u00b7 restarted: hype-guard"
+  "20:05:45 update e83999ed \u2192 1edc7bbe \u00b7 2 file(s): engine/engine.py, engine/planner.py",
+  "20:05:45 restart hype-engine",
+  "20:06:30 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Shan D x Boechi \u2013 Heen En Weer",
+  "song": "Jey One x Don Miguelo x OG DETRUYELO \u2013 P\u00d3NMELA",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
