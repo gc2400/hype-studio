@@ -37,14 +37,18 @@ body.pip #showbox,body.pip #showimg{visibility:hidden}   /* PIP scene: the video
 .st{position:absolute;left:0;top:0;height:64px;display:flex;align-items:center;white-space:nowrap;will-change:transform;font-weight:500;font-size:25px;color:#fff}
 .st span{padding:0 22px}.st b{color:#FFE000;font-weight:900}
 #tk .ur{flex:none;display:flex;align-items:center;padding:0 26px;background:linear-gradient(90deg,#05A9C6,#0277B8);color:#fff;font-weight:800;font-size:22px;letter-spacing:.01em}
+/* two OBS sources share this page: "Clock" (?layer=clock, above the logo) shows only time/temp, "Graphics" (?noclock=1) everything else */
+body.noclock #clockw{display:none}
+body.onlyclock>*:not(#clockw):not(script){display:none!important}
 </style></head><body>
+<script>{const q=new URLSearchParams(location.search);if(q.get('layer')==='clock')document.body.classList.add('onlyclock');if(q.get('noclock'))document.body.classList.add('noclock');}</script>
 <div id="slides"></div>
 <div id="np"><video id="npv" src="np_box.webm" muted playsinline preload="auto"></video><div class="tx"><div class="t" id="npt"></div><div class="a" id="npa"></div></div></div>
 <div id="screen"></div>
 <img id="showimg" class="full" alt="">
 <div id="showbox"><span class="lbl">NOW ON HYPE</span><span class="nm" id="shownm"></span></div>
-<img class="full" src="clockbox.png" alt="">
-<div id="time">--:--</div><div id="temp">–°</div>
+<div id="clockw"><img class="full" src="clockbox.png" alt="">
+<div id="time">--:--</div><div id="temp">–°</div></div>
 <div id="tk"><div class="lb"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg><span><i>HYPE</i> <span id="tkl"></span></span></div><div class="sb" id="tks"></div><div class="tr" id="tktr"><div class="st" id="tkt"></div></div><div class="ur">hyperadio.nl</div></div>
 <div id="tkw" class="full"><div id="tkbg"></div><img id="tkimg" class="full" alt=""><div id="tka"></div></div>
 <script>

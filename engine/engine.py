@@ -3090,12 +3090,13 @@ HS_WD = {"last": 0, "fix": 0}
 PAGES_MT = {}
 def reload_changed_pages():
     """After an update of the graphics pages (Graphics / Ad box), OBS reloads them by itself (no old page in memory)."""
-    for src, f in (("Graphics", "/var/www/overlay/index.html"), ("Ad box", "/var/www/overlay/adbox.html")):
+    for src, f in (("Graphics", "/var/www/overlay/index.html"), ("Clock", "/var/www/overlay/index.html"), ("Ad box", "/var/www/overlay/adbox.html")):
         try: m = os.path.getmtime(f)
         except OSError: continue
-        if PAGES_MT.get(f) is None: PAGES_MT[f] = m; continue
-        if m != PAGES_MT[f]:
-            PAGES_MT[f] = m
+        k = src + f
+        if PAGES_MT.get(k) is None: PAGES_MT[k] = m; continue
+        if m != PAGES_MT[k]:
+            PAGES_MT[k] = m
             try:
                 with E.tv.olock: E.tv.client().press_input_properties_button(src, "refreshnocache")
                 log.info("graphics page %s changed – OBS reloaded it", src)
