@@ -2088,6 +2088,11 @@ def show_name_image(title):
             if norm_name(re.sub(r"^\d+[_ .-]*", "", f.rsplit(".", 1)[0])) == key: return f
     except OSError: pass
     return None
+def show_image_v(title):
+    """Version of the show name PNG (its change time): a new file with the same name shows at once (no old cached picture)."""
+    f = show_name_image(title)
+    try: return int(os.path.getmtime(os.path.join(ROOT, "branding", "shownames", f))) if f else 0
+    except OSError: return 0
 SHOW_TITLES = {}
 def load_week():
     """The week schedule from hyperadio.nl -> planner.WEEK (day, start, end, title)."""
@@ -2449,7 +2454,7 @@ class H(BaseHTTPRequestHandler):
                 if not planner.get_setting(c, "hour_preview", True): return self.send(200, {"off": True})
                 return self.send(200, planner.preview_hour(c, day=int(qs["day"][0]) if "day" in qs else None, hour=int(qs["hour"][0]) if "hour" in qs else None,
                                                             clock=int(qs["clock"][0]) if "clock" in qs else None))
-            if p == "/graphics": return self.send(200, {"show": SHOW["title"], "show_image": show_name_image(SHOW["title"]), "start": SHOW["start"], "end": SHOW["end"], "temp": WEATHER["temp"], "code": WEATHER["code"]})
+            if p == "/graphics": return self.send(200, {"show": SHOW["title"], "show_image": show_name_image(SHOW["title"]), "show_v": show_image_v(SHOW["title"]), "start": SHOW["start"], "end": SHOW["end"], "temp": WEATHER["temp"], "code": WEATHER["code"]})
             if p == "/pads":
                 c = dbc(); rows = c.execute("SELECT path, title, folder, duration, has_video FROM items WHERE section='jingles' AND problem IS NULL ORDER BY folder, title").fetchall()
                 return self.send(200, [dict(zip(["path", "title", "folder", "duration", "has_video"], r)) for r in rows])

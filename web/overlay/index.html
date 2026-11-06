@@ -56,12 +56,12 @@ let lastShow = null;
 function data() {
   fetch('/api/graphics').then(r => r.json()).then(g => {
     $('#temp').textContent = g.temp == null ? '–°' : g.temp + '°';
-    const key = (g.show || '') + '|' + (g.show_image || '');
+    const key = (g.show || '') + '|' + (g.show_image || '') + '|' + (g.show_v || 0);   // a replaced PNG (same name) shows at once
     if (key !== lastShow) {
       lastShow = key;
       $('#showbox').classList.remove('on'); $('#showimg').classList.remove('on');
       setTimeout(() => {
-        if (g.show_image) { $('#showimg').src = '/shownames/' + encodeURIComponent(g.show_image); $('#showimg').classList.add('on'); }
+        if (g.show_image) { $('#showimg').src = '/shownames/' + encodeURIComponent(g.show_image) + '?v=' + (g.show_v || 0); $('#showimg').classList.add('on'); }
         else if (g.show) { $('#shownm').textContent = g.show; $('#showbox').classList.add('on'); }
       }, 700);
     }
