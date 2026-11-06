@@ -1,18 +1,18 @@
 {
- "time": "2026-11-05T20:56:18",
+ "time": "2026-11-06T01:04:07",
  "result": "ok",
- "commit": "d355d23e916d8928a1dcb4d0c5d99515bf5eb004",
- "subject": "TV copies: only paired videos are redone with their own sound (normal videos keep their v2 copy)",
+ "commit": "9ff84b1140ae46f8562c7ebf98b25484b223467c",
+ "subject": "Show name PNGs: a replaced file (same name) shows on TV at once \u2013 version in the URL (no cached old picture) and the overlay reloads when the file changes",
  "log": [
-  "20:55:33 update 1edc7bbe \u2192 d355d23e \u00b7 1 file(s): engine/indexer.py",
-  "20:55:33 restart hype-indexer",
-  "20:56:18 installed OK \u00b7 restarted: hype-indexer"
+  "01:03:22 update d355d23e \u2192 9ff84b11 \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
+  "01:03:22 restart hype-engine",
+  "01:04:07 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Ir Sais x Rocco Flava x D.A.N.D.O \u2013 ABC",
+  "song": "Myke Towers \u2013 UNA NA M\u00c1S",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },

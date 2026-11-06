@@ -266,3 +266,4 @@
 2026-11-05T19:52:27 ok e83999ed Guard: TV picture check every 30 s (newest 360p piece): black 90 s or frozen 2 min (not one pixel changing) -> restart OBS; while LIVE only the alarm
 2026-11-05T20:06:30 ok 1edc7bbe Top 10: jingles in a fixed-order playlist are never skipped by the no-two-jingles rule
 2026-11-05T20:56:18 ok d355d23e TV copies: only paired videos are redone with their own sound (normal videos keep their v2 copy)
+2026-11-06T01:04:07 ok 9ff84b11 Show name PNGs: a replaced file (same name) shows on TV at once – version in the URL (no cached old picture) and the overlay reloads when the file changes
