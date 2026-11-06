@@ -1,18 +1,18 @@
 {
- "time": "2026-11-06T01:04:07",
+ "time": "2026-11-06T17:26:06",
  "result": "ok",
- "commit": "9ff84b1140ae46f8562c7ebf98b25484b223467c",
- "subject": "Show name PNGs: a replaced file (same name) shows on TV at once \u2013 version in the URL (no cached old picture) and the overlay reloads when the file changes",
+ "commit": "2b516c964a55fbc840f51d1f16a8e2f93265c884",
+ "subject": "Graphics page: time/temp box can be its own OBS source above the logo (?layer=clock), Graphics shows the rest (?noclock=1)",
  "log": [
-  "01:03:22 update d355d23e \u2192 9ff84b11 \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
-  "01:03:22 restart hype-engine",
-  "01:04:07 installed OK \u00b7 restarted: hype-engine"
+  "17:25:21 update 9ff84b11 \u2192 2b516c96 \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
+  "17:25:21 restart hype-engine",
+  "17:26:06 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Myke Towers \u2013 UNA NA M\u00c1S",
+  "song": "CLUB HYPE \u2013 GIVARO B SUMMER MIXTAPE 2025",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
