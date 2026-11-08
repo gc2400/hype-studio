@@ -1540,7 +1540,7 @@ class Engine:
                     r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (p_,)).fetchone()
                     if r: its.append(row_item(r, "you"))
                 if not its: return {"ok": False, "error": "nothing to add"}
-                if pos == 0: self.take_back_next()
+                if pos == 0 and not d.get("keep"): self.take_back_next()     # keep: dropped just below the queued song
                 self.plan[pos:pos] = its; self.push_next(c)
             elif action == "run_clock":        # "Run this clock now": it takes over for the rest of this hour
                 cid = int(d["id"])
@@ -1554,13 +1554,13 @@ class Engine:
                 r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (d["path"],)).fetchone()
                 if not r: return {"ok": False, "error": "not found"}
                 it = row_item(r, "you"); pos = int(d.get("pos", 0))
-                if pos == 0: self.take_back_next()
+                if pos == 0 and not d.get("keep"): self.take_back_next()
                 self.plan.insert(pos, it); self.push_next(c)
             elif action == "remove":
                 if self.liq_next and self.liq_next["id"] == d["id"]: self.take_back_next()
                 self.plan = [p for p in self.plan if p["id"] != d["id"]]; self.push_next(c)
             elif action == "move":
-                if self.liq_next and d["id"] in (self.liq_next["id"],) or int(d["to"]) == 0: self.take_back_next()
+                if self.liq_next and d["id"] in (self.liq_next["id"],) or int(d["to"]) == 0 and not d.get("keep"): self.take_back_next()
                 it = next((p for p in self.plan if p["id"] == d["id"]), None)
                 if it: self.plan.remove(it); self.plan.insert(int(d["to"]), it)
                 self.push_next(c)

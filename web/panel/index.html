@@ -544,14 +544,19 @@ function renderLog() {
     el.ondragstart = e => { dragId = el.dataset.id; e.dataTransfer.setData('text/plain', 'log:' + el.dataset.id); };
     el.ondragover = e => { e.preventDefault(); el.classList.add('drop'); };
     el.ondragleave = () => el.classList.remove('drop');
-    el.ondrop = e => { e.preventDefault(); el.classList.remove('drop'); const d = e.dataTransfer.getData('text/plain'), to = +el.dataset.i;
-      if (d.startsWith('pl:')) return plDrop(d, 'log', to);
-      if (d.startsWith('log:')) cmd('move', {id: d.slice(4), to}); else if (d.startsWith('lib:')) cmd('insert', {path: d.slice(4), pos: to}).then(() => toast('Added to Up next'));
-      else if (d.startsWith('aux:')) { const [, a, id] = d.split(':'); const it = (S.aux[a] || []).find(x => x.id === id); if (it) cmd('insert', {path: it.path, pos: to}).then(() => toast('Added to Up next')); } };
+    el.ondrop = e => { e.preventDefault(); el.classList.remove('drop'); const d = e.dataTransfer.getData('text/plain');
+      // the yellow line is ABOVE this row: the server counts without the locked (already queued) row, so take it off
+      const lk = (S.upcoming[0] || {}).locked ? 1 : 0, i = +el.dataset.i, to = Math.max(0, i - lk);
+      const keep = lk && i >= 1;     // dropped below the queued song: that one stays queued
+      if (d.startsWith('pl:')) return plDrop(d, 'log', to, keep);
+      if (d.startsWith('log:')) { const fi = S.upcoming.findIndex(x => x.id === d.slice(4)); if (fi === i) return;
+        cmd('move', {id: d.slice(4), to: fi >= 0 && fi < i ? Math.max(0, to - (fi < lk ? 0 : 1)) : to, keep: keep && fi >= lk}); } else if (d.startsWith('lib:')) cmd('insert', {path: d.slice(4), pos: to, keep}).then(() => toast('Added to Up next'));
+      else if (d.startsWith('aux:')) { const [, a, id] = d.split(':'); const it = (S.aux[a] || []).find(x => x.id === id); if (it) cmd('insert', {path: it.path, pos: to, keep}).then(() => toast('Added to Up next')); } };
   });
 }
 $('#log').ondragover = e => e.preventDefault();
 $('#log').ondrop = e => { if (e.target.closest('.li[draggable]')) return; const d = e.dataTransfer.getData('text/plain');
+  if (d.startsWith('log:')) return cmd('move', {id: d.slice(4), to: S.upcoming.length});
   if (d.startsWith('pl:')) return plDrop(d, 'log', S.upcoming.length);
   let path = d.startsWith('lib:') ? d.slice(4) : null;
   if (d.startsWith('aux:')) { const [, a, id] = d.split(':'); const it = (S.aux[a] || []).find(x => x.id === id); path = it && it.path; }
@@ -582,14 +587,14 @@ function renderAux() {
 function auxCmd(a, d = {}) { auxSig = ''; return cmd(a, Object.assign({aux: AUX}, d)).then(r => { if (r && r.ok === false) toast(r.error, 1); return r; }); }
 // a playlist dragged from the library card: its next songs (its own order and rules) go to Up next or the AUX
 function plSongs(id, n) { return api('playlist_take?id=' + id + '&n=' + (n || 0)).then(r => r.paths || []); }
-function plDrop(d, where, pos) { const [, id, n] = d.split(':');
+function plDrop(d, where, pos, keep) { const [, id, n] = d.split(':');
   return plSongs(id, +n).then(paths => { if (!paths.length) return toast('That playlist has nothing to play right now', 1);
-    if (where === 'log') return cmd('insert_many', {paths, pos}).then(() => toast(paths.length + ' songs added to Up next'));
+    if (where === 'log') return cmd('insert_many', {paths, pos, keep: !!keep}).then(() => toast(paths.length + ' songs added to Up next'));
     return auxCmd('aux_add', {paths, pos}).then(() => toast(paths.length + ' songs added to AUX ' + AUX)); }); }
 function auxDrop(d, pos) {
   if (d.startsWith('pl:')) return plDrop(d, 'aux', pos);
   if (d.startsWith('lib:')) return auxCmd('aux_add', {path: d.slice(4), pos});
-  if (d.startsWith('aux:')) { const [, a, id] = d.split(':'); if (a === AUX) return auxCmd('aux_move', {id, to: pos}); const it = (S.aux[a] || []).find(x => x.id === id); if (it) return auxCmd('aux_add', {path: it.path, pos}); }
+  if (d.startsWith('aux:')) { const [, a, id] = d.split(':'); if (a === AUX) { const fi = ((S.aux || {})[AUX] || []).findIndex(x => x.id === id); if (fi === pos) return; return auxCmd('aux_move', {id, to: fi >= 0 && fi < pos ? pos - 1 : pos}); } const it = (S.aux[a] || []).find(x => x.id === id); if (it) return auxCmd('aux_add', {path: it.path, pos}); }
   if (d.startsWith('log:')) { const it = S.upcoming.find(x => x.id === d.slice(4)); if (it) return auxCmd('aux_add', {path: it.path, pos}); }
 }
 $('#aux').ondragover = e => e.preventDefault();
