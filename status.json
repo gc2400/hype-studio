@@ -1,18 +1,18 @@
 {
- "time": "2026-11-09T20:22:56",
+ "time": "2026-11-09T20:24:44",
  "result": "ok",
- "commit": "5ac69546dfd967d3064f0192f7d347b2b24e1492",
- "subject": "Up next PIP: once an hour (start of the hour, 10 s); optional once after :30 at the end of a music video (off); both in Settings \u2192 TV; Up next in the Scenes \u2192 PIP group",
+ "commit": "66a7f6c67ed71232e86aa87359164432a27f06c5",
+ "subject": "Up next: an engine restart mid-hour does not show it an extra time",
  "log": [
-  "20:22:11 update 414cfff6 \u2192 5ac69546 \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/settings.html",
-  "20:22:11 restart hype-engine",
-  "20:22:56 installed OK \u00b7 restarted: hype-engine"
+  "20:23:59 update 5ac69546 \u2192 66a7f6c6 \u00b7 1 file(s): engine/engine.py",
+  "20:23:59 restart hype-engine",
+  "20:24:44 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
   "song": "Rema \u2013 Oh No",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
