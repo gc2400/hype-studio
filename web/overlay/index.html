@@ -40,9 +40,16 @@ body.pip #showbox,body.pip #showimg{visibility:hidden}   /* PIP scene: the video
 /* two OBS sources share this page: "Clock" (?layer=clock, above the logo) shows only time/temp, "Graphics" (?noclock=1) everything else */
 body.noclock #clockw{display:none}
 body.onlyclock>*:not(#clockw):not(script){display:none!important}
+/* voice message box (Gianno's design A): while a listener's voice pad plays, in the Now Playing spot */
+#vb{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0;transform:translateX(-24px);transition:opacity .4s,transform .4s;pointer-events:none}
+#vb.on{opacity:1;transform:none}
+#vb img{position:absolute;left:0;top:0;width:1920px;height:1080px}
+#vbn{position:absolute;left:222px;max-width:300px;font-family:Inter,sans-serif;font-weight:900;color:#fff;letter-spacing:-.8px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.voice #np{visibility:hidden}
 </style></head><body>
 <script>{const q=new URLSearchParams(location.search);if(q.get('layer')==='clock')document.body.classList.add('onlyclock');if(q.get('noclock'))document.body.classList.add('noclock');}</script>
 <div id="slides"></div>
+<div id="vb"><img id="vbi" alt=""><div id="vbn"></div></div>
 <div id="np"><video id="npv" src="np_box.webm" muted playsinline preload="auto"></video><div class="tx"><div class="t" id="npt"></div><div class="a" id="npa"></div></div></div>
 <div id="screen"></div>
 <img id="showimg" class="full" alt="">
@@ -95,6 +102,7 @@ function screen() {
     ticker(d.ticker);
     slideshow(d.slides_layer === 'graphics' ? (d.slides || []) : [], d.slide_s || 30);
     nowPlaying(d.np, Date.now() / 1000 - off);
+    voiceBox(d.voice, Date.now() / 1000 - off);
   }).catch(() => {}).finally(() => setTimeout(screen, 500));
 }
 // ticker: smooth scroll at a steady speed; a new ticker (or new headlines) slides in; it gives way to the Now Playing box
@@ -155,5 +163,17 @@ function nowPlaying(np, now) {
 }
 // the text follows the animation's own clock (not the server's), so it always lands exactly in the box: in at 1.25 s, out at 16.75 s
 (function npText() { const v = $('#npv'), box = $('#np'); if (NP.on) { const t = v.currentTime || 0; box.classList.toggle('txon', t > 1.25 && t < 16.75); } requestAnimationFrame(npText); })();
+// voice message box: the sender's first name on Gianno's PNG (WhatsApp / website / unknown source); Now Playing hides meanwhile
+let VB = '';
+function voiceBox(v, now) {
+  const on = !!(v && now >= v.start - 0.5 && now < v.end);
+  if (on) { const src = v.source === 'whatsapp' ? 'A_Voice_WhatsApp' : v.source === 'website' ? 'A_Voice_Website' : 'A_Voice_no_source', key = src + '|' + v.name + '|' + v.start;
+    if (key !== VB) { VB = key; $('#vbi').src = src + '.png'; const n = $('#vbn'); n.textContent = v.name;
+      let fs = 46; n.style.fontSize = fs + 'px';
+      while (n.scrollWidth > 300 && fs > 34) { fs -= 1; n.style.fontSize = fs + 'px'; }   // long name: smaller (down to 34 px), then "…"
+      n.style.top = (882 - 0.863 * fs) + 'px'; } }           // the same baseline (y 882) at every size
+  $('#vb').classList.toggle('on', on); document.body.classList.toggle('voice', on);
+  if (!on) VB = on ? VB : '';
+}
 screen();
 </script></body></html>

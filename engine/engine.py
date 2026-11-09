@@ -420,7 +420,8 @@ class Screen:
         else:      # no planned ticker: the one that is always on in this scene (e.g. News on the Hype Screen)
             g = tickers.always_for(scene); tick = dict(g, key="always-" + g["id"]) if g else None
         if LOWER.get("visible"): tick = None      # a lower third is on: the ticker makes way (same place on screen), comes back after
-        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "ticker": tick,
+        voice = dict(VOICE_ON) if VOICE_ON and VOICE_ON.get("end", 0) > now else None
+        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "ticker": tick, "voice": voice,
                 "slides": ["/adbox/" + urllib.parse.quote(f) for f in slides], "slide_s": 30,
                 "slides_layer": "adbox" if scene == "Hype Screen" else "graphics"}   # Hype Screen: its own source under the Live Layer
 
@@ -1597,17 +1598,21 @@ class Engine:
                 os.replace(src, os.path.join(MEDIA_DIR, ".deleted", time.strftime("%Y%m%d-%H%M%S-") + f)); log.info("media deleted: %s", f)
                 return {"ok": True}
             elif action == "pad_unloop":
-                self.pad_loops.pop(d.get("path"), None); self.duck_until = 0; self.liq.cmd("pads.stop"); self.pad_video_off()
+                self.pad_loops.pop(d.get("path"), None); self.duck_until = 0; self.liq.cmd("pads.stop"); self.pad_video_off(); VOICE_ON.clear()
             elif action == "pad":
                 r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (d["path"],)).fetchone()
                 if d["path"].startswith("jingles/VOICE/"):              # a listener's voice: always over ducked music, never a loop
                     d["duck"] = True; d["loop"] = False
                     try:
-                        st = voice_state()
+                        st = voice_state(); who = {}
                         for v in st.values():
-                            if v.get("path") == d["path"]: v["played"] = time.time()
+                            if v.get("path") == d["path"]: v["played"] = time.time(); who = v
                         voice_save(st)
-                    except Exception: pass
+                        if r:       # the voice message box on TV (Graphics, in the Now Playing spot) for as long as it plays
+                            vi = row_item(r, "pad"); ln = max(2.0, (vi.get("cue_end") or vi.get("duration") or 10) - (vi.get("cue_start") or 0))
+                            name = (who.get("name") or re.sub(r"^Voice - |\s*\(.*$|\s+\S+$", "", os.path.splitext(os.path.basename(d["path"]))[0]) or "Listener").split()[0]
+                            VOICE_ON.update(name=name, source=who.get("source") or "", start=time.time() + 0.3, end=time.time() + 0.3 + ln)
+                    except Exception as e: log.warning("voice box: %s", e)
                 if r and d.get("video"): self.pad_video(c, row_item(r, "pad"), bool(d.get("loop")))
                 if r and d.get("loop"): self.pad_loop(r, bool(d.get("duck")), float(planner.get_setting(c, "pad_duck", 0.25)))
                 elif r:
@@ -1655,7 +1660,7 @@ class Engine:
                     if on: self.take_back_next(); self.push_next(c)
                     elif self.liq_next and self.liq_next.get("src") == "loop": self.liq.cmd("radio.clear"); self.liq_next = None; self.push_next(c)
             elif action == "pads_stop":
-                self.pad_loops.clear(); self.duck_until = 0
+                self.pad_loops.clear(); self.duck_until = 0; VOICE_ON.clear()
                 self.liq.cmd("pads.stop"); self.pad_video_off()
                 if self.media.cur: self.media.stop(self)      # STOP PADS also takes the media (picture / video) off
             elif action.startswith("aux_"):
@@ -2334,6 +2339,7 @@ def lower_load():
     try: return json.load(open(LOWER_FILE))
     except Exception: return {"visible": False, "style": "A", "size": "auto", "name": "", "role": "", "handle": "", "recent": []}
 LOWER = lower_load()
+VOICE_ON = {}       # a listener's voice message playing now: {name, source, start, end} -> the voice message box on TV
 def lower_cmd(d):
     """Lower third: show / hide / update. Recent names are kept for one-tap reuse."""
     act = d.get("action", "show")

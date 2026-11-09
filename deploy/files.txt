@@ -62,3 +62,6 @@ system/needrestart-hype.conf|/etc/needrestart/conf.d/hype.conf|644|-
 system/hype-radio.service.d/master_me.conf|/etc/systemd/system/hype-radio.service.d/master_me.conf|644|daemon-reload
 system/hype-maintenance.service|/etc/systemd/system/hype-maintenance.service|644|daemon-reload
 system/hype-maintenance.timer|/etc/systemd/system/hype-maintenance.timer|644|daemon-reload
+web/overlay/A_Voice_WhatsApp.png|/var/www/overlay/A_Voice_WhatsApp.png|644|-
+web/overlay/A_Voice_Website.png|/var/www/overlay/A_Voice_Website.png|644|-
+web/overlay/A_Voice_no_source.png|/var/www/overlay/A_Voice_no_source.png|644|-
