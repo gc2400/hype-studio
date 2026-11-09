@@ -1,18 +1,18 @@
 {
- "time": "2026-11-09T20:06:29",
+ "time": "2026-11-09T20:08:18",
  "result": "ok",
- "commit": "01e43fb39870ceb2dda2152e5b1babd56b57a521",
- "subject": "Up next PIP: scene 'Up next' (music video in a window + Gianno's frame), now/next/then with start times and Apple Music covers (artist must match, cached); shown in the last 30 s of every 4th music video and 10 s into the first song of each hour",
+ "commit": "1300fecaccc29ec9c15f98ff7affa32912fecf24",
+ "subject": "Up next: covers looked up at every song (ready before the PIP shows)",
  "log": [
-  "20:05:44 update d984bbbd \u2192 01e43fb3 \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
-  "20:05:44 restart hype-engine",
-  "20:06:29 installed OK \u00b7 restarted: hype-engine"
+  "20:07:33 update 01e43fb3 \u2192 1300feca \u00b7 1 file(s): engine/engine.py",
+  "20:07:33 restart hype-engine",
+  "20:08:18 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Dj Goja x Jason Derulo x Melody \u2013 Mi Chico",
+  "song": "MAUVAIS DJO \u2013 Maladie",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
