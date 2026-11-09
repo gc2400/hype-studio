@@ -896,6 +896,10 @@ class Engine:
         self.ov_last = 0; self.ov_count = {}; self.ov_recent = []
         self.idi_times = []; self.idi_used = {}      # IDs over soft intros: when they played (max per hour / minutes apart), which ID
         self.last_kind = None
+        try:      # after a restart: what played last (else an ID over the next intro is skipped – Bleeding, 9 Nov)
+            lp = (dbc().execute("SELECT path FROM asrun ORDER BY id DESC LIMIT 1").fetchone() or [""])[0] or ""
+            self.last_kind = "music" if lp.startswith("music/") else "jingle" if lp.startswith("jingles/") else None
+        except Exception: pass
         self.missing = {}    # path -> when push_next found it missing / unplayable (not planned again for 10 min)
         self.plan = []; self.liq_next = None; self.now = {}; self.auto = True; self.stop_at_end = False; self.stopped = False
         self.snaps = []      # (item id, playlist positions before it was planned) for the planned items not on air yet
