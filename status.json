@@ -1,17 +1,19 @@
 {
- "time": "2026-11-09T19:07:42",
+ "time": "2026-11-09T19:19:43",
  "result": "ok",
- "commit": "37f02501ec61e038e184ce3f7c31b82d4a30ba24",
- "subject": "Panel: camera slots preview (CAM 1-4) under the program preview, open/hide, only plays while open; header: page links go into the \u2630 menu when they don't fit on the line",
+ "commit": "f072504587ea43f3b31926b67da61f94668ea386",
+ "subject": "History: week report (top songs/artists, genres, played too often, rotation per folder, never played, own streams per day, stability); audience numbers and guard events kept per day; camera slot labels under the pictures",
  "log": [
-  "19:07:42 update e7448a47 \u2192 37f02501 \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
-  "19:07:42 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:18:58 update 37f02501 \u2192 f0725045 \u00b7 4 file(s): engine/engine.py, engine/guard.py, web/panel/history.html, web/panel/index.html",
+  "19:18:58 restart hype-guard",
+  "19:18:58 restart hype-engine",
+  "19:19:43 installed OK \u00b7 restarted: hype-engine, hype-guard"
  ],
  "guard": {
-  "song": "Tahir x Issairo \u2013 Viezderij",
+  "song": "KYBBA X STYLO G X KALIBWOY \u2013 HAMMA",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
