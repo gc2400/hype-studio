@@ -206,10 +206,11 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .slotg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:6px}
 .slot{position:relative;aspect-ratio:16/9;border-radius:9px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
 .slot video{width:100%;height:100%;object-fit:cover;display:block}
-.slot .sl{position:absolute;left:5px;top:5px;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:rgba(6,20,35,.78);color:#F2F6FA;max-width:calc(100% - 10px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.slot .sl b{color:var(--y)}
+.slotc .sl{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:10.5px;font-weight:700;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.slotc .sl b{flex:none;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:4px;background:var(--card2,#0F2B44);color:var(--y);font-size:10px}
+.slotc.onair .sl{color:var(--txt,#F2F6FA)}.slotc.onair .sl b{background:var(--y);color:#061321}
 .slot .so{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#7f93a6;text-align:center;padding:0 6px}
-.slot.onair{box-shadow:0 0 0 2px var(--y)}
+.slotc.onair .slot{box-shadow:0 0 0 2px var(--y)}
 @media (max-width:700px){.slotg{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pv{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000}
 .pv img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1290,7 +1291,7 @@ function renderSlotsPv() {
   const g = $('#slotsGrid');
   if (g.dataset.sig !== sig) {
     g.dataset.sig = sig;
-    g.innerHTML = K.map(c => `<div class="slot" data-slot="${c}"><video muted playsinline autoplay></video>${info(c).online ? '' : '<span class="so">offline</span>'}<span class="sl"><b>${c.slice(4)}</b> · ${esc(info(c).name || src(c) || 'empty')}</span></div>`).join('');
+    g.innerHTML = K.map(c => `<div class="slotc" data-slot="${c}"><div class="slot"><video muted playsinline autoplay></video>${info(c).online ? '' : '<span class="so">offline</span>'}</div><div class="sl"><b>${c.slice(4)}</b>${esc(info(c).name || src(c) || 'empty')}</div></div>`).join('');
     K.forEach(c => {
       const s_ = src(c), on = info(c).online && typeof HypeRTC !== 'undefined';
       if (SLV[c] && (SLV[c].src !== s_ || !on)) { if (SLV[c].rtc) SLV[c].rtc.close(); delete SLV[c]; }

@@ -2372,6 +2372,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/library": return self.send(200, library(qs))
             if p == "/upload/status": return self.send(200, up_status(qs))
             if p == "/history": return self.send(200, history(qs))
+            if p == "/weekreport": return self.send(200, week_report(qs))
             if p == "/media": return self.send(200, {"files": media_files(), "scenes": MEDIA_SCENES})
             if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners(), own_tv=viewers()))
             if p == "/smartmix":     # the cue editor: where smart mix puts MIX for these START / END
@@ -2772,7 +2773,7 @@ def _viewers():
     ips = tv_viewer_ips(); now_n = len(ips); day = time.strftime("%Y-%m-%d")
     try: st = json.load(open(VSTATS_FILE))
     except Exception: st = {}
-    if st.get("day") != day: st = {"day": day, "peak": 0, "peak_t": 0, "uniq": []}
+    if st.get("day") != day: aud_archive("tv", st); st = {"day": day, "peak": 0, "peak_t": 0, "uniq": []}
     if now_n > st["peak"]: st["peak"], st["peak_t"] = now_n, int(time.time())
     u = set(st.get("uniq", []))
     for ip in ips: u.add(hashlib.sha1((day + ip).encode()).hexdigest()[:12])     # no IPs stored, only a daily hash
@@ -2781,6 +2782,66 @@ def _viewers():
     except Exception: pass
     d = {"current": now_n, "peak_today": st["peak"], "peak_time": st["peak_t"], "unique_today": len(u)}
     VIEW.update(t=time.time(), d=d); return d
+AUD_DAYS = "/var/lib/hype/audience_days.json"
+def aud_archive(kind, st):
+    """A finished day's numbers (peak + unique devices) are kept for the week report (90 days)."""
+    if not st.get("day"): return
+    try: d = json.load(open(AUD_DAYS))
+    except Exception: d = {}
+    d.setdefault(st["day"], {})[kind] = {"peak": st.get("peak", 0), "unique": max(len(st.get("uniq", [])), st.get("peak", 0))}
+    for k in sorted(d)[:-90]: d.pop(k, None)
+    try: jdump(d, AUD_DAYS)
+    except Exception as e: log.warning("audience archive: %s", e)
+
+def week_report(qs):
+    """Week report (Monday–Sunday) of the playout side: what played, rotation, stability, own streams.
+    ?w=0 this week so far, 1 = last week (default), 2 = the week before …"""
+    import datetime as D, collections as C
+    w = int((qs.get("w") or ["1"])[0])
+    today = D.date.today(); mon = today - D.timedelta(days=today.weekday()) - D.timedelta(weeks=w)
+    t0 = time.mktime(mon.timetuple()); t1 = time.mktime((mon + D.timedelta(days=7)).timetuple())
+    c = dbc()
+    rows = c.execute("SELECT started, path, artist, title, folder, mode, kind FROM asrun WHERE started>=? AND started<? ORDER BY started", (t0, t1)).fetchall()
+    music = [r for r in rows if (r[1] or "").startswith("music/") and "/MIXES/" not in (r[1] or "")]
+    songs = C.Counter(r[1] for r in music); arts = C.Counter()
+    for r in music:
+        for a in re.split(r"\s+(?:x|X|&|feat\.?|ft\.?|,)\s+", r[2] or ""):
+            if a.strip(): arts[a.strip()] += 1
+    title = {r[1]: "%s – %s" % (r[2] or "", r[3] or "") for r in music}
+    genre = lambda p: (p.split("/") + ["", ""])[1]
+    genres = C.Counter(genre(r[1]) for r in music)
+    vids = sum(1 for r in music if r[5] in ("clip", "pair"))
+    jingles = sum(1 for r in rows if (r[1] or "").startswith("jingles/"))
+    mixes = sum(1 for r in rows if "/MIXES/" in (r[1] or ""))
+    # rotation: active music (not archive / mixes / problem files)
+    lib = [x[0] for x in c.execute("SELECT path FROM items WHERE section='music' AND problem IS NULL AND path NOT LIKE '%/MIXES/%' AND path NOT LIKE '%ARC%/%' AND path NOT LIKE '%ARCHIVE%'")]
+    played = set(songs); never = [p for p in lib if p not in played]
+    folders = C.defaultdict(lambda: [0, 0, 0])      # folder -> songs, played songs, plays
+    for p in lib:
+        f = "/".join(p.split("/")[1:-1]); folders[f][0] += 1
+        if p in played: folders[f][1] += 1; folders[f][2] += songs[p]
+    rot = sorted(([f, n, pl, plays] for f, (n, pl, plays) in folders.items()), key=lambda x: x[0])
+    days = (min(t1, time.time()) - t0) / 86400
+    often = [[title[p], n] for p, n in songs.most_common() if n > max(3, 3 * days)][:15]       # more than 3× a day
+    # stability: the guard's events of this week
+    ev = []
+    try:
+        for ln in open("/var/lib/hype/guard_events.jsonl"):
+            try: e = json.loads(ln)
+            except ValueError: continue
+            if t0 <= e.get("t", 0) < t1 and e.get("level") in ("bad", "repair", "warn"): ev.append(e)
+    except OSError: pass
+    # own streams: peak + unique devices per day (kept since 9 Nov 2026)
+    try: aud = json.load(open(AUD_DAYS))
+    except Exception: aud = {}
+    adays = [[(mon + D.timedelta(days=i)).isoformat(), aud.get((mon + D.timedelta(days=i)).isoformat(), {})] for i in range(7)]
+    return {"week": mon.isocalendar()[1], "from": mon.isoformat(), "to": (mon + D.timedelta(days=6)).isoformat(), "w": w,
+            "totals": {"songs": len(music), "unique_songs": len(songs), "videos": vids, "jingles": jingles, "mixes": mixes, "items": len(rows)},
+            "top_songs": [[title[p], n] for p, n in songs.most_common(10)], "top_artists": arts.most_common(10),
+            "genres": genres.most_common(), "too_often": often,
+            "never": {"count": len(never), "of": len(lib), "examples": sorted(never)[:40]},
+            "rotation": rot, "events": ev[-60:], "audience": adays}
+
 def streams_status(eng):
     if _ST["d"] and time.time() - _ST["t"] < 5: return _ST["d"]
     d = {"time": time.time()}
@@ -2844,7 +2905,7 @@ def _listeners():
     day = time.strftime("%Y-%m-%d")
     try: st = json.load(open(LSTATS_FILE))
     except Exception: st = {}
-    if st.get("day") != day: st = {"day": day, "peak": 0, "peak_t": 0, "uniq": []}
+    if st.get("day") != day: aud_archive("radio", st); st = {"day": day, "peak": 0, "peak_t": 0, "uniq": []}
     if now_n > st["peak"]: st["peak"], st["peak_t"] = now_n, int(time.time())
     u = set(st.get("uniq", []))
     for k in devs:

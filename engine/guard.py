@@ -115,7 +115,10 @@ class Guard:
         self.hb_t = 0; self.hb = {"ok": None, "t": 0, "answer": ""}
         self.step = {}
     def event(self, level, text):
-        self.events.appendleft({"t": time.time(), "level": level, "text": text}); log.info("%s: %s", level, text)
+        e = {"t": time.time(), "level": level, "text": text}; self.events.appendleft(e); log.info("%s: %s", level, text)
+        try:       # kept for the week report (Hype Studio → History → Week report)
+            with open("/var/lib/hype/guard_events.jsonl", "a") as f: f.write(json.dumps(e) + "\n")
+        except OSError: pass
     def bad(self, pid, is_bad):
         if is_bad: self.since.setdefault(pid, time.time())
         else:
