@@ -1,18 +1,18 @@
 {
- "time": "2026-11-09T14:41:45",
- "result": "ok",
- "commit": "48bd78196d7d2b3202c5a00fe0f16d4b097164d1",
- "subject": "Graphics pages: after an update that also restarts the engine, OBS reloads the new page (it kept the old one)",
+ "time": "2026-11-09T16:08:51",
+ "result": "lab-failed",
+ "commit": "1814ef70001e209102bb6cc1b69134366eb77dad",
+ "subject": "Radio: log every clock delay (hiccup hunting), stop the telnet connect/disconnect log spam (disk writes)",
  "log": [
-  "14:41:00 update 4d256859 \u2192 48bd7819 \u00b7 1 file(s): engine/engine.py",
-  "14:41:00 restart hype-engine",
-  "14:41:45 installed OK \u00b7 restarted: hype-engine"
+  "16:07:35 update 48bd7819 \u2192 1814ef70 \u00b7 1 file(s): radio/radio.liq",
+  "16:08:51 lab: IndexError: list index out of range",
+  "16:08:51 2, in <module>\nIndexError: list index out of range\nTraceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nIndexError: list index out of range\nTraceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nIndexError: list index out of range\nTraceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nIndexError: list index out of range\nTraceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nIndexError: list index out of range\nTraceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nIndexError: list index out of range"
  ],
  "guard": {
-  "song": "Wisin x Kapo \u2013 Mu\u00e9velo Pa' M\u00ed",
-  "listeners": 2,
+  "song": "1T1 x Theomaa \u2013 Bouwey",
+  "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
