@@ -1,18 +1,18 @@
 {
- "time": "2026-11-08T14:22:33",
+ "time": "2026-11-09T14:34:50",
  "result": "ok",
- "commit": "2908b75b023b20b623f20cfacfd7c6a2cdf3371b",
- "subject": "Up next / AUX: a dragged song lands exactly at the yellow line (locked queued row counted, moving down no longer one row too low, dropping just below the queued song keeps it queued)",
+ "commit": "4d2568599b68e7c52b4600bc498260705958fc29",
+ "subject": "Voice message box on TV (design A): while a listener's voice pad plays, Gianno's PNG (WhatsApp / website / no source) with the sender's first name in the Now Playing spot; Now Playing hides meanwhile",
  "log": [
-  "14:21:48 update 2b516c96 \u2192 2908b75b \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
-  "14:21:48 restart hype-engine",
-  "14:22:33 installed OK \u00b7 restarted: hype-engine"
+  "14:34:05 update 2908b75b \u2192 4d256859 \u00b7 5 file(s): engine/engine.py, web/overlay/A_Voice_Website.png, web/overlay/A_Voice_WhatsApp.png, web/overlay/A_Voice_no_source.png, web/overlay/index.html",
+  "14:34:05 restart hype-engine",
+  "14:34:50 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "La Factor\u00eda x Eddy Lover \u2013 Perd\u00f3name",
-  "listeners": 0,
+  "song": "James Hype x Miggy Dela Rosa \u2013 Ferrari",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
