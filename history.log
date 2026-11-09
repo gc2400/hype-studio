@@ -280,3 +280,4 @@
 2026-11-09T20:06:29 ok 01e43fb3 Up next PIP: scene 'Up next' (music video in a window + Gianno's frame), now/next/then with start times and Apple Music covers (artist must match, cached); shown in the last 30 s of every 4th music video and 10 s into the first song of each hour
 2026-11-09T20:08:18 ok 1300feca Up next: covers looked up at every song (ready before the PIP shows)
 2026-11-09T20:14:12 ok e3021a31 Covers: retry after 2 min on an Apple hiccup; any of the song's artists may match
+2026-11-09T20:17:02 ok 414cfff6 Up next: titles + artists in capitals; Top 10 number as its own OBS layer (Top10 rank) above the Live Layer, in front of the show name box

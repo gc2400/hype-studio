@@ -1,18 +1,18 @@
 {
- "time": "2026-11-09T20:14:12",
+ "time": "2026-11-09T20:17:02",
  "result": "ok",
- "commit": "e3021a317a09a06cc1a441a97b880bb5b1cc44fe",
- "subject": "Covers: retry after 2 min on an Apple hiccup; any of the song's artists may match",
+ "commit": "414cfff6faa213edf8640b112de247e40aa32f6e",
+ "subject": "Up next: titles + artists in capitals; Top 10 number as its own OBS layer (Top10 rank) above the Live Layer, in front of the show name box",
  "log": [
-  "20:13:27 update 1300feca \u2192 e3021a31 \u00b7 1 file(s): engine/engine.py",
-  "20:13:27 restart hype-engine",
-  "20:14:12 installed OK \u00b7 restarted: hype-engine"
+  "20:16:17 update e3021a31 \u2192 414cfff6 \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
+  "20:16:17 restart hype-engine",
+  "20:17:02 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "B'jay x RULY \u2013 Kumpli",
+  "song": " \u2013 TOP10N3",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
