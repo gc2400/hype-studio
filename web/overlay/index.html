@@ -46,9 +46,21 @@ body.onlyclock>*:not(#clockw):not(script){display:none!important}
 #vb img{position:absolute;left:0;top:0;width:1920px;height:1080px}
 #vbn{position:absolute;left:222px;max-width:300px;font-family:Inter,sans-serif;font-weight:900;color:#fff;letter-spacing:-.8px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.voice #np{visibility:hidden}
+/* Up next PIP (scene "Up next", Gianno's frame in OBS): covers + now / next / then + start times – READ_ME_Positions.txt */
+#un{position:absolute;inset:0;opacity:0;transition:opacity .35s}#un.on{opacity:1}
+#un .cv{position:absolute;border-radius:12px;object-fit:cover;opacity:0;transition:opacity .3s}#un .cv.ok{opacity:1}
+#un .ut,#un .ua{position:absolute;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
+#un .ut{font-weight:900;color:#fff;letter-spacing:-.3px}#un .ua{font-weight:600;color:#C9D3DF;font-size:18px}
+#un .tm{position:absolute;width:76px;height:29px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff;font-variant-numeric:tabular-nums}
+#uc0 .cv{left:1262px;top:378px;width:118px;height:118px}#uc0 .ut{left:1398px;top:416px;font-size:34px;max-width:420px}#uc0 .ua{left:1398px;top:459px;max-width:420px}
+#uc1 .cv{left:1262px;top:541px;width:88px;height:88px}#uc1 .ut{left:1368px;top:573px;font-size:26px;max-width:360px}#uc1 .ua{left:1368px;top:606px;max-width:360px}#uc1 .tm{left:1743px;top:540px}
+#uc2 .cv{left:1262px;top:673px;width:88px;height:88px}#uc2 .ut{left:1368px;top:705px;font-size:26px;max-width:360px}#uc2 .ua{left:1368px;top:738px;max-width:360px}#uc2 .tm{left:1744px;top:672px}
 </style></head><body>
 <script>{const q=new URLSearchParams(location.search);if(q.get('layer')==='clock')document.body.classList.add('onlyclock');if(q.get('noclock'))document.body.classList.add('noclock');}</script>
 <div id="slides"></div>
+<div id="un"><div class="uc" id="uc0"><img class="cv" alt=""><div class="ut"></div><div class="ua"></div></div>
+<div class="uc" id="uc1"><img class="cv" alt=""><div class="ut"></div><div class="ua"></div><div class="tm"></div></div>
+<div class="uc" id="uc2"><img class="cv" alt=""><div class="ut"></div><div class="ua"></div><div class="tm"></div></div></div>
 <div id="vb"><img id="vbi" alt=""><div id="vbn"></div></div>
 <div id="np"><video id="npv" src="np_box.webm" muted playsinline preload="auto"></video><div class="tx"><div class="t" id="npt"></div><div class="a" id="npa"></div></div></div>
 <div id="screen"></div>
@@ -103,6 +115,7 @@ function screen() {
     slideshow(d.slides_layer === 'graphics' ? (d.slides || []) : [], d.slide_s || 30);
     nowPlaying(d.np, Date.now() / 1000 - off);
     voiceBox(d.voice, Date.now() / 1000 - off);
+    upNext(d.scene === 'Up next' ? d.upnext : null);
   }).catch(() => {}).finally(() => setTimeout(screen, 500));
 }
 // ticker: smooth scroll at a steady speed; a new ticker (or new headlines) slides in; it gives way to the Now Playing box
@@ -163,6 +176,17 @@ function nowPlaying(np, now) {
 }
 // the text follows the animation's own clock (not the server's), so it always lands exactly in the box: in at 1.25 s, out at 16.75 s
 (function npText() { const v = $('#npv'), box = $('#np'); if (NP.on) { const t = v.currentTime || 0; box.classList.toggle('txon', t > 1.25 && t < 16.75); } requestAnimationFrame(npText); })();
+// Up next PIP: the 3 cards (the frame PNG with labels and badges is an image in the OBS scene "Up next")
+function upNext(u) {
+  const on = !!(u && u.items && u.items.length);
+  if (on) u.items.slice(0, 3).forEach((it, i) => { const c = $('#uc' + i); if (!c) return;
+    const t = c.querySelector('.ut'), a = c.querySelector('.ua'), cv = c.querySelector('.cv'), tm = c.querySelector('.tm');
+    if (t.textContent !== it.title) t.textContent = it.title; if (a.textContent !== it.artist) a.textContent = it.artist;
+    if (tm) tm.textContent = it.start || '';
+    const src = it.cover || ''; if (cv.dataset.src !== src) { cv.dataset.src = src; cv.classList.remove('ok'); if (src) { cv.onload = () => cv.classList.add('ok'); cv.src = src; } else cv.removeAttribute('src'); } });
+  if (on) for (let i = u.items.length; i < 3; i++) { const c = $('#uc' + i); c.querySelectorAll('.ut,.ua,.tm').forEach(x => x.textContent = ''); c.querySelector('.cv').classList.remove('ok'); }
+  $('#un').classList.toggle('on', on);
+}
 // voice message box: the sender's first name on Gianno's PNG (WhatsApp / website / unknown source); Now Playing hides meanwhile
 let VB = '';
 function voiceBox(v, now) {

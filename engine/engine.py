@@ -2,7 +2,7 @@
 """Hype Studio playout engine (phase 2).
 Keeps the upcoming plan (hour clock + your own picks), feeds Liquidsoap one song ahead,
 switches the TV in OBS on every song start, and serves the control panel API."""
-import shutil, os, re, json, time, random, sqlite3, socket, threading, logging, uuid, base64, hashlib, subprocess, array, urllib.request
+import shutil, os, re, json, time, random, sqlite3, socket, threading, logging, uuid, base64, hashlib, subprocess, array, urllib.request, unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 import obsws_python as obs
@@ -375,6 +375,9 @@ class Screen:
                 f = "TOP10/N%d.png" % self.top10[0]
                 if os.path.exists(os.path.join(planner.SCREEN_DIR, f)): self.add(None, f, 0.0, max(5.0, length - 1), "all")
             self.top10 = None
+        if it["section"] == "music":
+            try: self.upnext_plan(c, it, length)
+            except Exception as e: log.warning("up next: %s", e)
         for r in planner.api_screen_rules(c):
             if not r["enabled"] or not r["file"]: continue
             t, ref = r["trigger"], r["ref"] or ""
@@ -382,6 +385,19 @@ class Screen:
             if t == "folder" and it["section"] == "music": ok = planner.rule_matches(c, {"match_kind": "folder", "match_ref": ref}, it)
             if t == "playlist" and it["section"] == "music" and ref: ok = planner.in_playlist(c, ref, it["path"])
             if ok: self.fire(r, length)
+    def upnext_plan(self, c, it, length):
+        """The Up next PIP (scene "Up next": the music video in a window + now / next / then with start times):
+        in the last N s of every Nth music video, and a few seconds into the first song of each hour (Settings → TV)."""
+        every = int(planner.get_setting(c, "upnext_every", 4) or 0)
+        end_s = float(planner.get_setting(c, "upnext_end_s", 30) or 0)
+        hour_s = float(planner.get_setting(c, "upnext_hour_s", 10) or 0)
+        hk = time.strftime("%Y%m%d%H"); first = getattr(self, "upn_hour", None) != hk; self.upn_hour = hk
+        self.upn_n = getattr(self, "upn_n", 0) + 1
+        path = it["path"]
+        if first and hour_s > 0 and length > 40:
+            threading.Timer(12.0, lambda: E.upnext_show(path, hour_s)).start()          # 12 s in: the song has started properly
+        elif every > 0 and end_s > 0 and self.upn_n % every == 0 and length > end_s + 40:
+            threading.Timer(max(1.0, length - end_s), lambda: E.upnext_show(path, end_s - 0.5)).start()
     def on_show(self, title):
         c = dbc()
         for r in planner.api_screen_rules(c):
@@ -421,9 +437,52 @@ class Screen:
             g = tickers.always_for(scene); tick = dict(g, key="always-" + g["id"]) if g else None
         if LOWER.get("visible"): tick = None      # a lower third is on: the ticker makes way (same place on screen), comes back after
         voice = dict(VOICE_ON) if VOICE_ON and VOICE_ON.get("end", 0) > now else None
-        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "ticker": tick, "voice": voice,
+        upn = None
+        if scene == "Up next":
+            try: upn = E.upnext_data()
+            except Exception as e: log.warning("up next data: %s", e)
+        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "ticker": tick, "voice": voice, "upnext": upn,
                 "slides": ["/adbox/" + urllib.parse.quote(f) for f in slides], "slide_s": 30,
                 "slides_layer": "adbox" if scene == "Hype Screen" else "graphics"}   # Hype Screen: its own source under the Live Layer
+
+COVERS = "/srv/hype-data/covers"; COVER_IDX = os.path.join(COVERS, "index.json")
+COVER_Q = []; COVER_LOCK = threading.Lock(); COVER_MISS = {}
+def cover_key(artist, title): return hashlib.sha1(("%s|%s" % ((artist or "").lower().strip(), (title or "").lower().strip())).encode()).hexdigest()[:16]
+def cover_url(artist, title):
+    """The song's cover (Apple Music, only when the artist matches) – None while it is looked up / when there is none."""
+    if not (artist or "").strip() or not (title or "").strip(): return None
+    k = cover_key(artist, title); f = os.path.join(COVERS, k + ".jpg")
+    if os.path.exists(f): return "/api/cover/%s.jpg?v=%d" % (k, int(os.path.getmtime(f)))
+    if time.time() - COVER_MISS.get(k, 0) > 7 * 86400:
+        with COVER_LOCK:
+            if k not in [x[0] for x in COVER_Q]: COVER_Q.append((k, artist, title))
+    return None
+def cover_worker():
+    os.makedirs(COVERS, exist_ok=True)
+    try: COVER_MISS.update(json.load(open(COVER_IDX)))
+    except Exception: pass
+    while True:
+        time.sleep(3)          # at most one look-up per 3 s
+        with COVER_LOCK: job = COVER_Q.pop(0) if COVER_Q else None
+        if not job: continue
+        k, artist, title = job
+        try:
+            first = re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|&|,)\s+|,", artist, flags=re.I)[0].strip().lower()
+            clean = re.sub(r"\s*[\(\[].*?[\)\]]", "", title)
+            q = urllib.parse.urlencode({"term": "%s %s" % (first, clean), "entity": "song", "limit": 8, "country": "NL"})
+            res = json.loads(urllib.request.urlopen("https://itunes.apple.com/search?" + q, timeout=8).read()).get("results", [])
+            fold = lambda x: unicodedata.normalize("NFKD", x or "").encode("ascii", "ignore").decode().lower()
+            ok = [r for r in res if fold(first) and fold(first) in fold(r.get("artistName"))]
+            ok.sort(key=lambda r: 0 if fold(clean) in fold(r.get("trackName")) else 1)
+            if ok and ok[0].get("artworkUrl100"):
+                img = urllib.request.urlopen(ok[0]["artworkUrl100"].replace("100x100bb", "300x300bb"), timeout=8).read()
+                with open(os.path.join(COVERS, k + ".jpg.tmp"), "wb") as fh: fh.write(img)
+                os.replace(os.path.join(COVERS, k + ".jpg.tmp"), os.path.join(COVERS, k + ".jpg")); COVER_MISS.pop(k, None)
+            else: COVER_MISS[k] = time.time()
+        except Exception as e: log.info("cover %s – %s: %s", artist, title, e); COVER_MISS[k] = time.time() - 6 * 86400   # retry in a day
+        try: jdump(COVER_MISS, COVER_IDX)
+        except Exception: pass
+threading.Thread(target=cover_worker, daemon=True).start()
 
 ADBOX = "/srv/hype/branding/adbox"
 PIP_DIR = "/srv/hype/branding/pip"          # frames for the PIP scene (full-frame PNG with a transparent window)
@@ -553,7 +612,7 @@ class TV:
       with self.olock:
         live = bool(getattr(self, "live", False))
         # PIP too: the sponsor frame goes around the video, so the clip's sound plays on (no switch to the mp3 and back)
-        split = bool(self.clip_sound and (scene_has_video(self.scene) or self.scene == "PIP")) and not live
+        split = bool(self.clip_sound and (scene_has_video(self.scene) or self.scene in ("PIP", "Up next"))) and not live
         if (split, live) == (self.split, getattr(self, "_live_r", None)) and not force: return
         try:
             cl = self.client()
@@ -1091,6 +1150,25 @@ class Engine:
                 except Exception: pass
                 self._ducking = False
         threading.Thread(target=run, daemon=True).start()
+    def upnext_show(self, path, dur):
+        """Show the Up next PIP now – only over the music video that planned it, scenes on AUTO, not LIVE."""
+        n = self.now or {}
+        if n.get("path") != path or n.get("mode") not in ("clip", "pair") or self.live.live or self.stopped: return
+        if not self.tv.auto or self.tv.scene != "Music video": return
+        if len([u for u in self.upnext_data()["items"]]) < 2: return
+        log.info("Up next PIP for %.0f s", dur); self.hold_scene("Up next", dur)
+    def upnext_data(self):
+        """Now playing + the next 2 songs with their start times (jingles in between count for the time) + covers."""
+        n = self.now or {}; out = []
+        if n.get("path"): out.append({"title": n.get("title") or "", "artist": n.get("artist") or "", "cover": cover_url(n.get("artist"), n.get("title"))})
+        t = (n.get("started") or time.time()) + (self.length(n) if n.get("path") else 0)
+        for it in ([self.liq_next] if self.liq_next else []) + list(self.plan):
+            if len(out) >= 3: break
+            if it.get("section") == "music":
+                out.append({"title": it.get("title") or "", "artist": it.get("artist") or "", "start": time.strftime("%H:%M", time.localtime(t)),
+                            "cover": cover_url(it.get("artist"), it.get("title"))})
+            t += self.length(it)
+        return {"items": out}
     def hold_scene(self, name, hold=0):
         """Switch the TV to a scene (from a scheduled rule); after `hold` seconds back to AUTO SCENES (0 = stays)."""
         with LOCK:
@@ -2452,6 +2530,10 @@ class H(BaseHTTPRequestHandler):
                                        "others": [s_ for s_, g_ in st["guests"].items() if s_ != slot and g_["online"]],
                                        "muted": [s_ for s_, g_ in st["guests"].items() if s_ != slot and g_.get("muted")]})   # muted by the host: the other guests don't hear them either
             if p == "/screen": return self.send(200, E.screen.current(E.tv.scene))
+            if p.startswith("/cover/"):
+                f = os.path.join(COVERS, os.path.basename(p))
+                if not re.fullmatch(r"[0-9a-f]{16}\.jpg", os.path.basename(p)) or not os.path.exists(f): return self.send(404, {"error": "no cover"})
+                return self.send(200, open(f, "rb").read(), "image/jpeg")
             if p == "/screenrules": return self.send(200, {"rules": planner.api_screen_rules(dbc()), "files": planner.screen_files(),
                                                          "tickers": [{"id": t["id"], "label": t["label"]} for t in tickers.config() if t.get("on")],
                                                          "bars": [t["bar"] for t in tickers.config() if t.get("bar")], "pip": pip_frames()})
