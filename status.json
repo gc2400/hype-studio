@@ -1,18 +1,17 @@
 {
- "time": "2026-11-09T23:03:25",
+ "time": "2026-11-09T23:07:33",
  "result": "ok",
- "commit": "e13eee939e5956d73c6531fb14bd4fa8113d70fe",
- "subject": "Now Playing: coming into the Music video scene from another scene during a song -> the box once, 3 s later",
+ "commit": "f2ee5f3abf5a0d22854e01a348258ff67ccbc0fb",
+ "subject": "Branding scene: no show name box (and no Top 10 number) \u2013 the full-screen show visual already has the name",
  "log": [
-  "23:02:40 update 6a0b7f99 \u2192 e13eee93 \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
-  "23:02:40 restart hype-engine",
-  "23:03:25 installed OK \u00b7 restarted: hype-engine"
+  "23:07:33 update e13eee93 \u2192 f2ee5f3a \u00b7 1 file(s): web/overlay/index.html",
+  "23:07:33 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Wisin x Kapo \u2013 Mu\u00e9velo Pa' M\u00ed",
+  "song": "Frenna \u2013 COMMAS",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
