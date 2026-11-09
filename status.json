@@ -1,18 +1,18 @@
 {
- "time": "2026-11-09T14:34:50",
+ "time": "2026-11-09T14:41:45",
  "result": "ok",
- "commit": "4d2568599b68e7c52b4600bc498260705958fc29",
- "subject": "Voice message box on TV (design A): while a listener's voice pad plays, Gianno's PNG (WhatsApp / website / no source) with the sender's first name in the Now Playing spot; Now Playing hides meanwhile",
+ "commit": "48bd78196d7d2b3202c5a00fe0f16d4b097164d1",
+ "subject": "Graphics pages: after an update that also restarts the engine, OBS reloads the new page (it kept the old one)",
  "log": [
-  "14:34:05 update 2908b75b \u2192 4d256859 \u00b7 5 file(s): engine/engine.py, web/overlay/A_Voice_Website.png, web/overlay/A_Voice_WhatsApp.png, web/overlay/A_Voice_no_source.png, web/overlay/index.html",
-  "14:34:05 restart hype-engine",
-  "14:34:50 installed OK \u00b7 restarted: hype-engine"
+  "14:41:00 update 4d256859 \u2192 48bd7819 \u00b7 1 file(s): engine/engine.py",
+  "14:41:00 restart hype-engine",
+  "14:41:45 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "James Hype x Miggy Dela Rosa \u2013 Ferrari",
-  "listeners": 1,
+  "song": "Wisin x Kapo \u2013 Mu\u00e9velo Pa' M\u00ed",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },

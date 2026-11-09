@@ -270,3 +270,4 @@
 2026-11-06T17:26:06 ok 2b516c96 Graphics page: time/temp box can be its own OBS source above the logo (?layer=clock), Graphics shows the rest (?noclock=1)
 2026-11-08T14:22:33 ok 2908b75b Up next / AUX: a dragged song lands exactly at the yellow line (locked queued row counted, moving down no longer one row too low, dropping just below the queued song keeps it queued)
 2026-11-09T14:34:50 ok 4d256859 Voice message box on TV (design A): while a listener's voice pad plays, Gianno's PNG (WhatsApp / website / no source) with the sender's first name in the Now Playing spot; Now Playing hides meanwhile
+2026-11-09T14:41:45 ok 48bd7819 Graphics pages: after an update that also restarts the engine, OBS reloads the new page (it kept the old one)
