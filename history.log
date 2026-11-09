@@ -292,3 +292,4 @@
 2026-11-09T23:03:25 ok e13eee93 Now Playing: coming into the Music video scene from another scene during a song -> the box once, 3 s later
 2026-11-09T23:07:33 ok f2ee5f3a Branding scene: no show name box (and no Top 10 number) – the full-screen show visual already has the name
 2026-11-09T23:12:25 ok 1046c6ea PIP scene: no Top 10 number; no automatic Up next PIP during the Hype Top 10
+2026-11-09T23:13:29 ok be5e69d5 remove duplicate Top 10 check

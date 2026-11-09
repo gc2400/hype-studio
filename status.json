@@ -1,18 +1,17 @@
 {
- "time": "2026-11-09T23:12:25",
+ "time": "2026-11-09T23:13:29",
  "result": "ok",
- "commit": "1046c6ea55f17beded556acd9280a7455a1c7df3",
- "subject": "PIP scene: no Top 10 number; no automatic Up next PIP during the Hype Top 10",
+ "commit": "be5e69d5f89dd828db111fcc9aad53e0c1a8b9e3",
+ "subject": "remove duplicate Top 10 check",
  "log": [
-  "23:11:40 update f2ee5f3a \u2192 1046c6ea \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
-  "23:11:40 restart hype-engine",
-  "23:12:25 installed OK \u00b7 restarted: hype-engine"
+  "23:13:29 update 1046c6ea \u2192 be5e69d5 \u00b7 1 file(s): web/overlay/index.html",
+  "23:13:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Sarz x Asake x Wizkid x Skillibeng \u2013 Getting Paid",
   "listeners": 0,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
