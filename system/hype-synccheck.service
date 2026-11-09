@@ -1,0 +1,9 @@
+[Unit]
+Description=Hype Studio daily sync check (TV picture vs sound on a few music videos – only measures)
+After=hype-engine.service hype-obs.service
+
+[Service]
+Type=oneshot
+Nice=10
+ExecStart=/usr/bin/python3 /opt/hype/synccheck.py
+TimeoutStartSec=75min

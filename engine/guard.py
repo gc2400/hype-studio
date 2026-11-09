@@ -224,6 +224,15 @@ class Guard:
             if 0 <= sinks < 2: self.restart("radio", "hype-radio", "TV has no sound: the radio no longer sends to the audio bus")
             else: self.restart("obs", "hype-obs", "TV has no sound" + (" (OBS not connected to the audio bus)" if caps == 0 else ""))
             self.since["tv_silent"] = time.time()
+        # --- daily sync check (hype-synccheck, every night): TV picture vs sound on a few music videos – alarm only
+        try:
+            sc = json.load(open("/var/lib/hype/synccheck.json"))
+            fresh = time.time() - sc.get("t", 0) < 30 * 3600
+            st["av_sync_ms"] = sc.get("median_ms") if fresh else None
+            off = fresh and sc.get("ok") is False
+            if off and "av_sync" not in self.since: self.event("bad", "TV picture %+d ms out of sync with the sound (nightly check, %d songs)" % (sc["median_ms"], sc.get("good", 0)))
+            self.bad("av_sync", off)
+        except (OSError, ValueError): st["av_sync_ms"] = None
         self.bad("mount", not st["mount"])
         ra = st.get("radio_hls_age")
         t = self.bad("radio_hls", ra is None or ra > 20)
@@ -275,8 +284,8 @@ class Guard:
             self.hb = {"ok": False, "t": time.time(), "answer": str(e)[:80]}
 
 PIDS = {"silence": "Silence on air", "liq_down": "Radio engine not answering", "engine_down": "Playout engine not answering",
-        "obs_down": "OBS not answering", "obs_off": "OBS not streaming", "hls_late": "TV stream stalled", "mount": "Radio stream (MP3) missing", "radio_hls": "Radio HLS stream stalled", "tv_silent": "TV has no sound", "tv_black": "TV picture black", "tv_frozen": "TV picture frozen"}
-MIN_SHOW = {"silence": 15, "mount": 30, "tv_silent": 45, "tv_black": 60}
+        "obs_down": "OBS not answering", "obs_off": "OBS not streaming", "hls_late": "TV stream stalled", "mount": "Radio stream (MP3) missing", "radio_hls": "Radio HLS stream stalled", "tv_silent": "TV has no sound", "tv_black": "TV picture black", "tv_frozen": "TV picture frozen", "av_sync": "TV picture out of sync with the sound (nightly check)"}
+MIN_SHOW = {"av_sync": 0, "silence": 15, "mount": 30, "tv_silent": 45, "tv_black": 60}
 
 if __name__ == "__main__":
     g = Guard(); g.event("ok", "guard started")

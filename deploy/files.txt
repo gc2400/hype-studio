@@ -65,3 +65,6 @@ system/hype-maintenance.timer|/etc/systemd/system/hype-maintenance.timer|644|dae
 web/overlay/A_Voice_WhatsApp.png|/var/www/overlay/A_Voice_WhatsApp.png|644|-
 web/overlay/A_Voice_Website.png|/var/www/overlay/A_Voice_Website.png|644|-
 web/overlay/A_Voice_no_source.png|/var/www/overlay/A_Voice_no_source.png|644|-
+engine/synccheck.py|/opt/hype/synccheck.py|644|-
+system/hype-synccheck.service|/etc/systemd/system/hype-synccheck.service|644|daemon-reload
+system/hype-synccheck.timer|/etc/systemd/system/hype-synccheck.timer|644|daemon-reload
