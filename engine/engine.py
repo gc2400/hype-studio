@@ -444,7 +444,7 @@ class Screen:
         if scene == "Up next":
             try: upn = E.upnext_data()
             except Exception as e: log.warning("up next data: %s", e)
-        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and E.now and E.now.get("path") and E.now.get("section") != "music"),
+        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and E.now and E.now.get("path") and E.now.get("section") != "music"),
                 "slides": ["/adbox/" + urllib.parse.quote(f) for f in slides], "slide_s": 30,
                 "slides_layer": "adbox" if scene == "Hype Screen" else "graphics"}   # Hype Screen: its own source under the Live Layer
 
@@ -608,6 +608,10 @@ class TV:
                 self.scene = scene; self.prog = scene
         except Exception as e: log.warning("OBS scene: %s", e); self.cl = None
         self.route_audio()
+        try:   # clean screen during a jingle only in the Music video scene: another scene (cameras …) -> the logo back at once
+            n = E.now or {}
+            self.jingle_graphics(bool(JINGLE_HIDE and self.scene == "Music video" and not E.live.live and n.get("path") and n.get("section") != "music"))
+        except Exception: pass
     def pip_done(self):
         """A PIP showing ended: log frame + seconds for Hype Live's sponsor report (the frame name = the sponsor, e.g. PIP_Brand.png)."""
         t0 = getattr(self, "_pip_t", None); f = getattr(self, "_pip_f", None); self._pip_t = None
@@ -1542,7 +1546,7 @@ class Engine:
             if it.get("deck"): self.deck = it["deck"]
             elif self.dj: self.deck = None
             if it["section"] == "music": self.intro_sweeper(c, it)
-            if JINGLE_HIDE: threading.Thread(target=self.tv.jingle_graphics, args=(it["section"] != "music",), daemon=True).start()
+            if JINGLE_HIDE: threading.Thread(target=self.tv.jingle_graphics, args=(it["section"] != "music" and scene == "Music video" and not self.live.live,), daemon=True).start()
             try: self.screen.on_song(c, it)
             except Exception as e: log.warning("screen: %s", e)
             log.info("ON AIR %s – %s [%s/%s] scene=%s", it["artist"], it["title"], it["folder"], mode, scene)
