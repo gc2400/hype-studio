@@ -273,3 +273,4 @@
 2026-11-09T14:41:45 ok 48bd7819 Graphics pages: after an update that also restarts the engine, OBS reloads the new page (it kept the old one)
 2026-11-09T16:08:51 lab-failed 1814ef70 Radio: log every clock delay (hiccup hunting), stop the telnet connect/disconnect log spam (disk writes)
 2026-11-09T16:21:24 ok 919c080e Radio lab test: create its own Pulse sinks when missing (after a Pulse restart every radio.liq update failed the lab)
+2026-11-09T19:02:33 ok e7448a47 Daily sync check: every night the TV picture vs sound is measured on 3 music videos; off by >120 ms -> alarm in Hype Live (guard), nothing on air changes

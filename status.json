@@ -1,19 +1,18 @@
 {
- "time": "2026-11-09T16:21:24",
+ "time": "2026-11-09T19:02:33",
  "result": "ok",
- "commit": "919c080e6fc7d45136c79939e99b15af56d216ed",
- "subject": "Radio lab test: create its own Pulse sinks when missing (after a Pulse restart every radio.liq update failed the lab)",
+ "commit": "e7448a47c5c20bf5fa9c5a17c6254257069547a6",
+ "subject": "Daily sync check: every night the TV picture vs sound is measured on 3 music videos; off by >120 ms -> alarm in Hype Live (guard), nothing on air changes",
  "log": [
-  "16:19:55 update 48bd7819 \u2192 919c080e \u00b7 1 file(s): radio/radio.liq",
-  "16:20:39 lab: PASS (6/6 good readings)",
-  "16:20:39 restart hype-radio",
-  "16:21:24 installed OK \u00b7 restarted: hype-radio"
+  "19:01:48 update 919c080e \u2192 e7448a47 \u00b7 4 file(s): engine/guard.py, engine/synccheck.py, system/hype-synccheck.service, system/hype-synccheck.timer",
+  "19:01:48 restart hype-guard",
+  "19:02:33 installed OK \u00b7 restarted: hype-guard"
  ],
  "guard": {
-  "song": "Mr Eazi x MOLIY \u2013 Comfort",
+  "song": "Kapo x Feid \u2013 X TI",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
