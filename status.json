@@ -1,18 +1,18 @@
 {
- "time": "2026-11-09T22:38:16",
+ "time": "2026-11-09T22:41:07",
  "result": "ok",
- "commit": "38f017b1155b819202af3e2ad17f010512c98a1a",
- "subject": "Up next PIP design C (next 3 songs, title + artist, no covers; window x80 y330 1080x608) with the Hype stinger going in; shown in the first music video of the hour; Now Playing waits 3 s after the TV comes into the Music video scene and then plays from its start",
+ "commit": "03e09bfc90fd2476f29bbe7987b7f57fe5965cad",
+ "subject": "Show name switches exactly at the start time (week schedule, checked 1 s after every minute); the website only decides in gaps; Graphics page asks every 3 s",
  "log": [
-  "22:37:31 update 66a7f6c6 \u2192 38f017b1 \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
-  "22:37:31 restart hype-engine",
-  "22:38:16 installed OK \u00b7 restarted: hype-engine"
+  "22:40:21 update 38f017b1 \u2192 03e09bfc \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
+  "22:40:21 restart hype-engine",
+  "22:41:06 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Feid x Sfera Ebbasta \u2013 PIENXA EN MI",
+  "song": "TitoM x Yuppe x Burna Boy x S.N.E \u2013 Tshwala Bam (Remix)",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
