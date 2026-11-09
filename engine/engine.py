@@ -474,14 +474,15 @@ def cover_worker():
             q = urllib.parse.urlencode({"term": "%s %s" % (first, clean), "entity": "song", "limit": 8, "country": "NL"})
             res = json.loads(urllib.request.urlopen("https://itunes.apple.com/search?" + q, timeout=8).read()).get("results", [])
             fold = lambda x: unicodedata.normalize("NFKD", x or "").encode("ascii", "ignore").decode().lower()
-            ok = [r for r in res if fold(first) and fold(first) in fold(r.get("artistName"))]
+            names = [fold(a.strip()) for a in re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|&|,)\s+|,", artist, flags=re.I) if a.strip()]
+            ok = [r for r in res if any(n and n in fold(r.get("artistName")) for n in names)]     # one of the song's artists
             ok.sort(key=lambda r: 0 if fold(clean) in fold(r.get("trackName")) else 1)
             if ok and ok[0].get("artworkUrl100"):
                 img = urllib.request.urlopen(ok[0]["artworkUrl100"].replace("100x100bb", "300x300bb"), timeout=8).read()
                 with open(os.path.join(COVERS, k + ".jpg.tmp"), "wb") as fh: fh.write(img)
                 os.replace(os.path.join(COVERS, k + ".jpg.tmp"), os.path.join(COVERS, k + ".jpg")); COVER_MISS.pop(k, None)
             else: COVER_MISS[k] = time.time()
-        except Exception as e: log.info("cover %s – %s: %s", artist, title, e); COVER_MISS[k] = time.time() - 6 * 86400   # retry in a day
+        except Exception as e: log.info("cover %s – %s: %s", artist, title, e); COVER_MISS[k] = time.time() - 7 * 86400 + 120   # Apple hiccup: again in 2 min
         try: jdump(COVER_MISS, COVER_IDX)
         except Exception: pass
 threading.Thread(target=cover_worker, daemon=True).start()
