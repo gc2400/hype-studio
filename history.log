@@ -288,3 +288,4 @@
 2026-11-09T22:43:11 ok 573820a4 Up next PIP C with start times in the badges; the Now Playing box never shows outside the Music video scene
 2026-11-09T22:51:07 ok 7f97040c Up next: setting for how far into the music video it comes (Settings → TV); max on screen 60 s
 2026-11-09T22:53:57 ok 2fc7e73f After an engine restart: remember what played last, so an ID over the next song's intro is not skipped
+2026-11-09T22:57:32 ok 6a0b7f99 Radio: telnet connect/disconnect lines hidden for real (server log level 4, above the log level 3)

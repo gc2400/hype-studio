@@ -1,18 +1,19 @@
 {
- "time": "2026-11-09T22:53:57",
+ "time": "2026-11-09T22:57:32",
  "result": "ok",
- "commit": "2fc7e73f73182bf9f08ce984a08b7a4cad742172",
- "subject": "After an engine restart: remember what played last, so an ID over the next song's intro is not skipped",
+ "commit": "6a0b7f994559d5d187d8fb8e2317a9c235c88595",
+ "subject": "Radio: telnet connect/disconnect lines hidden for real (server log level 4, above the log level 3)",
  "log": [
-  "22:53:12 update 7f97040c \u2192 2fc7e73f \u00b7 1 file(s): engine/engine.py",
-  "22:53:12 restart hype-engine",
-  "22:53:57 installed OK \u00b7 restarted: hype-engine"
+  "22:56:02 update 2fc7e73f \u2192 6a0b7f99 \u00b7 1 file(s): radio/radio.liq",
+  "22:56:46 lab: PASS (6/6 good readings)",
+  "22:56:46 restart hype-radio",
+  "22:57:32 installed OK \u00b7 restarted: hype-radio"
  ],
  "guard": {
-  "song": "Vybz Kartel x Shenseea \u2013 PANIC",
+  "song": "FS Green x El Yeidi x FleurAnelle \u2013 Go Down",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
