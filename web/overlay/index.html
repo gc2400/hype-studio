@@ -12,6 +12,7 @@ html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transpa
 #showimg{opacity:0;transition:opacity .6s}#showimg.on{opacity:1}
 body.branding #showbox,body.branding #showimg,body.branding #screen .it.top10{opacity:0!important}   /* Branding: the show's own full-screen visual already shows the name */
 body.pip #showbox,body.pip #showimg,body.pip #screen .it.top10{visibility:hidden}   /* PIP scene: the video window is where the show name sits */
+body.upnext #screen .it.top10{opacity:0!important}   /* Up next PIP: no Top 10 number either */
 #screen .it{position:absolute;left:0;top:0;width:1920px;height:1080px;object-fit:contain;opacity:0;transition:opacity .45s}
 #screen .it.on{opacity:1}
 #slides img{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0;transition:opacity .8s}#slides img.on{opacity:1}
@@ -115,6 +116,7 @@ function screen() {
     });
     document.body.classList.toggle('pip', d.scene === 'PIP');
     document.body.classList.toggle('branding', d.scene === 'Branding');
+    document.body.classList.toggle('upnext', d.scene === 'Up next');
     ticker(d.ticker);
     slideshow(d.slides_layer === 'graphics' ? (d.slides || []) : [], d.slide_s || 30);
     if (d.scene !== SC_LAST) { if (d.scene === 'Music video' && SC_LAST !== null) SC_IN = d.now; SC_LAST = d.scene; }
