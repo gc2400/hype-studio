@@ -3100,7 +3100,11 @@ def reload_changed_pages():
         try: m = os.path.getmtime(f)
         except OSError: continue
         k = src + f
-        if PAGES_MT.get(k) is None: PAGES_MT[k] = m; continue
+        if PAGES_MT.get(k) is None:
+            # first look after a (re)start: a page changed in the last 10 min came with the same update that restarted
+            # the engine (installed just before it) -> OBS may still have the old one: reload it once
+            PAGES_MT[k] = 0 if time.time() - m < 600 else m
+            if PAGES_MT[k]: continue
         if m != PAGES_MT[k]:
             PAGES_MT[k] = m
             try:
