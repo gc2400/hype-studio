@@ -283,3 +283,4 @@
 2026-11-09T20:17:02 ok 414cfff6 Up next: titles + artists in capitals; Top 10 number as its own OBS layer (Top10 rank) above the Live Layer, in front of the show name box
 2026-11-09T20:22:56 ok 5ac69546 Up next PIP: once an hour (start of the hour, 10 s); optional once after :30 at the end of a music video (off); both in Settings → TV; Up next in the Scenes → PIP group
 2026-11-09T20:24:44 ok 66a7f6c6 Up next: an engine restart mid-hour does not show it an extra time
+2026-11-09T22:38:16 ok 38f017b1 Up next PIP design C (next 3 songs, title + artist, no covers; window x80 y330 1080x608) with the Hype stinger going in; shown in the first music video of the hour; Now Playing waits 3 s after the TV comes into the Music video scene and then plays from its start
