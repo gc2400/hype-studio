@@ -324,7 +324,8 @@ class Screen:
     """On-screen items (Gianno's PNG/WebM graphics): shown by the Graphics page when a rule fires."""
     def __init__(self):
         self.active = []; self.count = {}; self.last = {}; self.done_min = set()
-        self.upn_hour = time.strftime("%Y%m%d%H") if time.localtime().tm_min >= 2 else None   # a restart mid-hour: no extra Up next
+        self.upn_hour = time.strftime("%Y%m%d%H") if time.localtime().tm_min >= 2 else None
+        self.upn_done = self.upn_hour            # a restart mid-hour: no extra Up next
         self.np = None; self.top10 = None
         try:   # what was on screen before a restart stays on screen
             self.active = [a for a in json.load(open(SCREEN_STATE)) if a["end"] > time.time()]
@@ -391,11 +392,10 @@ class Screen:
         in the last N s of every Nth music video, and a few seconds into the first song of each hour (Settings → TV)."""
         end_s = float(planner.get_setting(c, "upnext_end_s", 0) or 0)       # 0 = off (Gianno: once an hour is enough)
         hour_s = float(planner.get_setting(c, "upnext_hour_s", 10) or 0)
-        try: E.upnext_data()             # look the covers up now (in the background), so they are ready when the PIP shows
-        except Exception: pass
         hk = time.strftime("%Y%m%d%H"); first = getattr(self, "upn_hour", None) != hk; self.upn_hour = hk
         path = it["path"]
-        if first and hour_s > 0 and length > 40:
+        if hour_s > 0 and getattr(self, "upn_done", None) != hk and it.get("mode") in ("clip", "pair") and length > 40:
+            self.upn_done = hk          # the first MUSIC VIDEO of the hour (an audio song first: the next video gets it)
             threading.Timer(12.0, lambda: E.upnext_show(path, hour_s)).start()          # 12 s in: the song has started properly
         elif end_s > 0 and time.localtime().tm_min >= 30 and getattr(self, "upn_half", None) != hk and it.get("mode") in ("clip", "pair") and length > end_s + 40:
             self.upn_half = hk          # once in the second half of the hour: the last N s of a music video
@@ -489,7 +489,7 @@ threading.Thread(target=cover_worker, daemon=True).start()
 
 ADBOX = "/srv/hype/branding/adbox"
 PIP_DIR = "/srv/hype/branding/pip"          # frames for the PIP scene (full-frame PNG with a transparent window)
-STINGER_SCENES = {"Hype Screen", "PIP"}
+STINGER_SCENES = {"Hype Screen", "PIP", "Up next"}
 def pip_frames():
     try: return sorted(f for f in os.listdir(PIP_DIR) if f.lower().endswith(".png"))
     except OSError: return []
@@ -1163,18 +1163,16 @@ class Engine:
         n = self.now or {}
         if n.get("path") != path or n.get("mode") not in ("clip", "pair") or self.live.live or self.stopped: return
         if not self.tv.auto or self.tv.scene != "Music video": return
-        if len([u for u in self.upnext_data()["items"]]) < 2: return
+        if len(self.upnext_data()["items"]) < 3: return
         log.info("Up next PIP for %.0f s", dur); self.hold_scene("Up next", dur)
     def upnext_data(self):
-        """Now playing + the next 2 songs with their start times (jingles in between count for the time) + covers."""
+        """The next 3 songs (design C: title + artist, no covers; jingles in between are skipped), with their start times."""
         n = self.now or {}; out = []
-        if n.get("path"): out.append({"title": n.get("title") or "", "artist": n.get("artist") or "", "cover": cover_url(n.get("artist"), n.get("title"))})
         t = (n.get("started") or time.time()) + (self.length(n) if n.get("path") else 0)
         for it in ([self.liq_next] if self.liq_next else []) + list(self.plan):
             if len(out) >= 3: break
             if it.get("section") == "music":
-                out.append({"title": it.get("title") or "", "artist": it.get("artist") or "", "start": time.strftime("%H:%M", time.localtime(t)),
-                            "cover": cover_url(it.get("artist"), it.get("title"))})
+                out.append({"title": it.get("title") or "", "artist": it.get("artist") or "", "start": time.strftime("%H:%M", time.localtime(t))})
             t += self.length(it)
         return {"items": out}
     def hold_scene(self, name, hold=0):
