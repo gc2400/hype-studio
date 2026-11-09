@@ -1,17 +1,18 @@
 {
- "time": "2026-11-09T23:20:41",
+ "time": "2026-11-09T23:25:33",
  "result": "ok",
- "commit": "7a6a10bd68e590c86afecf83faefb63de3b2bbb5",
- "subject": "Pads: 4 rows (16) per page with \u25c0 1/3 \u25b6 under them (all pads while editing); MEDIA empty text over the full width",
+ "commit": "080e949605ebf245dce66f6a76f73c7efa0f4c73",
+ "subject": "After an engine restart the IDs/sweepers over intros of the last hour still count (max per hour, minutes apart) \u2013 no extra ID after every restart",
  "log": [
-  "23:20:40 update be5e69d5 \u2192 7a6a10bd \u00b7 1 file(s): web/panel/index.html",
-  "23:20:41 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "23:24:48 update 7a6a10bd \u2192 080e9496 \u00b7 1 file(s): engine/engine.py",
+  "23:24:48 restart hype-engine",
+  "23:25:33 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "EMMAW \u2013 Proost",
+  "song": "Kilate Tesla \u2013 Mi Isla",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
