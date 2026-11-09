@@ -1168,6 +1168,7 @@ class Engine:
         n = self.now or {}
         if n.get("path") != path or n.get("mode") not in ("clip", "pair") or self.live.live or self.stopped: return
         if not self.tv.auto or self.tv.scene != "Music video": return
+        if re.search(r"top\s*10", SHOW.get("title") or "", re.I): return      # the Hype Top 10 has its own order: no Up next
         if len(self.upnext_data()["items"]) < 3: return
         log.info("Up next PIP for %.0f s", dur); self.hold_scene("Up next", dur)
     def upnext_data(self):
