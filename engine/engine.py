@@ -324,6 +324,7 @@ class Screen:
     """On-screen items (Gianno's PNG/WebM graphics): shown by the Graphics page when a rule fires."""
     def __init__(self):
         self.active = []; self.count = {}; self.last = {}; self.done_min = set()
+        self.upn_hour = time.strftime("%Y%m%d%H") if time.localtime().tm_min >= 2 else None   # a restart mid-hour: no extra Up next
         self.np = None; self.top10 = None
         try:   # what was on screen before a restart stays on screen
             self.active = [a for a in json.load(open(SCREEN_STATE)) if a["end"] > time.time()]
