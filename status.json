@@ -1,18 +1,18 @@
 {
- "time": "2026-11-09T20:08:18",
+ "time": "2026-11-09T20:14:12",
  "result": "ok",
- "commit": "1300fecaccc29ec9c15f98ff7affa32912fecf24",
- "subject": "Up next: covers looked up at every song (ready before the PIP shows)",
+ "commit": "e3021a317a09a06cc1a441a97b880bb5b1cc44fe",
+ "subject": "Covers: retry after 2 min on an Apple hiccup; any of the song's artists may match",
  "log": [
-  "20:07:33 update 01e43fb3 \u2192 1300feca \u00b7 1 file(s): engine/engine.py",
-  "20:07:33 restart hype-engine",
-  "20:08:18 installed OK \u00b7 restarted: hype-engine"
+  "20:13:27 update 1300feca \u2192 e3021a31 \u00b7 1 file(s): engine/engine.py",
+  "20:13:27 restart hype-engine",
+  "20:14:12 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "MAUVAIS DJO \u2013 Maladie",
+  "song": "B'jay x RULY \u2013 Kumpli",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 2.0,
   "problems": [],
   "ok": true
  },
