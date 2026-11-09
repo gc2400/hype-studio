@@ -277,3 +277,4 @@
 2026-11-09T19:07:42 ok 37f02501 Panel: camera slots preview (CAM 1-4) under the program preview, open/hide, only plays while open; header: page links go into the ☰ menu when they don't fit on the line
 2026-11-09T19:19:43 ok f0725045 History: week report (top songs/artists, genres, played too often, rotation per folder, never played, own streams per day, stability); audience numbers and guard events kept per day; camera slot labels under the pictures
 2026-11-09T19:26:54 ok d984bbbd Week report: download as CSV (spreadsheet) or PDF (print, clean white layout)
+2026-11-09T20:06:29 ok 01e43fb3 Up next PIP: scene 'Up next' (music video in a window + Gianno's frame), now/next/then with start times and Apple Music covers (artist must match, cached); shown in the last 30 s of every 4th music video and 10 s into the first song of each hour
