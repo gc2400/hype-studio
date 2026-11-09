@@ -1,18 +1,18 @@
 {
- "time": "2026-11-09T20:17:02",
+ "time": "2026-11-09T20:22:56",
  "result": "ok",
- "commit": "414cfff6faa213edf8640b112de247e40aa32f6e",
- "subject": "Up next: titles + artists in capitals; Top 10 number as its own OBS layer (Top10 rank) above the Live Layer, in front of the show name box",
+ "commit": "5ac69546dfd967d3064f0192f7d347b2b24e1492",
+ "subject": "Up next PIP: once an hour (start of the hour, 10 s); optional once after :30 at the end of a music video (off); both in Settings \u2192 TV; Up next in the Scenes \u2192 PIP group",
  "log": [
-  "20:16:17 update e3021a31 \u2192 414cfff6 \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
-  "20:16:17 restart hype-engine",
-  "20:17:02 installed OK \u00b7 restarted: hype-engine"
+  "20:22:11 update 414cfff6 \u2192 5ac69546 \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/settings.html",
+  "20:22:11 restart hype-engine",
+  "20:22:56 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": " \u2013 TOP10N3",
+  "song": "Rema \u2013 Oh No",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
