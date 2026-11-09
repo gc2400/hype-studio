@@ -1,17 +1,18 @@
 {
- "time": "2026-11-09T23:07:33",
+ "time": "2026-11-09T23:12:25",
  "result": "ok",
- "commit": "f2ee5f3abf5a0d22854e01a348258ff67ccbc0fb",
- "subject": "Branding scene: no show name box (and no Top 10 number) \u2013 the full-screen show visual already has the name",
+ "commit": "1046c6ea55f17beded556acd9280a7455a1c7df3",
+ "subject": "PIP scene: no Top 10 number; no automatic Up next PIP during the Hype Top 10",
  "log": [
-  "23:07:33 update e13eee93 \u2192 f2ee5f3a \u00b7 1 file(s): web/overlay/index.html",
-  "23:07:33 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "23:11:40 update f2ee5f3a \u2192 1046c6ea \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
+  "23:11:40 restart hype-engine",
+  "23:12:25 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Frenna \u2013 COMMAS",
+  "song": "Sarz x Asake x Wizkid x Skillibeng \u2013 Getting Paid",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 2.0,
   "problems": [],
   "ok": true
  },
