@@ -35,6 +35,11 @@ td b{font-weight:700}
 .scroll{max-height:calc(100vh - 210px);overflow:auto}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
 .ov{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:700;color:var(--b,#05A9C6);border:1px solid currentColor;white-space:nowrap}.ov.id{color:#FFE000}
+@media print{body{background:#fff!important;color:#000!important}#hhead,[role=tablist],#dayCard,#wPrev,#wNext,#wCsv,#wPdf{display:none!important}
+  .card{border:0!important;background:#fff!important;padding:0!important}.kpi{background:#fff!important;border:1px solid #ccc!important}.kpi b{color:#000!important}
+  .scroll2{max-height:none!important;overflow:visible!important}th{background:#fff!important;color:#444!important;position:static!important}td,th,.ev{border-color:#ddd!important}
+  .muted,h3 small,.kpi span,.wl li span,.gen span:last-child{color:#555!important}.bar{background:#eee!important}.bar i{background:#05A9C6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #wTitle{font-size:18px}.wgrid{display:block}.wgrid>div{margin-bottom:14px;break-inside:avoid}}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
 .kpi{background:var(--deep);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.kpi b{display:block;font-size:22px;font-weight:900;color:var(--y)}.kpi span{font-size:11px;color:var(--mut);font-weight:600}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
@@ -51,7 +56,7 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
   <header id="hhead"></header><script src="/panel/header.js?v=1793567541"></script>
   <div class="row" style="gap:6px" role="tablist" aria-label="View"><button class="btn on" id="vDay" role="tab">Played list</button><button class="btn" id="vWeek" role="tab">Week report</button></div>
   <section class="card" id="weekCard" hidden>
-    <div class="row"><button class="btn" id="wPrev" aria-label="Previous week">◀</button><b id="wTitle" style="min-width:230px;text-align:center">…</b><button class="btn" id="wNext" aria-label="Next week">▶</button><span class="muted" id="wNote"></span></div>
+    <div class="row"><button class="btn" id="wPrev" aria-label="Previous week">◀</button><b id="wTitle" style="min-width:230px;text-align:center">…</b><button class="btn" id="wNext" aria-label="Next week">▶</button><span class="muted" id="wNote"></span><span style="flex:1"></span><button class="btn" id="wCsv" title="Download this week as a spreadsheet (Excel / Google Sheets)">⬇ CSV</button><button class="btn" id="wPdf" title="Save this week as a PDF (choose &quot;Save as PDF&quot; as the printer)">⬇ PDF</button></div>
     <div class="kpis" id="wKpi"></div>
     <div class="wgrid">
       <div><h3>Top 10 songs</h3><ol class="wl" id="wSongs"></ol></div>
@@ -103,7 +108,7 @@ $$('#types [data-t]').forEach(b => b.onclick = () => { TYPE = b.dataset.t; $$('#
 // ---------- week report ----------
 let W = 1;
 function wLoad() {
-  fetch('../api/weekreport?w=' + W).then(r => r.json()).then(d => {
+  fetch('../api/weekreport?w=' + W).then(r => r.json()).then(d => { WD = d;
     const dm = s => new Date(s + 'T12:00').toLocaleDateString('en-GB', {day: 'numeric', month: 'short'});
     $('#wTitle').textContent = 'Week ' + d.week + ' · ' + dm(d.from) + ' – ' + dm(d.to); $('#wNext').disabled = W <= 0; $('#wNote').textContent = W === 0 ? 'this week so far' : '';
     const T = d.totals, k = (v, l) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`;
@@ -119,6 +124,24 @@ function wLoad() {
     $('#wEv').innerHTML = d.events.length ? d.events.slice().reverse().map(e => `<div class="ev ${e.level}"><span class="mono">${new Date(e.t * 1000).toLocaleString('en-GB', {weekday: 'short', hour: '2-digit', minute: '2-digit'})}</span><b>${esc(e.text)}</b></div>`).join('') : '<span class="muted">No silence, repairs or alarms. ✓ (kept from 9 Nov 2026 on)</span>';
   }).catch(() => {});
 }
+let WD = null;
+$('#wCsv').onclick = () => {
+  const d = WD; if (!d) return;
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"', L = [], row = (...a) => L.push(a.map(q).join(';'));
+  row('Hype Studio – week report', 'week ' + d.week, d.from + ' – ' + d.to); row();
+  const T = d.totals; row('Totals'); row('Songs played', T.songs); row('Different songs', T.unique_songs); row('With a music video', T.videos); row('Jingles & sweepers', T.jingles); row('Mixes', T.mixes); row('Never played', d.never.count, 'of ' + d.never.of); row();
+  row('Top songs', 'Plays'); d.top_songs.forEach(r => row(...r)); row();
+  row('Top artists', 'Plays'); d.top_artists.forEach(r => row(...r)); row();
+  row('Genre', 'Plays'); d.genres.forEach(r => row(...r)); row();
+  row('Played too often (more than 3× a day)', 'Plays'); d.too_often.forEach(r => row(...r)); row();
+  row('Folder', 'Songs', 'Played', 'Plays'); d.rotation.forEach(r => row(...r)); row();
+  row('Day', 'Radio peak', 'Radio unique', 'TV peak', 'TV unique'); d.audience.forEach(([day, a]) => row(day, a.radio && a.radio.peak, a.radio && a.radio.unique, a.tv && a.tv.peak, a.tv && a.tv.unique)); row();
+  row('Time', 'Stability event'); d.events.forEach(e => row(new Date(e.t * 1000).toLocaleString('en-GB'), e.text)); row();
+  row('Never played this week'); d.never.examples.forEach(p => row(p));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + L.join('\r\n')], {type: 'text/csv'}));
+  a.download = 'Hype_week_report_' + d.from + '.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+$('#wPdf').onclick = () => { const t = document.title; document.title = 'Hype week report ' + (WD ? WD.from : ''); window.print(); setTimeout(() => document.title = t, 500); };
 $('#wPrev').onclick = () => { W++; wLoad(); }; $('#wNext').onclick = () => { if (W > 0) { W--; wLoad(); } };
 function view(week) { $('#weekCard').hidden = !week; $('#dayCard').hidden = week; $('#vWeek').classList.toggle('on', week); $('#vDay').classList.toggle('on', !week); if (week) wLoad(); try { localStorage.setItem('hypeHistView', week ? 'w' : 'd'); } catch (e) {} }
 $('#vDay').onclick = () => view(false); $('#vWeek').onclick = () => view(true);
