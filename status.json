@@ -1,18 +1,17 @@
 {
- "time": "2026-11-09T19:02:33",
+ "time": "2026-11-09T19:07:42",
  "result": "ok",
- "commit": "e7448a47c5c20bf5fa9c5a17c6254257069547a6",
- "subject": "Daily sync check: every night the TV picture vs sound is measured on 3 music videos; off by >120 ms -> alarm in Hype Live (guard), nothing on air changes",
+ "commit": "37f02501ec61e038e184ce3f7c31b82d4a30ba24",
+ "subject": "Panel: camera slots preview (CAM 1-4) under the program preview, open/hide, only plays while open; header: page links go into the \u2630 menu when they don't fit on the line",
  "log": [
-  "19:01:48 update 919c080e \u2192 e7448a47 \u00b7 4 file(s): engine/guard.py, engine/synccheck.py, system/hype-synccheck.service, system/hype-synccheck.timer",
-  "19:01:48 restart hype-guard",
-  "19:02:33 installed OK \u00b7 restarted: hype-guard"
+  "19:07:42 update e7448a47 \u2192 37f02501 \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
+  "19:07:42 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Kapo x Feid \u2013 X TI",
+  "song": "Tahir x Issairo \u2013 Viezderij",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
