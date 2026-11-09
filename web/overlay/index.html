@@ -51,16 +51,18 @@ body.noclock #screen .it.top10{display:none!important}
 body.voice #np{visibility:hidden}
 /* Up next PIP, design C (scene "Up next", Gianno's frame in OBS): the next 3 songs, title + artist – READ_ME_Positions.txt */
 #un{position:absolute;inset:0;opacity:0;transition:opacity .35s}#un.on{opacity:1}
-#un .ut,#un .ua{position:absolute;left:1290px;max-width:525px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
+#un .ut,#un .ua{position:absolute;left:1290px;max-width:405px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
 #un .ut{font-weight:900;font-size:36px;color:#fff;letter-spacing:-.3px}#un .ua{font-weight:600;font-size:23px;color:#C9D3DF}
 #uc0 .ut{top:484px}#uc0 .ua{top:532px}#uc1 .ut{top:655px}#uc1 .ua{top:703px}#uc2 .ut{top:826px}#uc2 .ua{top:874px}
+#un .tm{position:absolute;left:1715px;width:100px;height:43px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#fff;font-variant-numeric:tabular-nums}
+#uc0 .tm{top:500px;color:#041C33}#uc1 .tm{top:671px}#uc2 .tm{top:842px}
 #un .ut,#un .ua{text-transform:uppercase}#un .ua{letter-spacing:.02em}      /* capitals, like the Now Playing box (Gianno, 9 Nov) */
 </style></head><body>
 <script>{const q=new URLSearchParams(location.search);if(q.get('layer')==='clock')document.body.classList.add('onlyclock');if(q.get('noclock'))document.body.classList.add('noclock');if(q.get('layer')==='top10')document.body.classList.add('onlytop10');}</script>
 <div id="slides"></div>
-<div id="un"><div class="uc" id="uc0"><div class="ut"></div><div class="ua"></div></div>
-<div class="uc" id="uc1"><div class="ut"></div><div class="ua"></div></div>
-<div class="uc" id="uc2"><div class="ut"></div><div class="ua"></div></div></div>
+<div id="un"><div class="uc" id="uc0"><div class="ut"></div><div class="ua"></div><div class="tm"></div></div>
+<div class="uc" id="uc1"><div class="ut"></div><div class="ua"></div><div class="tm"></div></div>
+<div class="uc" id="uc2"><div class="ut"></div><div class="ua"></div><div class="tm"></div></div></div>
 <div id="vb"><img id="vbi" alt=""><div id="vbn"></div></div>
 <div id="np"><video id="npv" src="np_box.webm" muted playsinline preload="auto"></video><div class="tx"><div class="t" id="npt"></div><div class="a" id="npa"></div></div></div>
 <div id="screen"></div>
@@ -114,7 +116,7 @@ function screen() {
     ticker(d.ticker);
     slideshow(d.slides_layer === 'graphics' ? (d.slides || []) : [], d.slide_s || 30);
     if (d.scene !== SC_LAST) { if (d.scene === 'Music video' && SC_LAST !== null) SC_IN = d.now; SC_LAST = d.scene; }
-    nowPlaying(d.np, Date.now() / 1000 - off);
+    nowPlaying(d.scene === 'Music video' ? d.np : null, Date.now() / 1000 - off);
     voiceBox(d.voice, Date.now() / 1000 - off);
     upNext(d.scene === 'Up next' ? d.upnext : null);
   }).catch(() => {}).finally(() => setTimeout(screen, 500));
@@ -186,7 +188,8 @@ function upNext(u) {
   const on = !!(u && u.items && u.items.length);
   if (on) for (let i = 0; i < 3; i++) { const it = u.items[i] || {title: '', artist: ''}, c = $('#uc' + i);
     const t = c.querySelector('.ut'), a = c.querySelector('.ua');
-    if (t.textContent !== it.title) t.textContent = it.title; if (a.textContent !== it.artist) a.textContent = it.artist; }
+    if (t.textContent !== it.title) t.textContent = it.title; if (a.textContent !== it.artist) a.textContent = it.artist;
+    c.querySelector('.tm').textContent = it.start || ''; }
   $('#un').classList.toggle('on', on);
 }
 // voice message box: the sender's first name on Gianno's PNG (WhatsApp / website / unknown source); Now Playing hides meanwhile
