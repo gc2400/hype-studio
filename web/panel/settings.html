@@ -182,7 +182,8 @@ table{border-collapse:collapse;width:100%}
     <section class="card sec" data-sec="tv">
       <span class="lab">TV · Up next PIP</span>
       <p class="muted" style="margin:0">The music video in a window with NOW PLAYING, NEXT and THEN (start times + covers). Only over a music video, with scenes on AUTO, never when LIVE. You can also put it on yourself: Scenes → PIP → Up next.</p>
-      <div class="sl" data-find="up next pip hour start"><label>Start of the hour<small>seconds, in the first song of each hour (0 = off)</small></label><input type="range" id="upnext_hour_s" min="0" max="30" step="1"><span class="v" id="upnext_hour_s_v"></span></div>
+      <div class="sl" data-find="up next pip hour start how long"><label>Start of the hour · how long<small>seconds on screen, in the first music video of each hour (0 = off)</small></label><input type="range" id="upnext_hour_s" min="0" max="60" step="5"><span class="v" id="upnext_hour_s_v"></span></div>
+      <div class="sl" data-find="up next pip after seconds into the video"><label>Start of the hour · after<small>seconds into that music video</small></label><input type="range" id="upnext_after_s" min="5" max="90" step="5"><span class="v" id="upnext_after_s_v"></span></div>
       <div class="sl" data-find="up next pip end of song half hour"><label>Also once after :30<small>the last seconds of one music video (0 = off)</small></label><input type="range" id="upnext_end_s" min="0" max="45" step="5"><span class="v" id="upnext_end_s_v"></span></div>
     </section>
     <section class="card sec" data-sec="tickers">
@@ -344,10 +345,10 @@ function render() {
   ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always', 'smart_mix', 'id_intro'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
   $('#tv_clip_offset').value = ST.tv_clip_offset; $('#tv_clip_offset_v').textContent = fmtv(ST.tv_clip_offset, 'dB');
   $('#tv_clip_offset').oninput = () => $('#tv_clip_offset_v').textContent = fmtv(+$('#tv_clip_offset').value, 'dB');
-  [['upnext_hour_s', 'in the first song of the hour'], ['upnext_end_s', 'once after :30']].forEach(([k, w]) => { const el = $('#' + k), lab = v => v > 0 ? v + ' s' : 'off';
+  [['upnext_hour_s', 'in the first music video of the hour'], ['upnext_after_s', 'into the music video', true], ['upnext_end_s', 'once after :30']].forEach(([k, w, after]) => { const el = $('#' + k), lab = v => v > 0 ? v + ' s' : 'off';
     el.value = ST[k] ?? 0; $('#' + k + '_v').textContent = lab(+el.value);
     el.oninput = () => $('#' + k + '_v').textContent = lab(+el.value);
-    el.onchange = () => post('settings', {[k]: +el.value}).then(d => { ST = d; toast(+el.value > 0 ? 'Up next: ' + el.value + ' s ' + w : 'Up next ' + w + ': off'); }); });
+    el.onchange = () => post('settings', {[k]: +el.value}).then(d => { ST = d; toast(after ? 'Up next comes ' + el.value + ' s ' + w : +el.value > 0 ? 'Up next: ' + el.value + ' s ' + w : 'Up next ' + w + ': off'); }); });
   $('#tv_clip_offset').onchange = () => post('settings', {tv_clip_offset: +$('#tv_clip_offset').value}).then(d => { ST = d; toast('Saved – used from the next paired song'); });
 }
 // ---------- sections + find ----------
