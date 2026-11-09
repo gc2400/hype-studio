@@ -7,7 +7,7 @@ settings.log.file.set(true)
 settings.log.file.path.set("/var/log/hype/liquidsoap.log")
 settings.log.stdout.set(false)
 settings.clock.log_delay.set(1.)        # every time the clock falls behind ("We must catchup …") is logged: a hiccup gets an exact time
-settings.server.log.level.set(2)        # no "New client / disconnected" line for every telnet poll (thousands per hour on a busy disk)
+settings.server.log.level.set(4)        # (4 = above the log level 3: hidden) no "New client / disconnected" line for every telnet poll (thousands per hour on a busy disk)
 settings.frame.audio.samplerate.set(48000)
 settings.harbor.bind_addrs.set(["127.0.0.1"])
 
