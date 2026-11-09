@@ -7,6 +7,10 @@ cp /var/lib/hype/sound.json /tmp/lab_sound.json 2>/dev/null
 sed -e "s/telnet.port.set(1234)/telnet.port.set(1244)/" -e "s/port=8005/port=8015/" -e "s/mount=\"rec.mp3\"/mount=\"lab.mp3\"/" -e "s/mount=\"radio.mp3\"/mount=\"labradio.mp3\"/" \
     -e "s#/var/log/hype/liquidsoap.log#/tmp/lab_liq.log#" -e "s#/var/lib/hype/sound.json#/tmp/lab_sound.json#" \
     -e "s/device=\"hype_/device=\"lab_/" -e "s#8554/return#8554/labreturn#" "$C" > $L
+# the lab's own Pulse sinks (gone after a Pulse restart -> the lab Liquidsoap stopped at once and every test failed)
+for d in $(grep -o 'device="lab_[a-z]*"' $L | cut -d'"' -f2 | sort -u); do
+  pactl list short sinks 2>/dev/null | awk '{print $2}' | grep -qx "$d" || pactl load-module module-null-sink sink_name=$d >/dev/null 2>&1
+done
 liquidsoap --check $L >/tmp/lab_check.log 2>&1 || { echo "FAIL: liquidsoap --check"; grep -v "^$" /tmp/lab_check.log | head -5; exit 1; }
 for p in $(pgrep -f "liquidsoap /tmp/lab_update[.]liq"); do kill $p; done; sleep 1
 setsid nohup liquidsoap $L >/tmp/lab_run.log 2>&1 &
