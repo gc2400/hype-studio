@@ -538,12 +538,17 @@ class TV:
         """The Hype Live Layer is the top layer in every scene (above Graphics, the On Air box, logo, clock, Now Playing,
         the show intro): from Hype Live 2.25.2 it shows full-screen moments that must cover everything (New Year countdown,
         Merry Christmas, GOAL on match days). The rest of the time it is transparent."""
+        # one exception, on top of it: "Top10 rank" (only the Top 10 number from the Graphics page) – it sits on the right
+        # end of Hype Live's show name box during the Hype Top 10 and must be in front of it (Gianno, 9 Nov)
         moved = []
         for sc in cl.get_scene_list().scenes:
             items = cl.get_scene_item_list(sc["sceneName"]).scene_items
             ll = next((i for i in items if i["sourceName"] == "Live Layer"), None)
-            if ll and ll["sceneItemIndex"] != len(items) - 1:
-                cl.set_scene_item_index(sc["sceneName"], ll["sceneItemId"], len(items) - 1); moved.append(sc["sceneName"])
+            tr = next((i for i in items if i["sourceName"] == "Top10 rank"), None)
+            want = len(items) - (2 if tr else 1)
+            if ll and ll["sceneItemIndex"] != want:
+                cl.set_scene_item_index(sc["sceneName"], ll["sceneItemId"], want); moved.append(sc["sceneName"])
+            if tr and tr["sceneItemIndex"] != len(items) - 1: cl.set_scene_item_index(sc["sceneName"], tr["sceneItemId"], len(items) - 1)
         if moved: log.info("Live Layer moved to the top in %d scene(s)", len(moved))
     LAYER_CSS = "html,body{background:transparent!important}:root{--key:transparent!important}"
     def layer_alpha(self, cl):
@@ -3242,7 +3247,7 @@ HS_WD = {"last": 0, "fix": 0}
 PAGES_MT = {}
 def reload_changed_pages():
     """After an update of the graphics pages (Graphics / Ad box), OBS reloads them by itself (no old page in memory)."""
-    for src, f in (("Graphics", "/var/www/overlay/index.html"), ("Clock", "/var/www/overlay/index.html"), ("Ad box", "/var/www/overlay/adbox.html")):
+    for src, f in (("Graphics", "/var/www/overlay/index.html"), ("Clock", "/var/www/overlay/index.html"), ("Top10 rank", "/var/www/overlay/index.html"), ("Ad box", "/var/www/overlay/adbox.html")):
         try: m = os.path.getmtime(f)
         except OSError: continue
         k = src + f

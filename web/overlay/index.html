@@ -40,6 +40,9 @@ body.pip #showbox,body.pip #showimg{visibility:hidden}   /* PIP scene: the video
 /* two OBS sources share this page: "Clock" (?layer=clock, above the logo) shows only time/temp, "Graphics" (?noclock=1) everything else */
 body.noclock #clockw{display:none}
 body.onlyclock>*:not(#clockw):not(script){display:none!important}
+/* "Top10 rank" (?layer=top10): only the Top 10 number, as an OBS source ABOVE the Hype Live Layer (over the show name box) */
+body.onlytop10>*:not(#screen):not(script){display:none!important}body.onlytop10 #screen .it:not(.top10){display:none!important}
+body.noclock #screen .it.top10{display:none!important}
 /* voice message box (Gianno's design A): while a listener's voice pad plays, in the Now Playing spot */
 #vb{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0;transform:translateX(-24px);transition:opacity .4s,transform .4s;pointer-events:none}
 #vb.on{opacity:1;transform:none}
@@ -50,13 +53,14 @@ body.voice #np{visibility:hidden}
 #un{position:absolute;inset:0;opacity:0;transition:opacity .35s}#un.on{opacity:1}
 #un .cv{position:absolute;border-radius:12px;object-fit:cover;opacity:0;transition:opacity .3s}#un .cv.ok{opacity:1}
 #un .ut,#un .ua{position:absolute;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
-#un .ut{font-weight:900;color:#fff;letter-spacing:-.3px}#un .ua{font-weight:600;color:#C9D3DF;font-size:18px}
+#un .ut,#un .ua{text-transform:uppercase}
+#un .ut{font-weight:900;color:#fff;letter-spacing:-.3px}#un .ua{font-weight:600;color:#C9D3DF;font-size:18px;letter-spacing:.02em}
 #un .tm{position:absolute;width:76px;height:29px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff;font-variant-numeric:tabular-nums}
 #uc0 .cv{left:1262px;top:378px;width:118px;height:118px}#uc0 .ut{left:1398px;top:416px;font-size:34px;max-width:420px}#uc0 .ua{left:1398px;top:459px;max-width:420px}
 #uc1 .cv{left:1262px;top:541px;width:88px;height:88px}#uc1 .ut{left:1368px;top:573px;font-size:26px;max-width:360px}#uc1 .ua{left:1368px;top:606px;max-width:360px}#uc1 .tm{left:1743px;top:540px}
 #uc2 .cv{left:1262px;top:673px;width:88px;height:88px}#uc2 .ut{left:1368px;top:705px;font-size:26px;max-width:360px}#uc2 .ua{left:1368px;top:738px;max-width:360px}#uc2 .tm{left:1744px;top:672px}
 </style></head><body>
-<script>{const q=new URLSearchParams(location.search);if(q.get('layer')==='clock')document.body.classList.add('onlyclock');if(q.get('noclock'))document.body.classList.add('noclock');}</script>
+<script>{const q=new URLSearchParams(location.search);if(q.get('layer')==='clock')document.body.classList.add('onlyclock');if(q.get('noclock'))document.body.classList.add('noclock');if(q.get('layer')==='top10')document.body.classList.add('onlytop10');}</script>
 <div id="slides"></div>
 <div id="un"><div class="uc" id="uc0"><img class="cv" alt=""><div class="ut"></div><div class="ua"></div></div>
 <div class="uc" id="uc1"><img class="cv" alt=""><div class="ut"></div><div class="ua"></div><div class="tm"></div></div>
@@ -102,7 +106,7 @@ function screen() {
       let el = SHOWN[it.id];
       if (!el) {
         const vid = /\.(webm|mp4|mov)$/i.test(it.url.split("?")[0]);
-        el = document.createElement(vid ? 'video' : 'img'); el.className = 'it'; el.src = it.url;
+        el = document.createElement(vid ? 'video' : 'img'); el.className = 'it' + (it.url.indexOf('/screen/TOP10/') === 0 ? ' top10' : ''); el.src = it.url;
         if (vid) { el.muted = true; el.playsInline = true; el.autoplay = false; }
         $('#screen').appendChild(el); SHOWN[it.id] = el;
       }
