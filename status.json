@@ -1,19 +1,18 @@
 {
- "time": "2026-11-09T22:57:32",
+ "time": "2026-11-09T23:03:25",
  "result": "ok",
- "commit": "6a0b7f994559d5d187d8fb8e2317a9c235c88595",
- "subject": "Radio: telnet connect/disconnect lines hidden for real (server log level 4, above the log level 3)",
+ "commit": "e13eee939e5956d73c6531fb14bd4fa8113d70fe",
+ "subject": "Now Playing: coming into the Music video scene from another scene during a song -> the box once, 3 s later",
  "log": [
-  "22:56:02 update 2fc7e73f \u2192 6a0b7f99 \u00b7 1 file(s): radio/radio.liq",
-  "22:56:46 lab: PASS (6/6 good readings)",
-  "22:56:46 restart hype-radio",
-  "22:57:32 installed OK \u00b7 restarted: hype-radio"
+  "23:02:40 update 6a0b7f99 \u2192 e13eee93 \u00b7 2 file(s): engine/engine.py, web/overlay/index.html",
+  "23:02:40 restart hype-engine",
+  "23:03:25 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "FS Green x El Yeidi x FleurAnelle \u2013 Go Down",
+  "song": "Wisin x Kapo \u2013 Mu\u00e9velo Pa' M\u00ed",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
