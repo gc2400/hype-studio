@@ -227,6 +227,8 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .scene{min-height:54px;text-align:left;padding:6px 10px}
 .scene small{display:block;font-size:10px;font-weight:600;opacity:.8}
 .scene.live{box-shadow:0 0 0 2px var(--y);border-color:var(--y)}
+.padpg{display:flex;align-items:center;justify-content:center;gap:10px;font-size:12px;font-weight:700;color:var(--mut)}.padpg .btn{min-width:38px}
+.pads>.muted{grid-column:1/-1}
 .pad{min-height:56px;text-align:left;padding:6px 10px;font-size:12px;line-height:1.2}
 .pad small{display:block;font-size:10px;color:var(--soft);font-weight:500;font-family:'JetBrains Mono',monospace}
 .pad{position:relative;overflow:hidden;transition:transform .08s,filter .15s,box-shadow .15s}
@@ -425,6 +427,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <button class="btn sm yellow" id="mediaDone" hidden title="Stop editing">Done</button><input type="file" id="mFile" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,.mkv,.m4v" hidden>
         </div>
         <div class="grid4 pads" id="pads"></div>
+        <div class="padpg" id="padPg" hidden><button class="btn sm" id="pgPrev" aria-label="Previous page">◀</button><span id="pgTxt"></span><button class="btn sm" id="pgNext" aria-label="Next page">▶</button></div>
         <label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label>
         <div class="row"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK: OFF</button><button class="btn sm" id="bPVid" aria-pressed="false" title="When on, pads with a video (▶) also show their video full screen over what's on air">▶ VIDEO: OFF</button><button class="btn sm" id="bPLoop" aria-pressed="false" title="When on, a pad you start repeats until you click it again (or STOP PADS)">⟳ LOOP: OFF</button><span style="flex:1"></span><button class="btn sm red" id="bPadStop">STOP PADS</button></div>
       </div>
@@ -824,7 +827,8 @@ function renderPads() {
   $('#mediaDone').hidden = !(PEDIT && bank === -1);
   if (bank === -1) { $('#padEditBar').hidden = true; return renderMediaPads(); }
   const B = BANKS[bank] || {items: []}; $('#bankName').value = B.name || ''; $('#pads').classList.toggle('edit', PEDIT); $('#padEditBar').hidden = !PEDIT;
-  $('#pads').innerHTML = B.items.map((p, i) => `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE RADIO\s*[-–]\s*/i, '').replace(/^[^A-Za-z0-9]+\s*/u, ''))}<small>${fmt(p.duration)}${p.voice ? (p.played ? ' · ✓ played' : ' · NEW') : ''}${p.has_video ? ' · video' : ''}${p.missing ? ' · not found' : ''}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmpad="${i}" title="Remove">×</span>` : ''}</button>`).join('')
+  const pg = padPage(B.items.length);
+  $('#pads').innerHTML = B.items.map((p, i) => (!PEDIT && (i < pg[0] || i >= pg[1])) ? '' : `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE RADIO\s*[-–]\s*/i, '').replace(/^[^A-Za-z0-9]+\s*/u, ''))}<small>${fmt(p.duration)}${p.voice ? (p.played ? ' · ✓ played' : ' · NEW') : ''}${p.has_video ? ' · video' : ''}${p.missing ? ' · not found' : ''}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmpad="${i}" title="Remove">×</span>` : ''}</button>`).join('')
     + (PEDIT ? '<button class="padadd" id="padDrop">drop here</button>' : '') || '<span class="muted">This bank is empty. Press ✎ EDIT and drag jingles from the library onto it.</span>';
   $$('#pads [data-pad]').forEach(b => {
     const p = B.items[+b.dataset.pad];
@@ -841,6 +845,17 @@ function renderPads() {
   });
   if ($('#padDrop')) { $('#padDrop').ondragover = e => e.preventDefault(); $('#padDrop').ondrop = e => { e.preventDefault(); padDrop(e.dataTransfer.getData('text/plain'), B.items.length); }; }
 }
+// pads in pages of 4 rows (16): ◀ ▶ under the pads; while editing all pads show (drag anywhere)
+const PADS_PER_PAGE = 16, PGS = {};
+function padPage(n) {
+  const pages = Math.max(1, Math.ceil(n / PADS_PER_PAGE)), k = String(bank);
+  PGS[k] = Math.min(PGS[k] || 0, pages - 1);
+  const show = !PEDIT && pages > 1; $('#padPg').hidden = !show;
+  if (show) { $('#pgTxt').textContent = (PGS[k] + 1) + ' / ' + pages; $('#pgPrev').disabled = PGS[k] === 0; $('#pgNext').disabled = PGS[k] >= pages - 1; }
+  return [PGS[k] * PADS_PER_PAGE, (PGS[k] + 1) * PADS_PER_PAGE];
+}
+$('#pgPrev').onclick = () => { PGS[String(bank)] = Math.max(0, (PGS[String(bank)] || 0) - 1); renderPads(); };
+$('#pgNext').onclick = () => { PGS[String(bank)] = (PGS[String(bank)] || 0) + 1; renderPads(); };
 function padDrop(d, pos) {
   const B = BANKS[bank]; if (!B) return;
   if (d.startsWith('pad:')) { const it = B.items.splice(+d.slice(4), 1)[0]; B.items.splice(Math.min(pos, B.items.length), 0, it); return renderPads(); }
@@ -855,7 +870,8 @@ function renderMediaPads() {
   $('#mScene').innerHTML = `<option value="manual" ${MSCENE === 'manual' ? 'selected' : ''}>Manual – I pick the scene</option>` + MEDIA.scenes.map(n => `<option ${n === MSCENE ? 'selected' : ''}>${esc(n)}</option>`).join('');
   $$('#mSound [data-ms]').forEach(b => b.classList.toggle('on', b.dataset.ms === MSOUND));
   const cur = (S && S.media) || null;
-  $('#pads').innerHTML = MEDIA.files.map((m, i) => `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}">${esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('') + (PEDIT ? '<button class="padadd" id="mDrop" title="Drop pictures or videos here, or click to choose them">drop here</button>' : '')
+  const pg = padPage(MEDIA.files.length);
+  $('#pads').innerHTML = MEDIA.files.map((m, i) => (!PEDIT && (i < pg[0] || i >= pg[1])) ? '' : `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}">${esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('') + (PEDIT ? '<button class="padadd" id="mDrop" title="Drop pictures or videos here, or click to choose them">drop here</button>' : '')
     || '<span class="muted">Upload pictures (png, jpg) and videos (mp4, mov) to <b>branding/media</b>, then they show here.</span>';
   $('#pads').classList.toggle('edit', PEDIT);
   const md = $('#mDrop'); if (md) { md.onclick = () => $('#mFile').click();
