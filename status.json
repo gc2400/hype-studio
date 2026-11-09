@@ -1,18 +1,18 @@
 {
- "time": "2026-11-09T23:25:33",
+ "time": "2026-11-10T00:11:15",
  "result": "ok",
- "commit": "080e949605ebf245dce66f6a76f73c7efa0f4c73",
- "subject": "After an engine restart the IDs/sweepers over intros of the last hour still count (max per hour, minutes apart) \u2013 no extra ID after every restart",
+ "commit": "97dd1d3b00fa22fef0404c71d979abb6f5c05b24",
+ "subject": "Clean screen during jingles: no logo (OBS filter), show name, clock or Top 10 number while a jingle / sweeper / TOH plays; back with the song (Settings \u2192 TV, on)",
  "log": [
-  "23:24:48 update 7a6a10bd \u2192 080e9496 \u00b7 1 file(s): engine/engine.py",
-  "23:24:48 restart hype-engine",
-  "23:25:33 installed OK \u00b7 restarted: hype-engine"
+  "00:10:30 update 080e9496 \u2192 97dd1d3b \u00b7 3 file(s): engine/engine.py, web/overlay/index.html, web/panel/settings.html",
+  "00:10:30 restart hype-engine",
+  "00:11:15 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Kilate Tesla \u2013 Mi Isla",
+  "song": "B'JAY X RULY \u2013 COCO",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
