@@ -197,6 +197,20 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .li:hover .x{opacity:1}.li .x:hover{color:var(--r);background:var(--deep)}
 .li.jg b{color:#B9A2FF}
 /* preview, scenes, pads */
+/* the 4 camera slots under the preview: open / hide (remembered) */
+.slots{margin:8px 0 2px}.slots summary{cursor:pointer;display:flex;align-items:center;gap:8px;list-style:none;padding:4px 2px;user-select:none}
+.slots summary::-webkit-details-marker{display:none}
+.slots summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(-45deg);transition:transform .15s;margin:0 3px}
+.slots[open] summary::before{transform:rotate(45deg)}
+.slots summary .muted{font-size:11px}
+.slotg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:6px}
+.slot{position:relative;aspect-ratio:16/9;border-radius:9px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.slot video{width:100%;height:100%;object-fit:cover;display:block}
+.slot .sl{position:absolute;left:5px;top:5px;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:rgba(6,20,35,.78);color:#F2F6FA;max-width:calc(100% - 10px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .sl b{color:var(--y)}
+.slot .so{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#7f93a6;text-align:center;padding:0 6px}
+.slot.onair{box-shadow:0 0 0 2px var(--y)}
+@media (max-width:700px){.slotg{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pv{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000}
 .pv img{width:100%;height:100%;object-fit:cover;display:block}
 .pv .tag{position:absolute;top:10px;left:10px}
@@ -354,6 +368,8 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
             <span class="pvst" id="pvSt"></span>
           </div>
         </div>
+        <details class="slots" id="slotsBox"><summary><span class="lab">Camera slots</span><span class="muted" id="slotsSum"></span></summary>
+          <div class="slotg" id="slotsGrid"></div></details>
         <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="lab">Scenes</span>
           <div class="row" style="gap:5px;flex-wrap:wrap">
             <span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third">LOWER THIRD</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
@@ -1258,6 +1274,35 @@ function renderGuests() {
 }
 $('#gnAdd').onclick = () => api('live/guest_add', {name: $('#gnName').value, mode: $('#gnMode').value}).then(d => { if (d.error) return toast(d.error, 1); $('#gnName').value = ''; navigator.clipboard && navigator.clipboard.writeText(location.origin + '/guest/?t=' + encodeURIComponent(d.token)).catch(() => {}); toast('Guest invited – link copied, send it by WhatsApp'); lvLoad(); });
 applyMode(MODE);
+// ---------- camera slots under the preview: what CAM 1-4 show right now (open / hide; only plays while open) ----------
+const SLV = {};      // CAM n -> {src, rtc}
+const slotsBox = $('#slotsBox');
+try { slotsBox.open = localStorage.getItem('hypeSlots') === '1'; } catch (e) {}
+function slotsClose() { Object.keys(SLV).forEach(c => { if (SLV[c].rtc) SLV[c].rtc.close(); delete SLV[c]; }); $('#slotsGrid').dataset.sig = ''; }
+function renderSlotsPv() {
+  if (!LV || !LV.cams) return;
+  const K = ['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'], src = c => LV.cams[c], info = c => (LV.sources || {})[src(c)] || {};
+  const onl = K.filter(c => info(c).online).length;
+  $('#slotsSum').textContent = onl + ' of 4 online';
+  if (!slotsBox.open || document.hidden) { if (Object.keys(SLV).length) slotsClose(); return; }
+  const scene = (S && S.scene) || '';
+  const sig = K.map(c => src(c) + ':' + (info(c).online ? 1 : 0)).join('|');
+  const g = $('#slotsGrid');
+  if (g.dataset.sig !== sig) {
+    g.dataset.sig = sig;
+    g.innerHTML = K.map(c => `<div class="slot" data-slot="${c}"><video muted playsinline autoplay></video>${info(c).online ? '' : '<span class="so">offline</span>'}<span class="sl"><b>${c.slice(4)}</b> · ${esc(info(c).name || src(c) || 'empty')}</span></div>`).join('');
+    K.forEach(c => {
+      const s_ = src(c), on = info(c).online && typeof HypeRTC !== 'undefined';
+      if (SLV[c] && (SLV[c].src !== s_ || !on)) { if (SLV[c].rtc) SLV[c].rtc.close(); delete SLV[c]; }
+      if (on && !SLV[c]) SLV[c] = {src: s_, rtc: HypeRTC.keep('slot' + c.slice(4), async alive => { const r = await HypeRTC.play(s_, {key: LV.studio_key, video: true}); if (!alive()) return r; if (SLV[c]) SLV[c].stream = r.stream; const v = g.querySelector(`[data-slot="${c}"] video`); if (v) v.srcObject = r.stream; return r; }, () => {})};
+    });
+    // a re-drawn grid has new <video> elements: hand them the running streams again
+    K.forEach(c => { const v = g.querySelector(`[data-slot="${c}"] video`), st = SLV[c] && SLV[c].stream; if (v && st) v.srcObject = st; });
+  }
+  K.forEach(c => { const el = g.querySelector(`[data-slot="${c}"]`); if (el) el.classList.toggle('onair', scene.split(' ').includes(c.slice(4)) && /^(CAM|VID|M)\b/.test(scene)); });
+}
+slotsBox.addEventListener('toggle', () => { try { localStorage.setItem('hypeSlots', slotsBox.open ? '1' : '0'); } catch (e) {} if (!slotsBox.open) slotsClose(); renderSlotsPv(); });
+setInterval(renderSlotsPv, 1000);
 // ---------- go ----------
 refresh(); setInterval(() => { if (!document.hidden) refresh(); }, 2000); setInterval(tick, 250); lib(); pvLive();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); lvLoad(); ltLoad(); } });      // back on the tab: fresh at once

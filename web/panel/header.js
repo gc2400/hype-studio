@@ -70,7 +70,12 @@ html{scrollbar-gutter:stable}
   #hhead .hrec{padding:0 9px}
   #hhead .hpop{position:fixed;top:64px;left:12px;right:12px;width:auto}
 }
-#hhead .hnav .sep{width:1px;height:20px;background:#1E3A56;margin:0 3px}`;
+#hhead .hnav .sep{width:1px;height:20px;background:#1E3A56;margin:0 3px}
+/* wider than a phone, but the page links don't fit on the line any more: the ☰ menu, like on a phone (a drop-down on the right) */
+#hhead.compact .menu{display:block}
+#hhead.compact .hnav{display:none;position:absolute;top:calc(100% + 6px);right:12px;flex-direction:column;align-items:stretch;padding:6px;min-width:230px;z-index:80;background:#0B2236;border-color:#23496B;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+#hhead.compact.open .hnav{display:flex}
+#hhead.compact .hnav a{padding:12px;font-size:14px}#hhead.compact .hnav .sep{display:none}#hhead.compact .hnav a.out .lo{display:inline}`;
   document.head.appendChild(st);
   const h = document.getElementById('hhead'); if (!h) return;
   document.body.insertBefore(h, document.body.firstChild);
@@ -85,6 +90,17 @@ html{scrollbar-gutter:stable}
     <button class="menu" id="hMenu" aria-label="Pages" aria-expanded="false">☰</button>
     <nav class="hnav" aria-label="Pages">${P.map(([u, t, k], i) => `<a href="${u}" class="${k === cur ? 'cur' : ''}" ${k === cur ? 'aria-current="page"' : ''} title="${t} (Alt+${i + 1})">${t}</a>`).join('')}<span class="sep"></span><a class="out" href="/logout" title="Log out" aria-label="Log out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span class="lo"> Log out</span></a></nav>`;
   h.querySelector('#hMenu').onclick = () => { const o = h.classList.toggle('open'); h.querySelector('#hMenu').setAttribute('aria-expanded', o); };
+  // do the page links fit next to the rest? if not (they would wrap to a second line): the ☰ menu
+  const nav = h.querySelector('.hnav'), hb = h.querySelector('.hb');
+  function fitNav() {
+    if (window.innerWidth <= 900) { h.classList.remove('compact'); return; }      // phone layout has its own menu
+    const was = h.classList.contains('compact'); h.classList.remove('compact');
+    const wraps = nav.offsetTop > hb.offsetTop + hb.offsetHeight / 2;
+    h.classList.toggle('compact', wraps); if (!wraps && was) h.classList.remove('open');
+  }
+  let fitT; window.addEventListener('resize', () => { clearTimeout(fitT); fitT = setTimeout(fitNav, 80); });
+  fitNav(); setTimeout(fitNav, 300); document.fonts && document.fonts.ready.then(fitNav);
+  document.addEventListener('click', e => { if (h.classList.contains('compact') && h.classList.contains('open') && !h.contains(e.target)) { h.classList.remove('open'); h.querySelector('#hMenu').setAttribute('aria-expanded', false); } });
   // radio / tv dots: the meaning on hover (the classes are set by On Air or by this script)
   new MutationObserver(() => { const r = h.querySelector('#stRadio'), t = h.querySelector('#stTv');
     r.title = 'Radio: ' + (r.classList.contains('bad') ? 'problem / stopped' : 'on air'); t.title = 'TV: ' + (t.classList.contains('bad') ? 'problem' : 'on air'); })
