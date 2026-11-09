@@ -179,6 +179,12 @@ table{border-collapse:collapse;width:100%}
       <p class="muted" style="margin:0">A song that has a clip with the same name in /clips: the radio plays the audio file, the TV plays the clip with its own sound. This sets how loud that clip sound is on TV compared to the radio.</p>
       <div class="sl" data-find="clip sound tv loudness"><label>Clip sound on TV<small>dB compared to the radio</small></label><input type="range" id="tv_clip_offset" min="-10" max="10" step="0.5"><span class="v" id="tv_clip_offset_v"></span></div>
     </section>
+    <section class="card sec" data-sec="tv">
+      <span class="lab">TV · Up next PIP</span>
+      <p class="muted" style="margin:0">The music video in a window with NOW PLAYING, NEXT and THEN (start times + covers). Only over a music video, with scenes on AUTO, never when LIVE. You can also put it on yourself: Scenes → PIP → Up next.</p>
+      <div class="sl" data-find="up next pip hour start"><label>Start of the hour<small>seconds, in the first song of each hour (0 = off)</small></label><input type="range" id="upnext_hour_s" min="0" max="30" step="1"><span class="v" id="upnext_hour_s_v"></span></div>
+      <div class="sl" data-find="up next pip end of song half hour"><label>Also once after :30<small>the last seconds of one music video (0 = off)</small></label><input type="range" id="upnext_end_s" min="0" max="45" step="5"><span class="v" id="upnext_end_s_v"></span></div>
+    </section>
     <section class="card sec" data-sec="tickers">
       <div class="row between"><span class="lab">Tickers · the scrolling bar at the bottom of the TV</span><button class="btn sm" id="tkAdd">+ Ticker</button></div>
       <p class="muted" style="margin:0">A ticker reads an <b>RSS feed</b> (e.g. nu.nl/rss) or a <b>Hype Live ticker link</b> (hyperadio.nl/?hype_ticker=traffic …) as often as you set per ticker ("fetch every"). Show it with <b>Planning → ON SCREEN</b> (e.g. "At a time *:20 → ▤ Ticker: TRAFFIC, 60 s"), or tick "always on the Hype Screen". A planned ticker goes over the always-on one; the bar gives way to the Now Playing box.</p>
@@ -338,6 +344,10 @@ function render() {
   ['smart_pick', 'hit_hour', 'hour_preview', 'adbox_always', 'smart_mix', 'id_intro'].forEach(k => { $('#' + k).checked = ST[k]; $('#' + k).onchange = () => post('settings', {[k]: $('#' + k).checked}).then(d => { ST = d; toast('Saved'); }); });
   $('#tv_clip_offset').value = ST.tv_clip_offset; $('#tv_clip_offset_v').textContent = fmtv(ST.tv_clip_offset, 'dB');
   $('#tv_clip_offset').oninput = () => $('#tv_clip_offset_v').textContent = fmtv(+$('#tv_clip_offset').value, 'dB');
+  [['upnext_hour_s', 'in the first song of the hour'], ['upnext_end_s', 'once after :30']].forEach(([k, w]) => { const el = $('#' + k), lab = v => v > 0 ? v + ' s' : 'off';
+    el.value = ST[k] ?? 0; $('#' + k + '_v').textContent = lab(+el.value);
+    el.oninput = () => $('#' + k + '_v').textContent = lab(+el.value);
+    el.onchange = () => post('settings', {[k]: +el.value}).then(d => { ST = d; toast(+el.value > 0 ? 'Up next: ' + el.value + ' s ' + w : 'Up next ' + w + ': off'); }); });
   $('#tv_clip_offset').onchange = () => post('settings', {tv_clip_offset: +$('#tv_clip_offset').value}).then(d => { ST = d; toast('Saved – used from the next paired song'); });
 }
 // ---------- sections + find ----------

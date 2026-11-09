@@ -388,17 +388,16 @@ class Screen:
     def upnext_plan(self, c, it, length):
         """The Up next PIP (scene "Up next": the music video in a window + now / next / then with start times):
         in the last N s of every Nth music video, and a few seconds into the first song of each hour (Settings → TV)."""
-        every = int(planner.get_setting(c, "upnext_every", 4) or 0)
-        end_s = float(planner.get_setting(c, "upnext_end_s", 30) or 0)
+        end_s = float(planner.get_setting(c, "upnext_end_s", 0) or 0)       # 0 = off (Gianno: once an hour is enough)
         hour_s = float(planner.get_setting(c, "upnext_hour_s", 10) or 0)
         try: E.upnext_data()             # look the covers up now (in the background), so they are ready when the PIP shows
         except Exception: pass
         hk = time.strftime("%Y%m%d%H"); first = getattr(self, "upn_hour", None) != hk; self.upn_hour = hk
-        self.upn_n = getattr(self, "upn_n", 0) + 1
         path = it["path"]
         if first and hour_s > 0 and length > 40:
             threading.Timer(12.0, lambda: E.upnext_show(path, hour_s)).start()          # 12 s in: the song has started properly
-        elif every > 0 and end_s > 0 and self.upn_n % every == 0 and length > end_s + 40:
+        elif end_s > 0 and time.localtime().tm_min >= 30 and getattr(self, "upn_half", None) != hk and it.get("mode") in ("clip", "pair") and length > end_s + 40:
+            self.upn_half = hk          # once in the second half of the hour: the last N s of a music video
             threading.Timer(max(1.0, length - end_s), lambda: E.upnext_show(path, end_s - 0.5)).start()
     def on_show(self, title):
         c = dbc()
@@ -2384,6 +2383,7 @@ def get_settings():
         except Exception: snd[v] = None
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
+            "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
             "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd}
 def set_settings(d):
@@ -2392,6 +2392,8 @@ def set_settings(d):
     for k in ("smart_pick", "hit_hour", "hour_preview"):
         if k in d: planner.set_setting(c, k, bool(d[k]))
     if "tv_clip_offset" in d: planner.set_setting(c, "tv_clip_offset", max(-10.0, min(10.0, float(d["tv_clip_offset"]))))
+    if "upnext_hour_s" in d: planner.set_setting(c, "upnext_hour_s", max(0.0, min(60.0, float(d["upnext_hour_s"]))))
+    if "upnext_end_s" in d: planner.set_setting(c, "upnext_end_s", max(0.0, min(60.0, float(d["upnext_end_s"]))))
     if "artist_sep_min" in d: planner.set_setting(c, "artist_sep_min", max(0.0, min(360.0, float(d["artist_sep_min"]))))
     for k in ("strict_hold_before", "strict_hold_after"):
         if k in d: planner.set_setting(c, k, max(0.0, min(240.0, float(d[k])))); planner._HOLD.clear()
