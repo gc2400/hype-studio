@@ -895,6 +895,11 @@ class Engine:
         except Exception: pass
         self.ov_last = 0; self.ov_count = {}; self.ov_recent = []
         self.idi_times = []; self.idi_used = {}      # IDs over soft intros: when they played (max per hour / minutes apart), which ID
+        try:      # after a restart: the IDs / sweepers over intros of the last hour still count (9 Nov: an ID after every restart)
+            rows = dbc().execute("SELECT started, over FROM asrun WHERE over IS NOT NULL AND started > ? ORDER BY started", (time.time() - 3600,)).fetchall()
+            self.idi_times = [r[0] for r in rows if (r[1] or "").startswith("ID:")]
+            if rows: self.ov_last = rows[-1][0]
+        except Exception: pass
         self.last_kind = None
         try:      # after a restart: what played last (else an ID over the next intro is skipped – Bleeding, 9 Nov)
             lp = (dbc().execute("SELECT path FROM asrun ORDER BY id DESC LIMIT 1").fetchone() or [""])[0] or ""
