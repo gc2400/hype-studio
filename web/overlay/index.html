@@ -170,7 +170,11 @@ function nowPlaying(np, now) {
   const box = $('#np'), v = $('#npv');
   // a window that was already running when the scene came in starts again (from 0) NP_WAIT s after the switch
   const s0 = t => SC_IN > t && SC_IN < t + 18 ? SC_IN + NP_WAIT : t;
-  let at = null; if (np) for (const t of np.at) { const a0 = s0(t); if (now >= a0 && now < a0 + 18) { at = a0; break; } }
+  let wins = np ? np.at.map(s0) : [];
+  // coming into Music video from another scene (cameras, Hype Screen, PIP …) during a song: the box once, NP_WAIT s later
+  // (unless a window of its own comes or ran around that moment, or the song ends within the box's 18 s)
+  if (np && SC_IN >= (np.start || 0) && SC_IN + NP_WAIT + 18 < (np.end || 0) && !wins.some(w => Math.abs(w - (SC_IN + NP_WAIT)) < 20)) wins.push(SC_IN + NP_WAIT);
+  let at = null; for (const a0 of wins) { if (now >= a0 && now < a0 + 18) { at = a0; break; } }
   const key = at ? np.id + '|' + at : null;
   if (key && key !== NP.key) {
     NP.key = key; $('#npt').textContent = np.title; $('#npa').textContent = np.artist;
