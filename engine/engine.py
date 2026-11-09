@@ -2213,16 +2213,23 @@ def watch_show():
         if time.time() - last_week > 3600:
             try: load_week(); last_week = time.time()
             except Exception as e: log.warning("week: %s", e); last_week = time.time() - 3000
+        # the show switches EXACTLY at its start time from the week schedule (the website's "current show" answered up to
+        # a minute late – the show name box changed late, Gianno 9 Nov); the website only decides when the schedule has no slot
+        sched = week_slot()
+        def switch(title, start, end, image, why):
+            log.info("show is now: %s (%s)", title, why)
+            SHOW.update(title=title, start=start, end=end, image=image)
+            E.tv.show_changed(title)
+            try: E.screen.on_show(title)
+            except Exception as e: log.warning("screen show: %s", e)
+        if sched and sched["title"] != SHOW["title"]:
+            switch(sched["title"], sched["start"], sched["end"], None, "schedule")
         try:
             with urllib.request.urlopen("https://www.hyperadio.nl/wp-json/proradio/v1/current-show", timeout=10) as r:
                 d = json.loads(r.read())
             title = (d.get("title") or "").strip() or None
-            if title != SHOW["title"]:
-                log.info("show is now: %s", title)
-                SHOW.update(title=title, start=d.get("start"), end=d.get("end"), image=d.get("image"))
-                E.tv.show_changed(title)
-                try: E.screen.on_show(title)
-                except Exception as e: log.warning("screen show: %s", e)
+            if title == SHOW["title"]: SHOW.update(start=d.get("start") or SHOW.get("start"), end=d.get("end") or SHOW.get("end"), image=d.get("image") or SHOW.get("image"))
+            elif not week_slot(): switch(title, d.get("start"), d.get("end"), d.get("image"), "website")
         except Exception as e: log.warning("show: %s", e)
         if time.time() - WEATHER["at"] > 600:
             try:
@@ -2230,7 +2237,17 @@ def watch_show():
                 with urllib.request.urlopen(u, timeout=10) as r: cur = json.loads(r.read())["current"]
                 WEATHER.update(temp=round(cur["temperature_2m"]), code=cur.get("weather_code"), at=time.time())
             except Exception as e: log.warning("weather: %s", e)
-        time.sleep(60)
+        time.sleep(61 - time.time() % 60)        # wake 1 s after every full minute: a show starting at 20:00 shows at 20:00:01
+
+def week_slot(t=None):
+    """The show of the week schedule at this moment -> {title, start, end} or None (a gap / no schedule)."""
+    lt = time.localtime(t or time.time()); hm = "%02d:%02d" % (lt.tm_hour, lt.tm_min)
+    for sl in planner.WEEK:
+        st, en = sl.get("start") or "", sl.get("end") or ""
+        if sl.get("day") == lt.tm_wday and st <= hm < (en if en and en != "00:00" else "24:00"):
+            day = time.strftime("%Y-%m-%d", lt); tz = time.strftime("%z", lt); tz = tz[:3] + ":" + tz[3:]
+            return {"title": sl["title"], "start": "%sT%s:00%s" % (day, st, tz), "end": "%sT%s:00%s" % (day, en or "00:00", tz)}
+    return None
 
 SOUND_VARS = ["snd_drive", "snd_bass", "snd_bass_f", "snd_treble", "snd_mid", "snd_lowmid", "snd_hpf", "snd_width", "snd_comp", "snd_monob", "snd_agc", "snd_ratio", "snd_thresh", "snd_attack", "snd_release", "snd_ceiling", "snd_punch", "mm_target", "mm_comp", "mm_mb", "mm_lim", "mm_lev", "mm_kc_th", "mm_kc_att", "mm_kc_rel", "mm_lo_str", "mm_lo_f", "mm_lo_th", "mm_lo_att", "mm_lo_rel", "mm_hi_str", "mm_hi_f", "mm_hi_th", "mm_hi_att", "mm_hi_rel", "mm_lim_att", "mm_lim_rel", "mix_out", "mix_in"]
 def load_rotation():

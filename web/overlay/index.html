@@ -90,7 +90,7 @@ function data() {
     }
   }).catch(() => {});
 }
-clock(); setInterval(clock, 1000); data(); setInterval(data, 15000);
+clock(); setInterval(clock, 1000); data(); setInterval(data, 3000);     // 3 s: a new show name shows within seconds of its start
 // on-screen items (New Music, Throwback …): the engine says what shows when
 const SHOWN = {};
 function screen() {
