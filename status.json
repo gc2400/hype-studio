@@ -1,19 +1,17 @@
 {
- "time": "2026-11-09T19:19:43",
+ "time": "2026-11-09T19:26:54",
  "result": "ok",
- "commit": "f072504587ea43f3b31926b67da61f94668ea386",
- "subject": "History: week report (top songs/artists, genres, played too often, rotation per folder, never played, own streams per day, stability); audience numbers and guard events kept per day; camera slot labels under the pictures",
+ "commit": "d984bbbde1193442548418029b7c9efaafa985aa",
+ "subject": "Week report: download as CSV (spreadsheet) or PDF (print, clean white layout)",
  "log": [
-  "19:18:58 update 37f02501 \u2192 f0725045 \u00b7 4 file(s): engine/engine.py, engine/guard.py, web/panel/history.html, web/panel/index.html",
-  "19:18:58 restart hype-guard",
-  "19:18:58 restart hype-engine",
-  "19:19:43 installed OK \u00b7 restarted: hype-engine, hype-guard"
+  "19:26:54 update f0725045 \u2192 d984bbbd \u00b7 1 file(s): web/panel/history.html",
+  "19:26:54 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "KYBBA X STYLO G X KALIBWOY \u2013 HAMMA",
+  "song": "Sean Paul x Seanizzle \u2013 Face Card",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
