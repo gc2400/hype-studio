@@ -1,17 +1,17 @@
 {
- "time": "2026-11-09T23:13:29",
+ "time": "2026-11-09T23:20:41",
  "result": "ok",
- "commit": "be5e69d5f89dd828db111fcc9aad53e0c1a8b9e3",
- "subject": "remove duplicate Top 10 check",
+ "commit": "7a6a10bd68e590c86afecf83faefb63de3b2bbb5",
+ "subject": "Pads: 4 rows (16) per page with \u25c0 1/3 \u25b6 under them (all pads while editing); MEDIA empty text over the full width",
  "log": [
-  "23:13:29 update 1046c6ea \u2192 be5e69d5 \u00b7 1 file(s): web/overlay/index.html",
-  "23:13:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "23:20:40 update be5e69d5 \u2192 7a6a10bd \u00b7 1 file(s): web/panel/index.html",
+  "23:20:41 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Sarz x Asake x Wizkid x Skillibeng \u2013 Getting Paid",
+  "song": "EMMAW \u2013 Proost",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },

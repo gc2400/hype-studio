@@ -293,3 +293,4 @@
 2026-11-09T23:07:33 ok f2ee5f3a Branding scene: no show name box (and no Top 10 number) – the full-screen show visual already has the name
 2026-11-09T23:12:25 ok 1046c6ea PIP scene: no Top 10 number; no automatic Up next PIP during the Hype Top 10
 2026-11-09T23:13:29 ok be5e69d5 remove duplicate Top 10 check
+2026-11-09T23:20:41 ok 7a6a10bd Pads: 4 rows (16) per page with ◀ 1/3 ▶ under them (all pads while editing); MEDIA empty text over the full width
