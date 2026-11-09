@@ -391,6 +391,8 @@ class Screen:
         every = int(planner.get_setting(c, "upnext_every", 4) or 0)
         end_s = float(planner.get_setting(c, "upnext_end_s", 30) or 0)
         hour_s = float(planner.get_setting(c, "upnext_hour_s", 10) or 0)
+        try: E.upnext_data()             # look the covers up now (in the background), so they are ready when the PIP shows
+        except Exception: pass
         hk = time.strftime("%Y%m%d%H"); first = getattr(self, "upn_hour", None) != hk; self.upn_hour = hk
         self.upn_n = getattr(self, "upn_n", 0) + 1
         path = it["path"]
