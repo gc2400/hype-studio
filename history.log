@@ -272,3 +272,4 @@
 2026-11-09T14:34:50 ok 4d256859 Voice message box on TV (design A): while a listener's voice pad plays, Gianno's PNG (WhatsApp / website / no source) with the sender's first name in the Now Playing spot; Now Playing hides meanwhile
 2026-11-09T14:41:45 ok 48bd7819 Graphics pages: after an update that also restarts the engine, OBS reloads the new page (it kept the old one)
 2026-11-09T16:08:51 lab-failed 1814ef70 Radio: log every clock delay (hiccup hunting), stop the telnet connect/disconnect log spam (disk writes)
+2026-11-09T16:21:24 ok 919c080e Radio lab test: create its own Pulse sinks when missing (after a Pulse restart every radio.liq update failed the lab)
