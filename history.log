@@ -296,3 +296,4 @@
 2026-11-09T23:20:41 ok 7a6a10bd Pads: 4 rows (16) per page with ◀ 1/3 ▶ under them (all pads while editing); MEDIA empty text over the full width
 2026-11-09T23:25:33 ok 080e9496 After an engine restart the IDs/sweepers over intros of the last hour still count (max per hour, minutes apart) – no extra ID after every restart
 2026-11-10T00:11:15 ok 97dd1d3b Clean screen during jingles: no logo (OBS filter), show name, clock or Top 10 number while a jingle / sweeper / TOH plays; back with the song (Settings → TV, on)
+2026-11-10T00:13:04 ok 68e88b11 Clean screen during jingles / ads only in the Music video scene (not on cameras or LIVE); a scene change puts the logo back at once
