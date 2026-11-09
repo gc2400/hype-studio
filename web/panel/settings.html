@@ -180,6 +180,7 @@ table{border-collapse:collapse;width:100%}
       <div class="sl" data-find="clip sound tv loudness"><label>Clip sound on TV<small>dB compared to the radio</small></label><input type="range" id="tv_clip_offset" min="-10" max="10" step="0.5"><span class="v" id="tv_clip_offset_v"></span></div>
     </section>
     <section class="card sec" data-sec="tv">
+      <label class="opt" data-find="jingle hide logo show name clock graphics"><input type="checkbox" id="jingle_hide"><div><b>Clean screen during jingles</b><span>While a jingle, sweeper or TOH plays: no logo, show name, clock / temperature or Top 10 number. They come back when the song starts.</span></div></label>
       <span class="lab">TV · Up next PIP</span>
       <p class="muted" style="margin:0">The music video in a window with NOW PLAYING, NEXT and THEN (start times + covers). Only over a music video, with scenes on AUTO, never when LIVE. You can also put it on yourself: Scenes → PIP → Up next.</p>
       <div class="sl" data-find="up next pip hour start how long"><label>Start of the hour · how long<small>seconds on screen, in the first music video of each hour (0 = off)</small></label><input type="range" id="upnext_hour_s" min="0" max="60" step="5"><span class="v" id="upnext_hour_s_v"></span></div>
@@ -349,6 +350,8 @@ function render() {
     el.value = ST[k] ?? 0; $('#' + k + '_v').textContent = lab(+el.value);
     el.oninput = () => $('#' + k + '_v').textContent = lab(+el.value);
     el.onchange = () => post('settings', {[k]: +el.value}).then(d => { ST = d; toast(after ? 'Up next comes ' + el.value + ' s ' + w : +el.value > 0 ? 'Up next: ' + el.value + ' s ' + w : 'Up next ' + w + ': off'); }); });
+  $('#jingle_hide').checked = ST.jingle_hide !== false;
+  $('#jingle_hide').onchange = () => post('settings', {jingle_hide: $('#jingle_hide').checked}).then(d => { ST = d; toast($('#jingle_hide').checked ? 'Clean screen during jingles: on' : 'Graphics stay on during jingles'); });
   $('#tv_clip_offset').onchange = () => post('settings', {tv_clip_offset: +$('#tv_clip_offset').value}).then(d => { ST = d; toast('Saved – used from the next paired song'); });
 }
 // ---------- sections + find ----------

@@ -444,7 +444,7 @@ class Screen:
         if scene == "Up next":
             try: upn = E.upnext_data()
             except Exception as e: log.warning("up next data: %s", e)
-        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "ticker": tick, "voice": voice, "upnext": upn,
+        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and E.now and E.now.get("path") and E.now.get("section") != "music"),
                 "slides": ["/adbox/" + urllib.parse.quote(f) for f in slides], "slide_s": 30,
                 "slides_layer": "adbox" if scene == "Hype Screen" else "graphics"}   # Hype Screen: its own source under the Live Layer
 
@@ -534,7 +534,20 @@ class TV:
             except Exception as e: log.warning("Live Layer transparency: %s", e)
             try: self.layer_top(self.cl)
             except Exception as e: log.warning("Live Layer on top: %s", e)
+            try:   # the logo can be hidden while a jingle plays: an opacity filter "Hide" on the Logo source (off = visible)
+                if not any(f["filterName"] == "Hide" for f in self.cl.get_source_filter_list("Logo").filters):
+                    self.cl.create_source_filter("Logo", "Hide", "color_filter_v2", {"opacity": 0.0})
+                    self.cl.set_source_filter_enabled("Logo", "Hide", False)
+                self._logo_hidden = None
+            except Exception as e: log.warning("logo hide filter: %s", e)
         return self.cl
+    def jingle_graphics(self, hide):
+        """While a jingle / sweeper / TOH plays: no logo (and the Graphics page hides show name, clock, Top 10 number)."""
+        if getattr(self, "_logo_hidden", None) == hide: return
+        try:
+            with self.olock: self.client().set_source_filter_enabled("Logo", "Hide", bool(hide))
+            self._logo_hidden = hide
+        except Exception as e: log.warning("logo hide: %s", e); self.cl = None
     def layer_top(self, cl):
         """The Hype Live Layer is the top layer in every scene (above Graphics, the On Air box, logo, clock, Now Playing,
         the show intro): from Hype Live 2.25.2 it shows full-screen moments that must cover everything (New Year countdown,
@@ -1529,6 +1542,7 @@ class Engine:
             if it.get("deck"): self.deck = it["deck"]
             elif self.dj: self.deck = None
             if it["section"] == "music": self.intro_sweeper(c, it)
+            if JINGLE_HIDE: threading.Thread(target=self.tv.jingle_graphics, args=(it["section"] != "music",), daemon=True).start()
             try: self.screen.on_song(c, it)
             except Exception as e: log.warning("screen: %s", e)
             log.info("ON AIR %s – %s [%s/%s] scene=%s", it["artist"], it["title"], it["folder"], mode, scene)
@@ -2271,7 +2285,9 @@ def load_rotation():
     ADBOX_ALWAYS = bool(planner.get_setting(c, "adbox_always", True))
     SMART_MIX = bool(planner.get_setting(c, "smart_mix", True))
     AV_LAG = max(-0.5, min(1.0, float(planner.get_setting(c, "av_lag", 0.20))))
+    global JINGLE_HIDE; JINGLE_HIDE = bool(planner.get_setting(c, "jingle_hide", True))
     MIX_MAX = 8.0     # (the longest-overlap slider is gone: the overlap = the fade-out)
+JINGLE_HIDE = True     # Settings → TV: no logo / show name / clock while a jingle plays
 LEVEL = {"l": 0.0, "r": 0.0, "asked": 0}
 AGC = {"db": 0.0, "lift": 0.0, "level": None, "strength": 0.7, "t": 0}
 def intro_lift(now, st):
@@ -2410,7 +2426,7 @@ def get_settings():
         except Exception: snd[v] = None
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
-            "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
+            "jingle_hide": bool(planner.get_setting(c, "jingle_hide", True)), "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
             "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd}
 def set_settings(d):
@@ -2419,6 +2435,9 @@ def set_settings(d):
     for k in ("smart_pick", "hit_hour", "hour_preview"):
         if k in d: planner.set_setting(c, k, bool(d[k]))
     if "tv_clip_offset" in d: planner.set_setting(c, "tv_clip_offset", max(-10.0, min(10.0, float(d["tv_clip_offset"]))))
+    if "jingle_hide" in d:
+        planner.set_setting(c, "jingle_hide", bool(d["jingle_hide"])); load_rotation()
+        if not d["jingle_hide"]: E.tv.jingle_graphics(False)
     if "upnext_hour_s" in d: planner.set_setting(c, "upnext_hour_s", max(0.0, min(60.0, float(d["upnext_hour_s"]))))
     if "upnext_after_s" in d: planner.set_setting(c, "upnext_after_s", max(3.0, min(120.0, float(d["upnext_after_s"]))))
     if "upnext_end_s" in d: planner.set_setting(c, "upnext_end_s", max(0.0, min(60.0, float(d["upnext_end_s"]))))
