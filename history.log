@@ -286,3 +286,4 @@
 2026-11-09T22:38:16 ok 38f017b1 Up next PIP design C (next 3 songs, title + artist, no covers; window x80 y330 1080x608) with the Hype stinger going in; shown in the first music video of the hour; Now Playing waits 3 s after the TV comes into the Music video scene and then plays from its start
 2026-11-09T22:41:07 ok 03e09bfc Show name switches exactly at the start time (week schedule, checked 1 s after every minute); the website only decides in gaps; Graphics page asks every 3 s
 2026-11-09T22:43:11 ok 573820a4 Up next PIP C with start times in the badges; the Now Playing box never shows outside the Music video scene
+2026-11-09T22:51:07 ok 7f97040c Up next: setting for how far into the music video it comes (Settings → TV); max on screen 60 s

@@ -1,17 +1,18 @@
 {
- "time": "2026-11-09T22:43:11",
+ "time": "2026-11-09T22:51:07",
  "result": "ok",
- "commit": "573820a41908d7470a85775b2178b25ccae4cb95",
- "subject": "Up next PIP C with start times in the badges; the Now Playing box never shows outside the Music video scene",
+ "commit": "7f97040c77db6b9af8f6fb10577360d71cd6531a",
+ "subject": "Up next: setting for how far into the music video it comes (Settings \u2192 TV); max on screen 60 s",
  "log": [
-  "22:43:11 update 03e09bfc \u2192 573820a4 \u00b7 1 file(s): web/overlay/index.html",
-  "22:43:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "22:50:22 update 573820a4 \u2192 7f97040c \u00b7 2 file(s): engine/engine.py, web/panel/settings.html",
+  "22:50:22 restart hype-engine",
+  "22:51:07 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Rauw Alejandro x Romeo Santos \u2013 Kh\u00e9",
+  "song": "Davido x Leon Thomas \u2013 Tell Everybody",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
