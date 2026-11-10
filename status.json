@@ -1,18 +1,19 @@
 {
- "time": "2026-11-10T00:13:04",
+ "time": "2026-11-10T15:47:56",
  "result": "ok",
- "commit": "68e88b118bf8f47515c416533d5ca8d6cb2ed2e0",
- "subject": "Clean screen during jingles / ads only in the Music video scene (not on cameras or LIVE); a scene change puts the logo back at once",
+ "commit": "3565a4c73de90a1dcf32d572b8df2d01b9a5ae3c",
+ "subject": "Backup relay: Hype Studio's radio live to Streamerr (AzuraCast) as a streamer/DJ \u2013 old links play Hype Studio, AutoDJ takes over when it stops; song titles sent along; Settings \u2192 Alarm & Hype Live (password never shown)",
  "log": [
-  "00:12:19 update 97dd1d3b \u2192 68e88b11 \u00b7 1 file(s): engine/engine.py",
-  "00:12:19 restart hype-engine",
-  "00:13:04 installed OK \u00b7 restarted: hype-engine"
+  "15:47:10 update 68e88b11 \u2192 3565a4c7 \u00b7 4 file(s): engine/engine.py, engine/relay.py, system/hype-relay.service, web/panel/settings.html",
+  "15:47:11 restart hype-relay",
+  "15:47:11 restart hype-engine",
+  "15:47:56 installed OK \u00b7 restarted: hype-engine, hype-relay"
  ],
  "guard": {
-  "song": "KAPO \u2013 PLAYA FR\u00cdA",
+  "song": "Stefflon Don x Fivio Foreign x Major League Djz \u2013 Big Fat Machine",
   "listeners": 0,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
