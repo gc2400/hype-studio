@@ -1,19 +1,18 @@
 {
- "time": "2026-11-10T16:12:14",
+ "time": "2026-11-10T16:45:44",
  "result": "ok",
- "commit": "2b926e72bf423aa5f804b7fabdb5f4033c96e109",
- "subject": "Now playing API: only songs (a jingle keeps the last song; history and next without jingles); relay: own Icecast SOURCE client (AzuraCast DJ mount /), 'user:password' in the password field understood; no titles for jingles",
+ "commit": "41a29f820eda92d5a4b3f88ef20ae57d3bfa0e40",
+ "subject": "Now playing API answers the browser's CORS check (OPTIONS gave 501); radio HLS (iPhone) in 2 s pieces \u2013 starts faster, ~half the delay",
  "log": [
-  "16:11:29 update 3565a4c7 \u2192 2b926e72 \u00b7 2 file(s): engine/engine.py, engine/relay.py",
-  "16:11:29 restart hype-relay",
-  "16:11:29 restart hype-engine",
-  "16:12:14 installed OK \u00b7 restarted: hype-engine, hype-relay"
+  "16:44:59 update 2b926e72 \u2192 41a29f82 \u00b7 2 file(s): system/nginx-hype.conf, tv/radio_hls.sh",
+  "16:44:59 restart hype-radio-hls",
+  "16:45:44 installed OK \u00b7 restarted: nginx-reload, hype-radio-hls"
  ],
  "guard": {
-  "song": "GXSZ X TY X JEON \u2013 SAK BAI PIKI",
-  "listeners": 0,
+  "song": "Karol G x Drake \u2013 Ahi\u0301",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
