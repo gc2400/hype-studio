@@ -1,19 +1,17 @@
 {
- "time": "2026-11-10T17:37:40",
+ "time": "2026-11-10T20:09:53",
  "result": "ok",
- "commit": "cd956bca5075774530484c60e9f303280dcefe71",
- "subject": "radio.mp3 starts in ~1 s in Chrome/Edge: MP3 gate makes every listener start on a clean MP3 frame (Icecast 2.4 started mid-frame, so browsers needed 128 KB before playing); nginx falls back to Icecast if the gate is down. Radio HLS back to 4 s pieces (safer on weak mobile networks)",
+ "commit": "38707fc2f62e911ef0a1251d9c5380ee3e3917ab",
+ "subject": "Header status: drop 'Listeners on this stream' (already part of 'Own streams now')",
  "log": [
-  "17:36:55 update 41a29f82 \u2192 cd956bca \u00b7 4 file(s): engine/mp3gate.py, system/hype-mp3gate.service, system/nginx-hype.conf, tv/radio_hls.sh",
-  "17:36:55 restart hype-mp3gate",
-  "17:36:55 restart hype-radio-hls",
-  "17:37:40 installed OK \u00b7 restarted: hype-mp3gate, nginx-reload, hype-radio-hls"
+  "20:09:53 update cd956bca \u2192 38707fc2 \u00b7 1 file(s): web/panel/header.js",
+  "20:09:53 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Ayra Starr \u2013 Where Do We Go",
-  "listeners": 2,
+  "song": "Gedi1000 x Dongo \u2013 No Ta Nada",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
