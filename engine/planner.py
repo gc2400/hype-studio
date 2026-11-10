@@ -127,6 +127,8 @@ def playlist_order(c, pid):
         new = [p for p in songs if p not in set(ordl)]
         if shuffle: random.shuffle(new)
         ordl += new; pos = min(st[1], len(ordl)); rounds = st[2]
+        if not shuffle and (c.execute("SELECT strict FROM playlists WHERE id=?", (pid,)).fetchone() or [0])[0]:
+            ordl = songs[:]   # "play exactly as listed" (Top 10): always the playlist's own order, also right after you reorder it
     else:
         ordl = songs[:]; pos = 0; rounds = 0
         if shuffle: random.shuffle(ordl)
