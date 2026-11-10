@@ -1,0 +1,12 @@
+[Unit]
+Description=Hype Studio backup relay – the radio live to Streamerr (AzuraCast); AutoDJ takes over when it stops
+After=hype-radio.service network-online.target
+PartOf=hype-radio.service
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/hype/relay.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

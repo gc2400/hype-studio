@@ -1550,7 +1550,7 @@ class Engine:
             try: self.screen.on_song(c, it)
             except Exception as e: log.warning("screen: %s", e)
             log.info("ON AIR %s – %s [%s/%s] scene=%s", it["artist"], it["title"], it["folder"], mode, scene)
-            hl_send_np(c, it)
+            hl_send_np(c, it); relay_title(it)
             if it["section"] != "music": self.last_kind = "jingle"
             self.push_next(c)
     def pick_intro_id(self, c, it):
@@ -2432,10 +2432,45 @@ def get_settings():
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
             "jingle_hide": bool(planner.get_setting(c, "jingle_hide", True)), "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
             "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
-            "sound": snd}
+            "sound": snd, "relay": relay_public()}
+RELAY_CFG = "/etc/hype/relay.json"
+def relay_cfg():
+    try: return json.load(open(RELAY_CFG))
+    except Exception: return {}
+def relay_public():
+    """Backup relay to Streamerr for the panel – never the password itself."""
+    r = relay_cfg(); st = {}
+    try: st = json.load(open("/run/hype/relay.json"))
+    except Exception: pass
+    return {"on": bool(r.get("on")), "host": r.get("host", ""), "port": r.get("port", 8000), "mount": r.get("mount", "/"), "user": r.get("user", ""),
+            "password_set": bool(r.get("password")), "state": st.get("state", "off"), "error": st.get("error", ""), "since": st.get("since")}
+def relay_save(d):
+    r = relay_cfg()
+    for k in ("host", "mount", "user"):
+        if k in d: r[k] = str(d[k] or "").strip()
+    if "port" in d: r["port"] = int(d["port"] or 8000)
+    if d.get("password"): r["password"] = str(d["password"])          # empty = keep the saved one
+    if "on" in d: r["on"] = bool(d["on"])
+    tmp = RELAY_CFG + ".tmp"
+    with open(os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as f: json.dump(r, f)
+    os.replace(tmp, RELAY_CFG)
+def relay_title(it):
+    """The song title on the Streamerr station too (AzuraCast takes Icecast-style metadata from the live source)."""
+    r = relay_cfg()
+    if not (r.get("on") and r.get("host") and r.get("password")): return
+    def go():
+        try:
+            song = "%s - %s" % (it.get("artist") or "", it.get("title") or "") if it.get("section") == "music" else "Hype Radio TV"
+            q = urllib.parse.urlencode({"mount": "/" + (r.get("mount") or "/").lstrip("/"), "mode": "updinfo", "song": song})
+            rq = urllib.request.Request("http://%s:%s/admin/metadata?%s" % (r["host"], int(r.get("port") or 8000), q))
+            rq.add_header("Authorization", "Basic " + base64.b64encode(("%s:%s" % (r.get("user") or "source", r["password"])).encode()).decode())
+            urllib.request.urlopen(rq, timeout=5).read()
+        except Exception as e: log.info("relay title: %s", e)
+    threading.Thread(target=go, daemon=True).start()
 def set_settings(d):
     global MIX_OUT
     c = dbc(); liq = Liq()
+    if isinstance(d.get("relay"), dict): relay_save(d["relay"])
     for k in ("smart_pick", "hit_hour", "hour_preview"):
         if k in d: planner.set_setting(c, k, bool(d[k]))
     if "tv_clip_offset" in d: planner.set_setting(c, "tv_clip_offset", max(-10.0, min(10.0, float(d["tv_clip_offset"]))))
