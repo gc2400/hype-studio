@@ -1,19 +1,19 @@
 {
- "time": "2026-11-10T15:47:56",
+ "time": "2026-11-10T16:12:14",
  "result": "ok",
- "commit": "3565a4c73de90a1dcf32d572b8df2d01b9a5ae3c",
- "subject": "Backup relay: Hype Studio's radio live to Streamerr (AzuraCast) as a streamer/DJ \u2013 old links play Hype Studio, AutoDJ takes over when it stops; song titles sent along; Settings \u2192 Alarm & Hype Live (password never shown)",
+ "commit": "2b926e72bf423aa5f804b7fabdb5f4033c96e109",
+ "subject": "Now playing API: only songs (a jingle keeps the last song; history and next without jingles); relay: own Icecast SOURCE client (AzuraCast DJ mount /), 'user:password' in the password field understood; no titles for jingles",
  "log": [
-  "15:47:10 update 68e88b11 \u2192 3565a4c7 \u00b7 4 file(s): engine/engine.py, engine/relay.py, system/hype-relay.service, web/panel/settings.html",
-  "15:47:11 restart hype-relay",
-  "15:47:11 restart hype-engine",
-  "15:47:56 installed OK \u00b7 restarted: hype-engine, hype-relay"
+  "16:11:29 update 3565a4c7 \u2192 2b926e72 \u00b7 2 file(s): engine/engine.py, engine/relay.py",
+  "16:11:29 restart hype-relay",
+  "16:11:29 restart hype-engine",
+  "16:12:14 installed OK \u00b7 restarted: hype-engine, hype-relay"
  ],
  "guard": {
-  "song": "Stefflon Don x Fivio Foreign x Major League Djz \u2013 Big Fat Machine",
+  "song": "GXSZ X TY X JEON \u2013 SAK BAI PIKI",
   "listeners": 0,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },

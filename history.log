@@ -298,3 +298,4 @@
 2026-11-10T00:11:15 ok 97dd1d3b Clean screen during jingles: no logo (OBS filter), show name, clock or Top 10 number while a jingle / sweeper / TOH plays; back with the song (Settings → TV, on)
 2026-11-10T00:13:04 ok 68e88b11 Clean screen during jingles / ads only in the Music video scene (not on cameras or LIVE); a scene change puts the logo back at once
 2026-11-10T15:47:56 ok 3565a4c7 Backup relay: Hype Studio's radio live to Streamerr (AzuraCast) as a streamer/DJ – old links play Hype Studio, AutoDJ takes over when it stops; song titles sent along; Settings → Alarm & Hype Live (password never shown)
+2026-11-10T16:12:14 ok 2b926e72 Now playing API: only songs (a jingle keeps the last song; history and next without jingles); relay: own Icecast SOURCE client (AzuraCast DJ mount /), 'user:password' in the password field understood; no titles for jingles
