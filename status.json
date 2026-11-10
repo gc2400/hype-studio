@@ -1,18 +1,19 @@
 {
- "time": "2026-11-10T16:45:44",
+ "time": "2026-11-10T17:37:40",
  "result": "ok",
- "commit": "41a29f820eda92d5a4b3f88ef20ae57d3bfa0e40",
- "subject": "Now playing API answers the browser's CORS check (OPTIONS gave 501); radio HLS (iPhone) in 2 s pieces \u2013 starts faster, ~half the delay",
+ "commit": "cd956bca5075774530484c60e9f303280dcefe71",
+ "subject": "radio.mp3 starts in ~1 s in Chrome/Edge: MP3 gate makes every listener start on a clean MP3 frame (Icecast 2.4 started mid-frame, so browsers needed 128 KB before playing); nginx falls back to Icecast if the gate is down. Radio HLS back to 4 s pieces (safer on weak mobile networks)",
  "log": [
-  "16:44:59 update 2b926e72 \u2192 41a29f82 \u00b7 2 file(s): system/nginx-hype.conf, tv/radio_hls.sh",
-  "16:44:59 restart hype-radio-hls",
-  "16:45:44 installed OK \u00b7 restarted: nginx-reload, hype-radio-hls"
+  "17:36:55 update 41a29f82 \u2192 cd956bca \u00b7 4 file(s): engine/mp3gate.py, system/hype-mp3gate.service, system/nginx-hype.conf, tv/radio_hls.sh",
+  "17:36:55 restart hype-mp3gate",
+  "17:36:55 restart hype-radio-hls",
+  "17:37:40 installed OK \u00b7 restarted: hype-mp3gate, nginx-reload, hype-radio-hls"
  ],
  "guard": {
-  "song": "Karol G x Drake \u2013 Ahi\u0301",
+  "song": "Ayra Starr \u2013 Where Do We Go",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
