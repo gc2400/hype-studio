@@ -70,3 +70,5 @@ system/hype-synccheck.service|/etc/systemd/system/hype-synccheck.service|644|dae
 system/hype-synccheck.timer|/etc/systemd/system/hype-synccheck.timer|644|daemon-reload
 engine/relay.py|/opt/hype/relay.py|644|hype-relay
 system/hype-relay.service|/etc/systemd/system/hype-relay.service|644|daemon-reload
+engine/mp3gate.py|/opt/hype/mp3gate.py|644|hype-mp3gate
+system/hype-mp3gate.service|/etc/systemd/system/hype-mp3gate.service|644|daemon-reload

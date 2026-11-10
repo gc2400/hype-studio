@@ -1,0 +1,12 @@
+[Unit]
+Description=Hype Studio MP3 gate – every radio.mp3 listener starts on a clean MP3 frame (Chrome/Edge start in ~1 s instead of ~5 s)
+After=icecast2.service network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/hype/mp3gate.py
+Restart=always
+RestartSec=2
+LimitNOFILE=20000
+
+[Install]
+WantedBy=multi-user.target
