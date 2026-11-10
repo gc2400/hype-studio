@@ -304,3 +304,4 @@
 2026-11-10T20:09:53 ok 38707fc2 Header status: drop 'Listeners on this stream' (already part of 'Own streams now')
 2026-11-10T20:38:15 ok b0eb2743 Mixing: when the music right after END is still loud, END is a hard stop (old song fades out between MIX and END) – Bare Minimum played ~2 s past its END
 2026-11-10T22:37:27 ok 069fef5b Recordings get their own folder music/RECORDINGS (were inside MIXES/Recordings); everything that treats mixes specially (no artist needed, out of rotation, no smart mix, week report, schedule) knows it too
+2026-11-10T23:56:51 ok 2927ed42 Playlists played exactly as listed (Top 10): the play order always follows the playlist itself, also right after reordering (it kept the order from when the round started)

@@ -1,19 +1,18 @@
 {
- "time": "2026-11-10T22:37:27",
+ "time": "2026-11-10T23:56:51",
  "result": "ok",
- "commit": "069fef5b5ce579a0f1342462cb29c943ffe8e4e4",
- "subject": "Recordings get their own folder music/RECORDINGS (were inside MIXES/Recordings); everything that treats mixes specially (no artist needed, out of rotation, no smart mix, week report, schedule) knows it too",
+ "commit": "2927ed42a08fc3c0ae0c08ee17615ef5db5755eb",
+ "subject": "Playlists played exactly as listed (Top 10): the play order always follows the playlist itself, also right after reordering (it kept the order from when the round started)",
  "log": [
-  "22:36:42 update b0eb2743 \u2192 069fef5b \u00b7 5 file(s): engine/engine.py, engine/indexer.py, engine/live.py, engine/planner.py, web/panel/plan.html",
-  "22:36:42 restart hype-indexer",
-  "22:36:42 restart hype-engine",
-  "22:37:27 installed OK \u00b7 restarted: hype-engine, hype-indexer"
+  "23:56:06 update 069fef5b \u2192 2927ed42 \u00b7 1 file(s): engine/planner.py",
+  "23:56:06 restart hype-engine",
+  "23:56:51 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Kybba x J Balvin x Rytikal \u2013 I Love It",
-  "listeners": 3,
+  "song": "Maisak x Jay Wheeler \u2013 Casi Algo",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
