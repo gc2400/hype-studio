@@ -302,3 +302,4 @@
 2026-11-10T16:45:44 ok 41a29f82 Now playing API answers the browser's CORS check (OPTIONS gave 501); radio HLS (iPhone) in 2 s pieces – starts faster, ~half the delay
 2026-11-10T17:37:40 ok cd956bca radio.mp3 starts in ~1 s in Chrome/Edge: MP3 gate makes every listener start on a clean MP3 frame (Icecast 2.4 started mid-frame, so browsers needed 128 KB before playing); nginx falls back to Icecast if the gate is down. Radio HLS back to 4 s pieces (safer on weak mobile networks)
 2026-11-10T20:09:53 ok 38707fc2 Header status: drop 'Listeners on this stream' (already part of 'Own streams now')
+2026-11-10T20:38:15 ok b0eb2743 Mixing: when the music right after END is still loud, END is a hard stop (old song fades out between MIX and END) – Bare Minimum played ~2 s past its END

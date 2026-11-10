@@ -1,17 +1,18 @@
 {
- "time": "2026-11-10T20:09:53",
+ "time": "2026-11-10T20:38:15",
  "result": "ok",
- "commit": "38707fc2f62e911ef0a1251d9c5380ee3e3917ab",
- "subject": "Header status: drop 'Listeners on this stream' (already part of 'Own streams now')",
+ "commit": "b0eb2743f0e94d909cef2ee01e63859dff7504d7",
+ "subject": "Mixing: when the music right after END is still loud, END is a hard stop (old song fades out between MIX and END) \u2013 Bare Minimum played ~2 s past its END",
  "log": [
-  "20:09:53 update cd956bca \u2192 38707fc2 \u00b7 1 file(s): web/panel/header.js",
-  "20:09:53 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:37:30 update 38707fc2 \u2192 b0eb2743 \u00b7 1 file(s): engine/engine.py",
+  "20:37:30 restart hype-engine",
+  "20:38:15 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Gedi1000 x Dongo \u2013 No Ta Nada",
-  "listeners": 1,
+  "song": "De La Rose x Ryan Castro \u2013 LA MONDA",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
