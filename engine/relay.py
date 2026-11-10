@@ -3,7 +3,7 @@ Hype Studio's radio (the public MP3) goes live to the Streamerr station as a str
 plays Hype Studio's sound; when this relay (or the whole server) stops, AzuraCast's AutoDJ takes over by itself.
 Settings: Hype Studio → Settings → Backup (/etc/hype/relay.json, root only). Status: /run/hype/relay.json.
 """
-import json, os, subprocess, time, urllib.parse
+import base64, json, os, socket, time, urllib.request
 
 CFG = "/etc/hype/relay.json"; ST = "/run/hype/relay.json"
 SRC = "http://127.0.0.1:8000/radio.mp3"
@@ -16,39 +16,52 @@ def status(**k):
     os.makedirs("/run/hype", exist_ok=True)
     d = dict(k, t=time.time()); tmp = ST + ".tmp"; json.dump(d, open(tmp, "w")); os.replace(tmp, ST)
 
-def url(c):
-    u = urllib.parse.quote(c.get("user") or "source", safe=""); p = urllib.parse.quote(c.get("password") or "", safe="")
-    mount = "/" + (c.get("mount") or "/").lstrip("/")
-    return "icecast://%s:%s@%s:%s%s" % (u, p, c["host"], int(c.get("port") or 8000), mount)
+def creds(c):
+    """AzuraCast accepts DJ user + password; its hint for clients without a user field is "user:password" as the password."""
+    u, p = c.get("user") or "source", c.get("password") or ""
+    if u and p.startswith(u + ":"): p = p[len(u) + 1:]
+    return u, p
+
+def run(c):
+    """Icecast SOURCE client (like butt / Mixxx): one connection to the Streamerr DJ port, the radio MP3 copied into it.
+    (ffmpeg's icecast output can't use mount "/", which AzuraCast's DJ port wants.) Returns an error text when it ends."""
+    u, p = creds(c); mount = "/" + (c.get("mount") or "/").lstrip("/")
+    s = socket.create_connection((c["host"], int(c.get("port") or 8000)), timeout=15)
+    auth = base64.b64encode(("%s:%s" % (u, p)).encode()).decode()
+    s.sendall(("SOURCE %s HTTP/1.0\r\nAuthorization: Basic %s\r\nUser-Agent: HypeStudio-relay/1.0\r\nContent-Type: audio/mpeg\r\n"
+               "ice-name: %s\r\nice-public: 0\r\nice-audio-info: bitrate=128\r\n\r\n" % (mount, auth, c.get("name") or "Hype Radio TV")).encode())
+    head = b""
+    while b"\r\n\r\n" not in head and len(head) < 4096:
+        ch = s.recv(1024)
+        if not ch: break
+        head += ch
+    line = head.split(b"\r\n", 1)[0].decode(errors="replace")
+    if " 200" not in line: s.close(); return "Streamerr answered: " + (line or "nothing") + " (check DJ login / Streamers enabled)"
+    status(state="live", host=c["host"], since=time.time())
+    src = urllib.request.urlopen(SRC, timeout=15); mt = os.path.getmtime(CFG)
+    try:
+        while True:
+            b = src.read(8192)
+            if not b: return "the local radio stream ended"
+            s.sendall(b)
+            if os.path.getmtime(CFG) != mt or not cfg().get("on"): return None       # settings changed / off
+    except (OSError, socket.timeout) as e: return "connection lost: %s" % e
+    finally:
+        try: s.close(); src.close()
+        except Exception: pass
 
 def main():
-    proc, started, mt, fails = None, 0, None, 0
+    fails = 0
     while True:
-        try: m = os.path.getmtime(CFG)
-        except OSError: m = None
-        c = cfg(); on = bool(c.get("on") and c.get("host") and c.get("password"))
-        if proc and (m != mt or not on):                     # settings changed / switched off: stop the running relay
-            proc.terminate()
-            try: proc.wait(10)
-            except Exception: proc.kill()
-            proc = None
-        mt = m
-        if not on:
-            status(state="off"); time.sleep(5); continue
-        if proc is None:
-            cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-reconnect", "1", "-reconnect_streamed", "1",
-                   "-i", SRC, "-c", "copy", "-f", "mp3", "-content_type", "audio/mpeg",
-                   "-ice_name", c.get("name") or "Hype Radio TV", "-ice_public", "0", url(c)]
-            proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True); started = time.time()
-            status(state="connecting", host=c["host"])
-        time.sleep(3)
-        if proc.poll() is not None:                           # ended: wrong password, Streamerr down, DJ slot taken …
-            err = (proc.stderr.read() or "").strip().splitlines()[-1:] if proc.stderr else []
-            fails = fails + 1 if time.time() - started < 60 else 1
-            status(state="error", host=c["host"], error=(err[0] if err else "stopped")[:200], retry_in=min(300, 10 * fails))
-            proc = None; time.sleep(min(300, 10 * fails))
-        elif time.time() - started > 8:
-            fails = 0; status(state="live", host=c["host"], since=started)
+        c = cfg()
+        if not (c.get("on") and c.get("host") and c.get("password")): status(state="off"); time.sleep(5); continue
+        status(state="connecting", host=c["host"]); t0 = time.time()
+        try: err = run(c)
+        except Exception as e: err = str(e)
+        if err is None: fails = 0; continue
+        fails = fails + 1 if time.time() - t0 < 60 else 1
+        wait = min(300, 10 * fails)
+        status(state="error", host=c["host"], error=err[:200], retry_in=wait); time.sleep(wait)
 
 if __name__ == "__main__":
     main()

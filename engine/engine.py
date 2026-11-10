@@ -2460,10 +2460,13 @@ def relay_title(it):
     if not (r.get("on") and r.get("host") and r.get("password")): return
     def go():
         try:
-            song = "%s - %s" % (it.get("artist") or "", it.get("title") or "") if it.get("section") == "music" else "Hype Radio TV"
+            if it.get("section") != "music": return              # jingles / sweepers / ads: the song title stays
+            song = "%s - %s" % (it.get("artist") or "", it.get("title") or "")
             q = urllib.parse.urlencode({"mount": "/" + (r.get("mount") or "/").lstrip("/"), "mode": "updinfo", "song": song})
             rq = urllib.request.Request("http://%s:%s/admin/metadata?%s" % (r["host"], int(r.get("port") or 8000), q))
-            rq.add_header("Authorization", "Basic " + base64.b64encode(("%s:%s" % (r.get("user") or "source", r["password"])).encode()).decode())
+            u, pw = r.get("user") or "source", r["password"]
+            if pw.startswith(u + ":"): pw = pw[len(u) + 1:]               # "user:password" typed in the password field
+            rq.add_header("Authorization", "Basic " + base64.b64encode(("%s:%s" % (u, pw)).encode()).decode())
             urllib.request.urlopen(rq, timeout=5).read()
         except Exception as e: log.info("relay title: %s", e)
     threading.Thread(target=go, daemon=True).start()
@@ -3100,14 +3103,20 @@ def nowplaying_api():
     def song(it, sid=""):
         it = it or {}; a, ti = it.get("artist") or "", it.get("title") or ""
         return {"id": sid or hashlib.md5((a + ti).encode()).hexdigest(), "text": (a + " - " + ti) if a else ti, "artist": a, "title": ti, "album": "", "genre": it.get("folder") or "", "art": "", "custom_fields": {}}
-    dur = E.length(n) if n.get("path") else 0
-    el = max(0, t - (n.get("started") or t))
-    nxt = (E.plan[0] if E.plan else None) if not E.liq_next else E.liq_next
-    hist = []
-    try:
-        for r in dbc().execute("SELECT started, artist, title, folder, kind FROM asrun ORDER BY started DESC LIMIT 11").fetchall()[1:]:
-            hist.append({"played_at": int(r[0]), "duration": 0, "playlist": r[3] or "", "is_request": False, "song": song({"artist": r[1], "title": r[2], "folder": r[3]})})
+    # only SONGS for the outside world (website, Hype Live, apps): while a jingle / sweeper / ad plays, "now playing" stays
+    # the last song, and jingles are left out of the history and "next"
+    rows = []
+    try: rows = dbc().execute("SELECT started, artist, title, folder, path FROM asrun WHERE path LIKE 'music/%' ORDER BY started DESC LIMIT 11").fetchall()
     except Exception: pass
+    if n.get("section") != "music" and rows:
+        r0 = rows[0]; n = {"artist": r0[1], "title": r0[2], "folder": r0[3], "section": "music", "started": r0[0], "path": r0[4]}
+        try: dur = E.length(dict(row_item(dbc().execute(f"SELECT {COLS} FROM items WHERE path=?", (r0[4],)).fetchone(), "")))
+        except Exception: dur = 0
+    else: dur = E.length(n) if n.get("path") else 0
+    el = max(0, t - (n.get("started") or t))
+    nxt = next((x for x in ([E.liq_next] if E.liq_next else []) + list(E.plan) if x.get("section") == "music"), None)
+    hist = [{"played_at": int(r[0]), "duration": 0, "playlist": r[3] or "", "is_request": False, "song": song({"artist": r[1], "title": r[2], "folder": r[3]})}
+            for r in rows if int(r[0]) != int(n.get("started") or 0)][:10]
     return {"station": {"id": 1, "name": "Hype Radio TV", "shortcode": "hype_radio", "listen_url": "https://stream.hyperadio.nl/radio.mp3",
                         "hls_url": "https://stream.hyperadio.nl/radio.m3u8", "hls_enabled": True, "is_public": True,
                         "mounts": [{"name": "MP3 128", "url": "https://stream.hyperadio.nl/radio.mp3", "bitrate": 128, "format": "mp3", "is_default": True}]},
