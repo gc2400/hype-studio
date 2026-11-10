@@ -358,7 +358,7 @@ class ClockRunner:
                 r_b = c.execute("SELECT brand FROM ad_spots WHERE path=?", (path,)).fetchone()
                 if r_b and r_b[0]: brands.add(r_b[0].strip().lower())
         st[2] = False
-        if path and kind in ("playlist", "folder") and c.execute("SELECT 1 FROM items WHERE path=? AND folder LIKE 'MIXES%'", (path,)).fetchone():
+        if path and kind in ("playlist", "folder") and c.execute("SELECT 1 FROM items WHERE path=? AND (folder LIKE 'MIXES%' OR folder LIKE 'RECORDINGS%')", (path,)).fetchone():
             if self.mix_key == key: st[0] += 1; st[1] = 0; return "_SKIP_"   # only 1 mixtape per hour
             self.mix_key = key
         return path

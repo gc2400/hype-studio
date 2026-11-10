@@ -402,7 +402,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
     <section id="tab-rc" hidden>
     <div class="card" style="display:flex;flex-direction:column;gap:10px">
       <div class="row between"><span class="lab">Recordings · the show is recorded by itself</span><button class="btn yellow" id="arSave">Save</button></div>
-      <p class="muted" style="margin:0" data-find="auto recording record show schedule replay podcast">Recordings go to the Library → <b>Recordings</b> (also <b>music/MIXES/Recordings</b> in WinSCP): the TV picture as .mp4 and the radio as .mp3, named <i>date time name</i>. <b>Show</b> = while that show is on air (website schedule). <b>Day + time</b> = your own window (an end before the start runs over midnight). A recording you start yourself (REC / GO LIVE) always wins, and if you stop an automatic one with REC it stays off until its window ends.</p>
+      <p class="muted" style="margin:0" data-find="auto recording record show schedule replay podcast">Recordings go to the Library → <b>Recordings</b> (also <b>music/RECORDINGS</b> in WinSCP): the TV picture as .mp4 and the radio as .mp3, named <i>date time name</i>. <b>Show</b> = while that show is on air (website schedule). <b>Day + time</b> = your own window (an end before the start runs over midnight). A recording you start yourself (REC / GO LIVE) always wins, and if you stop an automatic one with REC it stays off until its window ends.</p>
       <div id="arRules" class="arrules"></div>
       <div class="row"><button class="btn sm" id="arAdd">+ Add recording</button><span class="muted" id="arNow" style="font-size:12px"></span></div>
       <span class="lab" style="margin-top:8px">Latest recordings <span class="muted" id="arFree" style="text-transform:none;letter-spacing:0"></span></span>
@@ -827,7 +827,7 @@ function tabChanged(b) { b.scrollIntoView({block: 'nearest', inline: 'nearest'})
 /* ---------------- shared: how a slot reads ---------------- */
 const SLK = {playlist: ['SONG', '#062F38', '#05A9C6'], folder: ['SONG', '#062F38', '#05A9C6'], mix: ['MIX', '#3A3300', '#FFE000'], showjingle: ['SHOW ID', '#1E1438', '#B9A2FF'],
   jingle: ['SWEEP', '#1E1438', '#B9A2FF'], id: ['STATION ID', '#1E1438', '#B9A2FF'], song: ['SONG', '#062F38', '#05A9C6'], file: ['FILE', '#062F38', '#05A9C6'], adbreak: ['ADS', '#3A2A00', '#FFB54D'], fixed: ['FIXED', '#3A3300', '#FFE000']};
-const isMix = s => s.kind === 'folder' && /^MIXES\//i.test(s.ref || '');
+const isMix = s => s.kind === 'folder' && /^(MIXES|RECORDINGS)(\/|$)/i.test(s.ref || '');
 const JTAG = {LINERS: 'LINER', SWEEPERS: 'SWEEP', 'NEW MUSIC': 'NEW MUSIC', THROWBACK: 'THROWBACK', IDS: 'STATION ID', SWP: 'SWEEP'};
 const tagOf = s => { const t = SLK[isMix(s) ? 'mix' : s.kind] || ['?', '#0F2B44', '#A9BCCD']; return s.kind === 'jingle' ? [JTAG[(s.ref || '').toUpperCase()] || 'JINGLE', t[1], t[2]] : t; };
 const tagHtml = s => { const t = tagOf(s); return `<span class="tg" style="background:${t[1]};color:${t[2]}">${t[0]}</span>`; };

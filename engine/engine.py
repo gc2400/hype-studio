@@ -80,7 +80,7 @@ class Picker:
         self.recent = [r for r in self.recent if time.time() - r[0] < TITLE_SEP]
     def pick_song(self, c, folder, avoid):
         rows = c.execute(f"""SELECT {COLS} FROM items WHERE section='music' AND problem IS NULL AND mode IS NOT NULL
-                             AND (folder=? OR folder LIKE ? OR folder LIKE ?) AND (folder NOT LIKE 'MIXES%' OR ? LIKE 'MIXES%')""", (folder, "%/" + folder, folder + "/%", folder)).fetchall()
+                             AND (folder=? OR folder LIKE ? OR folder LIKE ?) AND ((folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%') OR ? LIKE 'MIXES%' OR ? LIKE 'RECORDINGS%')""", (folder, "%/" + folder, folder + "/%", folder, folder)).fetchall()
         if not rows: return None
         now = time.time(); paths = {r[1] for r in self.recent} | avoid["paths"]
         arts = {a for t, p, aa in self.recent if now - t < ARTIST_SEP for a in aa} | avoid["artists"]
@@ -378,7 +378,7 @@ class Screen:
             now = time.time()
             # artist + title in the Now Playing box (Music video scene only): after the start, and again halfway on longer songs
             at = [now + 5.0] + ([now + length / 2] if length > 150 else [])
-            mix_no_artist = (it.get("folder") or "").upper().startswith("MIXES") and not (it.get("artist") or "").strip()
+            mix_no_artist = (it.get("folder") or "").upper().startswith(("MIXES", "RECORDINGS")) and not (it.get("artist") or "").strip()
             self.np = None if mix_no_artist else {"id": uuid.uuid4().hex[:8], "title": it.get("title") or "", "artist": it.get("artist") or "", "at": at, "start": now, "end": now + length}   # a mix without artist: no box
             if self.top10 and now - self.top10[1] < 120:
                 f = "TOP10/N%d.png" % self.top10[0]
@@ -907,7 +907,7 @@ class Engine:
         planner.init_pads(c0); planner.init_screen(c0); self.screen = Screen()
         try: c0.execute("ALTER TABLE items ADD COLUMN mix_set INT DEFAULT 0"); c0.commit()    # 1 = MIX set by hand (smart mix leaves it alone)
         except sqlite3.OperationalError: pass
-        c0.execute("UPDATE items SET mtime=0 WHERE folder LIKE 'MIXES%' AND problem LIKE 'no artist%'"); c0.commit()   # mixes need no artist: index again
+        c0.execute("UPDATE items SET mtime=0 WHERE (folder LIKE 'MIXES%' OR folder LIKE 'RECORDINGS%') AND problem LIKE 'no artist%'"); c0.commit()   # mixes need no artist: index again
         self.live = live.Live(self.liq, self.tv, lambda: SHOW.get("title") or "show")
         self.tv.live = self.live.live; self.tv.route_audio(force=True)
         self.live.song_scene = lambda: (self.now or {}).get("scene") or "Hype Screen"     # the automatic scene for what plays now (studio drop-out)
@@ -1355,7 +1355,7 @@ class Engine:
     def mix_in_run(self, at):
         """Is a mixtape on air / in Up next that starts in the same clock run (hour or show) as `at`? (after a restart or
         a replan the clock runner is new and does not know it - so a 2nd mix is never planned in the same hour)"""
-        k = planner.runner_key(at); is_mix = lambda p_: (p_.get("folder") or "").upper().startswith("MIXES")
+        k = planner.runner_key(at); is_mix = lambda p_: (p_.get("folder") or "").upper().startswith(("MIXES", "RECORDINGS"))
         if self.now.get("path") and is_mix(self.now) and planner.runner_key(self.now.get("started") or 0) == k: return True
         t = max(time.time(), (self.now.get("started") or 0) + self.length(self.now)) if self.now.get("path") else time.time()
         for p_ in ([self.liq_next] if self.liq_next else []) + self.plan:
@@ -1368,7 +1368,7 @@ class Engine:
         paths = {p for t, p, a in rec} | av["paths"]
         arts = {a for t, p, aa in rec if now - t < ARTIST_SEP for a in aa} | av["artists"] | set(artist_key(self.now.get("artist") or ""))
         for q, args in (("folder=?", (self.now.get("folder"),)), ("1=1", ())):
-            rows = c.execute(f"SELECT {COLS} FROM items WHERE section='music' AND problem IS NULL AND folder NOT LIKE 'MIXES%' AND {q}", args).fetchall()
+            rows = c.execute(f"SELECT {COLS} FROM items WHERE section='music' AND problem IS NULL AND folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%' AND {q}", args).fetchall()
             cand = [row_item(r, "clock") for r in rows if r[0] not in paths and not (set(artist_key(r[1])) & arts)]
             if cand: return min(cand, key=lambda i: planner.fit_score(plain_len(i), gap))   # cue length: no loudness maps for every song (runs under LOCK, just before :00)
         return None
@@ -1565,9 +1565,9 @@ class Engine:
         never on a mix or a song with its own sweeper / "never", at most N per hour and M minutes apart, and only when the
         ID's voice (its START -> MIX) is over 1 s before the intro reaches full level. The ID that has rested longest."""
         if not ID_INTRO["on"] or not self.auto or self.dj or it.get("section") != "music": return None
-        if (it.get("folder") or "").upper().startswith("MIXES") or it.get("src") in ("aux", "dj"): return None
+        if (it.get("folder") or "").upper().startswith(("MIXES", "RECORDINGS")) or it.get("src") in ("aux", "dj"): return None
         prev = self.now if self.now and self.now.get("path") else None
-        if not prev or prev.get("section") != "music" or (prev.get("folder") or "").upper().startswith("MIXES"): return None
+        if not prev or prev.get("section") != "music" or (prev.get("folder") or "").upper().startswith(("MIXES", "RECORDINGS")): return None
         r = c.execute("SELECT overlay_mode FROM items WHERE path=?", (it["path"],)).fetchone()
         if r and r[0] in ("none", "song"): return None
         now = time.time(); self.idi_times = [t for t in self.idi_times if now - t < 3600]
@@ -2033,8 +2033,8 @@ def library(qs):
     c = dbc(); q = (qs.get("q", [""])[0]).strip(); sec = qs.get("section", ["music"])[0]; folder = qs.get("folder", [""])[0]
     sql = "SELECT path, artist, title, folder, mode, clip_path, clip_suggest, clip_score, duration, has_video, problem, overlay_mode, overlay_path, cue_start, cue_mix, cue_end, cues_edited, added_at, COALESCE(mix_set, 0) FROM items WHERE section=?"
     mixes = sec == "mixes"; recs = sec == "recordings"
-    if recs: sec = "music"; sql += " AND folder LIKE 'MIXES/Recordings%'"           # recordings (REC / GO LIVE / auto): a Library tab of their own
-    elif sec in ("music", "mixes"): sec = "music"; sql += " AND folder " + ("" if mixes else "NOT ") + "LIKE 'MIXES%'" + (" AND folder NOT LIKE 'MIXES/Recordings%'" if mixes else "")
+    if recs: sec = "music"; sql += " AND folder LIKE 'RECORDINGS%'"           # recordings (REC / GO LIVE / auto): a Library tab of their own
+    elif sec in ("music", "mixes"): sec = "music"; sql += (" AND folder LIKE 'MIXES%'" if mixes else " AND folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%'")
     args = [sec]; sort = qs.get("sort", ["az"])[0]; recent = int(qs.get("recent", ["0"])[0] or 0)
     if recent: sql += " AND added_at > ?"; args.append(time.time() - recent * 86400)   # uploaded in the last N days
     if folder: sql += " AND (folder=? OR folder LIKE ?)"; args += [folder, folder + "/%"]
@@ -2053,15 +2053,15 @@ def library(qs):
     for r in c.execute(sql, args):
         d = dict(zip(k, r)); d["last"] = last.get(d["path"]); out.append(d)
     folders = [r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section=? ORDER BY folder", (sec,))]
-    if recs: folders = [f for f in folders if (f or "").startswith("MIXES/Recordings")]
-    elif sec == "music": folders = [f for f in folders if (f or "").upper().startswith("MIXES") == mixes and not (f or "").startswith("MIXES/Recordings")]
+    if recs: folders = [f for f in folders if (f or "").upper().startswith("RECORDINGS")]
+    elif sec == "music": folders = [f for f in folders if (f or "").upper().startswith("MIXES") == mixes and not (f or "").upper().startswith("RECORDINGS")]
     all_folders = folders
     counts = dict(c.execute("SELECT section, COUNT(*) FROM items GROUP BY section").fetchall())
     counts["mixes"] = c.execute("SELECT COUNT(*) FROM items WHERE section='music' AND folder LIKE 'MIXES%'").fetchone()[0]
-    counts["recordings"] = c.execute("SELECT COUNT(*) FROM items WHERE section='music' AND folder LIKE 'MIXES/Recordings%'").fetchone()[0]
+    counts["recordings"] = c.execute("SELECT COUNT(*) FROM items WHERE section='music' AND folder LIKE 'RECORDINGS%'").fetchone()[0]
     counts["mixes"] -= counts["recordings"]
     counts["music"] = counts.get("music", 0) - counts["mixes"] - counts["recordings"]
-    psql = "SELECT COUNT(*) FROM items WHERE section=? AND problem IS NOT NULL" + ((" AND folder " + ("" if mixes else "NOT ") + "LIKE 'MIXES%'") if sec == "music" else "")
+    psql = "SELECT COUNT(*) FROM items WHERE section=? AND problem IS NOT NULL" + ((" AND folder LIKE 'MIXES%'" if mixes else " AND folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%'") if sec == "music" else "")
     return {"problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "counts": counts, "total": total, "offset": off}
 
 # ---------- upload from the Library page (WinSCP stays the main way; this is for a phone / someone without server access) ----------
@@ -2990,7 +2990,7 @@ def week_report(qs):
     t0 = time.mktime(mon.timetuple()); t1 = time.mktime((mon + D.timedelta(days=7)).timetuple())
     c = dbc()
     rows = c.execute("SELECT started, path, artist, title, folder, mode, kind FROM asrun WHERE started>=? AND started<? ORDER BY started", (t0, t1)).fetchall()
-    music = [r for r in rows if (r[1] or "").startswith("music/") and "/MIXES/" not in (r[1] or "")]
+    music = [r for r in rows if (r[1] or "").startswith("music/") and "/MIXES/" not in (r[1] or "") and "/RECORDINGS/" not in (r[1] or "")]
     songs = C.Counter(r[1] for r in music); arts = C.Counter()
     for r in music:
         for a in re.split(r"\s+(?:x|X|&|feat\.?|ft\.?|,)\s+", r[2] or ""):
@@ -3000,9 +3000,9 @@ def week_report(qs):
     genres = C.Counter(genre(r[1]) for r in music)
     vids = sum(1 for r in music if r[5] in ("clip", "pair"))
     jingles = sum(1 for r in rows if (r[1] or "").startswith("jingles/"))
-    mixes = sum(1 for r in rows if "/MIXES/" in (r[1] or ""))
+    mixes = sum(1 for r in rows if "/MIXES/" in (r[1] or "") or "/RECORDINGS/" in (r[1] or ""))
     # rotation: active music (not archive / mixes / problem files)
-    lib = [x[0] for x in c.execute("SELECT path FROM items WHERE section='music' AND problem IS NULL AND path NOT LIKE '%/MIXES/%' AND path NOT LIKE '%ARC%/%' AND path NOT LIKE '%ARCHIVE%'")]
+    lib = [x[0] for x in c.execute("SELECT path FROM items WHERE section='music' AND problem IS NULL AND path NOT LIKE '%/MIXES/%' AND path NOT LIKE '%/RECORDINGS/%' AND path NOT LIKE '%ARC%/%' AND path NOT LIKE '%ARCHIVE%'")]
     played = set(songs); never = [p for p in lib if p not in played]
     folders = C.defaultdict(lambda: [0, 0, 0])      # folder -> songs, played songs, plays
     for p in lib:

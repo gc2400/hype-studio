@@ -234,7 +234,7 @@ def index_file(c, path, st):
         elif section in ("music", "jingles", "ads") or (section == "clips"):
             lufs, peak, cs, cm, ce, lm, fm = loudness_and_cues(path, row["duration"])
             row.update(lufs=lufs, peak=peak, cue_start=cs, cue_mix=cm, cue_end=ce, lmap=lm, fine=fm)
-        if section == "music" and not row["artist"] and not folder.upper().startswith("MIXES"):   # a mix needs no artist
+        if section == "music" and not row["artist"] and not folder.upper().startswith(("MIXES", "RECORDINGS")):   # a mix / recording needs no artist
             row["problem"] = row["problem"] or "no artist (name the file 'Artist - Title')"
     if section == "music" and not row["problem"]:
         row["mode"] = "clip" if row["has_video"] else "audio"
