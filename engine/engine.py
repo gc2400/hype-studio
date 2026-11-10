@@ -287,6 +287,13 @@ def annotate(it, pad=False, nxt=None):
         # songs: the old one plays on under the new one for the Mix length, fading out – up to the real end of the file
         # (the END cue is usually the last loud moment, often < 1 s after MIX: too short to hear a fade)
         cross = max(0.3, min(MIX_MAX, MIX_OUT, max(ce, dur or ce) - cm)); fade = cross
+        # ...except when the music right after END is still loud (END cuts the song off on purpose, e.g. before the
+        # next part): then END is a hard stop - the old song fades out between MIX and END and is silent at END
+        if it.get("section") == "music" and ce < (dur or ce) - 0.5:
+            lm, L, _m = lm_info(it["path"])
+            w = lm[int(ce * 2):int(ce * 2) + 4] if lm else None
+            if w and L is not None and sum(w) / len(w) >= L - 12:
+                cross = max(0.3, min(MIX_MAX, MIX_OUT, ce - cm)); fade = cross
     ce = cm + cross
     # every song and jingle: -14 LUFS into the processing (the level the sound presets were tuned on);
     # pads + intro sweepers: -14 (a bit on top of the music, as before)
