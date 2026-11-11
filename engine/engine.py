@@ -43,6 +43,7 @@ def dbc():
                      title TEXT, folder TEXT, mode TEXT, clip TEXT, scene TEXT, kind TEXT)""")
         if "over" not in [r[1] for r in c.execute("PRAGMA table_info(asrun)")]: c.execute("ALTER TABLE asrun ADD COLUMN over TEXT")   # "+ ID …" over the intro (History)
         c.execute("CREATE INDEX IF NOT EXISTS asrun_path ON asrun(path)"); c.execute("CREATE INDEX IF NOT EXISTS asrun_started ON asrun(started)")
+        c.execute("CREATE TABLE IF NOT EXISTS aud_samples(t REAL PRIMARY KEY, r INT, p INT, tv INT)")   # audience every 15 s (History: who came / left per song)
         c.commit(); _DBI[0] = True
     return c
 _DBI = [False]
@@ -2413,20 +2414,54 @@ def meter_loop():
             sock = None; time.sleep(1)
         time.sleep(0.1)
 
+AUD_LAG = 8.0     # listeners hear / see a song this long after it starts on air (stream buffers)
+def aud_sampler():
+    """Every 15 s: radio listeners on our own streams, on Streamerr (public radio) and TV viewers -> aud_samples (14 days)."""
+    pub = {"t": 0, "n": None}; last_clean = 0
+    while True:
+        try:
+            if time.time() - pub["t"] > 30:
+                pub["t"] = time.time()
+                try:
+                    j = json.loads(urllib.request.urlopen("https://artemis.streamerr.co/api/nowplaying/hype_radio", timeout=5).read())
+                    pub["n"] = int((j.get("listeners") or {}).get("current", 0))
+                except Exception: pub["n"] = None
+            r = listeners()["current"]; tv = viewers()["current"]
+            c = dbc(); c.execute("INSERT OR REPLACE INTO aud_samples VALUES(?,?,?,?)", (time.time(), r, pub["n"], tv))
+            if time.time() - last_clean > 3600:
+                last_clean = time.time(); c.execute("DELETE FROM aud_samples WHERE t < ?", (time.time() - 14 * 86400,))
+            c.commit()
+        except Exception as e: log.warning("audience sample: %s", e)
+        time.sleep(15)
+def aud_at(samples, t):
+    """(radio total, tv) of the sample closest to t (within 40 s), or None."""
+    import bisect
+    if not samples: return None
+    i = bisect.bisect_left(samples, (t,))
+    best = min((samples[j] for j in (i - 1, i) if 0 <= j < len(samples)), key=lambda x: abs(x[0] - t))
+    if abs(best[0] - t) > 40: return None
+    return ((best[1] or 0) + (best[2] or 0), best[3] or 0)
+
 def history(qs, limit=2000):
     """What went on air (as-run log): one day, newest first, optional search and type (music / jingles / ads)."""
     day = (qs.get("day") or [time.strftime("%Y-%m-%d")])[0][:10]; q = (qs.get("q") or [""])[0].strip().lower(); typ = (qs.get("type") or [""])[0]
     t0 = time.mktime(time.strptime(day, "%Y-%m-%d")); t1 = t0 + 86400
     c = dbc(); out = []
+    try: smp = c.execute("SELECT t, r, p, tv FROM aud_samples WHERE t >= ? AND t < ? ORDER BY t", (t0 - 120, t1 + 3600)).fetchall()
+    except sqlite3.OperationalError: smp = []
     rows = c.execute("""SELECT a.started, a.path, a.artist, a.title, a.folder, a.mode, a.scene, i.section,
                         COALESCE(i.cue_mix, i.duration, 0) - COALESCE(i.cue_start, 0), a.over FROM asrun a LEFT JOIN items i ON i.path = a.path
                         WHERE a.started >= ? AND a.started < ? ORDER BY a.started DESC LIMIT ?""", (t0, t1, limit)).fetchall()
-    for st, path, ar, ti, fo, mo, sc, sec, ln, ov in rows:
+    for k_, (st, path, ar, ti, fo, mo, sc, sec, ln, ov) in enumerate(rows):
+        # audience when it started and when the next item started (newest first: the next item is the row before)
+        end = rows[k_ - 1][0] if k_ > 0 else (c.execute("SELECT MIN(started) FROM asrun WHERE started > ?", (st,)).fetchone() or [None])[0]
+        a0 = aud_at(smp, st + AUD_LAG); a1 = aud_at(smp, (end if end else time.time()) + AUD_LAG) if (end or time.time() - st > 20) else None
+        aud = {"r0": a0[0], "r1": a1[0], "v0": a0[1], "v1": a1[1], "live": end is None} if a0 and a1 else None
         sec = sec or ("jingles" if (path or "").startswith("jingles/") else "ads" if (path or "").startswith("ads/") else "music")
         if typ and sec != typ: continue
         if q and q not in f"{ar} {ti} {fo}".lower(): continue
         out.append({"t": st, "time": time.strftime("%H:%M:%S", time.localtime(st)), "artist": ar or "", "title": ti or "", "folder": fo or "",
-                    "type": sec, "mode": mo or "", "scene": sc or "", "len": round(ln or 0), "path": path or "", "over": ov or ""})
+                    "type": sec, "mode": mo or "", "scene": sc or "", "len": round(ln or 0), "path": path or "", "over": ov or "", "aud": aud})
     music = sum(1 for r in out if r["type"] == "music")
     return {"day": day, "items": out, "count": len(out), "songs": music}
 
@@ -2580,8 +2615,10 @@ class H(BaseHTTPRequestHandler):
             if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"] + AGC["lift"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01})
             if p == "/history.csv":
                 h = history(qs, limit=5000); import csv, io; b = io.StringIO(); w = csv.writer(b, delimiter=";")
-                w.writerow(["date", "time", "artist", "title", "folder", "type", "length", "tv", "file", "over the intro"])
-                for r in reversed(h["items"]): w.writerow([h["day"], r["time"], r["artist"], r["title"], r["folder"], r["type"], r["len"], r["scene"], r["path"], r.get("over", "")])
+                w.writerow(["date", "time", "artist", "title", "folder", "type", "length", "tv", "file", "over the intro", "radio start", "radio end", "tv start", "tv end"])
+                for r in reversed(h["items"]):
+                    a = r.get("aud") or {}
+                    w.writerow([h["day"], r["time"], r["artist"], r["title"], r["folder"], r["type"], r["len"], r["scene"], r["path"], r.get("over", ""), a.get("r0", ""), a.get("r1", ""), a.get("v0", ""), a.get("v1", "")])
                 return self.send(200, ("\ufeff" + b.getvalue()).encode("utf-8"), "text/csv; charset=utf-8")
             if p == "/wave": return self.send(200, waveform(qs["path"][0]))
             if p == "/pvclip": return self.send(200, pvclip(qs["path"][0]))
@@ -3413,5 +3450,6 @@ if __name__ == "__main__":
     threading.Thread(target=agc_loop, daemon=True).start()
     threading.Thread(target=voice_loop, daemon=True).start()
     threading.Thread(target=autorec_loop, daemon=True).start()
+    threading.Thread(target=aud_sampler, daemon=True).start()
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()
