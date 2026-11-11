@@ -270,6 +270,10 @@ class Guard:
             au = http_json("http://127.0.0.1:8090/audience"); body["audience"] = {"radio": au["radio"], "tv": au["tv"]}
             body["radio"]["listeners"] = au["radio"]["current"]; body["tv"]["viewers"] = au["tv"]["current"]
         except Exception: pass
+        try:                                          # the backup relay (Hype Studio's radio live to Streamerr): live / connecting / off / error
+            rl = json.load(open("/run/hype/relay.json"))
+            body["relay"] = {"state": rl.get("state", "off"), "host": rl.get("host", ""), "since": int(rl.get("since") or 0)}
+        except Exception: body["relay"] = {"state": "off", "host": "", "since": 0}
         if sev: body["screen_events"] = sev[:200]     # PIP showings etc. (Hype Live logs the ones whose brand is a sponsor)
         url = c["hl_url"].rstrip("/") + "/?hype_studio=" + urllib.request.quote(c["hl_key"])
         try:
