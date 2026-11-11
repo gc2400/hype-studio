@@ -31,6 +31,7 @@ def db():
     if "fine" not in cols: c.execute("ALTER TABLE items ADD COLUMN fine TEXT")   # the same loudness measure every 0.1 s, for the first and last seconds (exact mix moments)
     if "added_at" not in cols:   # when the file first arrived (for "recently uploaded")
         c.execute("ALTER TABLE items ADD COLUMN added_at REAL"); c.execute("UPDATE items SET added_at=MIN(COALESCE(mtime, indexed_at), COALESCE(indexed_at, mtime))")
+    if "cue_check" not in cols: c.execute("ALTER TABLE items ADD COLUMN cue_check INT DEFAULT 0")   # replaced by a file of another length while your own cue points were kept: check them
     c.execute("CREATE INDEX IF NOT EXISTS items_fp ON items(fp)")
     return c
 
@@ -238,15 +239,25 @@ def index_file(c, path, st):
             row["problem"] = row["problem"] or "no artist (name the file 'Artist - Title')"
     if section == "music" and not row["problem"]:
         row["mode"] = "clip" if row["has_video"] else "audio"
-    old = c.execute("SELECT cues_edited, mode_set_by_user, mode, clip_path, cue_start, cue_intro, cue_mix, cue_end FROM items WHERE path=?", (rel,)).fetchone()
+    old = c.execute("SELECT cues_edited, mode_set_by_user, mode, clip_path, cue_start, cue_intro, cue_mix, cue_end, duration FROM items WHERE path=?", (rel,)).fetchone()
+    check = False
     if old:
         if old[0] == 1:  # keep hand-edited cue points (2 = imported from CLOSE: re-applied below)
             row.update(cue_start=old[4], cue_intro=old[5], cue_mix=old[6], cue_end=old[7], cues_edited=1)
+            nd, od = row.get("duration") or 0, old[8] or 0
+            if nd and od and abs(nd - od) > 1.0:
+                # replaced by a version of another length: your cue points are kept, but may now sit in the wrong place
+                check = True
+                if row["cue_end"] and row["cue_end"] > nd: row["cue_end"] = nd
+                if row["cue_mix"] and row["cue_mix"] > (row["cue_end"] or nd): row["cue_mix"] = row["cue_end"] or nd
+                if row["cue_start"] and row["cue_start"] >= (row["cue_mix"] or nd): row["cue_start"] = 0.0
+                print("check cues (new length %.1f s, was %.1f s): %s" % (nd, od, rel), flush=True)
 
     cols = ",".join(row.keys()); qs = ",".join("?" * len(row))
     upd = ",".join(f"{k}=excluded.{k}" for k in row.keys())
     c.execute(f"INSERT INTO items({cols}) VALUES({qs}) ON CONFLICT(path) DO UPDATE SET {upd}", list(row.values()))
     c.execute("UPDATE items SET added_at=? WHERE path=? AND added_at IS NULL", (time.time(), rel))
+    if check: c.execute("UPDATE items SET cue_check=1 WHERE path=?", (rel,))
     if not row["problem"] and row.get("cues_edited") != 1:   # use its CLOSE cue points if we have them
         try:
             sys.path.insert(0, "/opt/hype"); import close_import

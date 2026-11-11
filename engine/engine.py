@@ -43,7 +43,8 @@ def dbc():
                      title TEXT, folder TEXT, mode TEXT, clip TEXT, scene TEXT, kind TEXT)""")
         if "over" not in [r[1] for r in c.execute("PRAGMA table_info(asrun)")]: c.execute("ALTER TABLE asrun ADD COLUMN over TEXT")   # "+ ID …" over the intro (History)
         c.execute("CREATE INDEX IF NOT EXISTS asrun_path ON asrun(path)"); c.execute("CREATE INDEX IF NOT EXISTS asrun_started ON asrun(started)")
-        c.execute("CREATE TABLE IF NOT EXISTS aud_samples(t REAL PRIMARY KEY, r INT, p INT, tv INT)")   # audience every 15 s (History: who came / left per song)
+        c.execute("CREATE TABLE IF NOT EXISTS aud_samples(t REAL PRIMARY KEY, r INT, p INT, tv INT)")
+        if "cue_check" not in [r[1] for r in c.execute("PRAGMA table_info(items)")]: c.execute("ALTER TABLE items ADD COLUMN cue_check INT DEFAULT 0")   # audience every 15 s (History: who came / left per song)
         c.commit(); _DBI[0] = True
     return c
 _DBI = [False]
@@ -150,9 +151,14 @@ CLOCK_POS = "/var/lib/hype/clock_pos.json"; PLAN_FILE = "/var/lib/hype/upnext_pl
 SNAPS_FILE = "/var/lib/hype/plan_snaps.json"; MINE_FILE = "/var/lib/hype/upnext_mine.json"
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
 LM_CACHE = {}
+LM_STAMP = {}
 def lm_info(path):
-    """(loudness map, LUFS, mix_set) of a file - cached; cleared when its cue points change."""
-    if path in LM_CACHE: return LM_CACHE[path]
+    """(loudness map, LUFS, mix_set) of a file - cached; cleared when its cue points change, and read again when the
+    file was indexed again (replaced by a new version: before, the old file's map stayed in memory until a restart)."""
+    try: stamp = (dbc().execute("SELECT indexed_at FROM items WHERE path=?", (path,)).fetchone() or [None])[0]
+    except Exception: stamp = None
+    if path in LM_CACHE and LM_STAMP.get(path) == stamp: return LM_CACHE[path]
+    LM_STAMP[path] = stamp; FINE_CACHE.pop(path, None)
     try:
         r = dbc().execute("SELECT lmap, lufs, COALESCE(mix_set, 0) FROM items WHERE path=?", (path,)).fetchone()
         v = ([int(x) for x in r[0].split(",")] if r and r[0] and r[0] != "-" else None, r[1] if r else None, bool(r and r[2]))
@@ -1745,6 +1751,8 @@ class Engine:
                 if auto: cm = min(max(cm, cs), ce)
                 if not (0 <= cs <= cm <= ce): return {"ok": False, "error": "START must be before MIX, MIX before END"}
                 c.execute("UPDATE items SET cue_start=?, cue_mix=?, cue_end=?, cues_edited=1, mix_set=? WHERE path=?", (cs, cm, ce, 0 if auto else 1, d["path"])); c.commit()
+                try: c.execute("UPDATE items SET cue_check=0 WHERE path=?", (d["path"],)); c.commit()   # checked by you
+                except sqlite3.OperationalError: pass
                 LM_CACHE.pop(d["path"], None)
                 for p_ in self.plan:
                     if p_["path"] == d["path"]: p_.update(cue_start=cs, cue_mix=cm, cue_end=ce)
@@ -1771,6 +1779,8 @@ class Engine:
                 return self.rename_item(c, d)
             elif action == "reset_cues":
                 c.execute("UPDATE items SET cues_edited=0, mix_set=0, mtime=0 WHERE path=?", (d["path"],)); c.commit(); LM_CACHE.pop(d["path"], None)
+                try: c.execute("UPDATE items SET cue_check=0 WHERE path=?", (d["path"],)); c.commit()
+                except sqlite3.OperationalError: pass
             elif action == "set_overlay":
                 c.execute("UPDATE items SET overlay_mode=?, overlay_path=? WHERE path=?",
                           (d.get("mode") or None, d.get("jingle") if d.get("mode") == "song" else (None if d.get("mode") == "none" else c.execute("SELECT overlay_path FROM items WHERE path=?", (d["path"],)).fetchone()[0]), d["path"])); c.commit()
@@ -2032,7 +2042,7 @@ KIND_SQL = {"audio": "COALESCE(mode, 'audio') IN ('audio', 'pair')", "pair": "mo
             "noclip": "COALESCE(mode, 'audio') = 'audio'", "video": "mode = 'clip'"}
 def library(qs):
     c = dbc(); q = (qs.get("q", [""])[0]).strip(); sec = qs.get("section", ["music"])[0]; folder = qs.get("folder", [""])[0]
-    sql = "SELECT path, artist, title, folder, mode, clip_path, clip_suggest, clip_score, duration, has_video, problem, overlay_mode, overlay_path, cue_start, cue_mix, cue_end, cues_edited, added_at, COALESCE(mix_set, 0) FROM items WHERE section=?"
+    sql = "SELECT path, artist, title, folder, mode, clip_path, clip_suggest, clip_score, duration, has_video, problem, overlay_mode, overlay_path, cue_start, cue_mix, cue_end, cues_edited, added_at, COALESCE(mix_set, 0), COALESCE(cue_check, 0) FROM items WHERE section=?"
     mixes = sec == "mixes"; recs = sec == "recordings"
     if recs: sec = "music"; sql += " AND folder LIKE 'RECORDINGS%'"           # recordings (REC / GO LIVE / auto): a Library tab of their own
     elif sec in ("music", "mixes"): sec = "music"; sql += (" AND folder LIKE 'MIXES%'" if mixes else " AND folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%'")
@@ -2049,7 +2059,7 @@ def library(qs):
     except ValueError: lim, off = 300, 0
     sql += " ORDER BY " + ("added_at DESC, artist, title" if sort == "new" else "(problem IS NULL), problem, artist, title" if sort == "problems" else "artist, title") + " LIMIT ? OFFSET ?"; args += [lim, off]
     last = {r[0]: r[1] for r in c.execute("SELECT path, MAX(started) FROM asrun GROUP BY path")}
-    k = ["path", "artist", "title", "folder", "mode", "clip_path", "clip_suggest", "clip_score", "duration", "has_video", "problem", "overlay_mode", "overlay_path", "cue_start", "cue_mix", "cue_end", "cues_edited", "added_at", "mix_set"]
+    k = ["path", "artist", "title", "folder", "mode", "clip_path", "clip_suggest", "clip_score", "duration", "has_video", "problem", "overlay_mode", "overlay_path", "cue_start", "cue_mix", "cue_end", "cues_edited", "added_at", "mix_set", "cue_check"]
     out = []
     for r in c.execute(sql, args):
         d = dict(zip(k, r)); d["last"] = last.get(d["path"]); out.append(d)
@@ -2974,6 +2984,8 @@ def mp3_devices():
         for blk in re.findall(r"<listener[^>]*>(.*?)</listener>", x, re.S):
             g = lambda tag: (re.search(f"<{tag}>([^<]*)</{tag}>", blk) or [None, ""])[1]
             ip, ua, lid = g("IP"), _h.unescape(g("UserAgent")), g("ID")
+            if ua.startswith("HypeStudio") or (ip in ("127.0.0.1", "::1") and ua.startswith("Python-urllib")):
+                continue        # our own readers on the server (the backup relay to Streamerr) are not listeners
             try: start = now - float(g("Connected") or 0)
             except ValueError: start = now
             if ip and ip not in ("127.0.0.1", "::1"): out.add(ip + "|" + ua); continue     # a direct listener (port 8000)
