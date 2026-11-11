@@ -2628,7 +2628,13 @@ class H(BaseHTTPRequestHandler):
             if p == "/history": return self.send(200, history(qs))
             if p == "/weekreport": return self.send(200, week_report(qs))
             if p == "/recap": return self.send(200, recap_data(int((qs.get("w") or ["1"])[0])))
-            if p == "/media": return self.send(200, {"files": media_files(), "scenes": MEDIA_SCENES})
+            if p == "/media":
+                lst = {v.get("file"): v for v in media_in_state().values()}; fl = media_files()
+                for m in fl:
+                    v = lst.get(m["file"])
+                    if v: m["listener"] = {k: v.get(k) for k in ("name", "city", "source", "caption", "added")}
+                fl.sort(key=lambda m: (0, -(m["listener"].get("added") or 0)) if m.get("listener") else (1, 0))
+                return self.send(200, {"files": fl, "scenes": MEDIA_SCENES})
             if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners(), own_tv=viewers()))
             if p == "/smartmix":     # the cue editor: where smart mix puts MIX for these START / END
                 c = dbc(); r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (qs["path"][0],)).fetchone()
@@ -3418,6 +3424,69 @@ def hl_call(param, extra="", data=None, timeout=20):
     r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1", **({"Content-Type": "application/json"} if data is not None else {})},
                                method="POST" if data is not None else "GET")
     return urllib.request.urlopen(r, timeout=timeout).read(2_000_000).decode("utf-8", "replace")
+# ---------------- listener photos & videos (approved in Hype Live) -> MEDIA pads ----------------
+MEDIA_IN = "/var/lib/hype/media_in.json"; MEDIA_LINK = {"t": 0, "ok": None, "error": "", "n": 0}; MEDIA_FAIL = {}
+def media_in_state():
+    try: return json.load(open(MEDIA_IN))
+    except Exception: return {}
+def media_in_drop(st, mid):
+    v = st.pop(mid, None)
+    if not v: return
+    f = v.get("file")
+    if f:
+        try:
+            if E.media.cur and E.media.cur.get("file") == f: E.media.stop(E)
+        except Exception: pass
+        try: os.remove(os.path.join(MEDIA_DIR, f))
+        except FileNotFoundError: pass
+    log.info("listener media: removed %s", mid)
+def media_in_loop():
+    """Every 30 s: photos / videos Gianno approved in Hype Live become ready 16:9 media pads (blurred fill for portrait
+    shots + the name card), then Hype Live gets the ack. Rejected / deleted / expired ones ('remove') go again.
+    Nothing plays by itself: a pad shows only when you tap it."""
+    import listener_media as LM
+    while True:
+        time.sleep(30)
+        try:
+            try: d = json.loads(hl_call("hype_studio_media", timeout=20))
+            except urllib.error.HTTPError as e:
+                MEDIA_LINK.update(t=time.time(), ok=False, error="Hype Live answered %s" % e.code); continue
+            MEDIA_LINK.update(t=time.time(), ok=True, error="")
+            st = media_in_state(); changed = False
+            for mid in d.get("remove") or []:
+                if str(mid) in st: media_in_drop(st, str(mid)); changed = True
+            for it in d.get("items") or []:
+                mid = re.sub(r"[^A-Za-z0-9_-]", "", str(it.get("id") or ""))
+                if not mid or time.time() - MEDIA_FAIL.get(mid, 0) < 3600: continue
+                if mid not in st:
+                    kind = "video" if it.get("kind") == "video" else "photo"
+                    name = re.sub(r"[^\w .'-]", "", str(it.get("name") or "Listener"), flags=re.U).strip()[:30] or "Listener"
+                    city = re.sub(r"[^\w .'-]", "", str(it.get("city") or ""), flags=re.U).strip()[:30]
+                    fn = f"Listener - {name}{' (' + city + ')' if city else ''} {mid[-6:]}." + ("mp4" if kind == "video" else "jpg")
+                    src = os.path.join("/tmp", "lm_" + mid)
+                    try:
+                        with hl_open(it.get("url") or "", 120) as r, open(src, "wb") as f: f.write(r.read(60_000_000))
+                        if kind == "video": LM.make_video(src, os.path.join(MEDIA_DIR, fn), name, city, it.get("caption") or "", it.get("source") or "")
+                        else: LM.make_photo(src, os.path.join(MEDIA_DIR, fn), name, city, it.get("caption") or "", it.get("source") or "")
+                    except Exception as e:
+                        MEDIA_FAIL[mid] = time.time(); log.warning("listener media: %s failed (%s) – again in 1 h", mid, e); continue
+                    finally:
+                        try: os.remove(src)
+                        except FileNotFoundError: pass
+                    st[mid] = {"file": fn, "kind": kind, "name": name, "city": city, "source": it.get("source") or "", "caption": (it.get("caption") or "")[:110],
+                               "received": voice_when(it.get("received")), "added": time.time()}
+                    changed = True; log.info("listener media: %s from %s ready as a media pad", kind, name)
+                try: a = hl_call("hype_studio_media", "&ack=" + urllib.parse.quote(mid), data=b"").strip()
+                except urllib.error.HTTPError as e: a = str(e.code)
+                st[mid]["acked"] = True; changed = True; log.info("listener media: ack %s -> %s", mid, a[:30])
+            MEDIA_LINK["n"] = len(st)
+            if changed: jdump(st, MEDIA_IN)
+        except Exception as e: MEDIA_LINK.update(t=time.time(), ok=False, error=str(e)[:80]); log.warning("listener media: %s", e)
+def hl_open(url, timeout=60):
+    """Open a file link Hype Live gave (only on hyperadio.nl)."""
+    if not re.match(r"^https://(www\.)?hyperadio\.nl/", url or ""): raise ValueError("not a Hype Live link")
+    return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "HypeStudio/1"}), timeout=timeout)
+
 RECAP_SENT = "/var/lib/hype/recap_sent.json"
 def recap_data(w=1):
     """Last week's playout summary for Hype Live's weekly recap (top songs / artists / new music / genres, live hours, peaks)."""
@@ -3569,6 +3638,7 @@ def guard_status(full=False):
                      "np": bool(c.get("np")), "np_spots": bool(c.get("np_spots"))}
     else:
         g = {k: g.get(k) for k in ("fresh", "ok", "problems", "heartbeat", "events")}; g["events"] = (g.get("events") or [])[:5]
+        g["media_link"] = dict(MEDIA_LINK, age=round(time.time() - MEDIA_LINK["t"]) if MEDIA_LINK["t"] else None)
     return g
 def guard_save(d):
     try: c = json.load(open(GUARD_CONF))
@@ -3652,5 +3722,6 @@ if __name__ == "__main__":
     threading.Thread(target=aud_sampler, daemon=True).start()
     threading.Thread(target=sponsors_loop, daemon=True).start()
     threading.Thread(target=recap_loop, daemon=True).start()
+    threading.Thread(target=media_in_loop, daemon=True).start()
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()

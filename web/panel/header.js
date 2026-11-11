@@ -124,6 +124,7 @@ html{scrollbar-gutter:stable}
       <div class="r"><span>Scene</span><b>${esc(t.scene || '–')}</b></div>
       <h4>Guard · alarm</h4>
       <div class="r"><span>Self-repair</span>${!d.guard || !d.guard.fresh ? '<b class="bad">● not running</b>' : (d.guard.problems || []).length ? '<b class="bad">● ' + d.guard.problems.map(x => esc(x.text)).join(' · ') + '</b>' : '<b class="ok">● all OK</b>'}</div>
+      <div class="r"><span>Hype Live media link</span>${d.guard && d.guard.media_link && d.guard.media_link.ok && d.guard.media_link.age < 120 ? '<b class="ok">● ' + d.guard.media_link.n + ' listener photos/videos</b>' : '<b style="color:#FFB547">● ' + esc((d.guard && d.guard.media_link && d.guard.media_link.error) || 'not checked yet') + '</b>'}</div>
       <div class="r"><span>Hype Live alarm link</span>${d.guard && d.guard.heartbeat && d.guard.heartbeat.ok ? '<b class="ok">● connected</b>' : '<b style="color:#FFB547">● ' + esc((d.guard && d.guard.heartbeat && d.guard.heartbeat.answer) || 'off') + '</b>'}</div>
       ${d.guard && (d.guard.events || []).filter(e => e.level !== 'ok').length ? '<div class="note">Last: ' + esc(d.guard.events.filter(e => e.level !== 'ok')[0].text) + '</div>' : ''}
       <h4>Server</h4>
