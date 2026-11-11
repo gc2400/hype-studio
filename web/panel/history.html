@@ -80,7 +80,7 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
       <a class="btn" id="csv" title="Download this day as a spreadsheet (proof of play)">⬇ CSV</a>
     </div>
     <div class="muted" id="sum"></div>
-    <div class="scroll"><table><thead><tr><th>Time</th><th>Artist – title</th><th>Folder</th><th>Type</th><th>Length</th><th>TV</th><th title="Listeners (own streams + Streamerr) and TV viewers: change from the start of this item to the start of the next, and how many at the end">Audience</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="scroll"><table><thead><tr><th>Time</th><th>Artist – title</th><th>Folder</th><th>Type</th><th>Length</th><th>TV</th><th title="Radio listeners (own streams + Streamerr) and TV viewers at the end of the item">Audience</th><th title="Gained ▲ / lost ▼ during the item (from its start to the start of the next)">Change</th></tr></thead><tbody id="rows"></tbody></table></div>
   </section>
 </div>
 <script>
@@ -90,7 +90,11 @@ const fmt = s => Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(
 const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 let TYPE = '', T = null;
 // audience change during an item: R = radio (own streams + Streamerr), TV = viewers; ▲ more, ▼ fewer, – no change (hover: from → to)
-function audCell(a) {
+function audCell(a) {        // Audience: how many at the end of the item (now, for the item on air)
+  if (!a) return '';
+  return `<span class="au"><span title="Radio listeners${a.live ? ' now' : ' at the end'}"><i>R</i><b>${a.r1}</b></span><span title="TV viewers${a.live ? ' now' : ' at the end'}"><i>TV</i><b>${a.v1}</b></span></span>`;
+}
+function chgCell(a) {        // Change: ▲ more, ▼ fewer, – no change during the item (hover: from → to)
   if (!a) return '';
   const one = (lb, x0, x1, nm) => { const d = x1 - x0, c = d > 0 ? 'up' : d < 0 ? 'dn' : 'eq';
     return `<span title="${nm}: ${x0} → ${x1}${a.live ? ' (so far)' : ''}"><i>${lb}</i><b class="${c}">${d > 0 ? '▲' + d : d < 0 ? '▼' + (-d) : '–'}</b></span>`; };
@@ -104,8 +108,8 @@ function load() {
   fetch('../api/history?' + qs).then(r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw 0; } return r.json(); }).then(d => {
     let lastH = null;
     $('#rows').innerHTML = d.items.map(r => { const h = r.time.slice(0, 2), hr = lastH !== null && h !== lastH; lastH = h;
-      return `<tr class="${r.type !== 'music' ? 'j' : ''} ${hr ? 'hr' : ''}"><td class="t">${r.time}</td><td>${r.artist ? '<b>' + esc(r.artist) + '</b> – ' : ''}${esc(r.title)}${r.over ? ` <span class="ov ${r.over.startsWith('ID') ? 'id' : ''}" title="Played over the intro">+ ${esc(r.over)}</span>` : ''}</td><td class="muted">${esc(r.folder)}</td><td><span class="tag ${r.type}">${r.type === 'music' ? 'SONG' : r.type === 'jingles' ? 'JINGLE' : 'AD'}</span></td><td class="mono muted">${r.len ? fmt(r.len) : ''}</td><td class="muted">${esc(r.scene)}</td><td>${audCell(r.aud)}</td></tr>`; }).join('')
-      || '<tr><td colspan="7" class="muted" style="padding:20px;text-align:center">Nothing on air for this day' + (q || TYPE ? ' with this filter' : '') + '.</td></tr>';
+      return `<tr class="${r.type !== 'music' ? 'j' : ''} ${hr ? 'hr' : ''}"><td class="t">${r.time}</td><td>${r.artist ? '<b>' + esc(r.artist) + '</b> – ' : ''}${esc(r.title)}${r.over ? ` <span class="ov ${r.over.startsWith('ID') ? 'id' : ''}" title="Played over the intro">+ ${esc(r.over)}</span>` : ''}</td><td class="muted">${esc(r.folder)}</td><td><span class="tag ${r.type}">${r.type === 'music' ? 'SONG' : r.type === 'jingles' ? 'JINGLE' : 'AD'}</span></td><td class="mono muted">${r.len ? fmt(r.len) : ''}</td><td class="muted">${esc(r.scene)}</td><td>${audCell(r.aud)}</td><td>${chgCell(r.aud)}</td></tr>`; }).join('')
+      || '<tr><td colspan="8" class="muted" style="padding:20px;text-align:center">Nothing on air for this day' + (q || TYPE ? ' with this filter' : '') + '.</td></tr>';
     $('#sum').textContent = d.count + ' items · ' + d.songs + ' songs' + (day === iso(new Date()) ? ' · updates every 30 s' : '');
   }).catch(() => {});
 }
