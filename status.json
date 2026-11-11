@@ -1,18 +1,18 @@
 {
- "time": "2026-11-11T15:45:12",
+ "time": "2026-11-11T15:52:08",
  "result": "ok",
- "commit": "8eaacc54f2fbcde99758b3e21c6416c0144729cc",
- "subject": "Weekly recap: /recap (preview) and /recap_send (send now)",
+ "commit": "eed5a6e11ecff3c168a43582fe1db8d5f9206395",
+ "subject": "Panel player: the song's cover (from Hype Live's cover store) instead of the letter; the next 3 songs' covers are fetched ahead",
  "log": [
-  "15:44:27 update 49b51188 \u2192 8eaacc54 \u00b7 1 file(s): engine/engine.py",
-  "15:44:27 restart hype-engine",
-  "15:45:12 installed OK \u00b7 restarted: hype-engine"
+  "15:51:22 update 8eaacc54 \u2192 eed5a6e1 \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "15:51:22 restart hype-engine",
+  "15:52:07 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Ayra Starr \u2013 Tornado",
+  "song": "Bryan Mg \u2013 Kom Maar",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
