@@ -35,6 +35,7 @@ def set_setting(c, key, value):
     c.execute("INSERT OR REPLACE INTO settings VALUES(?,?)", (key, json.dumps(value))); c.commit()
 
 # ---------------- smart picking + hitting the hour ----------------
+VOICE_PICK = None   # set by the engine: a listener voice (✓ OK for air in Hype Live) for a "Listener voice" slot
 CTX = {"at": None, "fit": None}     # set by the ClockRunner while it picks: planned start time, seconds left to the hour
 _HIST = {"t": 0, "last": {}, "recent": {}}
 def history(c):
@@ -316,7 +317,7 @@ class ClockRunner:
             if path:
                 self.jrun = 0 if c.execute("SELECT 1 FROM items WHERE path=? AND section='music'", (path,)).fetchone() else self.jrun + 1
                 st[1] -= 1
-                if st[1] <= 0 or kind in ("song", "file", "jingle", "id", "showjingle"): st[0] += 1; st[1] = 0
+                if st[1] <= 0 or kind in ("song", "file", "jingle", "id", "showjingle", "voice"): st[0] += 1; st[1] = 0
                 self.snap = (cid, st[0], st[1], st[2]) if resume else None
                 self.pos = (list(key), cid, st[0], st[1], st[2])
                 c.commit(); return path
@@ -350,6 +351,8 @@ class ClockRunner:
             path = resolve_file(c, ref)
         elif kind in ("jingle", "id"):
             path = pick_jingle(c, ref)
+        elif kind == "voice":            # a listener voice; none that fits (per hour, sender, plays) = the slot is skipped
+            path = VOICE_PICK(c, at) if VOICE_PICK else None
         elif kind == "adbreak":          # one sponsor spot per call; the slot's number = spots in this break
             brands = self.ad_brands if getattr(self, "ad_slot", None) == (cid, st[0]) else set()
             self.ad_slot = (cid, st[0]); self.ad_brands = brands
@@ -641,6 +644,9 @@ def due_events(c, now, window_end):
 # ---------------- hour preview (a dry run on a copy of the library) ----------------
 def preview_hour(c, day=None, hour=None, clock=None):
     """What an hour will sound like + warnings. Runs on an in-memory copy, so nothing on air changes."""
+    try: return _preview_hour(c, day, hour, clock)
+    finally: CTX["preview"] = False
+def _preview_hour(c, day=None, hour=None, clock=None):
     mem = sqlite3.connect(":memory:"); c.backup(mem)
     now = time.time(); start = (int(now) // 3600 + 1) * 3600
     if day is not None and hour is not None:
@@ -649,7 +655,7 @@ def preview_hour(c, day=None, hour=None, clock=None):
             lt = time.localtime(t)
             if lt.tm_wday == day and lt.tm_hour == hour and t >= now - 3600: start = t; break
             t += 3600
-    r = ClockRunner(); r.force_cid = clock
+    r = ClockRunner(); r.force_cid = clock; CTX["preview"] = True
     cid = clock or clock_for(mem, start)
     cname = (mem.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() or ["no clock"])[0]
     recent, arts = [], []
@@ -783,6 +789,31 @@ def ad_window(sp, t):
     if b <= a: b += 24
     return day0 + a * 3600, day0 + b * 3600
 
+HL_DEALS = []   # sponsor deals from Hype Live (?hype_studio_sponsors): set by the engine every 10 min, kept in /var/lib/hype/hl_sponsors.json
+def deal_for(sp):
+    """The Hype Live deal this spot belongs to (its brand matches the sponsor's name or spot names), or None."""
+    b = (sp.get("brand") or "").strip().lower()
+    if not b: return None
+    for d in HL_DEALS:
+        if b in [x.strip().lower() for x in (d.get("brands") or []) + [d.get("name") or ""]]: return d
+    return None
+def ad_windows(hours, t):
+    """[(start, end)] of the day of t: '' = 07–24, '16-18', '07-12,16-23', '22-2' over midnight."""
+    lt = time.localtime(t); day0 = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 0, 0, 0, 0, 0, -1)); out = []
+    for part in (hours or "").split(","):
+        m = re.match(r"^\s*(\d{1,2})\s*-\s*(\d{1,2})\s*$", part)
+        if not m: continue
+        a, b = int(m.group(1)), int(m.group(2))
+        if b <= a: b += 24
+        out.append((day0 + a * 3600, day0 + b * 3600))
+    return out or [(day0 + 7 * 3600, day0 + 24 * 3600)]
+def eff_spot(sp):
+    """A spot with its Hype Live deal applied (dates, days, hours, per day, paused) – the deal wins over the row."""
+    d = deal_for(sp)
+    if not d: return dict(sp, deal=None)
+    return dict(sp, deal=d, start_day=d.get("start") or "", end_day=d.get("end") or "", days=d.get("days") or "0123456",
+                hours=d.get("hours") or "", per_day=int(d.get("spots_per_day") or 0), enabled=bool(sp["enabled"]) and not d.get("paused"))
+
 def ad_spots(c):
     init_ads(c)
     k = ["id", "brand", "path", "start_day", "end_day", "per_day", "days", "hours", "enabled"]
@@ -799,19 +830,28 @@ def pick_ads(c, t, n, planned=None, avoid_brands=None):
     planned = planned if planned is not None else {}; avoid_brands = set(avoid_brands or ())
     lt = time.localtime(t); today = time.strftime("%Y-%m-%d", lt)
     played = ad_played_today(c, t); max_len = float(get_setting(c, "ad_max_len", 150)); out = []; total = 0.0
-    cand = []
-    for sp in ad_spots(c):
+    cand = []; spots = [eff_spot(s) for s in ad_spots(c)]; seen_deal = set()
+    # a sponsor with a Hype Live deal: its X spots per day count for all its spot files together (the least played file goes)
+    order = sorted(spots, key=lambda s: played.get(s["path"], 0) + planned.get(s["path"], 0))
+    for sp in order:
         if not sp["enabled"] or not sp["path"]: continue
         if sp["start_day"] and today < sp["start_day"]: continue
         if sp["end_day"] and today > sp["end_day"]: continue
         if str(lt.tm_wday) not in (sp["days"] or "0123456"): continue
-        a, b = ad_window(sp, t)
-        if not (a <= t < b): continue
+        wins = ad_windows(sp["hours"], t)
+        if not any(a <= t < b for a, b in wins): continue
+        dl = sp.get("deal")
+        if dl:
+            if dl.get("id") in seen_deal: continue
+            seen_deal.add(dl.get("id"))
+            files = [s["path"] for s in spots if s.get("deal") and s["deal"].get("id") == dl.get("id")]
+            done = sum(played.get(p, 0) + planned.get(p, 0) for p in set(files))
+        else: done = played.get(sp["path"], 0) + planned.get(sp["path"], 0)
         r = c.execute("SELECT COALESCE(cue_end, duration, 30) - COALESCE(cue_start, 0) FROM items WHERE path=? AND problem IS NULL", (sp["path"],)).fetchone()
         if not r: continue
-        done = played.get(sp["path"], 0) + planned.get(sp["path"], 0)
         if done >= (sp["per_day"] or 0): continue
-        target = (sp["per_day"] or 0) * min(1.0, (t - a) / max(1.0, b - a))
+        tot = sum(b - a for a, b in wins); el = sum(max(0, min(t, b) - a) for a, b in wins)
+        target = (sp["per_day"] or 0) * min(1.0, el / max(1.0, tot))
         cand.append((target - done + 0.5, sp, float(r[0] or 30)))
     for score, sp, ln in sorted(cand, key=lambda x: -x[0]):
         if len(out) >= n: break

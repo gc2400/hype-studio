@@ -143,6 +143,7 @@ JINGLE_FADE = 0.0   # Settings → Mixing → Jingles: fade-out (0 = plays out t
 MIX_OUT = 1.5     # Settings → Mixing → fade-out of the old song (= how long both songs play together)
 # ---------------- smart mix (from the loudness map) ----------------
 SMART_MIX = True     # Settings → Mixing → Smart mix
+VOICE_AIR = {"per_hour": 2, "max_plays": 3, "intro": True}   # Settings → Listener voices (only voices marked ✓ OK for air in Hype Live)
 ID_INTRO = {"on": True, "max": 3, "gap": 15, "db": -4.0}   # Settings → Mixing → ID over soft intros (max per hour, minutes apart)
 ID_FOLDER = "IDS"    # the IDs: /srv/hype/jingles/IDS
 ID_OFFSET, ID_DUCK = 0.4, 0.5   # the ID starts 0.4 s into the song; the (already soft) intro dips to 50 % under the voice
@@ -466,38 +467,36 @@ COVERS = "/srv/hype-data/covers"; COVER_IDX = os.path.join(COVERS, "index.json")
 COVER_Q = []; COVER_LOCK = threading.Lock(); COVER_MISS = {}
 def cover_key(artist, title): return hashlib.sha1(("%s|%s" % ((artist or "").lower().strip(), (title or "").lower().strip())).encode()).hexdigest()[:16]
 def cover_url(artist, title):
-    """The song's cover (Apple Music, only when the artist matches) – None while it is looked up / when there is none."""
+    """The song's cover from Hype Live's cover store (the same covers as Home / Hype Screen, incl. the ones fixed by hand)
+    – None while it is looked up, when there is none, or when it was set to 🚫 (use the Hype artwork).
+    A cover is asked again after a day, so a fix in Hype Live reaches Hype Studio."""
     if not (artist or "").strip() or not (title or "").strip(): return None
     k = cover_key(artist, title); f = os.path.join(COVERS, k + ".jpg")
-    if os.path.exists(f): return "/api/cover/%s.jpg?v=%d" % (k, int(os.path.getmtime(f)))
-    if time.time() - COVER_MISS.get(k, 0) > 7 * 86400:
+    have = os.path.exists(f); old = not have or time.time() - os.path.getmtime(f) > 86400
+    if old and time.time() - COVER_MISS.get(k, 0) > 86400:
         with COVER_LOCK:
             if k not in [x[0] for x in COVER_Q]: COVER_Q.append((k, artist, title))
-    return None
+    return "/api/cover/%s.jpg?v=%d" % (k, int(os.path.getmtime(f))) if have else None
 def cover_worker():
     os.makedirs(COVERS, exist_ok=True)
     try: COVER_MISS.update(json.load(open(COVER_IDX)))
     except Exception: pass
     while True:
-        time.sleep(3)          # at most one look-up per 3 s
+        time.sleep(3)          # at most one look-up per 3 s (Hype Live itself asks Apple at most once per 5 s)
         with COVER_LOCK: job = COVER_Q.pop(0) if COVER_Q else None
         if not job: continue
-        k, artist, title = job
+        k, artist, title = job; f = os.path.join(COVERS, k + ".jpg")
         try:
-            first = re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|&|,)\s+|,", artist, flags=re.I)[0].strip().lower()
-            clean = re.sub(r"\s*[\(\[].*?[\)\]]", "", title)
-            q = urllib.parse.urlencode({"term": "%s %s" % (first, clean), "entity": "song", "limit": 8, "country": "NL"})
-            res = json.loads(urllib.request.urlopen("https://itunes.apple.com/search?" + q, timeout=8).read()).get("results", [])
-            fold = lambda x: unicodedata.normalize("NFKD", x or "").encode("ascii", "ignore").decode().lower()
-            names = [fold(a.strip()) for a in re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|&|,)\s+|,", artist, flags=re.I) if a.strip()]
-            ok = [r for r in res if any(n and n in fold(r.get("artistName")) for n in names)]     # one of the song's artists
-            ok.sort(key=lambda r: 0 if fold(clean) in fold(r.get("trackName")) else 1)
-            if ok and ok[0].get("artworkUrl100"):
-                img = urllib.request.urlopen(ok[0]["artworkUrl100"].replace("100x100bb", "300x300bb"), timeout=8).read()
-                with open(os.path.join(COVERS, k + ".jpg.tmp"), "wb") as fh: fh.write(img)
-                os.replace(os.path.join(COVERS, k + ".jpg.tmp"), os.path.join(COVERS, k + ".jpg")); COVER_MISS.pop(k, None)
-            else: COVER_MISS[k] = time.time()
-        except Exception as e: log.info("cover %s – %s: %s", artist, title, e); COVER_MISS[k] = time.time() - 7 * 86400 + 120   # Apple hiccup: again in 2 min
+            d = json.loads(hl_call("hype_studio_cover", "&" + urllib.parse.urlencode({"artist": artist, "title": title}), timeout=15))
+            if d.get("pending"): COVER_MISS[k] = time.time() - 86400 + 60      # Hype Live is still searching: again in 1 min
+            elif d.get("url"):
+                img = urllib.request.urlopen(urllib.request.Request(d["url"], headers={"User-Agent": "HypeStudio/1"}), timeout=10).read(5_000_000)
+                with open(f + ".tmp", "wb") as fh: fh.write(img)
+                os.replace(f + ".tmp", f); COVER_MISS.pop(k, None)
+            else:                                                              # none found, or 🚫 Wrong cover: no cover (Hype artwork)
+                if os.path.exists(f): os.remove(f)
+                COVER_MISS[k] = time.time()
+        except Exception as e: log.info("cover %s – %s: %s", artist, title, e); COVER_MISS[k] = time.time() - 86400 + 300   # again in 5 min
         try: jdump(COVER_MISS, COVER_IDX)
         except Exception: pass
 threading.Thread(target=cover_worker, daemon=True).start()
@@ -1310,8 +1309,8 @@ class Engine:
             log.warning("skipped %s – the file is missing / its name can't be played: %s", it.get("title"), it.get("path"))
             return self.push_next(c, force)
         try:
-            it.pop("id_over", None); idp = self.pick_intro_id(c, it)
-            if idp: it["id_over"] = idp; log.info("ID over the intro of %s: %s", it["title"], idp)
+            it.pop("id_over", None); idp = self.pick_intro_voice(c, it) or self.pick_intro_id(c, it)
+            if idp: it["id_over"] = idp; log.info("%s over the intro of %s: %s", "Voice" if idp.startswith("jingles/VOICE/") else "ID", it["title"], idp)
         except Exception as e: log.warning("intro ID: %s", e)
         # push FIRST: only when Liquidsoap really took it, it leaves Up next and its fixed time counts as done
         try: res = self.liq.cmd("q.push " + annotate(it, nxt=self.plan[1] if len(self.plan) > 1 else None))
@@ -1560,6 +1559,8 @@ class Engine:
             if it.get("deck"): self.deck = it["deck"]
             elif self.dj: self.deck = None
             if it["section"] == "music": self.intro_sweeper(c, it)
+            elif (path or "").startswith("jingles/VOICE/"):      # a listener voice from an hour-plan slot: counted + the voice box on TV
+                voice_played(path); voice_box(path, 0.3, max(2.0, (it.get("cue_end") or it.get("duration") or 8) - (it.get("cue_start") or 0)))
             if JINGLE_HIDE: threading.Thread(target=self.tv.jingle_graphics, args=(it["section"] != "music" and scene == "Music video" and not self.live.live,), daemon=True).start()
             try: self.screen.on_song(c, it)
             except Exception as e: log.warning("screen: %s", e)
@@ -1567,6 +1568,19 @@ class Engine:
             hl_send_np(c, it); relay_title(it)
             if it["section"] != "music": self.last_kind = "jingle"
             self.push_next(c)
+    def pick_intro_voice(self, c, it):
+        """A listener voice (✓ OK for air) over the soft intro of the next song: same places as an ID over the intro
+        (song -> song, AUTO, no mixes, no own sweeper), the voice must be done 1 s before the intro reaches full level."""
+        if not VOICE_AIR["intro"] or not self.auto or self.dj or it.get("section") != "music": return None
+        if (it.get("folder") or "").upper().startswith(("MIXES", "RECORDINGS")) or it.get("src") in ("aux", "dj"): return None
+        prev = self.now if self.now and self.now.get("path") else None
+        if not prev or prev.get("section") != "music" or (prev.get("folder") or "").upper().startswith(("MIXES", "RECORDINGS")): return None
+        r = c.execute("SELECT overlay_mode FROM items WHERE path=?", (it["path"],)).fetchone()
+        if r and r[0] in ("none", "song"): return None
+        if time.time() - self.ov_last < 180: return None
+        nl = intro_len(it)
+        if not nl or nl < 2.5: return None
+        return voice_pick(c, time.time(), max_len=nl)
     def pick_intro_id(self, c, it):
         """An ID over the soft intro of the next song (AUTO): only song -> song (never after a jingle, ID, sweeper, TOH or ad),
         never on a mix or a song with its own sweeper / "never", at most N per hour and M minutes apart, and only when the
@@ -1602,7 +1616,7 @@ class Engine:
         jingle, offset, duck = None, 0.5, 0.35
         if it.get("id_over") and mode != "song" and prev == "music":     # ID over the soft intro (decided when it was queued)
             jingle, offset, duck = it["id_over"], ID_OFFSET, ID_DUCK
-            self.idi_times.append(time.time()); self.idi_used[jingle] = time.time()
+            if not jingle.startswith("jingles/VOICE/"): self.idi_times.append(time.time()); self.idi_used[jingle] = time.time()
         elif mode == "song" and opath:                            # chosen for this song (e.g. the Top 10 number 1)
             jingle = planner.song_overlay_path(c, opath); offset = oat or 0.3
             if oduck: duck = max(0.1, min(0.9, 1 - oduck / 100)) if oduck > 1 else oduck
@@ -1620,11 +1634,14 @@ class Engine:
         jr = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (jingle,)).fetchone()
         if not jr: return
         self.ov_last = time.time(); self.ov_recent.append(jingle)
-        kind_ = "ID" if it.get("id_over") and jingle == it.get("id_over") else "Sweeper"
+        kind_ = ("Voice" if jingle.startswith("jingles/VOICE/") else "ID") if it.get("id_over") and jingle == it.get("id_over") else "Sweeper"
         def go():
             ji = row_item(jr, "intro")
             if kind_ == "ID" and ji.get("lufs") is not None: ji["lufs"] = ji["lufs"] - ID_INTRO["db"]    # ID over the intro: its own level (Settings → Mixing)
             self.liq.cmd("pads.push " + annotate(ji, True)); self.duck_for(duck_len(ji), duck)
+            if kind_ == "Voice":
+                voice_played(jingle); voice_box(jingle, 0.2, max(2.0, (ji.get("cue_end") or ji.get("duration") or 8) - (ji.get("cue_start") or 0)))
+                vv = voice_by_path(jingle); ji["title"] = ((vv.get("name") or "listener").split() or ["listener"])[0]
             log.info("intro sweeper %s over %s", jingle, it["title"])
             try:     # History shows it next to the song: "+ ID …" / "+ Sweeper …"
                 cc = dbc(); cc.execute("UPDATE asrun SET over=? WHERE id=(SELECT max(id) FROM asrun WHERE path=?)", (kind_ + ": " + (ji.get("title") or os.path.basename(jingle)), it["path"])); cc.commit()
@@ -2301,6 +2318,7 @@ def load_rotation():
     """Artist / song separation and the longest overlap, from Settings."""
     global ARTIST_SEP, TITLE_SEP, MIX_MAX, JINGLE_FADE, JINGLE_DB, ADBOX_ALWAYS, SMART_MIX, AV_LAG
     c = dbc()
+    VOICE_AIR.update(per_hour=int(planner.get_setting(c, "voice_per_hour", 2)), max_plays=int(planner.get_setting(c, "voice_max_plays", 3)), intro=bool(planner.get_setting(c, "voice_intro", True)))
     ID_INTRO.update(on=bool(planner.get_setting(c, "id_intro", True)), max=int(planner.get_setting(c, "id_intro_max", 3)), gap=float(planner.get_setting(c, "id_intro_gap", 15)), db=float(planner.get_setting(c, "id_intro_db", -4.0)))
     ARTIST_SEP = 60 * float(planner.get_setting(c, "artist_sep_min", 75)); TITLE_SEP = 3600 * float(planner.get_setting(c, "title_sep_h", 3))
     JINGLE_FADE = float(planner.get_setting(c, "jingle_fade", 0.0)); JINGLE_DB = float(planner.get_setting(c, "jingle_db", -3.0))
@@ -2483,7 +2501,7 @@ def get_settings():
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
             "jingle_hide": bool(planner.get_setting(c, "jingle_hide", True)), "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
-            "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
+            "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "voice_per_hour": VOICE_AIR["per_hour"], "voice_max_plays": VOICE_AIR["max_plays"], "voice_intro": VOICE_AIR["intro"], "voices": voice_overview(), "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd, "relay": relay_public()}
 RELAY_CFG = "/etc/hype/relay.json"
 def relay_cfg():
@@ -2549,6 +2567,9 @@ def set_settings(d):
     if "adbox_always" in d: planner.set_setting(c, "adbox_always", bool(d["adbox_always"]))
     if "smart_mix" in d: planner.set_setting(c, "smart_mix", bool(d["smart_mix"]))
     if "id_intro" in d: planner.set_setting(c, "id_intro", bool(d["id_intro"]))
+    if "voice_intro" in d: planner.set_setting(c, "voice_intro", bool(d["voice_intro"]))
+    if "voice_per_hour" in d: planner.set_setting(c, "voice_per_hour", max(0, min(6, int(float(d["voice_per_hour"])))))
+    if "voice_max_plays" in d: planner.set_setting(c, "voice_max_plays", max(1, min(20, int(float(d["voice_max_plays"])))))
     if "id_intro_max" in d: planner.set_setting(c, "id_intro_max", max(1, min(12, int(float(d["id_intro_max"])))))
     if "id_intro_gap" in d: planner.set_setting(c, "id_intro_gap", max(0.0, min(60.0, float(d["id_intro_gap"]))))
     if "id_intro_db" in d: planner.set_setting(c, "id_intro_db", max(-15.0, min(6.0, float(d["id_intro_db"]))))
@@ -2663,7 +2684,18 @@ class H(BaseHTTPRequestHandler):
                 c_ = dbc(); pl_ = planner.ad_played_today(c_)
                 files = [{"path": r[0], "title": r[1], "folder": r[2], "len": r[3], "video": bool(r[4])} for r in c_.execute(
                     "SELECT path, title, folder, COALESCE(cue_end, duration, 0) - COALESCE(cue_start, 0), has_video FROM items WHERE section='ads' AND problem IS NULL ORDER BY folder, title")]
-                return self.send(200, {"spots": [dict(s_, played_today=pl_.get(s_["path"], 0)) for s_ in planner.ad_spots(c_)], "files": files,
+                sp_ = []
+                for s_ in planner.ad_spots(c_):
+                    dl = planner.deal_for(s_)
+                    if dl:
+                        same = [x["path"] for x in planner.ad_spots(c_) if planner.deal_for(x) and planner.deal_for(x).get("id") == dl.get("id")]
+                        s_ = dict(s_, deal={k: dl.get(k) for k in ("id", "name", "start", "end", "spots_per_day", "days", "hours", "paused")}, deal_played=sum(pl_.get(p, 0) for p in set(same)))
+                    sp_.append(dict(s_, played_today=pl_.get(s_["path"], 0)))
+                linked = {s_["deal"]["id"] for s_ in sp_ if s_.get("deal")}
+                try: dt_ = json.load(open(HL_SPONSORS)).get("t", 0)
+                except Exception: dt_ = 0
+                return self.send(200, {"spots": sp_, "files": files, "deals_t": dt_,
+                                       "deals_unlinked": [{k: d_.get(k) for k in ("id", "name", "brands", "spots_per_day", "start", "end")} for d_ in planner.HL_DEALS if d_.get("id") not in linked],
                                        "max_len": planner.get_setting(c_, "ad_max_len", 150), "max_spots": planner.get_setting(c_, "ad_max_spots", 3)})
             if p == "/lower": return self.send(200, dict(LOWER, scene=E.tv.scene, live_layer=getattr(E.tv, "ll_on", True)))
             if p == "/settings": return self.send(200, get_settings())
@@ -3307,6 +3339,148 @@ def voice_drop(c, st, vid):
         except FileNotFoundError: pass
         c.execute("DELETE FROM pad_items WHERE path=?", (rel,)); c.execute("DELETE FROM items WHERE path=?", (rel,)); c.commit()
     log.info("voice: removed %s", vid)
+VOICE_PLAYS = "/var/lib/hype/voice_plays.json"; VOICE_TAKEN = []   # [(planned time, path, sender)] picked in the last minutes (one planning pass)
+def voice_plays():
+    try: return json.load(open(VOICE_PLAYS))
+    except Exception: return {}
+def voice_played(path):
+    """A listener voice went on air (as a filler or over an intro): counts for 'max plays' and the per-hour rules."""
+    try:
+        p = voice_plays(); p.setdefault(path, []).append(time.time())
+        for k in [k for k in p if not os.path.exists(os.path.join(ROOT, k))]: p.pop(k, None)
+        json.dump(p, open(VOICE_PLAYS + ".tmp", "w")); os.replace(VOICE_PLAYS + ".tmp", VOICE_PLAYS)
+    except Exception as e: log.warning("voice plays: %s", e)
+def voice_by_path(path):
+    for v in voice_state().values():
+        if v.get("path") == path: return v
+    return {}
+def voice_who(v): return ((v.get("name") or "") + "|" + (v.get("city") or "")).lower()
+def voice_box(path, delay, ln):
+    """The voice message box on TV (first name + WhatsApp / website) while a listener voice plays."""
+    v = voice_by_path(path)
+    name = (v.get("name") or re.sub(r"^Voice - |\s*\(.*$|\s+\S+$", "", os.path.splitext(os.path.basename(path))[0]) or "Listener").split()[0]
+    VOICE_ON.update(name=name, source=v.get("source") or "", start=time.time() + delay, end=time.time() + delay + ln)
+def voice_overview():
+    """For Settings: how many voices are on air / waiting / done."""
+    st = voice_state(); pl = voice_plays(); n_air = n_done = 0
+    for v in st.values():
+        if not v.get("air"): continue
+        if len(pl.get(v.get("path"), [])) >= VOICE_AIR["max_plays"]: n_done += 1
+        else: n_air += 1
+    return {"ok_for_air": n_air, "done": n_done, "total": len(st)}
+def voice_pick(c, at, max_len=None):
+    """A listener voice for an hour-plan slot (or over an intro, max_len = the intro): only ✓ OK for air in Hype Live,
+    not expired, fewer than 'max plays'; at most N per hour, never the same sender twice within an hour, never two
+    planned at once. Fewest plays first, then the newest message. None = nothing fits (the slot is skipped)."""
+    if VOICE_AIR["per_hour"] <= 0: return None
+    preview = bool(planner.CTX.get("preview")); now = time.time()
+    VOICE_TAKEN[:] = [x for x in VOICE_TAKEN if now - x[3] < 600]
+    st = voice_state(); pl = voice_plays()
+    events = [(t, voice_who(v)) for v in st.values() for t in pl.get(v.get("path"), [])]
+    planned = {u.get("path") for u in (getattr(E, "plan", None) or []) if (u.get("path") or "").startswith("jingles/VOICE/") or (u.get("id_over") or "").startswith("jingles/VOICE/")}
+    planned |= {u.get("id_over") for u in (getattr(E, "plan", None) or []) if u.get("id_over")}
+    events += [(at, voice_who(voice_by_path(p))) for p in planned if p and p.startswith("jingles/VOICE/")]
+    if not preview: events += [(x[0], x[2]) for x in VOICE_TAKEN]
+    near = [w for t, w in events if abs(t - at) < 3600]
+    if len(near) >= VOICE_AIR["per_hour"]: return None
+    best = None
+    for v in st.values():
+        p = v.get("path")
+        if not v.get("air") or not p or p in planned or any(x[1] == p for x in VOICE_TAKEN): continue
+        if now - v.get("received", now) > VOICE_DAYS * 86400: continue
+        n = len(pl.get(p, []))
+        if n >= VOICE_AIR["max_plays"] or voice_who(v) in near: continue
+        r = c.execute(f"SELECT {COLS} FROM items WHERE path=? AND problem IS NULL", (p,)).fetchone()
+        if not r: continue
+        if max_len is not None and duck_len(row_item(r, "intro")) + ID_OFFSET + 1.0 > max_len: continue
+        k = (n, -v.get("received", 0))
+        if best is None or k < best[0]: best = (k, p, voice_who(v))
+    if not best: return None
+    if not preview: VOICE_TAKEN.append((at, best[1], best[2], now))
+    return best[1]
+planner.VOICE_PICK = voice_pick
+
+# ---------------- Hype Live: sponsor deals, covers, weekly recap ----------------
+HL_SPONSORS = "/var/lib/hype/hl_sponsors.json"
+def hl_call(param, extra="", data=None, timeout=20):
+    """GET (or POST data) https://hyperadio.nl/?<param>=KEY<extra> with the Hype Live key from the guard settings."""
+    g = json.load(open(GUARD_CONF))
+    if not g.get("hl_key"): raise RuntimeError("no Hype Live key")
+    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?" + param + "=" + urllib.parse.quote(g["hl_key"]) + extra
+    r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1", **({"Content-Type": "application/json"} if data is not None else {})},
+                               method="POST" if data is not None else "GET")
+    return urllib.request.urlopen(r, timeout=timeout).read(2_000_000).decode("utf-8", "replace")
+RECAP_SENT = "/var/lib/hype/recap_sent.json"
+def recap_data(w=1):
+    """Last week's playout summary for Hype Live's weekly recap (top songs / artists / new music / genres, live hours, peaks)."""
+    import datetime as D, collections as C
+    r = week_report({"w": [str(w)]})
+    mon = D.date.fromisoformat(r["from"]); t0 = time.mktime(mon.timetuple()); t1 = t0 + 7 * 86400
+    c = dbc(); rows = c.execute("SELECT path, artist, title FROM asrun WHERE started>=? AND started<? AND path LIKE 'music/%'", (t0, t1)).fetchall()
+    rows = [x for x in rows if "/MIXES/" not in x[0] and "/RECORDINGS/" not in x[0]]
+    cnt = C.Counter(x[0] for x in rows); name = {x[0]: (x[1] or "", x[2] or "") for x in rows}
+    top = [{"artist": name[p][0], "title": name[p][1], "plays": n} for p, n in cnt.most_common(10)]
+    new = [{"artist": name[p][0], "title": name[p][1], "plays": n} for p, n in cnt.most_common() if p.split("/")[1:2] == ["NEW"]][:10]
+    live_s, shows, on_at = 0.0, [], None          # live hours from the GO LIVE log
+    try:
+        for ln in open("/var/lib/hype/live_log.jsonl"):
+            e = json.loads(ln)
+            if e.get("on"):
+                on_at = e["t"]
+                if t0 <= e["t"] < t1 and e.get("show") and e["show"] not in shows: shows.append(e["show"])
+            elif on_at:
+                a, b = max(on_at, t0), min(e["t"], t1)
+                if b > a: live_s += b - a
+                on_at = None
+    except OSError: pass
+    au = r.get("audience") or []
+    rp = max([(d.get("radio") or {}).get("peak", 0) for _, d in au] or [0]); tp = max([(d.get("tv") or {}).get("peak", 0) for _, d in au] or [0])
+    ru = [(d.get("radio") or {}).get("unique", 0) for _, d in au if d.get("radio")]; tu = [(d.get("tv") or {}).get("unique", 0) for _, d in au if d.get("tv")]
+    y, wk, _ = mon.isocalendar()
+    return {"week": "%d-W%02d" % (y, wk), "from": r["from"], "to": r["to"],
+            "songs_played": r["totals"]["songs"], "different_songs": r["totals"]["unique_songs"],
+            "top_songs": top, "top_artists": [{"artist": a, "plays": n} for a, n in r["top_artists"][:10]], "new_music": new,
+            "genres": [{"genre": g, "plays": n} for g, n in r["genres"][:10]],
+            "live_hours": round(live_s / 3600, 1), "shows_live": shows[:10],
+            # devices are only counted per day (a daily code, no addresses): unique_week = the average day
+            "radio": {"peak": rp, "unique_week": round(sum(ru) / len(ru)) if ru else 0},
+            "tv": {"peak": tp, "unique_week": round(sum(tu) / len(tu)) if tu else 0}}
+def recap_send(w=1):
+    d = recap_data(w); a = hl_call("hype_studio_recap", data=json.dumps(d).encode(), timeout=30).strip()
+    log.info("weekly recap %s -> Hype Live: %s", d["week"], a[:40]); return d["week"], a
+def recap_loop():
+    """Every Monday from 05:30: last week's playout summary to Hype Live (once; tried again every 10 min if it fails)."""
+    while True:
+        try:
+            lt = time.localtime()
+            if lt.tm_wday == 0 and (lt.tm_hour, lt.tm_min) >= (5, 30):
+                try: sent = json.load(open(RECAP_SENT))
+                except Exception: sent = {}
+                import datetime as D
+                y, wk, _ = (D.date.today() - D.timedelta(days=7)).isocalendar(); key = "%d-W%02d" % (y, wk)
+                if sent.get("week") != key:
+                    week, a = recap_send(1)
+                    if a.startswith("OK"): jdump({"week": week, "t": time.time()}, RECAP_SENT)
+        except Exception as e: log.warning("weekly recap: %s", e)
+        time.sleep(600)
+def sponsors_load():
+    try: planner.HL_DEALS = json.load(open(HL_SPONSORS)).get("sponsors") or []
+    except Exception: planner.HL_DEALS = []
+def sponsors_loop():
+    """Every 10 min: the sponsor deals from Hype Live (spots per day, dates, days, hours, paused). The last good list is
+    kept (also over a restart) when Hype Live can't be reached, so the ads never stop because the website is slow."""
+    sponsors_load()
+    while True:
+        try:
+            d = json.loads(hl_call("hype_studio_sponsors"))
+            if isinstance(d.get("sponsors"), list):
+                d["t"] = time.time(); jdump(d, HL_SPONSORS)
+                old = {x.get("id"): x.get("updated") for x in planner.HL_DEALS}
+                planner.HL_DEALS = d["sponsors"]
+                if old != {x.get("id"): x.get("updated") for x in planner.HL_DEALS}: log.info("Hype Live sponsor deals: %d", len(planner.HL_DEALS))
+        except Exception as e: log.warning("Hype Live sponsor deals: %s", e)
+        time.sleep(600)
+
 def voice_loop():
     """Every 20 s: new voice messages Hype Live marked 'To Hype Studio' are downloaded, made into a clean mp3 in
     jingles/VOICE and put on the 🎙 VOICE pad bank (they only play when you tap the pad). Then Hype Live gets the ack.
@@ -3331,6 +3505,11 @@ def voice_loop():
             for vid, v in list(st.items()):
                 if time.time() - v.get("received", 0) > VOICE_DAYS * 86400: voice_drop(c, st, vid); changed = True
             os.makedirs(VOICE_DIR, exist_ok=True)
+            # ✓ OK for air / ✕ Not for air from Hype Live (items not acked yet carry it; later changes come in "update")
+            for u in list(d.get("items") or []) + list(d.get("update") or []):
+                vid = re.sub(r"[^A-Za-z0-9_-]", "", str(u.get("id") or ""))
+                if vid in st and "air" in u and bool(st[vid].get("air")) != bool(u.get("air")):
+                    st[vid]["air"] = bool(u.get("air")); changed = True; log.info("voice: %s %s", vid, "OK for air" if u.get("air") else "not for air")
             for it in d.get("items") or []:
                 vid = re.sub(r"[^A-Za-z0-9_-]", "", str(it.get("id") or ""))
                 if not vid or vid in st or time.time() - VOICE_FAIL.get(vid, 0) < 3600: continue   # (a message that failed: again in 1 h)
@@ -3352,7 +3531,7 @@ def voice_loop():
                     try: os.remove(src)
                     except FileNotFoundError: pass
                 st[vid] = {"path": os.path.relpath(os.path.join(VOICE_DIR, fn), ROOT), "name": name, "city": city, "source": it.get("source"),
-                           "received": voice_when(it.get("received")), "acked": False, "in_bank": False}
+                           "received": voice_when(it.get("received")), "acked": False, "in_bank": False, "air": bool(it.get("air"))}
                 changed = True; log.info("voice: downloaded %s (%s)", vid, name)
             # indexed? -> onto the VOICE bank (newest first) -> ack
             for vid, v in st.items():
@@ -3463,5 +3642,7 @@ if __name__ == "__main__":
     threading.Thread(target=voice_loop, daemon=True).start()
     threading.Thread(target=autorec_loop, daemon=True).start()
     threading.Thread(target=aud_sampler, daemon=True).start()
+    threading.Thread(target=sponsors_loop, daemon=True).start()
+    threading.Thread(target=recap_loop, daemon=True).start()
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()

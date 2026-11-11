@@ -417,6 +417,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
         A break gets the spots that are most behind on their plays for today, max. 1 per brand. Video spots show full screen on TV; audio spots play over the Hype Screen.</p>
       <div class="row" style="gap:14px;flex-wrap:wrap"><label class="row" style="gap:6px">Max. break length <input type="number" id="adMaxLen" min="15" max="600" style="width:80px"> s</label>
         <label class="row" style="gap:6px">Max. spots in a fixed-time break <input type="number" id="adMaxSp" min="1" max="10" style="width:64px"></label></div>
+      <p class="muted" style="margin:0" data-find="sponsor deal hype live spots per day">A spot whose <b>Brand</b> is the sponsor's name in Hype Live follows that sponsor's <b>deal</b> (💼 Sponsors → Spots per day, dates, days, hours, paused) – the deal wins over this row, and all its spot files share the X per day. <span id="adDeals"></span></p>
       <div style="overflow-x:auto">
       <table class="slots">
         <thead><tr><th>On</th><th>Brand</th><th>Spot</th><th>From</th><th>Until</th><th>Per day</th><th>Days</th><th>Hours</th><th>Today</th><th></th></tr></thead>
@@ -603,7 +604,7 @@ $('#plReset').onclick = () => post('plan/reset_playlist', {id: cur.id}).then(() 
 
 /* ---------------- clocks ---------------- */
 let ck = null;
-const KINDS = [['playlist', 'Playlist'], ['folder', 'Folder'], ['showjingle', 'Show sweeper'], ['jingle', 'Jingle / sweeper'], ['id', 'Station ID'], ['song', 'Song'], ['file', 'File (by name)'], ['adbreak', 'Ad break']];
+const KINDS = [['playlist', 'Playlist'], ['folder', 'Folder'], ['showjingle', 'Show sweeper'], ['jingle', 'Jingle / sweeper'], ['id', 'Station ID'], ['song', 'Song'], ['file', 'File (by name)'], ['adbreak', 'Ad break'], ['voice', 'Listener voice']];
 const STARTS = [['continue', 'Where it left off'], ['start', 'From the start'], ['random', 'Random place']];
 function renderCK() {
   const cq = nf($('#ckQ').value);
@@ -729,16 +730,19 @@ function loadAds() { get('ads').then(d => { AD = d; $('#adMaxLen').value = d.max
 function renderAds() {
   const fl = AD.files, fm = Object.fromEntries(fl.map(f => [f.path, f]));
   const mmss = s => Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0');
+  const dd = s => s ? (s.slice(8, 10) + '-' + s.slice(5, 7)) : '…';
+  const un = AD.deals_unlinked || [];
+  $('#adDeals').innerHTML = (un.length ? `<b style="color:#FFB54D">⚠ Deal in Hype Live without a spot here: ${un.map(d => esc(d.name) + ' (' + d.spots_per_day + '/day)').join(', ')} – add a row with that brand.</b> ` : '') + (AD.deals_t ? 'Deals read ' + new Date(AD.deals_t * 1000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + '.' : '');
   $('#adRows').innerHTML = AD.spots.map((s, i) => `<tr>
     <td><input type="checkbox" data-i="${i}" data-f="enabled" ${s.enabled ? 'checked' : ''} style="width:20px;height:20px;accent-color:var(--y)"></td>
-    <td><input type="text" data-i="${i}" data-f="brand" value="${esc(s.brand || '')}" placeholder="Brand" style="width:130px"></td>
+    <td><input type="text" data-i="${i}" data-f="brand" value="${esc(s.brand || '')}" placeholder="Brand" style="width:130px">${s.deal ? `<div style="font-size:11px;color:var(--g);margin-top:3px;white-space:nowrap" title="The Hype Live deal wins over the fields in this row">✓ Hype Live deal: ${s.deal.spots_per_day}/day · ${dd(s.deal.start)} → ${dd(s.deal.end)}${s.deal.hours ? ' · ' + esc(s.deal.hours) : ''}${s.deal.paused ? ' · <b style="color:#FFB54D">paused</b>' : ''}</div>` : ''}</td>
     <td><select data-i="${i}" data-f="path" style="max-width:260px"><option value="">– choose a spot –</option>${fl.map(f => `<option value="${esc(f.path)}" ${s.path === f.path ? 'selected' : ''}>${esc(f.folder.replace(/^ads\/?/i, ''))} · ${esc(f.title)} (${mmss(f.len)}${f.video ? ' · video' : ' · audio'})</option>`).join('')}</select></td>
     <td><input type="date" data-i="${i}" data-f="start_day" value="${esc(s.start_day || '')}"></td>
     <td><input type="date" data-i="${i}" data-f="end_day" value="${esc(s.end_day || '')}"></td>
     <td><input class="num" type="number" min="0" max="96" data-i="${i}" data-f="per_day" value="${s.per_day ?? 4}" style="width:64px"></td>
     <td><div class="row" style="flex-wrap:nowrap;gap:2px">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, d) => `<button class="btn sm ${(s.days ?? '0123456').includes(String(d)) ? 'on' : ''}" data-aday="${i}" data-d="${d}" style="min-width:24px;padding:0 4px">${l}</button>`).join('')}</div></td>
     <td><input type="text" data-i="${i}" data-f="hours" value="${esc(s.hours || '')}" placeholder="07-24" title="e.g. 16-19 (empty = 07–24)" style="width:64px"></td>
-    <td class="mono">${s.played_today ?? 0}/${s.per_day ?? 0}</td>
+    <td class="mono">${s.deal ? (s.deal_played ?? 0) + '/' + (s.deal.spots_per_day ?? 0) : (s.played_today ?? 0) + '/' + (s.per_day ?? 0)}</td>
     <td><button class="btn sm red" data-adel="${i}" aria-label="Remove">×</button></td></tr>`).join('') || `<tr><td colspan="10" class="muted">${fl.length ? 'No spots planned yet – click + Add spot.' : 'No spot files yet – upload them to the ads folder (ads/Brand/spot.mp4).'}</td></tr>`;
   $$('#adRows [data-f]').forEach(el => el.onchange = () => { const s = AD.spots[+el.dataset.i], f = el.dataset.f;
     s[f] = el.type === 'checkbox' ? el.checked : f === 'per_day' ? +el.value : el.value;
@@ -826,7 +830,7 @@ function tabChanged(b) { b.scrollIntoView({block: 'nearest', inline: 'nearest'})
 
 /* ---------------- shared: how a slot reads ---------------- */
 const SLK = {playlist: ['SONG', '#062F38', '#05A9C6'], folder: ['SONG', '#062F38', '#05A9C6'], mix: ['MIX', '#3A3300', '#FFE000'], showjingle: ['SHOW ID', '#1E1438', '#B9A2FF'],
-  jingle: ['SWEEP', '#1E1438', '#B9A2FF'], id: ['STATION ID', '#1E1438', '#B9A2FF'], song: ['SONG', '#062F38', '#05A9C6'], file: ['FILE', '#062F38', '#05A9C6'], adbreak: ['ADS', '#3A2A00', '#FFB54D'], fixed: ['FIXED', '#3A3300', '#FFE000']};
+  jingle: ['SWEEP', '#1E1438', '#B9A2FF'], id: ['STATION ID', '#1E1438', '#B9A2FF'], song: ['SONG', '#062F38', '#05A9C6'], file: ['FILE', '#062F38', '#05A9C6'], adbreak: ['ADS', '#3A2A00', '#FFB54D'], voice: ['VOICE', '#062A1E', '#3DDC97'], fixed: ['FIXED', '#3A3300', '#FFE000']};
 const isMix = s => s.kind === 'folder' && /^(MIXES|RECORDINGS)(\/|$)/i.test(s.ref || '');
 const JTAG = {LINERS: 'LINER', SWEEPERS: 'SWEEP', 'NEW MUSIC': 'NEW MUSIC', THROWBACK: 'THROWBACK', IDS: 'STATION ID', SWP: 'SWEEP'};
 const tagOf = s => { const t = SLK[isMix(s) ? 'mix' : s.kind] || ['?', '#0F2B44', '#A9BCCD']; return s.kind === 'jingle' ? [JTAG[(s.ref || '').toUpperCase()] || 'JINGLE', t[1], t[2]] : t; };
@@ -838,7 +842,8 @@ function slotText(s) {
   if (s.kind === 'showjingle') return 'Show ID / sweeper (else ' + (s.ref || 'SWEEPERS') + ')';
   if (s.kind === 'jingle') return (JTAG[(s.ref || '').toUpperCase()] === 'LINER' ? 'Liner' : JTAG[(s.ref || '').toUpperCase()] === 'SWEEP' ? 'Sweeper' : 'Jingle') + ' from ' + s.ref; if (s.kind === 'id') return 'Station ID from ' + s.ref;
   if (s.kind === 'song') return (s.ref || '').split('/').pop(); if (s.kind === 'file') return 'File ' + s.ref;
-  if (s.kind === 'adbreak') return 'Ad break · ' + (s.amount || 1) + ' spots'; return s.ref || '';
+  if (s.kind === 'adbreak') return 'Ad break · ' + (s.amount || 1) + ' spots';
+  if (s.kind === 'voice') return 'Listener voice (only ✓ OK for air · skipped when none fits)'; return s.ref || '';
 }
 function lighten(hex, k) { const m = /^#?([0-9a-f]{6})/i.exec(hex || ''); if (!m) return '#C9D7E3'; const n = parseInt(m[1], 16); const f = v => Math.round(v + (255 - v) * k);
   return '#' + [f(n >> 16), f((n >> 8) & 255), f(n & 255)].map(v => v.toString(16).padStart(2, '0')).join(''); }
@@ -1086,7 +1091,7 @@ function shEst() {
   $('#shEst').textContent = `${SHC.slots.length} rows · ${SHC.slots.some(s => s.amount >= 999) ? 'fills the hour' : SHC.slots.some(s => ['playlist', 'folder'].includes(s.kind) && !s.amount) ? 'has an "all" row' : '≈ ' + n + ' songs per round'} · Preview hour shows the real fill`;
 }
 const ADDS = [['playlist', 'Song from a playlist', 'POWER, CURRENT, GOLD …'], ['folder', 'Song from a folder', 'a music folder'], ['showjingle', 'Show ID / sweeper', 'from the show folder'],
-  ['jingle', 'Jingle / liner / sweeper', 'LINERS, SWEEPERS, NEW MUSIC, THROWBACK …'], ['id', 'Station ID', 'from IDS'], ['adbreak', 'Ad break', 'spots picked by Ads'], ['mix', 'Mix / liveset', 'one file from a MIXES folder'], ['song', 'One song', 'always this song'], ['fixed', 'Fixed time', 'news, TOH – at an exact minute']];
+  ['jingle', 'Jingle / liner / sweeper', 'LINERS, SWEEPERS, NEW MUSIC, THROWBACK …'], ['id', 'Station ID', 'from IDS'], ['adbreak', 'Ad break', 'spots picked by Ads'], ['voice', 'Listener voice', 'a voice message (✓ OK for air)'], ['mix', 'Mix / liveset', 'one file from a MIXES folder'], ['song', 'One song', 'always this song'], ['fixed', 'Fixed time', 'news, TOH – at an exact minute']];
 $('#shAdd').innerHTML = ADDS.map(([k, t, d]) => `<button type="button" class="adb" data-add="${k}" ${k === 'fixed' ? '' : 'draggable="true"'}><b>+ ${t}</b><small>${d}</small></button>`).join('');
 $$('#shAdd [data-add]').forEach(b => {
   b.onclick = () => { const k = b.dataset.add; if (k === 'fixed') { $('.tab[data-tab="fx"]').click(); return; } if (!SHC) return toast('Choose a show or hour plan first', 1);

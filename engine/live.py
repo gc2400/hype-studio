@@ -175,6 +175,9 @@ class Live:
         for k, d in self.dests().items():
             if d.get("with_live"): self.restream(k, on)
         log.info("LIVE %s", "ON" if on else "OFF")
+        try:      # for the weekly recap (live hours + which shows were live)
+            with open("/var/lib/hype/live_log.jsonl", "a") as f_: f_.write(json.dumps({"t": time.time(), "on": bool(on), "show": self.show_title()}) + "\n")
+        except Exception as e: log.warning("live log: %s", e)
     # ---------- guests ----------
     def guests(self):
         return load(GUESTS, {"guests": {}}).get("guests", {})
