@@ -335,13 +335,14 @@ def warm(c, it):
             except OSError: pass
     threading.Thread(target=go, daemon=True).start()
 
+CHART_HINT = {}   # path -> (chart playlist id, when) for chart songs that came in through a fixed-time block
 class Screen:
     """On-screen items (Gianno's PNG/WebM graphics): shown by the Graphics page when a rule fires."""
     def __init__(self):
         self.active = []; self.count = {}; self.last = {}; self.done_min = set()
         self.upn_hour = time.strftime("%Y%m%d%H") if time.localtime().tm_min >= 2 else None
         self.upn_done = self.upn_hour            # a restart mid-hour: no extra Up next
-        self.np = None; self.top10 = None
+        self.np = None; self.chart = None
         try:   # what was on screen before a restart stays on screen
             self.active = [a for a in json.load(open(SCREEN_STATE)) if a["end"] > time.time()]
             for a in self.active: a["file"] = tickers.as_ticker(a["file"])
@@ -380,18 +381,26 @@ class Screen:
         self.add(r["id"], f, r["delay"] or 0, dur, r["where_"]); log.info("on screen: %s (%s)", r["name"] or f, r["trigger"])
     def on_song(self, c, it):
         length = max(1.0, (it.get("cue_mix") or it.get("cue_end") or it.get("duration") or 180) - (it.get("cue_start") or 0))
-        m = re.search(r"TOP10N(\d+)", os.path.basename(it.get("path") or ""), re.I)
-        if m: self.top10 = (int(m.group(1)), time.time())      # the Top 10 number jingle: the next song gets that number
-        elif it["section"] == "music":
+        self.chart = None
+        if it["section"] == "music":
             now = time.time()
             # artist + title in the Now Playing box (Music video scene only): after the start, and again halfway on longer songs
             at = [now + 5.0] + ([now + length / 2] if length > 150 else [])
             mix_no_artist = (it.get("folder") or "").upper().startswith(("MIXES", "RECORDINGS")) and not (it.get("artist") or "").strip()
             self.np = None if mix_no_artist else {"id": uuid.uuid4().hex[:8], "title": it.get("title") or "", "artist": it.get("artist") or "", "at": at, "start": now, "end": now + length}   # a mix without artist: no box
-            if self.top10 and now - self.top10[1] < 120:
-                f = "TOP10/N%d.png" % self.top10[0]
-                if os.path.exists(os.path.join(planner.SCREEN_DIR, f)): self.add(None, f, 0.0, max(5.0, length - 1), "all")
-            self.top10 = None
+            h_ = CHART_HINT.get(it["path"])
+            if not it.get("chart_pid") and h_ and now - h_[1] < 6 * 3600: it["chart_pid"] = h_[0]
+            if it.get("chart_pid"):      # a chart song: its number (+ ▲ ▼ NEW RE) in the yellow square, the whole song
+                try:
+                    pid = it["chart_pid"]
+                    r_ = c.execute("SELECT COALESCE(chart_num,1), COALESCE(chart_arrows,1) FROM playlists WHERE id=? AND COALESCE(chart,0)=1", (pid,)).fetchone()
+                    pos = dict(planner.chart_positions(c, pid)).get(it["path"]) if r_ and r_[0] else None
+                    if pos:
+                        mv = planner.chart_move(c, pid, it["path"], pos) if r_[1] else None
+                        planner.chart_snapshot(c, pid)          # this week's list = the base for next week's arrows
+                        self.chart = {"num": pos, "mv": list(mv) if mv else None, "start": now, "end": now + length + 30}
+                        log.info("chart #%d %s", pos, ("%s %s" % mv) if mv else "")
+                except Exception as e: log.warning("chart number: %s", e)
         if it["section"] == "music":
             try: self.upnext_plan(c, it, length)
             except Exception as e: log.warning("up next: %s", e)
@@ -459,7 +468,8 @@ class Screen:
         if scene == "Up next":
             try: upn = E.upnext_data()
             except Exception as e: log.warning("up next data: %s", e)
-        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and E.now and E.now.get("path") and E.now.get("section") != "music"),
+        ch = self.chart if self.chart and self.chart["end"] > now else None
+        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and E.now and E.now.get("path") and E.now.get("section") != "music"),
                 "slides": ["/adbox/" + urllib.parse.quote(f) for f in slides], "slide_s": 30,
                 "slides_layer": "adbox" if scene == "Hype Screen" else "graphics"}   # Hype Screen: its own source under the Live Layer
 
@@ -1098,7 +1108,10 @@ class Engine:
         if it and touched: self.snaps.append((it["id"], {str(k): v for k, v in touched.items()}))
         if it and self.runner.snap: it["snap"] = self.runner.snap
         if it and self.runner.pos: it["pos"] = self.runner.pos
-        if it and getattr(self.runner, "fixed", False): it["fixed"] = True     # from a fixed-order playlist (Top 10 countdown)
+        if it and getattr(self.runner, "fixed", False):
+            it["fixed"] = True     # from a fixed-order playlist (Top 10 countdown)
+            pid_ = getattr(self.runner, "fixed_pid", None)
+            if pid_ and (c.execute("SELECT COALESCE(chart,0) FROM playlists WHERE id=?", (pid_,)).fetchone() or [0])[0]: it["chart_pid"] = pid_
         if it: it["hour_k"] = list(planner.runner_key(at))    # which clock run (hour / show) picked it - kept at the top of the hour
         if not it: it = self.picker.next(c, self.avoid())     # nothing in the clocks: built-in test clock
         if not it: return "stop"
@@ -1204,6 +1217,7 @@ class Engine:
         if n.get("path") != path or n.get("mode") not in ("clip", "pair") or self.live.live or self.stopped: return
         if not self.tv.auto or self.tv.scene != "Music video": return
         if re.search(r"top\s*10", SHOW.get("title") or "", re.I): return      # the Hype Top 10 has its own order: no Up next
+        if self.now and self.now.get("chart_pid"): return                     # during any chart (Top 40 …): no Up next either
         if len(self.upnext_data()["items"]) < 3: return
         log.info("Up next PIP for %.0f s", dur); self.hold_scene("Up next", dur)
     def upnext_data(self):
@@ -1416,6 +1430,8 @@ class Engine:
             n = e["amount"] if e["amount"] and e["amount"] > 0 else len(planner.playlist_songs(c, pid))
             for i in range(n):   # a fixed-time block plays its playlist from the start (e.g. the Top 10)
                 paths.append(planner.take_from_playlist(c, pid, "start" if i == 0 else "continue", lambda p: True))
+            if (c.execute("SELECT COALESCE(chart,0) FROM playlists WHERE id=?", (pid,)).fetchone() or [0])[0]:
+                for p_ in paths: CHART_HINT[p_] = (pid, time.time())      # a chart at a fixed time: its songs still get their number
         return paths
     def check_events(self, c):
         now = time.time(); n = self.now
@@ -3493,53 +3509,62 @@ def hl_open(url, timeout=60):
 
 # ---------------- Hype Top 10 -> Hype Live (for the website chart) ----------------
 TOP10_SENT = "/var/lib/hype/top10_sent.json"
-def top10_data():
-    """The Hype Top 10 as Gianno set it in the 'play exactly as listed' Top 10 playlist: each song gets the number of the
-    TOP10Nxx jingle right before it. show_at = the next start of the Hype Top 10 show (week schedule) – the week it is for."""
-    c = dbc()
-    r = c.execute("SELECT id, name FROM playlists WHERE name LIKE '%TOP%10%' AND COALESCE(strict, 0)=1 ORDER BY id LIMIT 1").fetchone()
-    if not r: return None
-    items, num = [], None
-    for p in planner.playlist_songs(c, r[0]):
-        m = re.search(r"TOP\s*10\s*N\s*0*(\d{1,2})", os.path.basename(p), re.I)
-        if m and not p.startswith("music/"): num = int(m.group(1)); continue
-        if p.startswith("music/") and num:
-            it = c.execute("SELECT artist, title FROM items WHERE path=?", (p,)).fetchone()
-            if it: items.append({"pos": num, "artist": it[0] or "", "title": it[1] or ""})
-            num = None
-    items.sort(key=lambda x: x["pos"])
-    show_at = 0; now = time.time()
-    for k in range(0, 8 * 1440, 1):                       # the next start of a show called "… Top 10 …" (minute steps over 8 days)
+def chart_show_at(name):
+    """The next start of the show this chart belongs to ('Hype Top 10' -> a show with 'Top 10' in its name), or 0."""
+    m = re.search(r"top\s*\d+", name or "", re.I); key = re.sub(r"\s+", "", (m.group(0) if m else name or "")).lower(); now = time.time()
+    if not key: return 0
+    for k in range(0, 8 * 1440):
         t = (int(now) // 60 + k) * 60; s_ = planner.show_at(t)
-        if s_ and re.search(r"top\s*10", s_.get("title") or "", re.I) and not (planner.show_at(t - 60) or {}).get("title") == s_.get("title"):
-            show_at = t; break
-    import datetime as D
-    y, wk, _ = (D.date.fromtimestamp(show_at) if show_at else D.date.today()).isocalendar()
-    return {"week": "%d-W%02d" % (y, wk), "show_at": show_at, "playlist": r[1], "items": items, "sent_at": int(now)}
-def top10_send(force=False):
-    d = top10_data()
-    if not d or not d["items"]: return None, "no Top 10 playlist / no songs"
+        if s_ and key in re.sub(r"\s+", "", (s_.get("title") or "").lower()) and (planner.show_at(t - 60) or {}).get("title") != s_.get("title"): return t
+    return 0
+def chart_data(pid):
+    """A chart as it is now in its playlist: numbers count down (first song = highest), for the website (via Hype Live)."""
+    c = dbc(); r = c.execute("SELECT id, name FROM playlists WHERE id=? AND COALESCE(chart,0)=1", (pid,)).fetchone()
+    if not r: return None
+    items = []
+    for p, n in planner.chart_positions(c, pid):
+        it = c.execute("SELECT artist, title FROM items WHERE path=?", (p,)).fetchone()
+        if it: items.append({"pos": n, "artist": it[0] or "", "title": it[1] or ""})
+    items.sort(key=lambda x: x["pos"]); show_at = chart_show_at(r[1])
+    return {"chart": {"id": pid, "name": r[1], "size": len(items)}, "week": planner.chart_week(show_at or None), "show_at": show_at,
+            "playlist": r[1], "items": items, "sent_at": int(time.time())}
+def web_charts():
+    return dbc().execute("SELECT id, name FROM playlists WHERE COALESCE(chart,0)=1 AND COALESCE(chart_web,1)=1").fetchall()
+def is_top10(name): return bool(re.search(r"top\s*10\b", name or "", re.I))
+def top10_data():
+    for pid, name in web_charts():
+        if is_top10(name): return chart_data(pid)
+    return None
+def chart_send(pid, force=False):
+    """One chart to Hype Live: the Hype Top 10 to ?hype_studio_top10 (as since 2.37), other charts to ?hype_studio_chart."""
+    d = chart_data(pid)
+    if not d or not d["items"]: return None, "no songs"
     sig = json.dumps([d["week"], d["items"]], sort_keys=True)
     try: last = json.load(open(TOP10_SENT))
     except Exception: last = {}
-    if not force and last.get("sig") == sig: return d["week"], "unchanged"
-    a = hl_call("hype_studio_top10", data=json.dumps(d).encode(), timeout=30).strip()
-    if a.startswith("OK"): jdump({"sig": sig, "t": time.time(), "week": d["week"]}, TOP10_SENT)
-    log.info("Hype Top 10 %s -> Hype Live: %s", d["week"], a[:40]); return d["week"], a
+    if "sig" in last: last = {}                        # old format (one chart)
+    if not force and last.get(str(pid), {}).get("sig") == sig: return d["week"], "unchanged"
+    a = hl_call("hype_studio_top10" if is_top10(d["chart"]["name"]) else "hype_studio_chart", data=json.dumps(d).encode(), timeout=30).strip()
+    if a.startswith("OK"): last[str(pid)] = {"sig": sig, "t": time.time(), "week": d["week"]}; jdump(last, TOP10_SENT)
+    log.info("chart %s %s -> Hype Live: %s", d["chart"]["name"], d["week"], a[:40]); return d["week"], a
+def top10_send(force=False):
+    for pid, name in web_charts():
+        if is_top10(name): return chart_send(pid, force)
+    return None, "no Top 10 chart"
 def top10_loop():
-    """Every 10 min: when the Top 10 list changed (and has been the same for 10 min, so half-done edits are not sent),
-    it goes to Hype Live. Hype Live puts it on the website from show_at (no spoilers before the show)."""
-    seen = None
+    """Every 10 min: a chart whose list changed (and stayed the same for 10 min, so half-done edits are never sent)
+    goes to Hype Live. Hype Live puts it on the website from show_at (no spoilers before the show)."""
+    seen = {}
     while True:
         time.sleep(600)
-        try:
-            d = top10_data()
-            sig = json.dumps([d["week"], d["items"]], sort_keys=True) if d else None
-            if sig and sig == seen: top10_send()
-            seen = sig
-        except urllib.error.HTTPError as e:
-            if e.code != 404: log.warning("Hype Top 10 -> Hype Live: %s", e)
-        except Exception as e: log.warning("Hype Top 10 -> Hype Live: %s", e)
+        for pid, name in web_charts():
+            try:
+                d = chart_data(pid); sig = json.dumps([d["week"], d["items"]], sort_keys=True) if d else None
+                if sig and sig == seen.get(pid): chart_send(pid)
+                seen[pid] = sig
+            except urllib.error.HTTPError as e:
+                if e.code != 404: log.warning("chart %s -> Hype Live: %s", name, e)
+            except Exception as e: log.warning("chart %s -> Hype Live: %s", name, e)
 
 RECAP_SENT = "/var/lib/hype/recap_sent.json"
 def recap_data(w=1):

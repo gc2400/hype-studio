@@ -48,6 +48,14 @@ body.onlyclock>*:not(#clockw):not(script){display:none!important}
 body.onlytop10>*:not(#screen):not(script){display:none!important}body.onlytop10 #screen .it:not(.top10){display:none!important}
 body.noclock #screen .it.top10{display:none!important}
 /* voice message box (Gianno's design A): while a listener's voice pad plays, in the Now Playing spot */
+/* chart number (a playlist set to Chart): a yellow square exactly over the left end of the Now Playing box, the whole song */
+#chq{position:absolute;left:80px;top:776px;width:148px;height:148px;border-radius:22px;background:#FFE000;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:scale(.92);transition:opacity .35s,transform .35s;z-index:5}
+#chq.on{opacity:1;transform:none}
+#chq .n{font-family:Inter,sans-serif;font-weight:900;font-size:78px;line-height:.9;color:#041C33;letter-spacing:-2px}
+#chq.d3 .n{font-size:58px}
+#chq .m{margin-top:9px;background:#041C33;border-radius:16px;padding:3px 13px;font-family:Inter,sans-serif;font-weight:900;font-size:24px;line-height:26px;white-space:nowrap}
+#chq .m:empty{display:none}#chq .up{color:#3DDC97}#chq .down{color:#FF3B5C}#chq .same{color:#B4C2D2}#chq .new{color:#05A9C6}#chq .re{color:#B98BFF}
+body.branding #chq,body.pip #chq,body.upnext #chq,body.jingle #chq{opacity:0!important}
 #vb{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0;transform:translateX(-24px);transition:opacity .4s,transform .4s;pointer-events:none}
 #vb.on{opacity:1;transform:none}
 #vb img{position:absolute;left:0;top:0;width:1920px;height:1080px}
@@ -68,6 +76,7 @@ body.voice #np{visibility:hidden}
 <div class="uc" id="uc1"><div class="ut"></div><div class="ua"></div><div class="tm"></div></div>
 <div class="uc" id="uc2"><div class="ut"></div><div class="ua"></div><div class="tm"></div></div></div>
 <div id="vb"><img id="vbi" alt=""><div id="vbn"></div></div>
+<div id="chq"><div class="n" id="chqn"></div><div class="m" id="chqm"></div></div>
 <div id="np"><video id="npv" src="np_box.webm" muted playsinline preload="auto"></video><div class="tx"><div class="t" id="npt"></div><div class="a" id="npa"></div></div></div>
 <div id="screen"></div>
 <img id="showimg" class="full" alt="">
@@ -125,6 +134,7 @@ function screen() {
     if (d.scene !== SC_LAST) { if (d.scene === 'Music video' && SC_LAST !== null) SC_IN = d.now; SC_LAST = d.scene; }
     nowPlaying(d.scene === 'Music video' ? d.np : null, Date.now() / 1000 - off);
     voiceBox(d.voice, Date.now() / 1000 - off);
+    chartSq(d.chart);
     upNext(d.scene === 'Up next' ? d.upnext : null);
   }).catch(() => {}).finally(() => setTimeout(screen, 500));
 }
@@ -202,6 +212,20 @@ function upNext(u) {
     if (t.textContent !== it.title) t.textContent = it.title; if (a.textContent !== it.artist) a.textContent = it.artist;
     c.querySelector('.tm').textContent = it.start || ''; }
   $('#un').classList.toggle('on', on);
+}
+// chart number + movement (▲ up / ▼ down / = same / NEW / RE); null = not a chart song
+let CHQ = '';
+function chartSq(ch) {
+  const el = $('#chq');
+  if (!ch) { el.classList.remove('on'); CHQ = ''; return; }
+  const key = ch.num + '|' + JSON.stringify(ch.mv || null);
+  if (key !== CHQ) {
+    CHQ = key; $('#chqn').textContent = ch.num; el.classList.toggle('d3', String(ch.num).length > 2);
+    const m = $('#chqm'), mv = ch.mv;
+    m.className = 'm' + (mv ? ' ' + mv[0] : '');
+    m.textContent = !mv ? '' : mv[0] === 'up' ? '▲ ' + mv[1] : mv[0] === 'down' ? '▼ ' + mv[1] : mv[0] === 'same' ? '=' : mv[0] === 'new' ? 'NEW' : 'RE';
+  }
+  el.classList.add('on');
 }
 // voice message box: the sender's first name on Gianno's PNG (WhatsApp / website / unknown source); Now Playing hides meanwhile
 let VB = '';

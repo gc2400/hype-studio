@@ -21,8 +21,12 @@ def init(c):
     CREATE TABLE IF NOT EXISTS clock_state(clock_id INT PRIMARY KEY, i INT, left_ INT, first INT, updated REAL);
     CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
     """)
-    for tbl, col, typ in [("playlists", "rotate", "INT DEFAULT 0"), ("playlists", "strict", "INT DEFAULT 0"), ("playlist_sources", "amount", "INT DEFAULT 1"), ("clocks", "resume", "INT DEFAULT 0")]:
-        if col not in [r[1] for r in c.execute(f"PRAGMA table_info({tbl})")]: c.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {typ}")
+    for tbl, col, typ in [("playlists", "chart", "INT DEFAULT 0"), ("playlists", "chart_num", "INT DEFAULT 1"), ("playlists", "chart_arrows", "INT DEFAULT 1"),
+                          ("playlists", "chart_web", "INT DEFAULT 1"), ("playlists", "rotate", "INT DEFAULT 0"), ("playlists", "strict", "INT DEFAULT 0"), ("playlist_sources", "amount", "INT DEFAULT 1"), ("clocks", "resume", "INT DEFAULT 0")]:
+        if col not in [r[1] for r in c.execute(f"PRAGMA table_info({tbl})")]:
+            c.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {typ}")
+            if col == "chart":   # the Hype Top 10 becomes the first chart
+                c.execute("UPDATE playlists SET chart=1 WHERE name LIKE '%TOP%10%' AND COALESCE(strict,0)=1")
     c.commit()
 
 def get_setting(c, key, default=None):
@@ -341,7 +345,7 @@ class ClockRunner:
             finally: CTX.update(at=None, fit=None)
             if path and kind == "playlist":     # "play exactly as listed" / shuffle off (like the Top 10): you placed its jingles yourself
                 r_ = c.execute("SELECT shuffle, strict FROM playlists WHERE id=?", (pid,)).fetchone()
-                self.fixed = bool(r_ and (r_[1] or not r_[0]))
+                self.fixed = bool(r_ and (r_[1] or not r_[0])); self.fixed_pid = pid
         elif kind == "showjingle":                         # sweeper of the show on air (jingles/SHOWS/<show>), else the fallback folder
             s_ = show_at(at)
             path = (pick_jingle(c, show_folder(c, at, s_)) if s_ else None) or pick_jingle(c, ref or "SWEEPERS")
@@ -388,19 +392,58 @@ def default_setup(c):
 # ---------------- API helpers ----------------
 def api_playlists(c):
     out = []
-    for pid, name, loop, shuffle, rot, strict in c.execute("SELECT id, name, loop, shuffle, rotate, strict FROM playlists WHERE name NOT LIKE '@%' ORDER BY name COLLATE NOCASE").fetchall():
+    for pid, name, loop, shuffle, rot, strict, ch, chn, cha, chw in c.execute("SELECT id, name, loop, shuffle, rotate, strict, COALESCE(chart,0), COALESCE(chart_num,1), COALESCE(chart_arrows,1), COALESCE(chart_web,1) FROM playlists WHERE name NOT LIKE '@%' ORDER BY name COLLATE NOCASE").fetchall():
         src = [dict(kind=k, ref=r, amount=a or 1) for k, r, a in c.execute("SELECT kind, ref, amount FROM playlist_sources WHERE playlist_id=? ORDER BY pos", (pid,)).fetchall()]
         for s_ in src:
             if s_["kind"] == "file": s_["found"] = bool(resolve_file(c, s_["ref"]))
         songs = playlist_songs(c, pid); st = c.execute("SELECT pos, rounds FROM playlist_state WHERE playlist_id=?", (pid,)).fetchone()
-        out.append(dict(id=pid, name=name, loop=bool(loop), shuffle=bool(shuffle), rotate=bool(rot), strict=bool(strict), sources=src, count=len(songs), pos=st[0] if st else 0))
+        out.append(dict(id=pid, name=name, loop=bool(loop), shuffle=bool(shuffle), rotate=bool(rot), strict=bool(strict), sources=src, count=len(songs), pos=st[0] if st else 0,
+                        chart=bool(ch), chart_num=bool(chn), chart_arrows=bool(cha), chart_web=bool(chw),
+                        chart_pos={p: n for p, n in chart_positions(c, pid)} if ch else None))
     return out
+
+def chart_positions(c, pid):
+    """A chart counts down: the first song in the list is the highest number, the last song is #1. Jingles get no number."""
+    songs = [p for p in playlist_songs(c, pid) if p.startswith("music/")]
+    return [(p, len(songs) - i) for i, p in enumerate(songs)]
+def chart_key(artist, title):
+    import unicodedata
+    s = unicodedata.normalize("NFKD", ((artist or "") + "|" + (title or "")).lower())
+    return re.sub(r"[^a-z0-9|]", "", "".join(ch for ch in s if not unicodedata.combining(ch)))
+def chart_week(t=None):
+    import datetime as D
+    y, w, _ = D.date.fromtimestamp(t or time.time()).isocalendar(); return "%d-W%02d" % (y, w)
+def chart_snapshot(c, pid, week=None):
+    """This week's list of a chart (kept per week; the same week is overwritten) - the base for ▲ ▼ NEW RE next week."""
+    c.execute("CREATE TABLE IF NOT EXISTS chart_weeks(pid INT, week TEXT, items TEXT, t REAL, PRIMARY KEY(pid, week))")
+    items = []
+    for p, n in chart_positions(c, pid):
+        r = c.execute("SELECT artist, title FROM items WHERE path=?", (p,)).fetchone()
+        items.append({"pos": n, "path": p, "key": chart_key(*(r or ("", os.path.basename(p))))})
+    c.execute("INSERT OR REPLACE INTO chart_weeks VALUES(?,?,?,?)", (pid, week or chart_week(), json.dumps(items), time.time())); c.commit()
+def chart_move(c, pid, path, pos, week=None):
+    """Movement against the chart of an earlier week: ("up", n) / ("down", n) / ("same", 0) / ("new", 0) / ("re", 0); None = no earlier week yet."""
+    c.execute("CREATE TABLE IF NOT EXISTS chart_weeks(pid INT, week TEXT, items TEXT, t REAL, PRIMARY KEY(pid, week))")
+    rows = c.execute("SELECT items FROM chart_weeks WHERE pid=? AND week<? ORDER BY week DESC", (pid, week or chart_week())).fetchall()
+    if not rows: return None
+    r = c.execute("SELECT artist, title FROM items WHERE path=?", (path,)).fetchone(); k = chart_key(*(r or ("", os.path.basename(path))))
+    def find(js):
+        for x in json.loads(js):
+            if x.get("path") == path or x.get("key") == k: return x["pos"]
+        return None
+    last = find(rows[0][0])
+    if last is None: return ("re", 0) if any(find(x[0]) is not None for x in rows[1:]) else ("new", 0)
+    return ("up", last - pos) if pos < last else ("down", pos - last) if pos > last else ("same", 0)
 
 def api_save_playlist(c, d):
     name = (d.get("name") or "").strip()
     if not name or name.startswith("@"): raise ValueError("give the playlist a name")
     if d.get("id"):
         pid = int(d["id"]); c.execute("UPDATE playlists SET name=?, loop=?, shuffle=?, rotate=?, strict=?, updated=? WHERE id=?", (name, int(bool(d.get("loop"))), int(bool(d.get("shuffle"))), int(bool(d.get("rotate"))), int(bool(d.get("strict"))), time.time(), pid))
+        if "chart" in d:   # a chart always plays exactly as listed, never shuffled
+            ch = bool(d.get("chart"))
+            c.execute("UPDATE playlists SET chart=?, chart_num=?, chart_arrows=?, chart_web=? WHERE id=?", (int(ch), int(bool(d.get("chart_num", True))), int(bool(d.get("chart_arrows", True))), int(bool(d.get("chart_web", True))), pid))
+            if ch: c.execute("UPDATE playlists SET strict=1, shuffle=0, rotate=0 WHERE id=?", (pid,))
     else:
         pid = c.execute("INSERT INTO playlists(name, loop, shuffle, rotate, strict, updated) VALUES(?,?,?,?,?,?)", (name, int(bool(d.get("loop", True))), int(bool(d.get("shuffle", True))), int(bool(d.get("rotate"))), int(bool(d.get("strict"))), time.time())).lastrowid
     c.execute("DELETE FROM playlist_sources WHERE playlist_id=?", (pid,))

@@ -320,6 +320,12 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
         <label class="plopt"><input type="checkbox" id="plShuffle" autocomplete="off"><span><b>Randomize</b><small>On: mixed, every song once per round · Off: in the order of the list</small></span></label>
         <label class="plopt" title="One from AFRO, then LAT, then CARIB … With Randomize the order of the sources changes every round"><input type="checkbox" id="plRotate" autocomplete="off"><span><b>Rotation</b><small>Take turns: the amount from each source, then the next</small></span></label>
         <label class="plopt" title="For countdowns like the Top 10: every item plays in its place"><input type="checkbox" id="plStrict" autocomplete="off"><span><b>Play exactly as listed</b><small>Never skip or move an item, also when that song or artist just played</small></span></label>
+        <label class="plopt" title="Hype Top 10, a Top 40 …: the order of the songs is the chart"><input type="checkbox" id="plChart" autocomplete="off"><span><b>🏆 Chart</b><small>A countdown: plays exactly as listed, the first song is the highest number, the last song #1. Jingles get no number.</small></span></label>
+      </div>
+      <div class="plopts" id="plChartOpts" hidden>
+        <label class="plopt"><input type="checkbox" id="plChNum" autocomplete="off"><span><b>Number on screen</b><small>The yellow square over the Now Playing box, the whole song</small></span></label>
+        <label class="plopt"><input type="checkbox" id="plChArr" autocomplete="off"><span><b>Arrows</b><small>▲ up · ▼ down · = same · NEW · RE, compared with last week's chart</small></span></label>
+        <label class="plopt"><input type="checkbox" id="plChWeb" autocomplete="off"><span><b>On the website</b><small>Sent to Hype Live after a change; goes live when the show starts</small></span></label>
       </div>
       <span class="lab">What's in it</span>
       <div class="srcs" id="plSources"></div>
@@ -504,13 +510,14 @@ setInterval(() => { if (!$('#tab-rc').hidden) get('autorec').then(arFiles); }, 1
 let cur = null;
 function renderPL() {
   const pq = nf($('#plQ').value);
-  $('#plList').innerHTML = PL.filter(p => !pq || nf(p.name).includes(pq)).map(p => `<button class="li ${cur && cur.id === p.id ? 'sel' : ''}" data-id="${p.id}"><div style="flex:1"><b>${esc(p.name)}</b><br><span>${p.rotate ? 'rotation · ' + p.sources.length + ' sources · ' : ''}${p.count} items · ${p.shuffle ? 'random' : 'in order'}${p.rotate ? '' : ' · ' + (p.loop ? 'loop' : 'no loop')}</span></div></button>`).join('') || '<span class="muted">No playlists yet. Make one with + New.</span>';
+  $('#plList').innerHTML = PL.filter(p => !pq || nf(p.name).includes(pq)).map(p => `<button class="li ${cur && cur.id === p.id ? 'sel' : ''}" data-id="${p.id}"><div style="flex:1"><b>${esc(p.name)}</b><br><span>${p.rotate ? 'rotation · ' + p.sources.length + ' sources · ' : ''}${p.chart ? '🏆 chart · ' : ''}${p.count} items · ${p.shuffle ? 'random' : 'in order'}${p.rotate ? '' : ' · ' + (p.loop ? 'loop' : 'no loop')}</span></div></button>`).join('') || '<span class="muted">No playlists yet. Make one with + New.</span>';
   $$('#plList [data-id]').forEach(b => b.onclick = () => openPL(PL.find(p => p.id == b.dataset.id)));
 }
 function openPL(p) {
   if (innerWidth < 760) setTimeout(() => { const e = document.querySelector('#plEdit'); if (e) e.scrollIntoView({behavior: 'smooth', block: 'start'}); }, 80);
   cur = JSON.parse(JSON.stringify(p)); $('#plEdit').hidden = false; $('#plEmpty').hidden = true;
   $('#plName').value = cur.name; $('#plLoop').checked = cur.loop; $('#plShuffle').checked = cur.shuffle; $('#plRotate').checked = !!cur.rotate; $('#plStrict').checked = !!cur.strict;
+  $('#plChart').checked = !!cur.chart; $('#plChNum').checked = cur.chart_num !== false; $('#plChArr').checked = cur.chart_arrows !== false; $('#plChWeb').checked = cur.chart_web !== false; chartUI();
   $('#plDel').hidden = !cur.id; $('#plReset').hidden = !cur.id; $('#plInfo').textContent = cur.id ? cur.count + ' songs' : 'new';
   renderSources(); renderPL(); fillPicker();
   if (cur.id) get('playlist?id=' + cur.id).then(d => {
@@ -529,9 +536,20 @@ function srcTag(s) {
   return `<span class="tg" style="background:${t[1]};color:${t[2]}">${t[0]}</span>`;
 }
 let PLDRAG = null;
+function chartUI() {      // a chart always plays exactly as listed, never randomized
+  const on = $('#plChart').checked; $('#plChartOpts').hidden = !on;
+  if (on) { $('#plStrict').checked = true; $('#plShuffle').checked = false; $('#plRotate').checked = false; }
+  ['#plStrict', '#plShuffle', '#plRotate'].forEach(q => $(q).disabled = on);
+  if (cur) { cur.chart = on; renderSources(); }
+}
+$('#plChart').onchange = chartUI;
+function chartNums() {   // song -> its chart number (counts down; jingles and folders get none)
+  const songs = cur.sources.map((s, i) => [s, i]).filter(([s]) => s.kind === 'song' && /^music\//.test(s.ref || ''));
+  const m = {}; songs.forEach(([s, i], k) => m[i] = songs.length - k); return m;
+}
 function renderSources() {
-  const rot = $('#plRotate').checked;
-  $('#plSources').innerHTML = cur.sources.map((s, i) => `<div class="src" draggable="true" data-i="${i}" style="${s.found === false ? 'opacity:.55' : ''}"><span class="h" title="Drag to move">⋮⋮</span><span class="n">${i + 1}</span>${srcTag(s)}${rot ? `<input type="number" min="1" value="${s.amount || 1}" data-amt="${i}" title="How many from this source per turn"><span class="muted">×</span>` : ''}<span class="lbl">${esc(srcLabel(s))}</span><button class="ib mv" data-up="${i}" aria-label="Move up">▲</button><button class="ib mv" data-dn="${i}" aria-label="Move down">▼</button><button class="ib rm" data-rm="${i}" title="Remove" aria-label="Remove">×</button></div>`).join('') || '<span class="muted">Nothing yet – add folders, songs, jingles or playlists.</span>';
+  const rot = $('#plRotate').checked, CN = cur.chart ? chartNums() : {};
+  $('#plSources').innerHTML = cur.sources.map((s, i) => `<div class="src" draggable="true" data-i="${i}" style="${s.found === false ? 'opacity:.55' : ''}"><span class="h" title="Drag to move">⋮⋮</span><span class="n">${i + 1}</span>${cur.chart && CN[i] ? `<span class="tg" style="background:#FFE000;color:#041C33;min-width:34px;text-align:center" title="Chart number">#${CN[i]}</span>` : ''}${srcTag(s)}${rot ? `<input type="number" min="1" value="${s.amount || 1}" data-amt="${i}" title="How many from this source per turn"><span class="muted">×</span>` : ''}<span class="lbl">${esc(srcLabel(s))}</span><button class="ib mv" data-up="${i}" aria-label="Move up">▲</button><button class="ib mv" data-dn="${i}" aria-label="Move down">▼</button><button class="ib rm" data-rm="${i}" title="Remove" aria-label="Remove">×</button></div>`).join('') || '<span class="muted">Nothing yet – add folders, songs, jingles or playlists.</span>';
   const mv = (a, b) => { if (b < 0 || b >= cur.sources.length || a === b) return; const [x] = cur.sources.splice(a, 1); cur.sources.splice(b, 0, x); renderSources(); };
   $$('#plSources [data-rm]').forEach(b => b.onclick = () => { cur.sources.splice(+b.dataset.rm, 1); renderSources(); });
   $$('#plSources [data-up]').forEach(b => b.onclick = () => mv(+b.dataset.up, +b.dataset.up - 1));
@@ -598,6 +616,7 @@ addEventListener('resize', fitSides); addEventListener('scroll', fitSides, {pass
 $$('.tab').forEach(b => b.addEventListener('click', () => setTimeout(fitSides, 30)));
 $('#plNew').onclick = () => openPL({id: null, name: '', loop: true, shuffle: true, rotate: false, sources: [], count: 0});
 $('#plSave').onclick = () => { cur.name = $('#plName').value; cur.loop = $('#plLoop').checked; cur.shuffle = $('#plShuffle').checked; cur.rotate = $('#plRotate').checked; cur.strict = $('#plStrict').checked;
+  cur.chart = $('#plChart').checked; cur.chart_num = $('#plChNum').checked; cur.chart_arrows = $('#plChArr').checked; cur.chart_web = $('#plChWeb').checked;
   post('plan/save_playlist', cur).then(r => { toast('Playlist saved'); return loadAll().then(() => openPL(PL.find(p => p.id === r.id))); }).catch(e => toast(e.message, 1)); };
 $('#plDel').onclick = () => { if (confirm('Delete playlist "' + cur.name + '"? Clock slots that use it will be skipped.')) post('plan/delete_playlist', {id: cur.id}).then(() => { cur = null; $('#plEdit').hidden = true; $('#plEmpty').hidden = false; toast('Deleted'); loadAll(); }); };
 $('#plReset').onclick = () => post('plan/reset_playlist', {id: cur.id}).then(() => { toast('Starts from the top next time'); openPL(cur); });
