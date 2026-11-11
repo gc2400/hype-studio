@@ -1,17 +1,18 @@
 {
- "time": "2026-11-11T20:44:45",
+ "time": "2026-11-11T20:48:36",
  "result": "ok",
- "commit": "2f0e968dede8c51a579f8a6c297df9be017e050b",
- "subject": "Hype Live tab: the sub-menu follows Hype Live's own menu when the plugin sends it (new pages like Programming appear by themselves); the fixed 8 stay as fallback",
+ "commit": "b80601a1c8eca6db6a7013ac64c58d673b296d0e",
+ "subject": "Charts: any playlist can be a \ud83c\udfc6 Chart (plays exactly as listed, counts down: first song = highest number, jingles no number). The number shows in a yellow square over the left end of the Now Playing box the whole song (Inter Black, house yellow), with \u25b2 \u25bc = NEW RE vs last week's list (per chart: number / arrows / website on-off). Weekly lists kept per chart. Charts go to Hype Live (Top 10 -> ?hype_studio_top10, others -> ?hype_studio_chart). No Up next during a chart. The Hype Top 10 becomes the first chart; the TOP10 PNG numbers are no longer used.",
  "log": [
-  "20:44:45 update 7cb9a1e9 \u2192 2f0e968d \u00b7 1 file(s): web/panel/hypelive.html",
-  "20:44:45 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:47:51 update 2f0e968d \u2192 b80601a1 \u00b7 4 file(s): engine/engine.py, engine/planner.py, web/overlay/index.html, web/panel/plan.html",
+  "20:47:51 restart hype-engine",
+  "20:48:36 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "DADDY YANKEE \u2013 BOTZ (B\u00e9same Otra Vez)",
+  "song": "IR SAIS \u2013 CLARAMENTE",
   "listeners": 5,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
