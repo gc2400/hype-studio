@@ -1,18 +1,18 @@
 {
- "time": "2026-11-11T15:18:05",
+ "time": "2026-11-11T15:42:22",
  "result": "ok",
- "commit": "e8604e17dca7d14395ff269d19db494601b3fd1a",
- "subject": "Heartbeat to Hype Live also reports the backup relay to Streamerr (live / connecting / off / error)",
+ "commit": "49b511884c18eb1461ace1641bacf32f7c6766f0",
+ "subject": "Hype Live 2.35 links: listener voices on air by themselves (only \u2713 OK for air: hour-plan slot 'Listener voice' + over soft intros, max per hour, max plays, never the same sender twice an hour, voice box on TV); sponsor deals from Hype Live drive the ads (dates, days, hours, X per day shared by all spot files, paused); covers from Hype Live's cover store; weekly recap POST every Monday 05:30; GO LIVE log for live hours",
  "log": [
-  "15:17:20 update 2bc21a91 \u2192 e8604e17 \u00b7 1 file(s): engine/guard.py",
-  "15:17:20 restart hype-guard",
-  "15:18:05 installed OK \u00b7 restarted: hype-guard"
+  "15:41:37 update e8604e17 \u2192 49b51188 \u00b7 6 file(s): engine/engine.py, engine/live.py, engine/planner.py, web/panel/index.html, web/panel/plan.html, web/panel/settings.html",
+  "15:41:37 restart hype-engine",
+  "15:42:22 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Dj Goja x Jason Derulo x Melody \u2013 Mi Chico",
+  "song": "Machel Montano x Davido \u2013 Fling It Up",
   "listeners": 3,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
