@@ -34,7 +34,7 @@ td b{font-weight:700}
 .tag.music{background:#062F38;color:var(--b)}.tag.jingles{background:#1E1438;color:#B9A2FF}.tag.ads{background:#3A2A00;color:#FFB54D}
 .scroll{max-height:calc(100vh - 210px);overflow:auto}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
-.au{white-space:nowrap;font-size:12px}.au b{font-family:ui-monospace,Menlo,Consolas,monospace;margin-right:2px}.au .up{color:var(--g)}.au .dn{color:var(--r)}.au .eq{color:var(--mut)}.au small{color:var(--mut);margin-right:10px}
+.au{white-space:nowrap;font-size:12px}.au>span{margin-right:12px}.au i{font-style:normal;color:var(--mut);font-weight:700;margin-right:4px}.au b{font-family:ui-monospace,Menlo,Consolas,monospace}.au .up{color:var(--g)}.au .dn{color:var(--r)}.au .eq{color:var(--mut)}
 .ov{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:700;color:var(--b,#05A9C6);border:1px solid currentColor;white-space:nowrap}.ov.id{color:#FFE000}
 @media print{body{background:#fff!important;color:#000!important}#hhead,[role=tablist],#dayCard,#wPrev,#wNext,#wCsv,#wPdf{display:none!important}
   .card{border:0!important;background:#fff!important;padding:0!important}.kpi{background:#fff!important;border:1px solid #ccc!important}.kpi b{color:#000!important}
@@ -89,12 +89,12 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&
 const fmt = s => Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0');
 const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 let TYPE = '', T = null;
-// audience change during an item: 🎧 radio (own streams + Streamerr) · 📺 TV, e.g. "+2 14" = 2 more, 14 at the end
+// audience change during an item: R = radio (own streams + Streamerr), TV = viewers; ▲ more, ▼ fewer, – no change (hover: from → to)
 function audCell(a) {
   if (!a) return '';
-  const one = (ic, x0, x1, nm) => { const d = x1 - x0, c = d > 0 ? 'up' : d < 0 ? 'dn' : 'eq';
-    return `<span title="${nm}: ${x0} → ${x1}${a.live ? ' (so far)' : ''}">${ic} <b class="${c}">${d > 0 ? '+' + d : d < 0 ? '−' + (-d) : '±0'}</b><small>${x1}</small></span>`; };
-  return `<span class="au">${one('🎧', a.r0, a.r1, 'Radio listeners')}${one('📺', a.v0, a.v1, 'TV viewers')}</span>`;
+  const one = (lb, x0, x1, nm) => { const d = x1 - x0, c = d > 0 ? 'up' : d < 0 ? 'dn' : 'eq';
+    return `<span title="${nm}: ${x0} → ${x1}${a.live ? ' (so far)' : ''}"><i>${lb}</i><b class="${c}">${d > 0 ? '▲' + d : d < 0 ? '▼' + (-d) : '–'}</b></span>`; };
+  return `<span class="au">${one('R', a.r0, a.r1, 'Radio listeners')}${one('TV', a.v0, a.v1, 'TV viewers')}</span>`;
 }
 $('#day').value = iso(new Date());
 function load() {
