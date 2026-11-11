@@ -1,18 +1,18 @@
 {
- "time": "2026-11-11T15:42:22",
+ "time": "2026-11-11T15:45:12",
  "result": "ok",
- "commit": "49b511884c18eb1461ace1641bacf32f7c6766f0",
- "subject": "Hype Live 2.35 links: listener voices on air by themselves (only \u2713 OK for air: hour-plan slot 'Listener voice' + over soft intros, max per hour, max plays, never the same sender twice an hour, voice box on TV); sponsor deals from Hype Live drive the ads (dates, days, hours, X per day shared by all spot files, paused); covers from Hype Live's cover store; weekly recap POST every Monday 05:30; GO LIVE log for live hours",
+ "commit": "8eaacc54f2fbcde99758b3e21c6416c0144729cc",
+ "subject": "Weekly recap: /recap (preview) and /recap_send (send now)",
  "log": [
-  "15:41:37 update e8604e17 \u2192 49b51188 \u00b7 6 file(s): engine/engine.py, engine/live.py, engine/planner.py, web/panel/index.html, web/panel/plan.html, web/panel/settings.html",
-  "15:41:37 restart hype-engine",
-  "15:42:22 installed OK \u00b7 restarted: hype-engine"
+  "15:44:27 update 49b51188 \u2192 8eaacc54 \u00b7 1 file(s): engine/engine.py",
+  "15:44:27 restart hype-engine",
+  "15:45:12 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Machel Montano x Davido \u2013 Fling It Up",
+  "song": "Ayra Starr \u2013 Tornado",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
