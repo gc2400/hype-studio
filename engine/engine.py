@@ -2628,6 +2628,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/history": return self.send(200, history(qs))
             if p == "/weekreport": return self.send(200, week_report(qs))
             if p == "/recap": return self.send(200, recap_data(int((qs.get("w") or ["1"])[0])))
+            if p == "/top10": return self.send(200, top10_data() or {})
             if p == "/media":
                 lst = {v.get("file"): v for v in media_in_state().values()}; fl = media_files()
                 for m in fl:
@@ -2836,6 +2837,9 @@ class H(BaseHTTPRequestHandler):
         if p == "/autorec":
             try: return self.send(200, autorec_save(d))
             except Exception as e: return self.send(400, {"error": str(e)})
+        if p == "/top10_send":      # the Hype Top 10 to Hype Live now
+            try: wk, a = top10_send(force=True); return self.send(200, {"week": wk, "answer": (a or "")[:80]})
+            except Exception as e: return self.send(500, {"error": str(e)})
         if p == "/recap_send":      # the weekly recap to Hype Live now (w = 0 this week so far, 1 last week)
             try: wk, a = recap_send(int(d.get("w", 1))); return self.send(200, {"week": wk, "answer": a[:80]})
             except Exception as e: return self.send(500, {"error": str(e)})
@@ -3487,6 +3491,56 @@ def hl_open(url, timeout=60):
     if not re.match(r"^https://(www\.)?hyperadio\.nl/", url or ""): raise ValueError("not a Hype Live link")
     return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "HypeStudio/1"}), timeout=timeout)
 
+# ---------------- Hype Top 10 -> Hype Live (for the website chart) ----------------
+TOP10_SENT = "/var/lib/hype/top10_sent.json"
+def top10_data():
+    """The Hype Top 10 as Gianno set it in the 'play exactly as listed' Top 10 playlist: each song gets the number of the
+    TOP10Nxx jingle right before it. show_at = the next start of the Hype Top 10 show (week schedule) – the week it is for."""
+    c = dbc()
+    r = c.execute("SELECT id, name FROM playlists WHERE name LIKE '%TOP%10%' AND COALESCE(strict, 0)=1 ORDER BY id LIMIT 1").fetchone()
+    if not r: return None
+    items, num = [], None
+    for p in planner.playlist_songs(c, r[0]):
+        m = re.search(r"TOP\s*10\s*N\s*0*(\d{1,2})", os.path.basename(p), re.I)
+        if m and not p.startswith("music/"): num = int(m.group(1)); continue
+        if p.startswith("music/") and num:
+            it = c.execute("SELECT artist, title FROM items WHERE path=?", (p,)).fetchone()
+            if it: items.append({"pos": num, "artist": it[0] or "", "title": it[1] or ""})
+            num = None
+    items.sort(key=lambda x: x["pos"])
+    show_at = 0; now = time.time()
+    for k in range(0, 8 * 1440, 1):                       # the next start of a show called "… Top 10 …" (minute steps over 8 days)
+        t = (int(now) // 60 + k) * 60; s_ = planner.show_at(t)
+        if s_ and re.search(r"top\s*10", s_.get("title") or "", re.I) and not (planner.show_at(t - 60) or {}).get("title") == s_.get("title"):
+            show_at = t; break
+    import datetime as D
+    y, wk, _ = (D.date.fromtimestamp(show_at) if show_at else D.date.today()).isocalendar()
+    return {"week": "%d-W%02d" % (y, wk), "show_at": show_at, "playlist": r[1], "items": items, "sent_at": int(now)}
+def top10_send(force=False):
+    d = top10_data()
+    if not d or not d["items"]: return None, "no Top 10 playlist / no songs"
+    sig = json.dumps([d["week"], d["items"]], sort_keys=True)
+    try: last = json.load(open(TOP10_SENT))
+    except Exception: last = {}
+    if not force and last.get("sig") == sig: return d["week"], "unchanged"
+    a = hl_call("hype_studio_top10", data=json.dumps(d).encode(), timeout=30).strip()
+    if a.startswith("OK"): jdump({"sig": sig, "t": time.time(), "week": d["week"]}, TOP10_SENT)
+    log.info("Hype Top 10 %s -> Hype Live: %s", d["week"], a[:40]); return d["week"], a
+def top10_loop():
+    """Every 10 min: when the Top 10 list changed (and has been the same for 10 min, so half-done edits are not sent),
+    it goes to Hype Live. Hype Live puts it on the website from show_at (no spoilers before the show)."""
+    seen = None
+    while True:
+        time.sleep(600)
+        try:
+            d = top10_data()
+            sig = json.dumps([d["week"], d["items"]], sort_keys=True) if d else None
+            if sig and sig == seen: top10_send()
+            seen = sig
+        except urllib.error.HTTPError as e:
+            if e.code != 404: log.warning("Hype Top 10 -> Hype Live: %s", e)
+        except Exception as e: log.warning("Hype Top 10 -> Hype Live: %s", e)
+
 RECAP_SENT = "/var/lib/hype/recap_sent.json"
 def recap_data(w=1):
     """Last week's playout summary for Hype Live's weekly recap (top songs / artists / new music / genres, live hours, peaks)."""
@@ -3723,5 +3777,6 @@ if __name__ == "__main__":
     threading.Thread(target=sponsors_loop, daemon=True).start()
     threading.Thread(target=recap_loop, daemon=True).start()
     threading.Thread(target=media_in_loop, daemon=True).start()
+    threading.Thread(target=top10_loop, daemon=True).start()
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()
