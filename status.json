@@ -1,17 +1,17 @@
 {
- "time": "2026-11-11T13:42:32",
+ "time": "2026-11-11T13:45:38",
  "result": "ok",
- "commit": "939937cf7aad8c756e1ec915997275707fd613be",
- "subject": "History audience column: one line 'R \u25b22  TV \u25bc1' (green up, red down, grey \u2013 no change; hover shows from \u2192 to)",
+ "commit": "f55aae8801902fc71e7f806be5527afdc03e3580",
+ "subject": "History: Audience column = how many (R / TV), new Change column = \u25b2 / \u25bc during the item",
  "log": [
-  "13:42:32 update 26234fff \u2192 939937cf \u00b7 1 file(s): web/panel/history.html",
-  "13:42:32 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "13:45:38 update 939937cf \u2192 f55aae88 \u00b7 1 file(s): web/panel/history.html",
+  "13:45:38 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Equalz \u2013 Baddies Club",
+  "song": "Darkoo x Dess Dior \u2013 Favourite Girl",
   "listeners": 3,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
