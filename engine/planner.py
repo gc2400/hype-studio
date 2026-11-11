@@ -599,8 +599,24 @@ def show_folder(c, t, s_):
     except Exception: pass
     return base
 
+SPECIALS = []   # one-off changes for one date (Hype Live → 📅 Programming → ⭐ Specials): [{date, from, to, title}] – set by the engine
+def special_at(t):
+    """The special on air at time t -> {day, start, end, title, special, t0, t1} or None. A special that ends after midnight
+    continues into the next day; to 00:00 = midnight."""
+    for sp in SPECIALS:
+        try:
+            d0 = time.mktime(time.strptime(sp["date"] + " " + sp["from"], "%Y-%m-%d %H:%M"))
+            d1 = time.mktime(time.strptime(sp["date"] + " " + sp["to"], "%Y-%m-%d %H:%M"))
+            if d1 <= d0: d1 += 86400
+            if d0 <= t < d1 and (sp.get("title") or "").strip():
+                return {"day": time.localtime(t).tm_wday, "start": sp["from"], "end": sp["to"], "title": sp["title"].strip(), "special": True, "t0": d0, "t1": d1}
+        except (KeyError, ValueError, TypeError): continue
+    return None
+
 def show_at(t):
-    """The website show on air at time t (handles 23:00–00:00 style ends)."""
+    """The website show on air at time t (handles 23:00–00:00 style ends); a special for that date wins."""
+    sp = special_at(t)
+    if sp: return sp
     lt = time.localtime(t); m = lt.tm_hour * 60 + lt.tm_min
     for s in WEEK:
         if s["day"] != lt.tm_wday: continue

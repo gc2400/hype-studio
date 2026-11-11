@@ -2289,14 +2289,28 @@ def load_week():
 
 try: planner.WEEK[:] = json.load(open("/var/lib/hype/week.json"))   # known right at start (show jingles plan right after a restart)
 except Exception: pass
+SPECIALS_F = "/var/lib/hype/specials.json"
+def load_specials():
+    """One-off schedule changes for one date (Hype Live → 📅 Programming → ⭐ Specials, /wp-json/hype/v1/schedule)."""
+    with urllib.request.urlopen(urllib.request.Request("https://www.hyperadio.nl/wp-json/hype/v1/schedule", headers={"User-Agent": "HypeStudio/1"}), timeout=15) as r:
+        d = json.loads(r.read())
+    sp = [x for x in (d.get("specials") or []) if isinstance(x, dict) and x.get("date") and x.get("from") and x.get("to")]
+    if sp != planner.SPECIALS: log.info("schedule specials: %d", len(sp))
+    planner.SPECIALS[:] = sp; jdump(sp, SPECIALS_F)
+try: planner.SPECIALS[:] = json.load(open(SPECIALS_F))
+except Exception: pass
 
 def watch_show():
     """Current show from hyperadio.nl (Pro.Radio schedule) every minute; week schedule hourly; temperature every 10 minutes."""
-    last_week = 0
+    last_week = last_sp = 0
     while True:
         if time.time() - last_week > 3600:
             try: load_week(); last_week = time.time()
             except Exception as e: log.warning("week: %s", e); last_week = time.time() - 3000
+        if time.time() - last_sp > 300:       # specials: every 5 min (a change made today is on screen within minutes)
+            try: load_specials()
+            except Exception as e: log.warning("specials: %s", e)
+            last_sp = time.time()
         # the show switches EXACTLY at its start time from the week schedule (the website's "current show" answered up to
         # a minute late – the show name box changed late, Gianno 9 Nov); the website only decides when the schedule has no slot
         sched = week_slot()
@@ -2324,7 +2338,11 @@ def watch_show():
         time.sleep(61 - time.time() % 60)        # wake 1 s after every full minute: a show starting at 20:00 shows at 20:00:01
 
 def week_slot(t=None):
-    """The show of the week schedule at this moment -> {title, start, end} or None (a gap / no schedule)."""
+    """The show of the week schedule at this moment -> {title, start, end} or None (a gap / no schedule). A special wins."""
+    sp = planner.special_at(t or time.time())
+    if sp:
+        iso = lambda x: time.strftime("%Y-%m-%dT%H:%M:00", time.localtime(x)) + (lambda z: z[:3] + ":" + z[3:])(time.strftime("%z", time.localtime(x)))
+        return {"title": sp["title"], "start": iso(sp["t0"]), "end": iso(sp["t1"])}
     lt = time.localtime(t or time.time()); hm = "%02d:%02d" % (lt.tm_hour, lt.tm_min)
     for sl in planner.WEEK:
         st, en = sl.get("start") or "", sl.get("end") or ""
