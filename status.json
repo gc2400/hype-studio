@@ -1,18 +1,18 @@
 {
- "time": "2026-11-10T23:56:51",
+ "time": "2026-11-11T13:36:21",
  "result": "ok",
- "commit": "2927ed42a08fc3c0ae0c08ee17615ef5db5755eb",
- "subject": "Playlists played exactly as listed (Top 10): the play order always follows the playlist itself, also right after reordering (it kept the order from when the round started)",
+ "commit": "26234fff5dfbd4a96a980b5582cbb451b2ea7aff",
+ "subject": "History: audience per item \u2013 radio listeners (own streams + Streamerr) and TV viewers gained / lost during each song, jingle and ad (sampled every 15 s, 14 days kept; also in the CSV)",
  "log": [
-  "23:56:06 update 069fef5b \u2192 2927ed42 \u00b7 1 file(s): engine/planner.py",
-  "23:56:06 restart hype-engine",
-  "23:56:51 installed OK \u00b7 restarted: hype-engine"
+  "13:35:36 update 2927ed42 \u2192 26234fff \u00b7 2 file(s): engine/engine.py, web/panel/history.html",
+  "13:35:36 restart hype-engine",
+  "13:36:21 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Maisak x Jay Wheeler \u2013 Casi Algo",
-  "listeners": 1,
+  "song": "Idaly x Ronnie Flex x Frenna \u2013 POPULAIR",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
