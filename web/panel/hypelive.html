@@ -41,14 +41,16 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(
 <script>
 (() => {
   const WP = 'https://www.hyperadio.nl/wp-admin/admin.php';   // www: that is where the WordPress login cookie lives
-  const V = [['home', 'Home'], ['messages', 'Messages'], ['photos', 'Photos & voice'], ['games', 'Games'], ['sponsors', 'Sponsors'],
+  let V = [['home', 'Home'], ['messages', 'Messages'], ['photos', 'Photos & voice'], ['games', 'Games'], ['sponsors', 'Sponsors'],
              ['notifications', 'Notifications'], ['reports', 'Reports'], ['settings', 'Settings']];
+  try { const m = JSON.parse(localStorage.getItem('hypeHLmenu') || 'null'); if (Array.isArray(m) && m.length) V = m; } catch (e) {}   // Hype Live's own menu (sent from inside the frame)
   const url = (v, embed) => `${WP}?page=hype-live&hl_view=${v}` + (embed ? '&hype_embed=1' : '');
   const sub = document.getElementById('sub'), fr = document.getElementById('fr'), note = document.getElementById('note');
   let view = (location.hash.slice(1) || localStorage.getItem('hypeHL') || 'home'), ok = false, timer;
   if (!V.some(x => x[0] === view)) view = 'home';
-  sub.innerHTML = V.map(([k, t]) => `<a href="#${k}" data-v="${k}">${t}</a>`).join('') +
-    `<span class="sp"></span><a class="ext" id="ext" target="_blank" rel="noopener" title="Open this page in WordPress">Open in WordPress ↗</a>`;
+  const tabs = () => { sub.innerHTML = V.map(([k, t]) => `<a href="#${k}" data-v="${k}">${t.replace(/[<>&]/g, '')}</a>`).join('') +
+    `<span class="sp"></span><a class="ext" id="ext" target="_blank" rel="noopener" title="Open this page in WordPress">Open in WordPress ↗</a>`; };
+  tabs();
   const mark = v => {
     view = v; try { localStorage.setItem('hypeHL', v); } catch (e) {}
     sub.querySelectorAll('[data-v]').forEach(a => a.classList.toggle('cur', a.dataset.v === v));
@@ -64,7 +66,13 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(
   // The plugin says hello from inside the frame: {hypeLive:'ready', view:'messages'} – keeps the tab in step when you click links inside.
   addEventListener('message', e => {
     if (!/^https:\/\/(www\.)?hyperadio\.nl$/.test(e.origin) || !e.data || e.data.hypeLive !== 'ready') return;
-    ok = true; note.hidden = true; if (e.data.view && e.data.view !== view && V.some(x => x[0] === e.data.view)) mark(e.data.view);
+    ok = true; note.hidden = true;
+    // newer Hype Live sends its whole menu: [{view:'programming', title:'Programming'}, …] – new pages appear as tabs by themselves
+    if (Array.isArray(e.data.menu) && e.data.menu.length) {
+      const m = e.data.menu.filter(x => x && /^[a-z0-9_-]{1,30}$/.test(x.view || '') && x.title).map(x => [x.view, String(x.title).slice(0, 30)]);
+      if (m.length && JSON.stringify(m) !== JSON.stringify(V)) { V = m; try { localStorage.setItem('hypeHLmenu', JSON.stringify(m)); } catch (e2) {} tabs(); mark(view); }
+    }
+    if (e.data.view && e.data.view !== view && V.some(x => x[0] === e.data.view)) mark(e.data.view);
   });
   document.getElementById('retry').onclick = () => go(view);
   addEventListener('focus', () => { if (!ok && !note.hidden) go(view); });   // back from the login tab: try again by itself
