@@ -306,3 +306,4 @@
 2026-11-10T22:37:27 ok 069fef5b Recordings get their own folder music/RECORDINGS (were inside MIXES/Recordings); everything that treats mixes specially (no artist needed, out of rotation, no smart mix, week report, schedule) knows it too
 2026-11-10T23:56:51 ok 2927ed42 Playlists played exactly as listed (Top 10): the play order always follows the playlist itself, also right after reordering (it kept the order from when the round started)
 2026-11-11T13:36:21 ok 26234fff History: audience per item – radio listeners (own streams + Streamerr) and TV viewers gained / lost during each song, jingle and ad (sampled every 15 s, 14 days kept; also in the CSV)
+2026-11-11T13:42:32 ok 939937cf History audience column: one line 'R ▲2  TV ▼1' (green up, red down, grey – no change; hover shows from → to)

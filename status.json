@@ -1,18 +1,17 @@
 {
- "time": "2026-11-11T13:36:21",
+ "time": "2026-11-11T13:42:32",
  "result": "ok",
- "commit": "26234fff5dfbd4a96a980b5582cbb451b2ea7aff",
- "subject": "History: audience per item \u2013 radio listeners (own streams + Streamerr) and TV viewers gained / lost during each song, jingle and ad (sampled every 15 s, 14 days kept; also in the CSV)",
+ "commit": "939937cf7aad8c756e1ec915997275707fd613be",
+ "subject": "History audience column: one line 'R \u25b22  TV \u25bc1' (green up, red down, grey \u2013 no change; hover shows from \u2192 to)",
  "log": [
-  "13:35:36 update 2927ed42 \u2192 26234fff \u00b7 2 file(s): engine/engine.py, web/panel/history.html",
-  "13:35:36 restart hype-engine",
-  "13:36:21 installed OK \u00b7 restarted: hype-engine"
+  "13:42:32 update 26234fff \u2192 939937cf \u00b7 1 file(s): web/panel/history.html",
+  "13:42:32 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Idaly x Ronnie Flex x Frenna \u2013 POPULAIR",
+  "song": "Equalz \u2013 Baddies Club",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
