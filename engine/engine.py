@@ -2623,6 +2623,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/upload/status": return self.send(200, up_status(qs))
             if p == "/history": return self.send(200, history(qs))
             if p == "/weekreport": return self.send(200, week_report(qs))
+            if p == "/recap": return self.send(200, recap_data(int((qs.get("w") or ["1"])[0])))
             if p == "/media": return self.send(200, {"files": media_files(), "scenes": MEDIA_SCENES})
             if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners(), own_tv=viewers()))
             if p == "/smartmix":     # the cue editor: where smart mix puts MIX for these START / END
@@ -2825,6 +2826,9 @@ class H(BaseHTTPRequestHandler):
         if p == "/autorec":
             try: return self.send(200, autorec_save(d))
             except Exception as e: return self.send(400, {"error": str(e)})
+        if p == "/recap_send":      # the weekly recap to Hype Live now (w = 0 this week so far, 1 last week)
+            try: wk, a = recap_send(int(d.get("w", 1))); return self.send(200, {"week": wk, "answer": a[:80]})
+            except Exception as e: return self.send(500, {"error": str(e)})
         if p == "/settings":
             try: return self.send(200, set_settings(d))
             except Exception as e: log.warning("settings: %s", e); return self.send(500, {"error": str(e)})
