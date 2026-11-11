@@ -517,7 +517,9 @@ function render() {
   $('#npOnair').textContent = '● ' + String(S.show || S.clock || 'ON AIR').toUpperCase();
   $('#npTitle').textContent = n.title || '–'; $('#npArtist').textContent = n.artist || '';
   $('#npFolder').textContent = n.folder || '–'; const [bt, bc] = badge(n.mode); $('#npMode').textContent = bt; $('#npMode').className = 'chip ' + bc;
-  $('#npArt').textContent = (n.artist || '♪').trim()[0] || '♪';
+  const art = $('#npArt');
+  if (n.cover) { if (art.dataset.cv !== n.cover) { art.dataset.cv = n.cover; art.textContent = ''; art.style.background = `#0B2236 url("${n.cover}") center/cover no-repeat`; } }
+  else { if (art.dataset.cv) { delete art.dataset.cv; art.style.background = ''; } art.textContent = (n.artist || '♪').trim()[0] || '♪'; }
   if (n.path && waveFor !== n.path) { waveFor = n.path; wavePeaks = null; api('wave?path=' + encodeURIComponent(n.path)).then(p => { if (waveFor === n.path) wavePeaks = p; }); }
   $('#pvScene').textContent = (S.auto_scene ? 'AUTO · ' : 'MANUAL · ') + (S.scene || '–'); $('#bAutoScene').classList.toggle('on', S.auto_scene);
   const manual = !S.auto && !(S.dj && S.dj.on); document.body.classList.toggle('is-auto', !!S.auto);

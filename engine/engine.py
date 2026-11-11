@@ -2024,6 +2024,10 @@ class Engine:
             upcoming = ([dict(self.liq_next, locked=True)] if self.liq_next else []) + self.plan
             upcoming = [dict(u, air=round(self.length(u), 1)) for u in upcoming]      # air = START → (smart) MIX: what is really heard
             if n.get("path"): n["air"] = round(self.length(n), 1)
+            try:      # the cover (Hype Live's cover store) for the player; the next songs are fetched ahead so theirs is ready
+                if n.get("section") == "music": n["cover"] = cover_url(n.get("artist"), n.get("title"))
+                for u in [u for u in upcoming if u.get("section") == "music"][:3]: cover_url(u.get("artist"), u.get("title"))
+            except Exception: pass
             c = dbc()
             hist = [dict(zip(["started", "artist", "title", "folder", "mode", "scene"], r)) for r in
                     c.execute("SELECT started, artist, title, folder, mode, scene FROM asrun ORDER BY id DESC LIMIT 8")]
