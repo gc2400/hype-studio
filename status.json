@@ -1,18 +1,18 @@
 {
- "time": "2026-11-11T15:52:08",
+ "time": "2026-11-11T16:36:49",
  "result": "ok",
- "commit": "eed5a6e11ecff3c168a43582fe1db8d5f9206395",
- "subject": "Panel player: the song's cover (from Hype Live's cover store) instead of the letter; the next 3 songs' covers are fetched ahead",
+ "commit": "d0f26aeee7b841df972c3e388dace046054179d2",
+ "subject": "Listener photos & videos (Hype Live 2.36 ?hype_studio_media): approved items become ready 16:9 media pads \u2013 fitted in the middle over a blurred fill (portrait phone shots), Hype name card (VIA WHATSAPP / HYPERADIO.NL, first name \u00b7 city, caption); videos H.264/AAC max 120 s; ack + remove; green \ud83d\udcf1 pads first in MEDIA; Health row 'Hype Live media link'",
  "log": [
-  "15:51:22 update 8eaacc54 \u2192 eed5a6e1 \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
-  "15:51:22 restart hype-engine",
-  "15:52:07 installed OK \u00b7 restarted: hype-engine"
+  "16:36:04 update eed5a6e1 \u2192 d0f26aee \u00b7 4 file(s): engine/engine.py, engine/listener_media.py, web/panel/header.js, web/panel/index.html",
+  "16:36:04 restart hype-engine",
+  "16:36:49 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Bryan Mg \u2013 Kom Maar",
+  "song": "ROTIMI \u2013 BESTIE",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
