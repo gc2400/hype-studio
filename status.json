@@ -1,17 +1,19 @@
 {
- "time": "2026-11-11T13:45:38",
+ "time": "2026-11-11T15:15:15",
  "result": "ok",
- "commit": "f55aae8801902fc71e7f806be5527afdc03e3580",
- "subject": "History: Audience column = how many (R / TV), new Change column = \u25b2 / \u25bc during the item",
+ "commit": "2bc21a91a4e76a14786d19dff62bf66c3066742a",
+ "subject": "Replaced file: engine reads its new loudness map (was kept from the old file until a restart); a replaced song of another length with your own cue points gets '\u26a0 new version \u2013 check cues' in the Library (cues clamped to the new length; saving clears it); the backup relay is no longer counted as a radio listener",
  "log": [
-  "13:45:38 update 939937cf \u2192 f55aae88 \u00b7 1 file(s): web/panel/history.html",
-  "13:45:38 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:14:30 update f55aae88 \u2192 2bc21a91 \u00b7 3 file(s): engine/engine.py, engine/indexer.py, web/panel/library.html",
+  "15:14:30 restart hype-indexer",
+  "15:14:30 restart hype-engine",
+  "15:15:15 installed OK \u00b7 restarted: hype-engine, hype-indexer"
  ],
  "guard": {
-  "song": "Darkoo x Dess Dior \u2013 Favourite Girl",
-  "listeners": 3,
+  "song": "Bollebof \u2013 LMZ",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
