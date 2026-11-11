@@ -1,18 +1,18 @@
 {
- "time": "2026-11-11T16:36:49",
+ "time": "2026-11-11T16:51:55",
  "result": "ok",
- "commit": "d0f26aeee7b841df972c3e388dace046054179d2",
- "subject": "Listener photos & videos (Hype Live 2.36 ?hype_studio_media): approved items become ready 16:9 media pads \u2013 fitted in the middle over a blurred fill (portrait phone shots), Hype name card (VIA WHATSAPP / HYPERADIO.NL, first name \u00b7 city, caption); videos H.264/AAC max 120 s; ack + remove; green \ud83d\udcf1 pads first in MEDIA; Health row 'Hype Live media link'",
+ "commit": "7cb9a1e93b0c48ea37a6bc5097ba5178014f25fe",
+ "subject": "Listener media name card in the voice-message-box house style (navy box, yellow edge, yellow icon circle with camera / play, red dot + PHOTO / VIDEO MESSAGE, first name, via WhatsApp / hyperadio.nl, caption); Hype Top 10 -> Hype Live (?hype_studio_top10): numbers from the TOP10Nxx jingles in the Top 10 playlist, week + show_at of the next Hype Top 10 show, sent when the list changed and stayed the same for 10 min; /top10 + /top10_send",
  "log": [
-  "16:36:04 update eed5a6e1 \u2192 d0f26aee \u00b7 4 file(s): engine/engine.py, engine/listener_media.py, web/panel/header.js, web/panel/index.html",
-  "16:36:04 restart hype-engine",
-  "16:36:49 installed OK \u00b7 restarted: hype-engine"
+  "16:51:09 update d0f26aee \u2192 7cb9a1e9 \u00b7 2 file(s): engine/engine.py, engine/listener_media.py",
+  "16:51:10 restart hype-engine",
+  "16:51:55 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "ROTIMI \u2013 BESTIE",
+  "song": "bees & honey x Omah Lay x BEAM x Gyptian \u2013 As We Get High",
   "listeners": 3,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
