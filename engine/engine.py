@@ -493,6 +493,12 @@ def cover_worker():
     except Exception: pass
     while True:
         time.sleep(3)          # at most one look-up per 3 s (Hype Live itself asks Apple at most once per 5 s)
+        if hl_sync_active():      # Hype Live 2.42: the wanted covers ride along in the minute sync (no call per song)
+            with COVER_LOCK: want = [{"artist": a, "title": t} for _, a, t in COVER_Q[:15]]
+            try:
+                if want != json.load(open(HL_WANT)): raise ValueError
+            except Exception: jdump(want, HL_WANT)
+            continue
         with COVER_LOCK: job = COVER_Q.pop(0) if COVER_Q else None
         if not job: continue
         k, artist, title = job; f = os.path.join(COVERS, k + ".jpg")
@@ -3264,7 +3270,7 @@ def _listeners():
     LISTEN.update(t=time.time(), d=d); return d
 def nowplaying_api():
     """AzuraCast-style /api/nowplaying/hype_radio, so Hype Live (and others) only need a different link."""
-    L = listeners(); n = E.now or {}; t = time.time()
+    n = E.now or {}; t = time.time()
     def song(it, sid=""):
         it = it or {}; a, ti = it.get("artist") or "", it.get("title") or ""
         return {"id": sid or hashlib.md5((a + ti).encode()).hexdigest(), "text": (a + " - " + ti) if a else ti, "artist": a, "title": ti, "album": "", "genre": it.get("folder") or "", "art": "", "custom_fields": {}}
@@ -3285,13 +3291,13 @@ def nowplaying_api():
     return {"station": {"id": 1, "name": "Hype Radio TV", "shortcode": "hype_radio", "listen_url": "https://stream.hyperadio.nl/radio.mp3",
                         "hls_url": "https://stream.hyperadio.nl/radio.m3u8", "hls_enabled": True, "is_public": True,
                         "mounts": [{"name": "MP3 128", "url": "https://stream.hyperadio.nl/radio.mp3", "bitrate": 128, "format": "mp3", "is_default": True}]},
-            "listeners": {"total": L["current"], "unique": L["current"], "current": L["current"]},
+            # listener / viewer numbers are NOT public any more (Hype Live gets them in the heartbeat, write key) – song info only
             "live": {"is_live": E.live.status().get("air") == "studio" if hasattr(E, "live") else False, "streamer_name": "", "broadcast_start": None},
             "now_playing": {"sh_id": int(n.get("started") or 0), "played_at": int(n.get("started") or t), "duration": round(dur), "elapsed": round(el), "remaining": round(max(0, dur - el)),
                             "playlist": n.get("folder") or "", "streamer": "", "is_request": False, "song": song(n),
                             "type": "song" if n.get("section") == "music" else "jingle" if n.get("section") == "jingles" else (n.get("section") or "")},
             "playing_next": {"song": song(nxt)} if nxt else None, "song_history": hist, "is_online": not E.stopped,
-            "hype": {"listeners": L, "viewers": viewers(), "source": "hype-studio"}}
+            "hype": {"source": "hype-studio"}}
 
 GUARD_CONF = "/var/lib/hype/guard_conf.json"
 def hl_send_np(c, it):
@@ -3308,10 +3314,10 @@ def hl_send_np(c, it):
         body["brand"] = (r[0] if r and r[0] else (it.get("folder") or "").split("/")[-1]) or it.get("title")
     if typ == "song":
         body["next"] = [{"artist": p_.get("artist") or "", "title": p_.get("title") or "", "type": "song" if p_.get("section") == "music" else "jingle"} for p_ in (([E.liq_next] if E.liq_next else []) + E.plan)[:3]]
-    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_np=" + urllib.parse.quote(hl_key(g))
+    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_np="; hk = hl_key(g)
     def go():
         try:
-            r = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "User-Agent": "HypeStudio/1"})
+            r = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "User-Agent": "HypeStudio/1", "X-Hype-Key": hk})
             a = urllib.request.urlopen(r, timeout=10).read(100).decode("utf-8", "replace")
             log.info("Hype Live np (%s %s): %s", typ, body.get("brand") or body["title"], a[:40])
         except Exception as e: log.warning("Hype Live np: %s", e)
@@ -3488,8 +3494,8 @@ def hl_call(param, extra="", data=None, timeout=20):
     """GET (or POST data) https://hyperadio.nl/?<param>=KEY<extra>: the write key for sending / acks, else the read key."""
     g = json.load(open(GUARD_CONF)); k = hl_key(g, "write" if (data is not None or "&ack=" in extra) else "read")
     if not k: raise RuntimeError("no Hype Live key")
-    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?" + param + "=" + urllib.parse.quote(k) + extra
-    r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1", **({"Content-Type": "application/json"} if data is not None else {})},
+    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?" + param + "=" + extra      # the key goes in X-Hype-Key (Hype Live 2.42), never in a URL
+    r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1", "X-Hype-Key": k, **({"Content-Type": "application/json"} if data is not None else {})},
                                method="POST" if data is not None else "GET")
     return urllib.request.urlopen(r, timeout=timeout).read(2_000_000).decode("utf-8", "replace")
 # ---------------- listener photos & videos (approved in Hype Live) -> MEDIA pads ----------------
@@ -3695,7 +3701,24 @@ def sponsors_loop():
 
 # ---------------- Hype Live 2.41: one sync call a minute (in the guard's heartbeat) + ⚡ poke ----------------
 HL_SYNC, HL_KNOWN, HL_ACKS = "/var/lib/hype/hl_sync.json", "/var/lib/hype/hl_known.json", "/var/lib/hype/hl_acks.json"
-HL_POKE, HL_SCHED = "/var/lib/hype/hl_poke", "/var/lib/hype/hl_schedule_version"
+HL_POKE, HL_SCHED, HL_WANT = "/var/lib/hype/hl_poke", "/var/lib/hype/hl_schedule_version", "/var/lib/hype/hl_want_covers.json"
+def sync_covers(cv):
+    """Covers from the sync answer ('artist|title' -> {url, fixed, none, pending}): saved like the old cover calls."""
+    for key, v in (cv or {}).items():
+        if not isinstance(v, dict) or v.get("pending") or "|" not in key: continue
+        artist, title = key.split("|", 1); k = cover_key(artist, title); f = os.path.join(COVERS, k + ".jpg")
+        try:
+            if v.get("url"):
+                img = urllib.request.urlopen(urllib.request.Request(v["url"], headers={"User-Agent": "HypeStudio/1"}), timeout=10).read(5_000_000)
+                with open(f + ".tmp", "wb") as fh: fh.write(img)
+                os.replace(f + ".tmp", f); COVER_MISS.pop(k, None)
+            else:                                    # none found, or 🚫 Wrong cover: the Hype artwork
+                if os.path.exists(f): os.remove(f)
+                COVER_MISS[k] = time.time()
+        except Exception as e: log.info("cover %s: %s", key, e); COVER_MISS[k] = time.time() - 86400 + 300; continue
+        with COVER_LOCK: COVER_Q[:] = [x for x in COVER_Q if x[0] != k]
+    try: jdump(COVER_MISS, COVER_IDX)
+    except Exception: pass
 HL_SYNC_SEEN = {"t": 0, "n": 0}
 def hl_sync_active():
     """True while the guard's heartbeat gets the sync answer (Hype Live 2.41+): the old polls then stay quiet."""
@@ -3740,6 +3763,9 @@ def hl_sync_loop():
                     st = media_in_state(); ok["media"] = all(re.sub(r"[^A-Za-z0-9_-]", "", str(i.get("id") or "")) in st for i in (d["media"] or {}).get("items") or [])
                 except Exception as e: ok["media"] = False; log.warning("sync media: %s", e)
             MEDIA_LINK.update(t=time.time(), ok=True, error="")
+            if d.get("covers"):
+                try: sync_covers(d["covers"])
+                except Exception as e: log.warning("sync covers: %s", e)
             if isinstance(d.get("sponsors"), list):
                 planner.HL_DEALS = d["sponsors"]; jdump({"sponsors": d["sponsors"], "t": time.time()}, HL_SPONSORS)
                 log.info("sync: sponsor deals %d", len(d["sponsors"]))
@@ -3800,8 +3826,8 @@ def voice_apply(d, fetch, ack):
         v["acked"] = True; changed = True; log.info("voice: ack %s -> %s", vid, a[:30])
     if changed: voice_save(st)
 
-def hl_get(url, data=None, timeout=20):
-    r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1"}, method="POST" if data is not None else "GET")
+def hl_get(url, data=None, timeout=20, key=None):
+    r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1", **({"X-Hype-Key": key} if key else {})}, method="POST" if data is not None else "GET")
     return urllib.request.urlopen(r, timeout=timeout)
 def voice_loop():
     """Old way (Hype Live before 2.41, or when the sync answer stops): poll every 20 s. With the sync call working,
@@ -3813,16 +3839,15 @@ def voice_loop():
             try: g = json.load(open(GUARD_CONF))
             except Exception: g = {}
             if not hl_key(g): continue
-            base = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_studio_voice=" + urllib.parse.quote(hl_key(g, "read"))
-            base_w = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_studio_voice=" + urllib.parse.quote(hl_key(g))
-            try: d = json.loads(hl_get(base).read(500000).decode("utf-8", "replace"))
+            base = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_studio_voice="; kr, kw = hl_key(g, "read"), hl_key(g)
+            try: d = json.loads(hl_get(base, key=kr).read(500000).decode("utf-8", "replace"))
             except urllib.error.HTTPError as e:
                 if e.code != 404: log.warning("voice: Hype Live %s", e.code)
                 continue
             def ack(vid):
-                try: return hl_get(base_w + "&ack=" + urllib.parse.quote(vid), data=b"").read(100).decode("utf-8", "replace")
+                try: return hl_get(base + "&ack=" + urllib.parse.quote(vid), data=b"", key=kw).read(100).decode("utf-8", "replace")
                 except urllib.error.HTTPError as e: return str(e.code)
-            voice_apply(d, lambda vid, it: hl_get(base + "&file=" + urllib.parse.quote(vid), timeout=60), ack)
+            voice_apply(d, lambda vid, it: hl_open(it["url"], 60) if "hype_file=" in (it.get("url") or "") else hl_get(base + "&file=" + urllib.parse.quote(vid), timeout=60, key=kr), ack)
         except Exception as e: log.warning("voice: %s", e)
 
 def guard_status(full=False):

@@ -31,7 +31,7 @@ logging.getLogger("obsws_python").setLevel(logging.WARNING)   # (it logs the pas
 
 DEFAULT = {"hl_url": "https://hyperadio.nl/", "hl_key": "", "heartbeat": True, "repair": True}
 HL_SYNC, HL_KNOWN, HL_ACKS = "/var/lib/hype/hl_sync.json", "/var/lib/hype/hl_known.json", "/var/lib/hype/hl_acks.json"
-HL_POKE, HL_SCHED = "/var/lib/hype/hl_poke", "/var/lib/hype/hl_schedule_version"
+HL_POKE, HL_SCHED, HL_WANT = "/var/lib/hype/hl_poke", "/var/lib/hype/hl_schedule_version", "/var/lib/hype/hl_want_covers.json"
 
 def hl_key(c, kind="write"):
     """Hype Live 2.40 has a read key (r…) and a write key (w…); the write key also reads. The old single key keeps
@@ -270,11 +270,11 @@ class Guard:
         if time.time() - self.tick_t < 60: return
         self.tick_t = time.time(); k = hl_key(c, "read")
         if not k: self.tk = {"ok": None, "t": 0, "fails": 0, "error": "no Hype Live key"}; return
-        url = "https://www.hyperadio.nl/wp-cron.php?doing_wp_cron&hype_tick=" + urllib.request.quote(k)
+        url = "https://www.hyperadio.nl/wp-cron.php?doing_wp_cron&hype_tick="       # the key travels in X-Hype-Key, never in a URL
         class NoRedirect(urllib.request.HTTPRedirectHandler):
             def redirect_request(self, *a, **kw): return None
         try:
-            r = urllib.request.build_opener(NoRedirect).open(urllib.request.Request(url, headers={"User-Agent": "HypeStudio-Clock/1"}), timeout=30)
+            r = urllib.request.build_opener(NoRedirect).open(urllib.request.Request(url, headers={"User-Agent": "HypeStudio-Clock/1", "X-Hype-Key": k}), timeout=30)
             r.read(1000); self.tk = {"ok": True, "t": time.time(), "fails": 0, "error": ""}
         except Exception as e:
             f = self.tk.get("fails", 0) + 1; self.tk = {"ok": f < 3, "t": time.time(), "fails": f, "error": str(e)[:80]}
@@ -314,10 +314,12 @@ class Guard:
         except Exception: acks = {}
         body["sync"] = 1; body["known"] = {k: known[k] for k in ("voice", "media", "sponsors") if k in known}
         body["ack"] = {k: list(acks.get(k) or [])[:100] for k in ("voice", "media") if acks.get(k)}
-        url = c["hl_url"].rstrip("/") + "/?hype_studio=" + urllib.request.quote(hl_key(c))
+        try: body["want_covers"] = json.load(open(HL_WANT))[:15]      # covers for the next songs come back in the answer
+        except Exception: pass
+        url = c["hl_url"].rstrip("/") + "/?hype_studio="
         try:
-            r = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "User-Agent": "HypeStudio-Guard/1"})
-            resp = urllib.request.urlopen(r, timeout=10)
+            r = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "User-Agent": "HypeStudio-Guard/1", "X-Hype-Key": hl_key(c)})
+            resp = urllib.request.urlopen(r, timeout=20)
             raw = resp.read(5_000_000).decode("utf-8", "replace").strip()
             sy = None
             if raw.startswith("{"):         # the sync answer (Hype Live 2.41+): handed to the engine, which makes the pads etc.
