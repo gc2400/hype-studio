@@ -2289,7 +2289,7 @@ def load_week():
 
 try: planner.WEEK[:] = json.load(open("/var/lib/hype/week.json"))   # known right at start (show jingles plan right after a restart)
 except Exception: pass
-SPECIALS_F = "/var/lib/hype/specials.json"
+SPECIALS_F = "/var/lib/hype/specials.json"; SCHED_V = [""]
 def load_specials():
     """One-off schedule changes for one date (Hype Live → 📅 Programming → ⭐ Specials, /wp-json/hype/v1/schedule)."""
     with urllib.request.urlopen(urllib.request.Request("https://www.hyperadio.nl/wp-json/hype/v1/schedule", headers={"User-Agent": "HypeStudio/1"}), timeout=15) as r:
@@ -2307,6 +2307,14 @@ def watch_show():
         if time.time() - last_week > 3600:
             try: load_week(); last_week = time.time()
             except Exception as e: log.warning("week: %s", e); last_week = time.time() - 3000
+        try: sv = open("/run/hype/schedule_version").read().strip()
+        except OSError: sv = ""
+        if sv and sv != SCHED_V[0]:             # Hype Live says the programming changed (X-Hype-Schedule): re-read everything now
+            if SCHED_V[0]: log.info("schedule changed in Hype Live (%s): re-reading", sv); last_week = last_sp = 0
+            SCHED_V[0] = sv
+            if time.time() - last_week > 3600:
+                try: load_week(); last_week = time.time()
+                except Exception as e: log.warning("week: %s", e)
         if time.time() - last_sp > 300:       # specials: every 5 min (a change made today is on screen within minutes)
             try: load_specials()
             except Exception as e: log.warning("specials: %s", e)
@@ -3274,7 +3282,7 @@ def hl_send_np(c, it):
     because until go-live the public radio is still CLOSE."""
     try: g = json.load(open(GUARD_CONF))
     except Exception: return
-    if not g.get("hl_key") or not (g.get("np") or (g.get("np_spots") and it.get("section") == "ads")): return
+    if not hl_key(g) or not (g.get("np") or (g.get("np_spots") and it.get("section") == "ads")): return
     if not g.get("np") and it.get("section") != "ads": return
     sec = it.get("section"); typ = "song" if sec == "music" else "spot" if sec == "ads" else "jingle"
     body = {"artist": it.get("artist") or "", "title": it.get("title") or "", "type": typ, "length": round(E.length(it), 1), "start": round(time.time(), 1), "path": it.get("path")}
@@ -3283,7 +3291,7 @@ def hl_send_np(c, it):
         body["brand"] = (r[0] if r and r[0] else (it.get("folder") or "").split("/")[-1]) or it.get("title")
     if typ == "song":
         body["next"] = [{"artist": p_.get("artist") or "", "title": p_.get("title") or "", "type": "song" if p_.get("section") == "music" else "jingle"} for p_ in (([E.liq_next] if E.liq_next else []) + E.plan)[:3]]
-    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_np=" + urllib.parse.quote(g["hl_key"])
+    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_np=" + urllib.parse.quote(hl_key(g))
     def go():
         try:
             r = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "User-Agent": "HypeStudio/1"})
@@ -3454,11 +3462,16 @@ planner.VOICE_PICK = voice_pick
 
 # ---------------- Hype Live: sponsor deals, covers, weekly recap ----------------
 HL_SPONSORS = "/var/lib/hype/hl_sponsors.json"
+def hl_key(g, kind="write"):
+    """Hype Live 2.40: read key (r…) for lists / files / sponsors / covers, write key (w…) for heartbeat, song link, acks,
+    charts and the recap; the write key also reads. The old single key keeps working until it is switched off in Hype Live."""
+    if kind == "read": return g.get("hl_key_read") or g.get("hl_key_write") or g.get("hl_key") or ""
+    return g.get("hl_key_write") or g.get("hl_key") or ""
 def hl_call(param, extra="", data=None, timeout=20):
-    """GET (or POST data) https://hyperadio.nl/?<param>=KEY<extra> with the Hype Live key from the guard settings."""
-    g = json.load(open(GUARD_CONF))
-    if not g.get("hl_key"): raise RuntimeError("no Hype Live key")
-    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?" + param + "=" + urllib.parse.quote(g["hl_key"]) + extra
+    """GET (or POST data) https://hyperadio.nl/?<param>=KEY<extra>: the write key for sending / acks, else the read key."""
+    g = json.load(open(GUARD_CONF)); k = hl_key(g, "write" if (data is not None or "&ack=" in extra) else "read")
+    if not k: raise RuntimeError("no Hype Live key")
+    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?" + param + "=" + urllib.parse.quote(k) + extra
     r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1", **({"Content-Type": "application/json"} if data is not None else {})},
                                method="POST" if data is not None else "GET")
     return urllib.request.urlopen(r, timeout=timeout).read(2_000_000).decode("utf-8", "replace")
@@ -3664,8 +3677,9 @@ def voice_loop():
         try:
             try: g = json.load(open(GUARD_CONF))
             except Exception: g = {}
-            if not g.get("hl_key"): continue
-            base = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_studio_voice=" + urllib.parse.quote(g["hl_key"])
+            if not hl_key(g): continue
+            base = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_studio_voice=" + urllib.parse.quote(hl_key(g, "read"))
+            base_w = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_studio_voice=" + urllib.parse.quote(hl_key(g))
             def get(url, data=None, timeout=20):
                 r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1"}, method="POST" if data is not None else "GET")
                 return urllib.request.urlopen(r, timeout=timeout)
@@ -3718,7 +3732,7 @@ def voice_loop():
                     c.execute("UPDATE pad_items SET pos=pos+1 WHERE bank_id=?", (bid,))
                     c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, 0, v["path"], v["name"] + (" · " + v["city"] if v["city"] else ""), "#0277b8"))
                     c.commit(); v["in_bank"] = True
-                try: a = get(base + "&ack=" + urllib.parse.quote(vid), data=b"").read(100).decode("utf-8", "replace")
+                try: a = get(base_w + "&ack=" + urllib.parse.quote(vid), data=b"").read(100).decode("utf-8", "replace")
                 except urllib.error.HTTPError as e: a = f"{e.code}"
                 v["acked"] = True; changed = True; log.info("voice: ack %s -> %s", vid, a[:30])
             if changed: voice_save(st)
@@ -3731,10 +3745,10 @@ def guard_status(full=False):
     if full:
         try: c = json.load(open(GUARD_CONF))
         except Exception: c = {}
-        g["conf"] = {"hl_url": c.get("hl_url", "https://hyperadio.nl/"), "has_key": bool(c.get("hl_key")), "heartbeat": c.get("heartbeat", True), "repair": c.get("repair", True),
+        g["conf"] = {"hl_url": c.get("hl_url", "https://hyperadio.nl/"), "has_key": bool(c.get("hl_key")), "has_read": bool(c.get("hl_key_read")), "has_write": bool(c.get("hl_key_write")), "heartbeat": c.get("heartbeat", True), "repair": c.get("repair", True),
                      "np": bool(c.get("np")), "np_spots": bool(c.get("np_spots"))}
     else:
-        g = {k: g.get(k) for k in ("fresh", "ok", "problems", "heartbeat", "events")}; g["events"] = (g.get("events") or [])[:5]
+        g = {k: g.get(k) for k in ("fresh", "ok", "problems", "heartbeat", "events", "tick")}; g["events"] = (g.get("events") or [])[:5]
         g["media_link"] = dict(MEDIA_LINK, age=round(time.time() - MEDIA_LINK["t"]) if MEDIA_LINK["t"] else None)
     return g
 def guard_save(d):
@@ -3742,6 +3756,8 @@ def guard_save(d):
     except Exception: c = {}
     if "hl_key" in d and str(d["hl_key"]).strip() and "•" not in str(d["hl_key"]): c["hl_key"] = str(d["hl_key"]).strip()[:80]
     if d.get("hl_key_clear"): c["hl_key"] = ""
+    for k_ in ("hl_key_read", "hl_key_write"):       # Hype Live 2.40: read key (r…) + write key (w…)
+        if k_ in d and str(d[k_]).strip() and "•" not in str(d[k_]): c[k_] = str(d[k_]).strip()[:80]
     if "hl_url" in d and str(d["hl_url"]).startswith("https://"): c["hl_url"] = str(d["hl_url"]).strip()[:200]
     for k in ("heartbeat", "repair", "np", "np_spots"):
         if k in d: c[k] = bool(d[k])

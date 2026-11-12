@@ -30,6 +30,12 @@ log = logging.getLogger("guard")
 logging.getLogger("obsws_python").setLevel(logging.WARNING)   # (it logs the password on every connect)
 
 DEFAULT = {"hl_url": "https://hyperadio.nl/", "hl_key": "", "heartbeat": True, "repair": True}
+def hl_key(c, kind="write"):
+    """Hype Live 2.40 has a read key (r…) and a write key (w…); the write key also reads. The old single key keeps
+    working until Gianno switches it off in Hype Live."""
+    if kind == "read": return c.get("hl_key_read") or c.get("hl_key_write") or c.get("hl_key") or ""
+    return c.get("hl_key_write") or c.get("hl_key") or ""
+
 def conf():
     try: return dict(DEFAULT, **json.load(open(CONF)))
     except Exception: return dict(DEFAULT)
@@ -113,6 +119,7 @@ class Guard:
         self.events = collections.deque(maxlen=40)  # what happened (shown in the panel + sent to Hype Live)
         self.state = {}
         self.hb_t = 0; self.hb = {"ok": None, "t": 0, "answer": ""}
+        self.tick_t = 0; self.tk = {"ok": None, "t": 0, "fails": 0, "error": ""}
         self.step = {}
     def event(self, level, text):
         e = {"t": time.time(), "level": level, "text": text}; self.events.appendleft(e); log.info("%s: %s", level, text)
@@ -250,13 +257,30 @@ class Guard:
         return out
 
     def write(self):
-        d = dict(self.state, problems=self.problems(), events=list(self.events)[:20], heartbeat=self.hb, ok=not self.problems())
+        d = dict(self.state, problems=self.problems(), events=list(self.events)[:20], heartbeat=self.hb, tick=self.tk, ok=not self.problems())
         tmp = STATUS + ".tmp"; json.dump(d, open(tmp, "w")); os.replace(tmp, STATUS)
         return d
 
+    def tick(self, c):
+        """Hype Live's clock: WordPress only runs its timed jobs when someone visits, so every minute we ping wp-cron
+        (Hype Live 2.40). Three failures in a row = a warning row in Studio's health (no alarm push)."""
+        if time.time() - self.tick_t < 60: return
+        self.tick_t = time.time(); k = hl_key(c, "read")
+        if not k: self.tk = {"ok": None, "t": 0, "fails": 0, "error": "no Hype Live key"}; return
+        url = "https://www.hyperadio.nl/wp-cron.php?doing_wp_cron&hype_tick=" + urllib.request.quote(k)
+        class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, *a, **kw): return None
+        try:
+            r = urllib.request.build_opener(NoRedirect).open(urllib.request.Request(url, headers={"User-Agent": "HypeStudio-Clock/1"}), timeout=30)
+            r.read(1000); self.tk = {"ok": True, "t": time.time(), "fails": 0, "error": ""}
+        except Exception as e:
+            f = self.tk.get("fails", 0) + 1; self.tk = {"ok": f < 3, "t": time.time(), "fails": f, "error": str(e)[:80]}
+            if f == 3: log.warning("Hype Live clock ping failed 3x: %s", e)
+
     def heartbeat(self, d):
         c = conf()
-        if not c.get("heartbeat") or not c.get("hl_key"): self.hb = {"ok": None, "t": 0, "answer": "no Hype Live key set"}; return
+        self.tick(c)
+        if not c.get("heartbeat") or not hl_key(c): self.hb = {"ok": None, "t": 0, "answer": "no Hype Live key set"}; return
         if time.time() - self.hb_t < 60: return
         self.hb_t = time.time()
         body = {"v": 1, "source": "hype-studio", "t": int(time.time()), "ok": d["ok"],
@@ -275,10 +299,19 @@ class Guard:
             body["relay"] = {"state": rl.get("state", "off"), "host": rl.get("host", ""), "since": int(rl.get("since") or 0)}
         except Exception: body["relay"] = {"state": "off", "host": "", "since": 0}
         if sev: body["screen_events"] = sev[:200]     # PIP showings etc. (Hype Live logs the ones whose brand is a sponsor)
-        url = c["hl_url"].rstrip("/") + "/?hype_studio=" + urllib.request.quote(c["hl_key"])
+        url = c["hl_url"].rstrip("/") + "/?hype_studio=" + urllib.request.quote(hl_key(c))
         try:
             r = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "User-Agent": "HypeStudio-Guard/1"})
-            a = urllib.request.urlopen(r, timeout=10).read(200).decode("utf-8", "replace").strip()
+            resp = urllib.request.urlopen(r, timeout=10)
+            a = resp.read(200).decode("utf-8", "replace").strip()
+            sv = (resp.headers.get("X-Hype-Schedule") or "").strip()
+            if sv:                          # the programming changed in Hype Live -> the engine re-reads the schedule at once
+                try:
+                    if open("/run/hype/schedule_version").read().strip() != sv:
+                        raise FileNotFoundError
+                except OSError:
+                    with open("/run/hype/schedule_version.tmp", "w") as f_: f_.write(sv)
+                    os.replace("/run/hype/schedule_version.tmp", "/run/hype/schedule_version"); log.info("Hype Live schedule version %s", sv)
             self.hb = {"ok": a.startswith("OK"), "t": time.time(), "answer": a[:80] if len(a) < 80 else "(Hype Live does not know this link yet – plugin update needed)"}
             if a.startswith("OK") and sev and "ev=" in a:   # Hype Live confirmed it stored them ("OK ev=N"): keep only what came in meanwhile
                 try:
