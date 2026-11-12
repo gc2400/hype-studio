@@ -1,17 +1,17 @@
 {
- "time": "2026-11-12T13:35:37",
+ "time": "2026-11-12T13:45:52",
  "result": "ok",
- "commit": "83c09db6a51b6028ab44285e32caa016134dac37",
- "subject": "Chart editor: when \ud83c\udfc6 Chart is on, only Chart \u00b7 Number on screen \u00b7 Arrows \u00b7 Website show, in one row (Loop / Randomize / Rotation / Play exactly as listed are implied and hidden); shorter texts, compact Website card (\ud83d\udce4 At the show / Now)",
+ "commit": "ed270210d86dea700f76c5319aad0e2fff8ff512",
+ "subject": "No emojis in the chart editor (Chart, Website, At the show), button texts centred on one line; History: Audience and Change as 'radio \u00b7 TV' (no R / TV letters, a dot between)",
  "log": [
-  "13:35:37 update b8b6e8d6 \u2192 83c09db6 \u00b7 1 file(s): web/panel/plan.html",
-  "13:35:37 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "13:45:52 update 83c09db6 \u2192 ed270210 \u00b7 2 file(s): web/panel/history.html, web/panel/plan.html",
+  "13:45:52 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Rvssian x Rauw Alejandro x Wizkid \u2013 PONGO",
+  "song": "Issairo x Dongo \u2013 Si Bo Stimami",
   "listeners": 6,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
