@@ -34,7 +34,7 @@ td b{font-weight:700}
 .tag.music{background:#062F38;color:var(--b)}.tag.jingles{background:#1E1438;color:#B9A2FF}.tag.ads{background:#3A2A00;color:#FFB54D}
 .scroll{max-height:calc(100vh - 210px);overflow:auto}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
-.au{white-space:nowrap;font-size:12px;display:inline-flex;align-items:center}.au b{font-family:ui-monospace,Menlo,Consolas,monospace;min-width:24px;text-align:right}.au i{font-style:normal;color:var(--mut);padding:0 8px}.au .up{color:var(--g)}.au .dn{color:var(--r)}.au .eq{color:var(--mut)}
+.au{white-space:nowrap;font-size:12px;display:inline-flex;align-items:center}.au b{font-family:ui-monospace,Menlo,Consolas,monospace;min-width:26px}.au b:first-child{text-align:right}.au b:last-child{text-align:left}.au i{width:5px;height:5px;border-radius:50%;background:#6F86A0;margin:0 8px;flex:none}.au .up{color:var(--g)}.au .dn{color:var(--r)}.au .eq{color:var(--mut)}
 .ov{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:700;color:var(--b,#05A9C6);border:1px solid currentColor;white-space:nowrap}.ov.id{color:#FFE000}
 @media print{body{background:#fff!important;color:#000!important}#hhead,[role=tablist],#dayCard,#wPrev,#wNext,#wCsv,#wPdf{display:none!important}
   .card{border:0!important;background:#fff!important;padding:0!important}.kpi{background:#fff!important;border:1px solid #ccc!important}.kpi b{color:#000!important}
@@ -80,7 +80,7 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
       <a class="btn" id="csv" title="Download this day as a spreadsheet (proof of play)">⬇ CSV</a>
     </div>
     <div class="muted" id="sum"></div>
-    <div class="scroll"><table><thead><tr><th>Time</th><th>Artist – title</th><th>Folder</th><th>Type</th><th>Length</th><th>TV</th><th title="Radio listeners (own streams + Streamerr) · TV viewers, at the end of the item">Audience <span style="font-weight:500;text-transform:none;letter-spacing:0">radio · TV</span></th><th title="Radio · TV gained ▲ / lost ▼ during the item (from its start to the start of the next)">Change</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="scroll"><table><thead><tr><th>Time</th><th>Artist – title</th><th>Folder</th><th>Type</th><th>Length</th><th>TV</th><th title="Radio listeners (own streams + Streamerr) · TV viewers, at the end of the item">Audience <span style="font-weight:500;text-transform:none;letter-spacing:0">radio • TV</span></th><th title="Radio · TV gained ▲ / lost ▼ during the item (from its start to the start of the next)">Change</th></tr></thead><tbody id="rows"></tbody></table></div>
   </section>
 </div>
 <script>
@@ -92,13 +92,13 @@ let TYPE = '', T = null;
 // audience change during an item: R = radio (own streams + Streamerr), TV = viewers; ▲ more, ▼ fewer, – no change (hover: from → to)
 function audCell(a) {        // Audience: radio · TV at the end of the item (now, for the item on air)
   if (!a) return '';
-  return `<span class="au" title="Radio listeners · TV viewers${a.live ? ' now' : ' at the end'}"><b>${a.r1}</b><i>·</i><b>${a.v1}</b></span>`;
+  return `<span class="au" title="Radio listeners · TV viewers${a.live ? ' now' : ' at the end'}"><b>${a.r1}</b><i></i><b>${a.v1}</b></span>`;
 }
 function chgCell(a) {        // Change: radio · TV, ▲ more / ▼ fewer / – no change during the item (hover: from → to)
   if (!a) return '';
   const one = (x0, x1, nm) => { const d = x1 - x0, c = d > 0 ? 'up' : d < 0 ? 'dn' : 'eq';
     return `<b class="${c}" title="${nm}: ${x0} → ${x1}${a.live ? ' (so far)' : ''}">${d > 0 ? '▲' + d : d < 0 ? '▼' + (-d) : '–'}</b>`; };
-  return `<span class="au">${one(a.r0, a.r1, 'Radio listeners')}<i>·</i>${one(a.v0, a.v1, 'TV viewers')}</span>`;
+  return `<span class="au">${one(a.r0, a.r1, 'Radio listeners')}<i></i>${one(a.v0, a.v1, 'TV viewers')}</span>`;
 }
 $('#day').value = iso(new Date());
 function load() {
