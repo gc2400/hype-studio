@@ -325,7 +325,9 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
       <div class="plopts" id="plChartOpts" hidden>
         <label class="plopt"><input type="checkbox" id="plChNum" autocomplete="off"><span><b>Number on screen</b><small>The yellow square over the Now Playing box, the whole song</small></span></label>
         <label class="plopt"><input type="checkbox" id="plChArr" autocomplete="off"><span><b>Arrows</b><small>▲ up · ▼ down · = same · NEW · RE, compared with last week's chart</small></span></label>
-        <label class="plopt"><input type="checkbox" id="plChWeb" autocomplete="off"><span><b>On the website</b><small>Sent to Hype Live after a change; goes live when the show starts</small></span></label>
+        <input type="checkbox" id="plChWeb" hidden>
+        <div class="plopt" style="flex-direction:column;align-items:flex-start;gap:6px;cursor:default"><b>🌐 Website</b><small id="plWebSt">Not on the website yet. Nothing goes out until you publish.</small>
+          <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" id="plPubShow" title="Hype Live puts it on the website when this chart's show starts (no spoilers)">📤 Publish · live at the show</button><button class="btn sm" id="plPubNow">Publish now</button></div></div>
       </div>
       <span class="lab">What's in it</span>
       <div class="srcs" id="plSources"></div>
@@ -517,7 +519,7 @@ function openPL(p) {
   if (innerWidth < 760) setTimeout(() => { const e = document.querySelector('#plEdit'); if (e) e.scrollIntoView({behavior: 'smooth', block: 'start'}); }, 80);
   cur = JSON.parse(JSON.stringify(p)); $('#plEdit').hidden = false; $('#plEmpty').hidden = true;
   $('#plName').value = cur.name; $('#plLoop').checked = cur.loop; $('#plShuffle').checked = cur.shuffle; $('#plRotate').checked = !!cur.rotate; $('#plStrict').checked = !!cur.strict;
-  $('#plChart').checked = !!cur.chart; $('#plChNum').checked = cur.chart_num !== false; $('#plChArr').checked = cur.chart_arrows !== false; $('#plChWeb').checked = cur.chart_web !== false; chartUI();
+  $('#plChart').checked = !!cur.chart; $('#plChNum').checked = cur.chart_num !== false; $('#plChArr').checked = cur.chart_arrows !== false; $('#plChWeb').checked = cur.chart_web !== false; chartUI(); webUI();
   $('#plDel').hidden = !cur.id; $('#plReset').hidden = !cur.id; $('#plInfo').textContent = cur.id ? cur.count + ' songs' : 'new';
   renderSources(); renderPL(); fillPicker();
   if (cur.id) get('playlist?id=' + cur.id).then(d => {
@@ -536,6 +538,20 @@ function srcTag(s) {
   return `<span class="tg" style="background:${t[1]};color:${t[2]}">${t[0]}</span>`;
 }
 let PLDRAG = null;
+function webUI() {      // website state of this chart: last publish + "changed since"
+  const w = cur && cur.web, el = $('#plWebSt'); if (!el) return;
+  const when = t => new Date(t * 1000).toLocaleString([], {weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
+  if (!w || !w.t) { el.innerHTML = 'Not on the website yet. Nothing goes out until you publish.' + (w && w.show_at ? ` Its show: ${when(w.show_at)}.` : ''); return; }
+  el.innerHTML = `Published ${when(w.t)} · week ${esc(w.week.split('-W')[1] || w.week)}${w.now ? ' · live at once' : ' · live from the start of the show'}` +
+    (w.changed ? ' · <b style="color:#FFB547">changed since – not on the website yet</b>' : ' · <span style="color:var(--g)">up to date</span>');
+}
+function publishChart(now) {
+  if (!cur || !cur.id) return toast('Save the chart first');
+  if (now && !confirm('Put this chart on the website right now?')) return;
+  post('chart_publish', {id: cur.id, now}).then(r => { cur.web = Object.assign(cur.web || {}, r.web || {}); webUI(); toast(r.answer && r.answer.startsWith('OK') ? (now ? 'On the website now' : 'Published – goes live when the show starts') : 'Hype Live: ' + (r.answer || r.error || 'no answer')); })
+    .catch(e => toast('Not published: ' + e));
+}
+$('#plPubShow').onclick = () => publishChart(false); $('#plPubNow').onclick = () => publishChart(true);
 function chartUI() {      // a chart always plays exactly as listed, never randomized
   const on = $('#plChart').checked; $('#plChartOpts').hidden = !on;
   if (on) { $('#plStrict').checked = true; $('#plShuffle').checked = false; $('#plRotate').checked = false; }

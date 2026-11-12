@@ -2733,7 +2733,13 @@ class H(BaseHTTPRequestHandler):
             if p == "/pvclip": return self.send(200, pvclip(qs["path"][0]))
             if p == "/wavezoom": return self.send(200, wave_zoom(qs["path"][0], float(qs.get("t", ["0"])[0]), float(qs.get("d", ["6"])[0])))
             if p == "/preview.jpg": return self.send(200, E.tv.screenshot(int(qs.get("w", ["640"])[0])), "image/jpeg")
-            if p == "/playlists": return self.send(200, planner.api_playlists(dbc()))
+            if p == "/playlists":
+                pls = planner.api_playlists(dbc())
+                for p_ in pls:
+                    if p_.get("chart"):
+                        try: p_["web"] = chart_state(p_["id"]); p_["web"]["show_at"] = chart_show_at(p_["name"])
+                        except Exception: p_["web"] = None
+                return self.send(200, pls)
             if p == "/playlist": return self.send(200, planner.api_preview_playlist(dbc(), int(qs["id"][0])))
             if p == "/playlist_take":    # the next songs of a playlist (for Up next / AUX); they count as played in its order
                 c = dbc(); pid = int(qs["id"][0]); n = min(200, int(qs.get("n", ["0"])[0] or 0))
@@ -2914,6 +2920,12 @@ class H(BaseHTTPRequestHandler):
             if abs(time.time() - float(d.get("t") or 0)) > 120: return self.send(400, {"ok": False, "error": "too old"})
             open(HL_POKE, "w").write(str(time.time())); log.info("Hype Live poke: %s", ",".join(map(str, d.get("what") or [])))
             return self.send(200, {"ok": True})
+        if p == "/chart_publish":   # 📤 Publish a chart to the website (via Hype Live): {id, now}
+            try:
+                wk, a = chart_send(int(d["id"]), force=True, now=bool(d.get("now")))
+                ok_ = (a or "").startswith("OK")
+                return self.send(200 if ok_ else 502, {"week": wk, "answer": (a or "")[:80], "web": chart_state(int(d["id"])), **({} if ok_ else {"error": "Hype Live: " + (a or "no answer")[:80]})})
+            except Exception as e: return self.send(500, {"error": str(e)[:120]})
         if p == "/top10_send":      # the Hype Top 10 to Hype Live now
             try: wk, a = top10_send(force=True); return self.send(200, {"week": wk, "answer": (a or "")[:80]})
             except Exception as e: return self.send(500, {"error": str(e)})
@@ -3608,17 +3620,25 @@ def top10_data():
     for pid, name in web_charts():
         if is_top10(name): return chart_data(pid)
     return None
-def chart_send(pid, force=False):
-    """One chart to Hype Live: the Hype Top 10 to ?hype_studio_top10 (as since 2.37), other charts to ?hype_studio_chart."""
+def chart_state(pid):
+    """Website state of a chart: when it was last published, which week, and whether the list changed since."""
+    try: last = json.load(open(TOP10_SENT)).get(str(pid)) or {}
+    except Exception: last = {}
+    d = chart_data(pid); sig = json.dumps([d["week"], d["items"]], sort_keys=True) if d else None
+    return {"t": last.get("t", 0), "week": last.get("week", ""), "now": bool(last.get("now")), "changed": bool(sig and sig != last.get("sig"))}
+def chart_send(pid, force=False, now=False):
+    """One chart to Hype Live: the Hype Top 10 to ?hype_studio_top10 (as since 2.37), other charts to ?hype_studio_chart.
+    Only when Gianno presses Publish (now = live on the website at once; else from the start of its show)."""
     d = chart_data(pid)
     if not d or not d["items"]: return None, "no songs"
+    if now: d["show_at"] = 0
     sig = json.dumps([d["week"], d["items"]], sort_keys=True)
     try: last = json.load(open(TOP10_SENT))
     except Exception: last = {}
     if "sig" in last: last = {}                        # old format (one chart)
     if not force and last.get(str(pid), {}).get("sig") == sig: return d["week"], "unchanged"
     a = hl_call("hype_studio_top10" if is_top10(d["chart"]["name"]) else "hype_studio_chart", data=json.dumps(d).encode(), timeout=30).strip()
-    if a.startswith("OK"): last[str(pid)] = {"sig": sig, "t": time.time(), "week": d["week"]}; jdump(last, TOP10_SENT)
+    if a.startswith("OK"): last[str(pid)] = {"sig": sig, "t": time.time(), "week": d["week"], "now": bool(now), "show_at": d["show_at"]}; jdump(last, TOP10_SENT)
     log.info("chart %s %s -> Hype Live: %s", d["chart"]["name"], d["week"], a[:40]); return d["week"], a
 def top10_send(force=False):
     for pid, name in web_charts():
@@ -3962,6 +3982,6 @@ if __name__ == "__main__":
     threading.Thread(target=recap_loop, daemon=True).start()
     threading.Thread(target=media_in_loop, daemon=True).start()
     threading.Thread(target=hl_sync_loop, daemon=True).start()
-    threading.Thread(target=top10_loop, daemon=True).start()
+    # (charts go to the website only when you press Publish in the chart – no automatic sending any more)
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()
