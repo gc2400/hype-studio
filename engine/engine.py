@@ -710,6 +710,18 @@ class TV:
             except Exception: pass
             time.sleep(0.05)
         return True
+    LEVEL_OK = set()
+    def clip_level(self, cl, name, gain):
+        """A paired video's own sound: its level is set FIRST in the chain (an OBS "Level" gain filter before the compressor
+        and limiter), the volume slider stays at 0 dB. Before, the slider came after the filters: a very loud video hit the
+        compressor at full force and then was turned down - it ended up much quieter on TV than a quiet one (12 Nov)."""
+        g = max(-30.0, min(30.0, gain))
+        if name not in self.LEVEL_OK:
+            fl = cl.get_source_filter_list(name).filters
+            if not any(f["filterName"] == "Level" for f in fl): cl.create_source_filter(name, "Level", "gain_filter", {"db": g})
+            cl.set_source_filter_index(name, "Level", 0); self.LEVEL_OK.add(name)
+        cl.set_source_filter_settings(name, "Level", {"db": g}, True)
+        cl.set_input_volume(name, vol_db=0.0)
     def show(self, mode, clip_file, cue_start, sound=False, gain=0.0, kf=None):
         """Switch the TV for a new song.
         - sound=True (paired song): the clip plays with its own sound, from its own cue point.
@@ -731,7 +743,7 @@ class TV:
                   cl.set_input_settings(nxt, {"local_file": clip_file, "looping": False, "restart_on_activate": False,
                                               "close_when_inactive": False, "hw_decode": True}, True)
                 cl.set_input_mute(nxt, True)          # (its own sound comes on in activate(), once it is at its cue point)
-                if sound: cl.set_input_volume(nxt, vol_db=max(-20.0, min(15.0, gain)))
+                if sound: self.clip_level(cl, nxt, gain)
                 if not use_pre:
                     cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
                     cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY")   # never left paused
