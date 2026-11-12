@@ -1,18 +1,17 @@
 {
- "time": "2026-11-12T13:29:27",
+ "time": "2026-11-12T13:35:37",
  "result": "ok",
- "commit": "b8b6e8d6240477c43c4ba6455fe66d6309d8c9e2",
- "subject": "Charts: no automatic sending to the website any more \u2013 a chart goes out only when you press \ud83d\udce4 Publish (live at the start of its show, or Publish now); the chart editor shows when it was published, which week, and 'changed since \u2013 not on the website yet'",
+ "commit": "83c09db6a51b6028ab44285e32caa016134dac37",
+ "subject": "Chart editor: when \ud83c\udfc6 Chart is on, only Chart \u00b7 Number on screen \u00b7 Arrows \u00b7 Website show, in one row (Loop / Randomize / Rotation / Play exactly as listed are implied and hidden); shorter texts, compact Website card (\ud83d\udce4 At the show / Now)",
  "log": [
-  "13:28:42 update 5218b249 \u2192 b8b6e8d6 \u00b7 2 file(s): engine/engine.py, web/panel/plan.html",
-  "13:28:42 restart hype-engine",
-  "13:29:27 installed OK \u00b7 restarted: hype-engine"
+  "13:35:37 update b8b6e8d6 \u2192 83c09db6 \u00b7 1 file(s): web/panel/plan.html",
+  "13:35:37 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
+  "song": "Rvssian x Rauw Alejandro x Wizkid \u2013 PONGO",
   "listeners": 6,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
