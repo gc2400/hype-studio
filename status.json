@@ -1,18 +1,19 @@
 {
- "time": "2026-11-11T21:25:08",
+ "time": "2026-11-12T12:46:42",
  "result": "ok",
- "commit": "8d35025a73c1ab5bba5f733547d00f1698a76fac",
- "subject": "Schedule specials from Hype Live (\ud83d\udcc5 Programming \u2192 \u2b50 Specials, /wp-json/hype/v1/schedule, every 5 min): a special wins over the week schedule for the show name box (switches exactly on time), show sweepers, hour-plan show ends and chart show times; also past midnight",
+ "commit": "663c156af2e8478192ac4eb3c54412b4428bb63c",
+ "subject": "Hype Live 2.40: read key + write key (old single key still works as fallback), clock ping to wp-cron every minute (read key, no redirects, Studio health row after 3 failures), X-Hype-Schedule from the heartbeat answer -> week schedule + specials re-read at once",
  "log": [
-  "21:24:23 update b80601a1 \u2192 8d35025a \u00b7 2 file(s): engine/engine.py, engine/planner.py",
-  "21:24:23 restart hype-engine",
-  "21:25:08 installed OK \u00b7 restarted: hype-engine"
+  "12:45:56 update 8d35025a \u2192 663c156a \u00b7 4 file(s): engine/engine.py, engine/guard.py, web/panel/header.js, web/panel/settings.html",
+  "12:45:57 restart hype-guard",
+  "12:45:57 restart hype-engine",
+  "12:46:42 installed OK \u00b7 restarted: hype-engine, hype-guard"
  ],
  "guard": {
-  "song": "Broederliefde \u2013 Dansvloerkiller",
-  "listeners": 4,
+  "song": "Clarence x Jeon \u2013 Kalor",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
