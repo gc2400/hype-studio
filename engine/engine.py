@@ -2297,6 +2297,7 @@ def load_specials():
     sp = [x for x in (d.get("specials") or []) if isinstance(x, dict) and x.get("date") and x.get("from") and x.get("to")]
     if sp != planner.SPECIALS: log.info("schedule specials: %d", len(sp))
     planner.SPECIALS[:] = sp; jdump(sp, SPECIALS_F)
+    return str(d.get("version") or "")
 try: planner.SPECIALS[:] = json.load(open(SPECIALS_F))
 except Exception: pass
 
@@ -2307,8 +2308,10 @@ def watch_show():
         if time.time() - last_week > 3600:
             try: load_week(); last_week = time.time()
             except Exception as e: log.warning("week: %s", e); last_week = time.time() - 3000
-        try: sv = open("/run/hype/schedule_version").read().strip()
+        try: sv = open("/run/hype/schedule_version").read().strip()     # from the heartbeat answer (X-Hype-Schedule)
         except OSError: sv = ""
+        try: sv = load_specials() or sv; last_sp = time.time()          # + the schedule feed itself every minute (its "version")
+        except Exception as e: log.warning("specials: %s", e)
         if sv and sv != SCHED_V[0]:             # Hype Live says the programming changed (X-Hype-Schedule): re-read everything now
             if SCHED_V[0]: log.info("schedule changed in Hype Live (%s): re-reading", sv); last_week = last_sp = 0
             SCHED_V[0] = sv
