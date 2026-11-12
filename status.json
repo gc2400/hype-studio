@@ -1,18 +1,18 @@
 {
- "time": "2026-11-12T13:22:32",
+ "time": "2026-11-12T13:29:27",
  "result": "ok",
- "commit": "5218b249b547089da226f5b939558bc9509e4c11",
- "subject": "Paired videos on TV: the level is set first in the chain (OBS 'Level' gain filter before compressor/limiter, volume slider 0 dB) \u2013 loud videos no longer get squashed and end up much quieter on TV",
+ "commit": "b8b6e8d6240477c43c4ba6455fe66d6309d8c9e2",
+ "subject": "Charts: no automatic sending to the website any more \u2013 a chart goes out only when you press \ud83d\udce4 Publish (live at the start of its show, or Publish now); the chart editor shows when it was published, which week, and 'changed since \u2013 not on the website yet'",
  "log": [
-  "13:21:47 update 994c92a6 \u2192 5218b249 \u00b7 1 file(s): engine/engine.py",
-  "13:21:47 restart hype-engine",
-  "13:22:32 installed OK \u00b7 restarted: hype-engine"
+  "13:28:42 update 5218b249 \u2192 b8b6e8d6 \u00b7 2 file(s): engine/engine.py, web/panel/plan.html",
+  "13:28:42 restart hype-engine",
+  "13:29:27 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Ronnie Flex x Ir Sais \u2013 Caribbean Girl",
-  "listeners": 5,
+  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
+  "listeners": 6,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
