@@ -321,12 +321,12 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
         <label class="plopt nochart"><input type="checkbox" id="plShuffle" autocomplete="off"><span><b>Randomize</b><small>On: mixed, every song once per round · Off: in the order of the list</small></span></label>
         <label class="plopt nochart" title="One from AFRO, then LAT, then CARIB … With Randomize the order of the sources changes every round"><input type="checkbox" id="plRotate" autocomplete="off"><span><b>Rotation</b><small>Take turns: the amount from each source, then the next</small></span></label>
         <label class="plopt nochart" title="For countdowns like the Top 10: every item plays in its place"><input type="checkbox" id="plStrict" autocomplete="off"><span><b>Play exactly as listed</b><small>Never skip or move an item, also when that song or artist just played</small></span></label>
-        <label class="plopt" title="Hype Top 10, a Top 40 …: the order of the songs is the chart"><input type="checkbox" id="plChart" autocomplete="off"><span><b>🏆 Chart</b><small>Countdown: plays as listed, first song = highest number, last = #1</small></span></label>
+        <label class="plopt" title="Hype Top 10, a Top 40 …: the order of the songs is the chart"><input type="checkbox" id="plChart" autocomplete="off"><span><b>Chart</b><small>Countdown: plays as listed, first song = highest number, last = #1</small></span></label>
         <label class="plopt chopt"><input type="checkbox" id="plChNum" autocomplete="off"><span><b>Number on screen</b><small>Yellow square over Now Playing, the whole song</small></span></label>
         <label class="plopt chopt"><input type="checkbox" id="plChArr" autocomplete="off"><span><b>Arrows</b><small>▲ ▼ = NEW RE vs last week</small></span></label>
         <input type="checkbox" id="plChWeb" hidden>
-        <div class="plopt chopt" style="flex-direction:column;align-items:stretch;gap:6px;cursor:default"><b>🌐 Website</b><small id="plWebSt">Not on the website yet</small>
-          <div class="row" style="gap:6px"><button class="btn sm" id="plPubShow" style="flex:1" title="Hype Live puts it on the website when this chart's show starts (no spoilers)">📤 At the show</button><button class="btn sm" id="plPubNow" style="flex:1" title="On the website right away">Now</button></div></div>
+        <div class="plopt chopt" style="flex-direction:column;align-items:stretch;gap:6px;cursor:default"><b>Website</b><small id="plWebSt">Not on the website yet</small>
+          <div class="row" style="gap:6px"><button class="btn sm" id="plPubShow" style="flex:1;justify-content:center;text-align:center;white-space:nowrap" title="Publish: Hype Live puts it on the website when this chart's show starts (no spoilers)">At the show</button><button class="btn sm" id="plPubNow" style="flex:1;justify-content:center;text-align:center;white-space:nowrap" title="Publish: on the website right away">Now</button></div></div>
       </div>
       <span class="lab">What's in it</span>
       <div class="srcs" id="plSources"></div>
@@ -511,7 +511,7 @@ setInterval(() => { if (!$('#tab-rc').hidden) get('autorec').then(arFiles); }, 1
 let cur = null;
 function renderPL() {
   const pq = nf($('#plQ').value);
-  $('#plList').innerHTML = PL.filter(p => !pq || nf(p.name).includes(pq)).map(p => `<button class="li ${cur && cur.id === p.id ? 'sel' : ''}" data-id="${p.id}"><div style="flex:1"><b>${esc(p.name)}</b><br><span>${p.rotate ? 'rotation · ' + p.sources.length + ' sources · ' : ''}${p.chart ? '🏆 chart · ' : ''}${p.count} items · ${p.shuffle ? 'random' : 'in order'}${p.rotate ? '' : ' · ' + (p.loop ? 'loop' : 'no loop')}</span></div></button>`).join('') || '<span class="muted">No playlists yet. Make one with + New.</span>';
+  $('#plList').innerHTML = PL.filter(p => !pq || nf(p.name).includes(pq)).map(p => `<button class="li ${cur && cur.id === p.id ? 'sel' : ''}" data-id="${p.id}"><div style="flex:1"><b>${esc(p.name)}</b><br><span>${p.rotate ? 'rotation · ' + p.sources.length + ' sources · ' : ''}${p.chart ? 'chart · ' : ''}${p.count} items · ${p.shuffle ? 'random' : 'in order'}${p.rotate ? '' : ' · ' + (p.loop ? 'loop' : 'no loop')}</span></div></button>`).join('') || '<span class="muted">No playlists yet. Make one with + New.</span>';
   $$('#plList [data-id]').forEach(b => b.onclick = () => openPL(PL.find(p => p.id == b.dataset.id)));
 }
 function openPL(p) {
