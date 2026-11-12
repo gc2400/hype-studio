@@ -2308,7 +2308,7 @@ def watch_show():
         if time.time() - last_week > 3600:
             try: load_week(); last_week = time.time()
             except Exception as e: log.warning("week: %s", e); last_week = time.time() - 3000
-        try: sv = open("/run/hype/schedule_version").read().strip()     # from the heartbeat answer (X-Hype-Schedule)
+        try: sv = open(HL_SCHED).read().strip()     # from the heartbeat / sync answer (X-Hype-Schedule, versions.schedule)
         except OSError: sv = ""
         try: sv = load_specials() or sv; last_sp = time.time()          # + the schedule feed itself every minute (its "version")
         except Exception as e: log.warning("specials: %s", e)
@@ -2674,6 +2674,9 @@ class H(BaseHTTPRequestHandler):
             if p == "/weekreport": return self.send(200, week_report(qs))
             if p == "/recap": return self.send(200, recap_data(int((qs.get("w") or ["1"])[0])))
             if p == "/top10": return self.send(200, top10_data() or {})
+            if p == "/hl_needs":     # the "Needs you" count for the header badge (from the last sync answer)
+                try: s_ = json.load(open(HL_SYNC)); return self.send(200, {"needs": s_.get("needs") or {}, "t": s_.get("_t", 0)})
+                except Exception: return self.send(200, {"needs": {}, "t": 0})
             if p == "/media":
                 lst = {v.get("file"): v for v in media_in_state().values()}; fl = media_files()
                 for m in fl:
@@ -2882,6 +2885,17 @@ class H(BaseHTTPRequestHandler):
         if p == "/autorec":
             try: return self.send(200, autorec_save(d))
             except Exception as e: return self.send(400, {"error": str(e)})
+        if p == "/hypelive/poke":     # ⚡ Hype Live: something changed -> one sync now (signature = HMAC-SHA256 of the body with the write key)
+            import hmac, hashlib
+            try: g = json.load(open(GUARD_CONF))
+            except Exception: g = {}
+            sig = (self.headers.get("X-Hype-Signature") or "").replace("sha256=", "").strip()
+            keys = [k for k in (g.get("hl_key_write"), g.get("hl_key")) if k]
+            good = any(hmac.compare_digest(hmac.new(k.encode(), body, hashlib.sha256).hexdigest(), sig) for k in keys) if sig else False
+            if not good: return self.send(403, {"ok": False, "error": "bad signature"})
+            if abs(time.time() - float(d.get("t") or 0)) > 120: return self.send(400, {"ok": False, "error": "too old"})
+            open(HL_POKE, "w").write(str(time.time())); log.info("Hype Live poke: %s", ",".join(map(str, d.get("what") or [])))
+            return self.send(200, {"ok": True})
         if p == "/top10_send":      # the Hype Top 10 to Hype Live now
             try: wk, a = top10_send(force=True); return self.send(200, {"week": wk, "answer": (a or "")[:80]})
             except Exception as e: return self.send(500, {"error": str(e)})
@@ -3494,48 +3508,55 @@ def media_in_drop(st, mid):
         try: os.remove(os.path.join(MEDIA_DIR, f))
         except FileNotFoundError: pass
     log.info("listener media: removed %s", mid)
-def media_in_loop():
-    """Every 30 s: photos / videos Gianno approved in Hype Live become ready 16:9 media pads (blurred fill for portrait
-    shots + the name card), then Hype Live gets the ack. Rejected / deleted / expired ones ('remove') go again.
-    Nothing plays by itself: a pad shows only when you tap it."""
+def media_apply(d, ack):
+    """Apply a photo / video list from Hype Live (old poll or the 2.41 sync answer): remove, make new ones into ready
+    16:9 media pads (blurred fill for portrait shots + the name card), then ack them. Nothing plays by itself."""
     import listener_media as LM
+    st = media_in_state(); changed = False
+    for mid in d.get("remove") or []:
+        if str(mid) in st: media_in_drop(st, str(mid)); changed = True
+    for it in d.get("items") or []:
+        mid = re.sub(r"[^A-Za-z0-9_-]", "", str(it.get("id") or ""))
+        if not mid or time.time() - MEDIA_FAIL.get(mid, 0) < 3600: continue
+        if mid not in st:
+            kind = "video" if it.get("kind") == "video" else "photo"
+            name = re.sub(r"[^\w .'-]", "", str(it.get("name") or "Listener"), flags=re.U).strip()[:30] or "Listener"
+            city = re.sub(r"[^\w .'-]", "", str(it.get("city") or ""), flags=re.U).strip()[:30]
+            fn = f"Listener - {name}{' (' + city + ')' if city else ''} {mid[-6:]}." + ("mp4" if kind == "video" else "jpg")
+            src = os.path.join("/tmp", "lm_" + mid)
+            try:
+                with hl_open(it.get("url") or "", 120) as r, open(src, "wb") as f: f.write(r.read(60_000_000))
+                if kind == "video": LM.make_video(src, os.path.join(MEDIA_DIR, fn), name, city, it.get("caption") or "", it.get("source") or "")
+                else: LM.make_photo(src, os.path.join(MEDIA_DIR, fn), name, city, it.get("caption") or "", it.get("source") or "")
+            except Exception as e:
+                MEDIA_FAIL[mid] = time.time(); log.warning("listener media: %s failed (%s) – again in 1 h", mid, e); continue
+            finally:
+                try: os.remove(src)
+                except FileNotFoundError: pass
+            st[mid] = {"file": fn, "kind": kind, "name": name, "city": city, "source": it.get("source") or "", "caption": (it.get("caption") or "")[:110],
+                       "received": voice_when(it.get("received")), "added": time.time()}
+            changed = True; log.info("listener media: %s from %s ready as a media pad", kind, name)
+        a = ack(mid)
+        st[mid]["acked"] = True; changed = True; log.info("listener media: ack %s -> %s", mid, a[:30])
+    MEDIA_LINK["n"] = len(st)
+    if changed: jdump(st, MEDIA_IN)
+
+def media_in_loop():
+    """Old way (Hype Live before 2.41, or when the sync answer stops): poll every 30 s."""
     while True:
         time.sleep(30)
+        if hl_sync_active(): continue
         try:
             try: d = json.loads(hl_call("hype_studio_media", timeout=20))
             except urllib.error.HTTPError as e:
                 MEDIA_LINK.update(t=time.time(), ok=False, error="Hype Live answered %s" % e.code); continue
             MEDIA_LINK.update(t=time.time(), ok=True, error="")
-            st = media_in_state(); changed = False
-            for mid in d.get("remove") or []:
-                if str(mid) in st: media_in_drop(st, str(mid)); changed = True
-            for it in d.get("items") or []:
-                mid = re.sub(r"[^A-Za-z0-9_-]", "", str(it.get("id") or ""))
-                if not mid or time.time() - MEDIA_FAIL.get(mid, 0) < 3600: continue
-                if mid not in st:
-                    kind = "video" if it.get("kind") == "video" else "photo"
-                    name = re.sub(r"[^\w .'-]", "", str(it.get("name") or "Listener"), flags=re.U).strip()[:30] or "Listener"
-                    city = re.sub(r"[^\w .'-]", "", str(it.get("city") or ""), flags=re.U).strip()[:30]
-                    fn = f"Listener - {name}{' (' + city + ')' if city else ''} {mid[-6:]}." + ("mp4" if kind == "video" else "jpg")
-                    src = os.path.join("/tmp", "lm_" + mid)
-                    try:
-                        with hl_open(it.get("url") or "", 120) as r, open(src, "wb") as f: f.write(r.read(60_000_000))
-                        if kind == "video": LM.make_video(src, os.path.join(MEDIA_DIR, fn), name, city, it.get("caption") or "", it.get("source") or "")
-                        else: LM.make_photo(src, os.path.join(MEDIA_DIR, fn), name, city, it.get("caption") or "", it.get("source") or "")
-                    except Exception as e:
-                        MEDIA_FAIL[mid] = time.time(); log.warning("listener media: %s failed (%s) – again in 1 h", mid, e); continue
-                    finally:
-                        try: os.remove(src)
-                        except FileNotFoundError: pass
-                    st[mid] = {"file": fn, "kind": kind, "name": name, "city": city, "source": it.get("source") or "", "caption": (it.get("caption") or "")[:110],
-                               "received": voice_when(it.get("received")), "added": time.time()}
-                    changed = True; log.info("listener media: %s from %s ready as a media pad", kind, name)
-                try: a = hl_call("hype_studio_media", "&ack=" + urllib.parse.quote(mid), data=b"").strip()
-                except urllib.error.HTTPError as e: a = str(e.code)
-                st[mid]["acked"] = True; changed = True; log.info("listener media: ack %s -> %s", mid, a[:30])
-            MEDIA_LINK["n"] = len(st)
-            if changed: jdump(st, MEDIA_IN)
+            def ack(mid):
+                try: return hl_call("hype_studio_media", "&ack=" + urllib.parse.quote(mid), data=b"").strip()
+                except urllib.error.HTTPError as e: return str(e.code)
+            media_apply(d, ack)
         except Exception as e: MEDIA_LINK.update(t=time.time(), ok=False, error=str(e)[:80]); log.warning("listener media: %s", e)
+
 def hl_open(url, timeout=60):
     """Open a file link Hype Live gave (only on hyperadio.nl)."""
     if not re.match(r"^https://(www\.)?hyperadio\.nl/", url or ""): raise ValueError("not a Hype Live link")
@@ -3661,6 +3682,7 @@ def sponsors_loop():
     kept (also over a restart) when Hype Live can't be reached, so the ads never stop because the website is slow."""
     sponsors_load()
     while True:
+        if hl_sync_active(): time.sleep(600); continue          # the minute sync brings sponsor changes
         try:
             d = json.loads(hl_call("hype_studio_sponsors"))
             if isinstance(d.get("sponsors"), list):
@@ -3671,74 +3693,136 @@ def sponsors_loop():
         except Exception as e: log.warning("Hype Live sponsor deals: %s", e)
         time.sleep(600)
 
+# ---------------- Hype Live 2.41: one sync call a minute (in the guard's heartbeat) + ⚡ poke ----------------
+HL_SYNC, HL_KNOWN, HL_ACKS = "/var/lib/hype/hl_sync.json", "/var/lib/hype/hl_known.json", "/var/lib/hype/hl_acks.json"
+HL_POKE, HL_SCHED = "/var/lib/hype/hl_poke", "/var/lib/hype/hl_schedule_version"
+HL_SYNC_SEEN = {"t": 0, "n": 0}
+def hl_sync_active():
+    """True while the guard's heartbeat gets the sync answer (Hype Live 2.41+): the old polls then stay quiet."""
+    try: return time.time() - os.path.getmtime(HL_SYNC) < 180
+    except OSError: return False
+def hl_ack_queue(kind, mid):
+    """A pad is ready: the next sync call carries its ack (the engine is the only writer of this file)."""
+    try: a = json.load(open(HL_ACKS))
+    except Exception: a = {}
+    if mid not in a.setdefault(kind, []): a[kind].append(mid)
+    jdump(a, HL_ACKS); return "queued for the next sync"
+def hl_sync_loop():
+    """Handles each new sync answer the guard stored: acks confirmed, voice / media / sponsor changes applied (only the
+    parts that changed come along), then 'known' moves on – only for parts that were handled completely, so a failed
+    download comes again with the next sync."""
+    last = 0
+    while True:
+        time.sleep(2)
+        try: mt = os.path.getmtime(HL_SYNC)
+        except OSError: continue
+        if mt == last: continue
+        last = mt
+        try:
+            d = json.load(open(HL_SYNC)); HL_SYNC_SEEN.update(t=time.time(), n=HL_SYNC_SEEN["n"] + 1)
+            try: known = json.load(open(HL_KNOWN))
+            except Exception: known = {}
+            try: acks = json.load(open(HL_ACKS))
+            except Exception: acks = {}
+            for k in ("voice", "media"):
+                done = set(((d.get("acked") or {}).get(k) or {}).keys())
+                if done: acks[k] = [x for x in acks.get(k, []) if x not in done]
+            jdump(acks, HL_ACKS)
+            ver = d.get("versions") or {}; ok = {}
+            try:
+                vd = d.get("voice") or {}
+                voice_apply(vd, lambda vid, it: hl_open(it.get("url") or "", 60), lambda vid: hl_ack_queue("voice", vid))
+                st = voice_state(); ok["voice"] = all(re.sub(r"[^A-Za-z0-9_-]", "", str(i.get("id") or "")) in st for i in vd.get("items") or [])
+            except Exception as e: ok["voice"] = False; log.warning("sync voice: %s", e)
+            if "media" in d:
+                try:
+                    media_apply(d["media"] or {}, lambda mid: hl_ack_queue("media", mid))
+                    st = media_in_state(); ok["media"] = all(re.sub(r"[^A-Za-z0-9_-]", "", str(i.get("id") or "")) in st for i in (d["media"] or {}).get("items") or [])
+                except Exception as e: ok["media"] = False; log.warning("sync media: %s", e)
+            MEDIA_LINK.update(t=time.time(), ok=True, error="")
+            if isinstance(d.get("sponsors"), list):
+                planner.HL_DEALS = d["sponsors"]; jdump({"sponsors": d["sponsors"], "t": time.time()}, HL_SPONSORS)
+                log.info("sync: sponsor deals %d", len(d["sponsors"]))
+            for k in ("voice", "media", "sponsors"):
+                if k in ver and ok.get(k, True): known[k] = ver[k]
+            jdump(known, HL_KNOWN)
+        except Exception as e: log.warning("sync: %s", e)
+
+def voice_apply(d, fetch, ack):
+    """Apply a voice list from Hype Live (old poll or the 2.41 sync answer; d = {} only does the housekeeping): remove /
+    expire, OK-for-air changes, download new ones as clean mp3s onto the 🎙 VOICE pads, then ack them."""
+    st = voice_state(); c = dbc(); changed = False
+    for vid in d.get("remove") or []:
+        if str(vid) in st: voice_drop(c, st, str(vid)); changed = True
+    for vid, v in list(st.items()):
+        if time.time() - v.get("received", 0) > VOICE_DAYS * 86400: voice_drop(c, st, vid); changed = True
+    os.makedirs(VOICE_DIR, exist_ok=True)
+    # ✓ OK for air / ✕ Not for air from Hype Live (items not acked yet carry it; later changes come in "update")
+    for u in list(d.get("items") or []) + list(d.get("update") or []):
+        vid = re.sub(r"[^A-Za-z0-9_-]", "", str(u.get("id") or ""))
+        if vid in st and "air" in u and bool(st[vid].get("air")) != bool(u.get("air")):
+            st[vid]["air"] = bool(u.get("air")); changed = True; log.info("voice: %s %s", vid, "OK for air" if u.get("air") else "not for air")
+    for it in d.get("items") or []:
+        vid = re.sub(r"[^A-Za-z0-9_-]", "", str(it.get("id") or ""))
+        if not vid or vid in st or time.time() - VOICE_FAIL.get(vid, 0) < 3600: continue   # (a message that failed: again in 1 h)
+        name = re.sub(r"[^\w .'-]", "", str(it.get("name") or "Listener"), flags=re.U).strip()[:30] or "Listener"
+        city = re.sub(r"[^\w .'-]", "", str(it.get("city") or ""), flags=re.U).strip()[:30]
+        src = os.path.join("/tmp", "voice_" + vid); fn = f"Voice - {name}{' (' + city + ')' if city else ''} {vid}.mp3"
+        tmp = os.path.join(VOICE_DIR, "." + fn)
+        try:
+            with fetch(vid, it) as r, open(src, "wb") as f: f.write(r.read(30_000_000))
+            p_ = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vn", "-af", "highpass=f=80", "-ar", "44100", "-ac", "2", "-b:a", "192k", "-f", "mp3", tmp], timeout=120)
+            if p_.returncode != 0: raise RuntimeError("ffmpeg could not read it")
+            os.replace(tmp, os.path.join(VOICE_DIR, fn))
+        except Exception as e:      # one bad message never blocks the others (or their acks)
+            VOICE_FAIL[vid] = time.time(); log.warning("voice: %s failed (%s) – tried again in 1 h", vid, e)
+            try: os.remove(tmp)
+            except OSError: pass
+            continue
+        finally:
+            try: os.remove(src)
+            except FileNotFoundError: pass
+        st[vid] = {"path": os.path.relpath(os.path.join(VOICE_DIR, fn), ROOT), "name": name, "city": city, "source": it.get("source"),
+                   "received": voice_when(it.get("received")), "acked": False, "in_bank": False, "air": bool(it.get("air"))}
+        changed = True; log.info("voice: downloaded %s (%s)", vid, name)
+    # indexed? -> onto the VOICE bank (newest first) -> ack
+    for vid, v in st.items():
+        if v.get("acked"): continue
+        r = c.execute("SELECT problem FROM items WHERE path=?", (v["path"],)).fetchone()
+        if not r: continue                                   # the indexer has not seen it yet
+        if r[0]: log.warning("voice: %s unusable: %s", vid, r[0])
+        elif not v.get("in_bank"):
+            bid = voice_bank(c)
+            c.execute("UPDATE pad_items SET pos=pos+1 WHERE bank_id=?", (bid,))
+            c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, 0, v["path"], v["name"] + (" · " + v["city"] if v["city"] else ""), "#0277b8"))
+            c.commit(); v["in_bank"] = True
+        a = ack(vid)
+        v["acked"] = True; changed = True; log.info("voice: ack %s -> %s", vid, a[:30])
+    if changed: voice_save(st)
+
+def hl_get(url, data=None, timeout=20):
+    r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1"}, method="POST" if data is not None else "GET")
+    return urllib.request.urlopen(r, timeout=timeout)
 def voice_loop():
-    """Every 20 s: new voice messages Hype Live marked 'To Hype Studio' are downloaded, made into a clean mp3 in
-    jingles/VOICE and put on the 🎙 VOICE pad bank (they only play when you tap the pad). Then Hype Live gets the ack.
-    Deleted/blocked messages (Hype Live 'remove') and messages older than 14 days are removed again."""
+    """Old way (Hype Live before 2.41, or when the sync answer stops): poll every 20 s. With the sync call working,
+    this loop only waits – the minute sync (and the ⚡ poke) bring the changes."""
     while True:
         time.sleep(20)
+        if hl_sync_active(): continue
         try:
             try: g = json.load(open(GUARD_CONF))
             except Exception: g = {}
             if not hl_key(g): continue
             base = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_studio_voice=" + urllib.parse.quote(hl_key(g, "read"))
             base_w = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_studio_voice=" + urllib.parse.quote(hl_key(g))
-            def get(url, data=None, timeout=20):
-                r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1"}, method="POST" if data is not None else "GET")
-                return urllib.request.urlopen(r, timeout=timeout)
-            try: d = json.loads(get(base).read(500000).decode("utf-8", "replace"))
+            try: d = json.loads(hl_get(base).read(500000).decode("utf-8", "replace"))
             except urllib.error.HTTPError as e:
                 if e.code != 404: log.warning("voice: Hype Live %s", e.code)
                 continue
-            st = voice_state(); c = dbc(); changed = False
-            for vid in d.get("remove") or []:
-                if str(vid) in st: voice_drop(c, st, str(vid)); changed = True
-            for vid, v in list(st.items()):
-                if time.time() - v.get("received", 0) > VOICE_DAYS * 86400: voice_drop(c, st, vid); changed = True
-            os.makedirs(VOICE_DIR, exist_ok=True)
-            # ✓ OK for air / ✕ Not for air from Hype Live (items not acked yet carry it; later changes come in "update")
-            for u in list(d.get("items") or []) + list(d.get("update") or []):
-                vid = re.sub(r"[^A-Za-z0-9_-]", "", str(u.get("id") or ""))
-                if vid in st and "air" in u and bool(st[vid].get("air")) != bool(u.get("air")):
-                    st[vid]["air"] = bool(u.get("air")); changed = True; log.info("voice: %s %s", vid, "OK for air" if u.get("air") else "not for air")
-            for it in d.get("items") or []:
-                vid = re.sub(r"[^A-Za-z0-9_-]", "", str(it.get("id") or ""))
-                if not vid or vid in st or time.time() - VOICE_FAIL.get(vid, 0) < 3600: continue   # (a message that failed: again in 1 h)
-                name = re.sub(r"[^\w .'-]", "", str(it.get("name") or "Listener"), flags=re.U).strip()[:30] or "Listener"
-                city = re.sub(r"[^\w .'-]", "", str(it.get("city") or ""), flags=re.U).strip()[:30]
-                src = os.path.join("/tmp", "voice_" + vid); fn = f"Voice - {name}{' (' + city + ')' if city else ''} {vid}.mp3"
-                tmp = os.path.join(VOICE_DIR, "." + fn)
-                try:
-                    with get(base + "&file=" + urllib.parse.quote(vid), timeout=60) as r, open(src, "wb") as f: f.write(r.read(30_000_000))
-                    p_ = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vn", "-af", "highpass=f=80", "-ar", "44100", "-ac", "2", "-b:a", "192k", "-f", "mp3", tmp], timeout=120)
-                    if p_.returncode != 0: raise RuntimeError("ffmpeg could not read it")
-                    os.replace(tmp, os.path.join(VOICE_DIR, fn))
-                except Exception as e:      # one bad message never blocks the others (or their acks)
-                    VOICE_FAIL[vid] = time.time(); log.warning("voice: %s failed (%s) – tried again in 1 h", vid, e)
-                    try: os.remove(tmp)
-                    except OSError: pass
-                    continue
-                finally:
-                    try: os.remove(src)
-                    except FileNotFoundError: pass
-                st[vid] = {"path": os.path.relpath(os.path.join(VOICE_DIR, fn), ROOT), "name": name, "city": city, "source": it.get("source"),
-                           "received": voice_when(it.get("received")), "acked": False, "in_bank": False, "air": bool(it.get("air"))}
-                changed = True; log.info("voice: downloaded %s (%s)", vid, name)
-            # indexed? -> onto the VOICE bank (newest first) -> ack
-            for vid, v in st.items():
-                if v.get("acked"): continue
-                r = c.execute("SELECT problem FROM items WHERE path=?", (v["path"],)).fetchone()
-                if not r: continue                                   # the indexer has not seen it yet
-                if r[0]: log.warning("voice: %s unusable: %s", vid, r[0])
-                elif not v.get("in_bank"):
-                    bid = voice_bank(c)
-                    c.execute("UPDATE pad_items SET pos=pos+1 WHERE bank_id=?", (bid,))
-                    c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, 0, v["path"], v["name"] + (" · " + v["city"] if v["city"] else ""), "#0277b8"))
-                    c.commit(); v["in_bank"] = True
-                try: a = get(base_w + "&ack=" + urllib.parse.quote(vid), data=b"").read(100).decode("utf-8", "replace")
-                except urllib.error.HTTPError as e: a = f"{e.code}"
-                v["acked"] = True; changed = True; log.info("voice: ack %s -> %s", vid, a[:30])
-            if changed: voice_save(st)
+            def ack(vid):
+                try: return hl_get(base_w + "&ack=" + urllib.parse.quote(vid), data=b"").read(100).decode("utf-8", "replace")
+                except urllib.error.HTTPError as e: return str(e.code)
+            voice_apply(d, lambda vid, it: hl_get(base + "&file=" + urllib.parse.quote(vid), timeout=60), ack)
         except Exception as e: log.warning("voice: %s", e)
 
 def guard_status(full=False):
@@ -3753,6 +3837,7 @@ def guard_status(full=False):
     else:
         g = {k: g.get(k) for k in ("fresh", "ok", "problems", "heartbeat", "events", "tick")}; g["events"] = (g.get("events") or [])[:5]
         g["media_link"] = dict(MEDIA_LINK, age=round(time.time() - MEDIA_LINK["t"]) if MEDIA_LINK["t"] else None)
+        g["sync"] = {"active": hl_sync_active(), "handled": HL_SYNC_SEEN["n"]}
     return g
 def guard_save(d):
     try: c = json.load(open(GUARD_CONF))
@@ -3839,6 +3924,7 @@ if __name__ == "__main__":
     threading.Thread(target=sponsors_loop, daemon=True).start()
     threading.Thread(target=recap_loop, daemon=True).start()
     threading.Thread(target=media_in_loop, daemon=True).start()
+    threading.Thread(target=hl_sync_loop, daemon=True).start()
     threading.Thread(target=top10_loop, daemon=True).start()
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()

@@ -30,6 +30,9 @@ log = logging.getLogger("guard")
 logging.getLogger("obsws_python").setLevel(logging.WARNING)   # (it logs the password on every connect)
 
 DEFAULT = {"hl_url": "https://hyperadio.nl/", "hl_key": "", "heartbeat": True, "repair": True}
+HL_SYNC, HL_KNOWN, HL_ACKS = "/var/lib/hype/hl_sync.json", "/var/lib/hype/hl_known.json", "/var/lib/hype/hl_acks.json"
+HL_POKE, HL_SCHED = "/var/lib/hype/hl_poke", "/var/lib/hype/hl_schedule_version"
+
 def hl_key(c, kind="write"):
     """Hype Live 2.40 has a read key (r…) and a write key (w…); the write key also reads. The old single key keeps
     working until Gianno switches it off in Hype Live."""
@@ -281,7 +284,12 @@ class Guard:
         c = conf()
         self.tick(c)
         if not c.get("heartbeat") or not hl_key(c): self.hb = {"ok": None, "t": 0, "answer": "no Hype Live key set"}; return
-        if time.time() - self.hb_t < 60: return
+        poke = os.path.exists(HL_POKE)
+        if poke and time.time() - self.hb_t < 3: return            # ⚡ poke from Hype Live: one extra sync, at most one per 3 s
+        if not poke and time.time() - self.hb_t < 60: return
+        if poke:
+            try: os.remove(HL_POKE)
+            except OSError: pass
         self.hb_t = time.time()
         body = {"v": 1, "source": "hype-studio", "t": int(time.time()), "ok": d["ok"],
                 "radio": {"on_air": d.get("liq") and not d.get("stopped"), "silent_s": d.get("silent_s", 0), "song": d.get("song", ""), "stream": d.get("mount"), "listeners": d.get("listeners", 0), "live": d.get("live")},
@@ -299,19 +307,35 @@ class Guard:
             body["relay"] = {"state": rl.get("state", "off"), "host": rl.get("host", ""), "since": int(rl.get("since") or 0)}
         except Exception: body["relay"] = {"state": "off", "host": "", "since": 0}
         if sev: body["screen_events"] = sev[:200]     # PIP showings etc. (Hype Live logs the ones whose brand is a sponsor)
+        # Hype Live 2.41 sync: the answer brings voice / media / sponsor changes (only what changed since "known") + acks for our pads
+        try: known = json.load(open(HL_KNOWN))
+        except Exception: known = {}
+        try: acks = json.load(open(HL_ACKS))
+        except Exception: acks = {}
+        body["sync"] = 1; body["known"] = {k: known[k] for k in ("voice", "media", "sponsors") if k in known}
+        body["ack"] = {k: list(acks.get(k) or [])[:100] for k in ("voice", "media") if acks.get(k)}
         url = c["hl_url"].rstrip("/") + "/?hype_studio=" + urllib.request.quote(hl_key(c))
         try:
             r = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "User-Agent": "HypeStudio-Guard/1"})
             resp = urllib.request.urlopen(r, timeout=10)
-            a = resp.read(200).decode("utf-8", "replace").strip()
-            sv = (resp.headers.get("X-Hype-Schedule") or "").strip()
+            raw = resp.read(5_000_000).decode("utf-8", "replace").strip()
+            sy = None
+            if raw.startswith("{"):         # the sync answer (Hype Live 2.41+): handed to the engine, which makes the pads etc.
+                try: sy = json.loads(raw)
+                except ValueError: sy = None
+            if sy is not None:
+                a = ("OK ev=%s" % sy["ev"]) if sy.get("ev") is not None and sy.get("ok") else ("OK" if sy.get("ok") else "sync answer: not ok")
+                sy["_t"] = time.time()
+                tmp = HL_SYNC + ".tmp"; json.dump(sy, open(tmp, "w")); os.replace(tmp, HL_SYNC)
+            else: a = raw[:200]
+            sv = (resp.headers.get("X-Hype-Schedule") or str(((sy or {}).get("versions") or {}).get("schedule") or "")).strip()
             if sv:                          # the programming changed in Hype Live -> the engine re-reads the schedule at once
                 try:
-                    if open("/run/hype/schedule_version").read().strip() != sv:
+                    if open(HL_SCHED).read().strip() != sv:
                         raise FileNotFoundError
                 except OSError:
-                    with open("/run/hype/schedule_version.tmp", "w") as f_: f_.write(sv)
-                    os.replace("/run/hype/schedule_version.tmp", "/run/hype/schedule_version"); log.info("Hype Live schedule version %s", sv)
+                    with open(HL_SCHED + ".tmp", "w") as f_: f_.write(sv)
+                    os.replace(HL_SCHED + ".tmp", HL_SCHED); log.info("Hype Live schedule version %s", sv)
             self.hb = {"ok": a.startswith("OK"), "t": time.time(), "answer": a[:80] if len(a) < 80 else "(Hype Live does not know this link yet – plugin update needed)"}
             if a.startswith("OK") and sev and "ev=" in a:   # Hype Live confirmed it stored them ("OK ev=N"): keep only what came in meanwhile
                 try:

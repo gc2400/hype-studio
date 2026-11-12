@@ -124,6 +124,7 @@ html{scrollbar-gutter:stable}
       <div class="r"><span>Scene</span><b>${esc(t.scene || '–')}</b></div>
       <h4>Guard · alarm</h4>
       <div class="r"><span>Self-repair</span>${!d.guard || !d.guard.fresh ? '<b class="bad">● not running</b>' : (d.guard.problems || []).length ? '<b class="bad">● ' + d.guard.problems.map(x => esc(x.text)).join(' · ') + '</b>' : '<b class="ok">● all OK</b>'}</div>
+      <div class="r"><span>Hype Live sync</span>${d.guard && d.guard.sync && d.guard.sync.active ? '<b class="ok">● one call a minute + ⚡ poke</b>' : '<b style="color:#8FA3B8">● old polls (Hype Live before 2.41)</b>'}</div>
       <div class="r"><span>Hype Live clock ping</span>${d.guard && d.guard.tick && d.guard.tick.ok === true ? '<b class="ok">● every minute</b>' : d.guard && d.guard.tick && d.guard.tick.ok === false ? '<b style="color:#FFB547">● failing ' + (d.guard.tick.fails || 0) + '× – ' + esc(d.guard.tick.error || '') + '</b>' : '<b style="color:#8FA3B8">● ' + esc((d.guard && d.guard.tick && d.guard.tick.error) || 'not yet') + '</b>'}</div>
       <div class="r"><span>Hype Live media link</span>${d.guard && d.guard.media_link && d.guard.media_link.ok && d.guard.media_link.age < 120 ? '<b class="ok">● ' + d.guard.media_link.n + ' listener photos/videos</b>' : '<b style="color:#FFB547">● ' + esc((d.guard && d.guard.media_link && d.guard.media_link.error) || 'not checked yet') + '</b>'}</div>
       <div class="r"><span>Hype Live alarm link</span>${d.guard && d.guard.heartbeat && d.guard.heartbeat.ok ? '<b class="ok">● connected</b>' : '<b style="color:#FFB547">● ' + esc((d.guard && d.guard.heartbeat && d.guard.heartbeat.answer) || 'off') + '</b>'}</div>
@@ -134,6 +135,19 @@ html{scrollbar-gutter:stable}
       <div class="note">The public radio still runs via Streamerr; once Hype Studio's own streams are live, all numbers come from here.</div>`;
   }
   let popT = null;
+  // "Needs you" from Hype Live (messages / photos / voices / videos / forms waiting) as a badge on the Hype Live link
+  (function needs() {
+    const go = () => fetch('/api/hl_needs').then(r => r.json()).then(d => {
+      const n = (d.needs && d.needs.total) || 0, fresh = Date.now() / 1000 - (d.t || 0) < 300;
+      document.querySelectorAll('a[href="/panel/hypelive.html"]').forEach(a => {
+        let b = a.querySelector('.hlneeds');
+        if (!b) { b = document.createElement('b'); b.className = 'hlneeds'; b.style.cssText = 'margin-left:6px;background:#FF4D5E;color:#fff;border-radius:9px;padding:0 6px;font:800 10px/16px Inter,system-ui,sans-serif;display:inline-block;min-width:16px;text-align:center'; a.appendChild(b); }
+        b.textContent = n; b.hidden = !(n > 0 && fresh);
+        const k = d.needs || {}; b.title = `Waiting in Hype Live: ${k.messages || 0} messages · ${k.photos || 0} photos · ${k.voices || 0} voices · ${k.videos || 0} videos · ${k.forms || 0} forms`;
+      });
+    }).catch(() => {});
+    setTimeout(go, 1500); setInterval(() => { if (!document.hidden) go(); }, 30000);
+  })();
   function popLoad() { fetch('/api/streams').then(r => r.json()).then(popRender).catch(() => { pop.innerHTML = '<div class="r"><span>Status</span><b class="bad">● no answer</b></div>'; }); }
   function popOpen(o) { pop.hidden = !o; dots.setAttribute('aria-expanded', o); clearInterval(popT); if (o) { popLoad(); popT = setInterval(popLoad, 5000); } }
   dots.onclick = e => { e.stopPropagation(); popOpen(pop.hidden); };
