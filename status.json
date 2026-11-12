@@ -1,19 +1,18 @@
 {
- "time": "2026-11-12T12:46:42",
+ "time": "2026-11-12T12:50:33",
  "result": "ok",
- "commit": "663c156af2e8478192ac4eb3c54412b4428bb63c",
- "subject": "Hype Live 2.40: read key + write key (old single key still works as fallback), clock ping to wp-cron every minute (read key, no redirects, Studio health row after 3 failures), X-Hype-Schedule from the heartbeat answer -> week schedule + specials re-read at once",
+ "commit": "6872685e6e59372b4643a4772052a1b4fe3caac1",
+ "subject": "Schedule version: also read from /wp-json/hype/v1/schedule every minute (the heartbeat POST answer carries no X-Hype-Schedule yet) \u2013 a programming change reaches Studio within a minute",
  "log": [
-  "12:45:56 update 8d35025a \u2192 663c156a \u00b7 4 file(s): engine/engine.py, engine/guard.py, web/panel/header.js, web/panel/settings.html",
-  "12:45:57 restart hype-guard",
-  "12:45:57 restart hype-engine",
-  "12:46:42 installed OK \u00b7 restarted: hype-engine, hype-guard"
+  "12:49:48 update 663c156a \u2192 6872685e \u00b7 1 file(s): engine/engine.py",
+  "12:49:48 restart hype-engine",
+  "12:50:33 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Clarence x Jeon \u2013 Kalor",
+  "song": "Bulin 47 X Kevin Wai \u2013 Dame Hombro",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
