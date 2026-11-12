@@ -1,17 +1,17 @@
 {
- "time": "2026-11-12T13:45:52",
+ "time": "2026-11-12T13:51:00",
  "result": "ok",
- "commit": "ed270210d86dea700f76c5319aad0e2fff8ff512",
- "subject": "No emojis in the chart editor (Chart, Website, At the show), button texts centred on one line; History: Audience and Change as 'radio \u00b7 TV' (no R / TV letters, a dot between)",
+ "commit": "755a6988e8343beedd3b416d20e3c4cd5a66e391",
+ "subject": "History audience columns: a real dot (5 px) with even space; first number right-aligned, second left-aligned so both sit tight against the dot",
  "log": [
-  "13:45:52 update 83c09db6 \u2192 ed270210 \u00b7 2 file(s): web/panel/history.html, web/panel/plan.html",
-  "13:45:52 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "13:51:00 update ed270210 \u2192 755a6988 \u00b7 1 file(s): web/panel/history.html",
+  "13:51:00 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Issairo x Dongo \u2013 Si Bo Stimami",
+  "song": "Tyla \u2013 Water",
   "listeners": 6,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },

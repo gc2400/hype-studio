@@ -326,3 +326,4 @@
 2026-11-12T13:29:27 ok b8b6e8d6 Charts: no automatic sending to the website any more – a chart goes out only when you press 📤 Publish (live at the start of its show, or Publish now); the chart editor shows when it was published, which week, and 'changed since – not on the website yet'
 2026-11-12T13:35:37 ok 83c09db6 Chart editor: when 🏆 Chart is on, only Chart · Number on screen · Arrows · Website show, in one row (Loop / Randomize / Rotation / Play exactly as listed are implied and hidden); shorter texts, compact Website card (📤 At the show / Now)
 2026-11-12T13:45:52 ok ed270210 No emojis in the chart editor (Chart, Website, At the show), button texts centred on one line; History: Audience and Change as 'radio · TV' (no R / TV letters, a dot between)
+2026-11-12T13:51:00 ok 755a6988 History audience columns: a real dot (5 px) with even space; first number right-aligned, second left-aligned so both sit tight against the dot
