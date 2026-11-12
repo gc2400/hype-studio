@@ -212,6 +212,7 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 @media (hover:none){.sl .rx{opacity:1}}
 @media (max-width:760px){.shlist{position:static;max-height:none}.shscroll{max-height:46vh}.shadd{position:static}}
 @media (max-width:700px){.shhead{grid-template-columns:1fr}.shname{min-width:0;width:100%}.shadd{max-width:none}.shlist{max-width:none}.wkctl b{min-width:0}}
+#plOpts.ischart .nochart{display:none}#plOpts:not(.ischart) .chopt{display:none}
 </style>
 </head>
 <body>
@@ -315,19 +316,17 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
         <span class="lab" style="flex:1 1 260px">Playlist · <input id="plName" class="shname" placeholder="e.g. HEAVY" aria-label="Playlist name"> <span class="muted" id="plInfo" style="text-transform:none;letter-spacing:0;font-weight:600"></span></span>
         <div class="row" style="gap:6px"><button class="btn yellow" id="plSave">Save</button><button class="btn" id="plReset" title="The next time it plays from 'where it left off', it starts at the top again">Start from the top</button><button class="btn sm red" id="plDel">Delete</button></div>
       </div>
-      <div class="plopts">
-        <label class="plopt"><input type="checkbox" id="plLoop" autocomplete="off"><span><b>Loop</b><small>Start again at the end</small></span></label>
-        <label class="plopt"><input type="checkbox" id="plShuffle" autocomplete="off"><span><b>Randomize</b><small>On: mixed, every song once per round · Off: in the order of the list</small></span></label>
-        <label class="plopt" title="One from AFRO, then LAT, then CARIB … With Randomize the order of the sources changes every round"><input type="checkbox" id="plRotate" autocomplete="off"><span><b>Rotation</b><small>Take turns: the amount from each source, then the next</small></span></label>
-        <label class="plopt" title="For countdowns like the Top 10: every item plays in its place"><input type="checkbox" id="plStrict" autocomplete="off"><span><b>Play exactly as listed</b><small>Never skip or move an item, also when that song or artist just played</small></span></label>
-        <label class="plopt" title="Hype Top 10, a Top 40 …: the order of the songs is the chart"><input type="checkbox" id="plChart" autocomplete="off"><span><b>🏆 Chart</b><small>A countdown: plays exactly as listed, the first song is the highest number, the last song #1. Jingles get no number.</small></span></label>
-      </div>
-      <div class="plopts" id="plChartOpts" hidden>
-        <label class="plopt"><input type="checkbox" id="plChNum" autocomplete="off"><span><b>Number on screen</b><small>The yellow square over the Now Playing box, the whole song</small></span></label>
-        <label class="plopt"><input type="checkbox" id="plChArr" autocomplete="off"><span><b>Arrows</b><small>▲ up · ▼ down · = same · NEW · RE, compared with last week's chart</small></span></label>
+      <div class="plopts" id="plOpts">
+        <label class="plopt nochart"><input type="checkbox" id="plLoop" autocomplete="off"><span><b>Loop</b><small>Start again at the end</small></span></label>
+        <label class="plopt nochart"><input type="checkbox" id="plShuffle" autocomplete="off"><span><b>Randomize</b><small>On: mixed, every song once per round · Off: in the order of the list</small></span></label>
+        <label class="plopt nochart" title="One from AFRO, then LAT, then CARIB … With Randomize the order of the sources changes every round"><input type="checkbox" id="plRotate" autocomplete="off"><span><b>Rotation</b><small>Take turns: the amount from each source, then the next</small></span></label>
+        <label class="plopt nochart" title="For countdowns like the Top 10: every item plays in its place"><input type="checkbox" id="plStrict" autocomplete="off"><span><b>Play exactly as listed</b><small>Never skip or move an item, also when that song or artist just played</small></span></label>
+        <label class="plopt" title="Hype Top 10, a Top 40 …: the order of the songs is the chart"><input type="checkbox" id="plChart" autocomplete="off"><span><b>🏆 Chart</b><small>Countdown: plays as listed, first song = highest number, last = #1</small></span></label>
+        <label class="plopt chopt"><input type="checkbox" id="plChNum" autocomplete="off"><span><b>Number on screen</b><small>Yellow square over Now Playing, the whole song</small></span></label>
+        <label class="plopt chopt"><input type="checkbox" id="plChArr" autocomplete="off"><span><b>Arrows</b><small>▲ ▼ = NEW RE vs last week</small></span></label>
         <input type="checkbox" id="plChWeb" hidden>
-        <div class="plopt" style="flex-direction:column;align-items:flex-start;gap:6px;cursor:default"><b>🌐 Website</b><small id="plWebSt">Not on the website yet. Nothing goes out until you publish.</small>
-          <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" id="plPubShow" title="Hype Live puts it on the website when this chart's show starts (no spoilers)">📤 Publish · live at the show</button><button class="btn sm" id="plPubNow">Publish now</button></div></div>
+        <div class="plopt chopt" style="flex-direction:column;align-items:stretch;gap:6px;cursor:default"><b>🌐 Website</b><small id="plWebSt">Not on the website yet</small>
+          <div class="row" style="gap:6px"><button class="btn sm" id="plPubShow" style="flex:1" title="Hype Live puts it on the website when this chart's show starts (no spoilers)">📤 At the show</button><button class="btn sm" id="plPubNow" style="flex:1" title="On the website right away">Now</button></div></div>
       </div>
       <span class="lab">What's in it</span>
       <div class="srcs" id="plSources"></div>
@@ -541,9 +540,9 @@ let PLDRAG = null;
 function webUI() {      // website state of this chart: last publish + "changed since"
   const w = cur && cur.web, el = $('#plWebSt'); if (!el) return;
   const when = t => new Date(t * 1000).toLocaleString([], {weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
-  if (!w || !w.t) { el.innerHTML = 'Not on the website yet. Nothing goes out until you publish.' + (w && w.show_at ? ` Its show: ${when(w.show_at)}.` : ''); return; }
-  el.innerHTML = `Published ${when(w.t)} · week ${esc(w.week.split('-W')[1] || w.week)}${w.now ? ' · live at once' : ' · live from the start of the show'}` +
-    (w.changed ? ' · <b style="color:#FFB547">changed since – not on the website yet</b>' : ' · <span style="color:var(--g)">up to date</span>');
+  if (!w || !w.t) { el.innerHTML = 'Not on the website yet' + (w && w.show_at ? ` · show ${when(w.show_at)}` : ''); return; }
+  el.innerHTML = `Week ${esc(w.week.split('-W')[1] || w.week)} · ${when(w.t)}<br>` +
+    (w.changed ? '<b style="color:#FFB547">Changed – not published yet</b>' : '<span style="color:var(--g)">Up to date</span>');
 }
 function publishChart(now) {
   if (!cur || !cur.id) return toast('Save the chart first');
@@ -553,9 +552,8 @@ function publishChart(now) {
 }
 $('#plPubShow').onclick = () => publishChart(false); $('#plPubNow').onclick = () => publishChart(true);
 function chartUI() {      // a chart always plays exactly as listed, never randomized
-  const on = $('#plChart').checked; $('#plChartOpts').hidden = !on;
-  if (on) { $('#plStrict').checked = true; $('#plShuffle').checked = false; $('#plRotate').checked = false; }
-  ['#plStrict', '#plShuffle', '#plRotate'].forEach(q => $(q).disabled = on);
+  const on = $('#plChart').checked; $('#plOpts').classList.toggle('ischart', on);
+  if (on) { $('#plStrict').checked = true; $('#plShuffle').checked = false; $('#plRotate').checked = false; $('#plLoop').checked = false; }
   if (cur) { cur.chart = on; renderSources(); }
 }
 $('#plChart').onchange = chartUI;
