@@ -1,19 +1,18 @@
 {
- "time": "2026-11-12T13:11:32",
+ "time": "2026-11-12T13:22:32",
  "result": "ok",
- "commit": "994c92a6dc6902f908b59d35e7db5355960b2a8c",
- "subject": "Hype Live 2.42: the key only in the X-Hype-Key header (heartbeat/sync, song link, charts, recap, covers, clock, old fallback links) \u2013 no key in any URL; listener / viewer numbers removed from the public nowplaying API (Hype Live takes them from the heartbeat); covers for the next songs ride along in the minute sync (want_covers -> covers), no call per song",
+ "commit": "5218b249b547089da226f5b939558bc9509e4c11",
+ "subject": "Paired videos on TV: the level is set first in the chain (OBS 'Level' gain filter before compressor/limiter, volume slider 0 dB) \u2013 loud videos no longer get squashed and end up much quieter on TV",
  "log": [
-  "13:10:47 update 3c3d9d99 \u2192 994c92a6 \u00b7 2 file(s): engine/engine.py, engine/guard.py",
-  "13:10:47 restart hype-guard",
-  "13:10:47 restart hype-engine",
-  "13:11:32 installed OK \u00b7 restarted: hype-engine, hype-guard"
+  "13:21:47 update 994c92a6 \u2192 5218b249 \u00b7 1 file(s): engine/engine.py",
+  "13:21:47 restart hype-engine",
+  "13:22:32 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Benzo \u2013 Whine & Dance",
-  "listeners": 7,
+  "song": "Ronnie Flex x Ir Sais \u2013 Caribbean Girl",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
