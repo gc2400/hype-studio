@@ -3605,15 +3605,17 @@ def chart_show_at(name):
         t = (int(now) // 60 + k) * 60; s_ = planner.show_at(t)
         if s_ and key in re.sub(r"\s+", "", (s_.get("title") or "").lower()) and (planner.show_at(t - 60) or {}).get("title") != s_.get("title"): return t
     return 0
-def chart_data(pid):
-    """A chart as it is now in its playlist: numbers count down (first song = highest), for the website (via Hype Live)."""
+def chart_data(pid, now=False):
+    """A chart as it is now in its playlist: numbers count down (first song = highest), for the website (via Hype Live).
+    Week: "Now" = the week it is published in; "At the show" = the week of that show (13 Nov: "Now" on a Friday gave
+    next week's number, because the next Top 10 show is next week)."""
     c = dbc(); r = c.execute("SELECT id, name FROM playlists WHERE id=? AND COALESCE(chart,0)=1", (pid,)).fetchone()
     if not r: return None
     items = []
     for p, n in planner.chart_positions(c, pid):
         it = c.execute("SELECT artist, title FROM items WHERE path=?", (p,)).fetchone()
         if it: items.append({"pos": n, "artist": it[0] or "", "title": it[1] or ""})
-    items.sort(key=lambda x: x["pos"]); show_at = chart_show_at(r[1])
+    items.sort(key=lambda x: x["pos"]); show_at = 0 if now else chart_show_at(r[1])
     return {"chart": {"id": pid, "name": r[1], "size": len(items)}, "week": planner.chart_week(show_at or None), "show_at": show_at,
             "playlist": r[1], "items": items, "sent_at": int(time.time())}
 def web_charts():
@@ -3627,15 +3629,14 @@ def chart_state(pid):
     """Website state of a chart: when it was last published, which week, and whether the list changed since."""
     try: last = json.load(open(TOP10_SENT)).get(str(pid)) or {}
     except Exception: last = {}
-    d = chart_data(pid); sig = json.dumps([d["week"], d["items"]], sort_keys=True) if d else None
+    d = chart_data(pid); sig = json.dumps(d["items"], sort_keys=True) if d else None
     return {"t": last.get("t", 0), "week": last.get("week", ""), "now": bool(last.get("now")), "changed": bool(sig and sig != last.get("sig"))}
 def chart_send(pid, force=False, now=False):
     """One chart to Hype Live: the Hype Top 10 to ?hype_studio_top10 (as since 2.37), other charts to ?hype_studio_chart.
     Only when Gianno presses Publish (now = live on the website at once; else from the start of its show)."""
-    d = chart_data(pid)
+    d = chart_data(pid, now)
     if not d or not d["items"]: return None, "no songs"
-    if now: d["show_at"] = 0
-    sig = json.dumps([d["week"], d["items"]], sort_keys=True)
+    sig = json.dumps(d["items"], sort_keys=True)          # the list only: "changed" = the songs or their order changed
     try: last = json.load(open(TOP10_SENT))
     except Exception: last = {}
     if "sig" in last: last = {}                        # old format (one chart)
@@ -3655,7 +3656,7 @@ def top10_loop():
         time.sleep(600)
         for pid, name in web_charts():
             try:
-                d = chart_data(pid); sig = json.dumps([d["week"], d["items"]], sort_keys=True) if d else None
+                d = chart_data(pid); sig = json.dumps(d["items"], sort_keys=True) if d else None
                 if sig and sig == seen.get(pid): chart_send(pid)
                 seen[pid] = sig
             except urllib.error.HTTPError as e:
