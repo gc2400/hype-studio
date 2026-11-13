@@ -1,17 +1,19 @@
 {
- "time": "2026-11-12T13:51:00",
+ "time": "2026-11-13T01:07:44",
  "result": "ok",
- "commit": "755a6988e8343beedd3b416d20e3c4cd5a66e391",
- "subject": "History audience columns: a real dot (5 px) with even space; first number right-aligned, second left-aligned so both sit tight against the dot",
+ "commit": "5759af16fa8bcc65cbedb78c615955485106882d",
+ "subject": "TV HLS: 15 pieces per playlist (30 s) and removed pieces kept ~30 s more (hls_delete_threshold 15) so iPhones switching quality don't hit 404s; FRAME-RATE=25.000 in master.m3u8; radio HLS keeps removed pieces too (threshold 8)",
  "log": [
-  "13:51:00 update ed270210 \u2192 755a6988 \u00b7 1 file(s): web/panel/history.html",
-  "13:51:00 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "01:06:58 update 755a6988 \u2192 5759af16 \u00b7 2 file(s): tv/ladder.sh, tv/radio_hls.sh",
+  "01:06:58 restart hype-ladder",
+  "01:06:59 restart hype-radio-hls",
+  "01:07:44 installed OK \u00b7 restarted: hype-ladder, hype-radio-hls"
  ],
  "guard": {
-  "song": "Tyla \u2013 Water",
-  "listeners": 6,
+  "song": "Bryan Mg x Dylisa x Bokoesam \u2013 Nobody Body",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },

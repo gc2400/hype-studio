@@ -327,3 +327,4 @@
 2026-11-12T13:35:37 ok 83c09db6 Chart editor: when 🏆 Chart is on, only Chart · Number on screen · Arrows · Website show, in one row (Loop / Randomize / Rotation / Play exactly as listed are implied and hidden); shorter texts, compact Website card (📤 At the show / Now)
 2026-11-12T13:45:52 ok ed270210 No emojis in the chart editor (Chart, Website, At the show), button texts centred on one line; History: Audience and Change as 'radio · TV' (no R / TV letters, a dot between)
 2026-11-12T13:51:00 ok 755a6988 History audience columns: a real dot (5 px) with even space; first number right-aligned, second left-aligned so both sit tight against the dot
+2026-11-13T01:07:44 ok 5759af16 TV HLS: 15 pieces per playlist (30 s) and removed pieces kept ~30 s more (hls_delete_threshold 15) so iPhones switching quality don't hit 404s; FRAME-RATE=25.000 in master.m3u8; radio HLS keeps removed pieces too (threshold 8)
