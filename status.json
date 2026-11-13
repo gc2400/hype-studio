@@ -1,19 +1,18 @@
 {
- "time": "2026-11-13T01:07:44",
+ "time": "2026-11-13T21:33:35",
  "result": "ok",
- "commit": "5759af16fa8bcc65cbedb78c615955485106882d",
- "subject": "TV HLS: 15 pieces per playlist (30 s) and removed pieces kept ~30 s more (hls_delete_threshold 15) so iPhones switching quality don't hit 404s; FRAME-RATE=25.000 in master.m3u8; radio HLS keeps removed pieces too (threshold 8)",
+ "commit": "f6edb99d89a7fa061fff77d49536069adf366e0d",
+ "subject": "Reload all OBS pages (graphics, ad box, Live Layer, Hype Screen) on request: RELOAD PAGES button in the panel's Scenes row, or an update that changes deploy/reload_pages.txt (done now: Gianno saw an old version on screen)",
  "log": [
-  "01:06:58 update 755a6988 \u2192 5759af16 \u00b7 2 file(s): tv/ladder.sh, tv/radio_hls.sh",
-  "01:06:58 restart hype-ladder",
-  "01:06:59 restart hype-radio-hls",
-  "01:07:44 installed OK \u00b7 restarted: hype-ladder, hype-radio-hls"
+  "21:32:50 update 5759af16 \u2192 f6edb99d \u00b7 3 file(s): deploy/reload_pages.txt, engine/engine.py, web/panel/index.html",
+  "21:32:50 restart hype-engine",
+  "21:33:35 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Bryan Mg x Dylisa x Bokoesam \u2013 Nobody Body",
-  "listeners": 1,
+  "song": "Caribang Radio 001 \u2013 Hosted by Essovilla",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
