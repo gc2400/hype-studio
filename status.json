@@ -1,18 +1,18 @@
 {
- "time": "2026-11-13T21:33:35",
+ "time": "2026-11-13T21:47:41",
  "result": "ok",
- "commit": "f6edb99d89a7fa061fff77d49536069adf366e0d",
- "subject": "Reload all OBS pages (graphics, ad box, Live Layer, Hype Screen) on request: RELOAD PAGES button in the panel's Scenes row, or an update that changes deploy/reload_pages.txt (done now: Gianno saw an old version on screen)",
+ "commit": "d9c1c2d51f51539f6cc41115c798f6f4dd2e1c79",
+ "subject": "Charts: 'Now' publishes with the week it is published in (was the week of the next show: a Friday publish of the Top 10 said W47); 'changed' compares the list only",
  "log": [
-  "21:32:50 update 5759af16 \u2192 f6edb99d \u00b7 3 file(s): deploy/reload_pages.txt, engine/engine.py, web/panel/index.html",
-  "21:32:50 restart hype-engine",
-  "21:33:35 installed OK \u00b7 restarted: hype-engine"
+  "21:46:56 update f6edb99d \u2192 d9c1c2d5 \u00b7 1 file(s): engine/engine.py",
+  "21:46:56 restart hype-engine",
+  "21:47:41 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
   "song": "Caribang Radio 001 \u2013 Hosted by Essovilla",
-  "listeners": 5,
+  "listeners": 3,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },

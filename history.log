@@ -329,3 +329,4 @@
 2026-11-12T13:51:00 ok 755a6988 History audience columns: a real dot (5 px) with even space; first number right-aligned, second left-aligned so both sit tight against the dot
 2026-11-13T01:07:44 ok 5759af16 TV HLS: 15 pieces per playlist (30 s) and removed pieces kept ~30 s more (hls_delete_threshold 15) so iPhones switching quality don't hit 404s; FRAME-RATE=25.000 in master.m3u8; radio HLS keeps removed pieces too (threshold 8)
 2026-11-13T21:33:35 ok f6edb99d Reload all OBS pages (graphics, ad box, Live Layer, Hype Screen) on request: RELOAD PAGES button in the panel's Scenes row, or an update that changes deploy/reload_pages.txt (done now: Gianno saw an old version on screen)
+2026-11-13T21:47:41 ok d9c1c2d5 Charts: 'Now' publishes with the week it is published in (was the week of the next show: a Friday publish of the Top 10 said W47); 'changed' compares the list only
