@@ -2920,6 +2920,9 @@ class H(BaseHTTPRequestHandler):
             if abs(time.time() - float(d.get("t") or 0)) > 120: return self.send(400, {"ok": False, "error": "too old"})
             open(HL_POKE, "w").write(str(time.time())); log.info("Hype Live poke: %s", ",".join(map(str, d.get("what") or [])))
             return self.send(200, {"ok": True})
+        if p == "/reload_pages":    # panel: reload every page in OBS (graphics, ad box, Live Layer, Hype Screen) within ~10 s
+            open(RELOAD_BTN, "w").write(str(time.time())); log.info("reload of all OBS pages asked from the panel")
+            return self.send(200, {"ok": True})
         if p == "/chart_publish":   # 📤 Publish a chart to the website (via Hype Live): {id, now}
             try:
                 wk, a = chart_send(int(d["id"]), force=True, now=bool(d.get("now")))
@@ -3913,9 +3916,14 @@ def shutil_disk(p):
 
 HS_WD = {"last": 0, "fix": 0}
 PAGES_MT = {}
+RELOAD_REQ = "/var/lib/hype/reload_pages"; RELOAD_BTN = "/var/lib/hype/reload_pages_btn"
 def reload_changed_pages():
     """After an update of the graphics pages (Graphics / Ad box), OBS reloads them by itself (no old page in memory)."""
-    for src, f in (("Graphics", "/var/www/overlay/index.html"), ("Clock", "/var/www/overlay/index.html"), ("Top10 rank", "/var/www/overlay/index.html"), ("Ad box", "/var/www/overlay/adbox.html")):
+    # + a reload of ALL pages (also the website ones: Live Layer, Hype Screen) when asked: the panel button (RELOAD_BTN) or an
+    # update that changes deploy/reload_pages.txt (RELOAD_REQ) - so OBS never keeps running an old version of a page
+    allp = ("Graphics", "Clock", "Ad box", "Live Layer", "Hype Screen page")
+    for src, f in (("Graphics", "/var/www/overlay/index.html"), ("Clock", "/var/www/overlay/index.html"), ("Top10 rank", "/var/www/overlay/index.html"), ("Ad box", "/var/www/overlay/adbox.html")) \
+                  + tuple((n, RELOAD_REQ) for n in allp) + tuple((n, RELOAD_BTN) for n in allp):
         try: m = os.path.getmtime(f)
         except OSError: continue
         k = src + f

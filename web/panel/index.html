@@ -377,6 +377,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <div class="row" style="gap:5px;flex-wrap:wrap">
             <span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third">LOWER THIRD</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
             <button class="btn sm" id="bEl" title="Put a graphic on screen">+ ELEMENT</button>
+            <button class="btn sm" id="bReload" title="Reload all pages on the screen (graphics, ad box, Live Layer, Hype Screen) – when the screen seems to run an old version">RELOAD PAGES</button>
             <button class="btn sm" id="bAutoScene">AUTO SCENES</button></div></div>
         <div class="subbox" id="ltBox" hidden>
           <div class="lt-form">
@@ -1323,6 +1324,7 @@ function renderSlotsPv() {
 slotsBox.addEventListener('toggle', () => { try { localStorage.setItem('hypeSlots', slotsBox.open ? '1' : '0'); } catch (e) {} if (!slotsBox.open) slotsClose(); renderSlotsPv(); });
 setInterval(renderSlotsPv, 1000);
 // ---------- go ----------
+$('#bReload').onclick = () => api('reload_pages', {}).then(() => toast('Pages reload on the screen within ~10 s'));
 refresh(); setInterval(() => { if (!document.hidden) refresh(); }, 2000); setInterval(tick, 250); lib(); pvLive();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); lvLoad(); ltLoad(); } });      // back on the tab: fresh at once
 </script>

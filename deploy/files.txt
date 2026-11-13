@@ -73,3 +73,4 @@ system/hype-relay.service|/etc/systemd/system/hype-relay.service|644|daemon-relo
 engine/listener_media.py|/opt/hype/listener_media.py|644|hype-engine
 engine/mp3gate.py|/opt/hype/mp3gate.py|644|hype-mp3gate
 system/hype-mp3gate.service|/etc/systemd/system/hype-mp3gate.service|644|daemon-reload
+deploy/reload_pages.txt|/var/lib/hype/reload_pages|644|-
