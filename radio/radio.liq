@@ -189,13 +189,15 @@ def process(~meter=false, ~light=false, x) =
     # (before: r1 sat only in the Classic branch, which is not computed then -> the AGC saw a frozen level and boosted)
     mi3 = rms(duration=3., r1)
     mi = peak(duration=0.3, mi3)
+    # leveler max 5 dB (was 10): it has no look-ahead, so on a quiet intro it rose up to 10 dB and the beat drop came in
+    # too loud, then sank again over seconds (14 Nov). Studio's own AGC + intro lift do the evening-out.
     mmx = ladspa.master_me(target={int_of_float(mm_target())}, leveler_speed={int_of_float(mm_lev())},
             kneecomp_strength={int_of_float(mm_comp())}, kneecomp_tar_thresh=mm_kc_th, kneecomp_attack=mm_kc_att, kneecomp_release=mm_kc_rel,
             low_strength={int_of_float(mm_lo_str())}, low_crossover=mm_lo_f, low_tar_thresh=mm_lo_th, low_attack=mm_lo_att, low_release=mm_lo_rel,
             high_strength={int_of_float(mm_hi_str())}, high_crossover=mm_hi_f, high_tar_thresh=mm_hi_th, high_attack=mm_hi_att, high_release=mm_hi_rel,
             limiter_strength={int_of_float(mm_lim())}, limiter_attack=mm_lim_att, limiter_release=mm_lim_rel,
             brickwall_ceiling={snd_ceiling() - 0.2}, eq_highpass_freq=snd_hpf,
-            gate_bypass=true, dc_blocker=true, leveler_max=10., leveler_max__=10., leveler_brake_threshold=-20.,
+            gate_bypass=true, dc_blocker=true, leveler_max=5., leveler_max__=5., leveler_brake_threshold=-20.,
             kneecomp_knee=6., kneecomp_link=60, low_knee=12., low_link=70, high_knee=12., high_link=30,
             makeup=1., limiter_tar_thresh=3., limiter_knee=3., brickwall_release=75., mi)
     mmx = ladspa.fastlookaheadlimiter(input_gain=0., limit={snd_ceiling() - 0.2}, release_time=0.08, mmx)   # the same last safety as Classic
