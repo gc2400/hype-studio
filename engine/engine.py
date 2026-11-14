@@ -3093,6 +3093,11 @@ class Media:
                 if eng.now: eng.tv.set_scene(eng.now.get("scene") or "Hype Screen")
 
 _ST = {"t": 0, "d": None, "pub": None, "pub_t": 0}
+# test tools, scripts and bots are no listeners / viewers (13 Nov: a stream test from ~30 cloud addresses with Python-urllib
+# showed as +11 / -11 TV viewers on two songs). Real players (browsers, AVPlayer, ExoPlayer/okhttp, VLC, Lavf, IPTV boxes) stay.
+NOT_PLAYER = re.compile(r"^(python-|python/|curl/|wget/|go-http-client|aiohttp|node-fetch|node/|axios/|undici|libwww-perl|httpie|postman|insomnia|guzzle|scrapy)"
+                        r"|bot\b|bot/|crawl|spider|headlesschrome|phantomjs|uptime|pingdom|statuscake|site24x7|lighthouse|facebookexternalhit|whatsapp/|slurp", re.I)
+def is_player(ua): return not NOT_PLAYER.search(ua or "")
 def log_devices(log_, keep, window):
     """Devices (internet address + app/browser) that fetched pieces in the last `window` s, from an nginx log.
     Address + user agent: two different phones on the same wifi count as 2; the same player on both links as 1."""
@@ -3107,7 +3112,8 @@ def log_devices(log_, keep, window):
             try: t = time.mktime(time.strptime(m.group(2).split()[0], "%d/%b/%Y:%H:%M:%S"))
             except ValueError: continue
             if now - t > window: break
-            ua = re.findall(r'"([^"]*)"', ln); out.add(m.group(1) + "|" + (ua[-1] if ua else ""))
+            ua = re.findall(r'"([^"]*)"', ln); ua = ua[-1] if ua else ""
+            if is_player(ua): out.add(m.group(1) + "|" + ua)
     except OSError: pass
     return out
 ICE_ADMIN = {"t": 0, "auth": None}
@@ -3128,6 +3134,7 @@ def mp3_devices():
             ip, ua, lid = g("IP"), _h.unescape(g("UserAgent")), g("ID")
             if ua.startswith("HypeStudio") or (ip in ("127.0.0.1", "::1") and ua.startswith("Python-urllib")):
                 continue        # our own readers on the server (the backup relay to Streamerr) are not listeners
+            if not is_player(ua): continue      # test tools / bots
             try: start = now - float(g("Connected") or 0)
             except ValueError: start = now
             if ip and ip not in ("127.0.0.1", "::1"): out.add(ip + "|" + ua); continue     # a direct listener (port 8000)
