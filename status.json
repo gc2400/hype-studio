@@ -1,18 +1,17 @@
 {
- "time": "2026-11-14T01:49:19",
+ "time": "2026-11-14T23:03:11",
  "result": "ok",
- "commit": "e85e30cb63f109b999c6dc339b573c94a76d9e14",
- "subject": "Listeners / viewers: test tools, scripts and bots are not counted (Python-urllib, curl, wget, bots, crawlers, uptime monitors \u2026); real players (browsers, iPhone, ExoPlayer, VLC, Lavf, IPTV boxes) still are",
+ "commit": "094f96967e925256086e393a4b36d084095ddf92",
+ "subject": "Library: a section with only one top folder (Mixes: MIXES/\u2026) shows its subfolders straight away",
  "log": [
-  "01:48:33 update 83e8d879 \u2192 e85e30cb \u00b7 1 file(s): engine/engine.py",
-  "01:48:34 restart hype-engine",
-  "01:49:19 installed OK \u00b7 restarted: hype-engine"
+  "23:03:11 update e85e30cb \u2192 094f9696 \u00b7 1 file(s): web/panel/library.html",
+  "23:03:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Pop Smoke X 50 Cent X Roddy Ricch \u2013 The Woo",
-  "listeners": 1,
+  "song": "Jeon \u2013 Curason",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
