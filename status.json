@@ -1,19 +1,18 @@
 {
- "time": "2026-11-14T01:29:05",
+ "time": "2026-11-14T01:49:19",
  "result": "ok",
- "commit": "83e8d8799fc4bef50c4de26020832cf6e8481617",
- "subject": "Install the master_me leveler change now (Gianno asked; a few seconds of radio restart)",
+ "commit": "e85e30cb63f109b999c6dc339b573c94a76d9e14",
+ "subject": "Listeners / viewers: test tools, scripts and bots are not counted (Python-urllib, curl, wget, bots, crawlers, uptime monitors \u2026); real players (browsers, iPhone, ExoPlayer, VLC, Lavf, IPTV boxes) still are",
  "log": [
-  "01:27:34 update d9c1c2d5 \u2192 83e8d879 \u00b7 1 file(s): radio/radio.liq",
-  "01:28:20 lab: PASS (6/6 good readings)",
-  "01:28:20 restart hype-radio",
-  "01:29:05 installed OK \u00b7 restarted: hype-radio"
+  "01:48:33 update 83e8d879 \u2192 e85e30cb \u00b7 1 file(s): engine/engine.py",
+  "01:48:34 restart hype-engine",
+  "01:49:19 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Equalz \u2013 Baddies Club",
+  "song": "Pop Smoke X 50 Cent X Roddy Ricch \u2013 The Woo",
   "listeners": 1,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
