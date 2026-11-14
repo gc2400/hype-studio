@@ -1,17 +1,19 @@
 {
- "time": "2026-11-14T01:25:29",
- "result": "waiting",
- "commit": "1af19f83f7c31714183a56ffd7f80cdb9e3a31cb",
- "subject": "[night] master_me leveler max 5 dB instead of 10: no more 'up on the intro, too loud on the beat drop, then down again'",
+ "time": "2026-11-14T01:29:05",
+ "result": "ok",
+ "commit": "83e8d8799fc4bef50c4de26020832cf6e8481617",
+ "subject": "Install the master_me leveler change now (Gianno asked; a few seconds of radio restart)",
  "log": [
-  "01:25:29 update d9c1c2d5 \u2192 1af19f83 \u00b7 1 file(s): radio/radio.liq",
-  "01:25:29 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "01:27:34 update d9c1c2d5 \u2192 83e8d879 \u00b7 1 file(s): radio/radio.liq",
+  "01:28:20 lab: PASS (6/6 good readings)",
+  "01:28:20 restart hype-radio",
+  "01:29:05 installed OK \u00b7 restarted: hype-radio"
  ],
  "guard": {
-  "song": "Idaly x Ronnie Flex x Frenna \u2013 POPULAIR",
-  "listeners": 2,
+  "song": "Equalz \u2013 Baddies Club",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },

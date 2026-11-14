@@ -331,3 +331,4 @@
 2026-11-13T21:33:35 ok f6edb99d Reload all OBS pages (graphics, ad box, Live Layer, Hype Screen) on request: RELOAD PAGES button in the panel's Scenes row, or an update that changes deploy/reload_pages.txt (done now: Gianno saw an old version on screen)
 2026-11-13T21:47:41 ok d9c1c2d5 Charts: 'Now' publishes with the week it is published in (was the week of the next show: a Friday publish of the Top 10 said W47); 'changed' compares the list only
 2026-11-14T01:25:29 waiting 1af19f83 [night] master_me leveler max 5 dB instead of 10: no more 'up on the intro, too loud on the beat drop, then down again'
+2026-11-14T01:29:05 ok 83e8d879 Install the master_me leveler change now (Gianno asked; a few seconds of radio restart)
