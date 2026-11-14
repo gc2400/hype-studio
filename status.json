@@ -1,18 +1,17 @@
 {
- "time": "2026-11-13T21:47:41",
- "result": "ok",
- "commit": "d9c1c2d51f51539f6cc41115c798f6f4dd2e1c79",
- "subject": "Charts: 'Now' publishes with the week it is published in (was the week of the next show: a Friday publish of the Top 10 said W47); 'changed' compares the list only",
+ "time": "2026-11-14T01:25:29",
+ "result": "waiting",
+ "commit": "1af19f83f7c31714183a56ffd7f80cdb9e3a31cb",
+ "subject": "[night] master_me leveler max 5 dB instead of 10: no more 'up on the intro, too loud on the beat drop, then down again'",
  "log": [
-  "21:46:56 update f6edb99d \u2192 d9c1c2d5 \u00b7 1 file(s): engine/engine.py",
-  "21:46:56 restart hype-engine",
-  "21:47:41 installed OK \u00b7 restarted: hype-engine"
+  "01:25:29 update d9c1c2d5 \u2192 1af19f83 \u00b7 1 file(s): radio/radio.liq",
+  "01:25:29 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Caribang Radio 001 \u2013 Hosted by Essovilla",
-  "listeners": 3,
+  "song": "Idaly x Ronnie Flex x Frenna \u2013 POPULAIR",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
