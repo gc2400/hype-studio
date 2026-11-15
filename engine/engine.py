@@ -1980,11 +1980,17 @@ class Engine:
         if (self.now or {}).get("path") == rel: return {"ok": False, "error": "it is on air right now – rename it after it played"}
         if self.liq_next and self.liq_next.get("path") == rel: return {"ok": False, "error": "it is the next item (already queued) - try again in a minute"}
         ext = os.path.splitext(rel)[1]
+        tdir = os.path.dirname(rel)
+        if d.get("folder"):        # Library → Move to: the same file in another folder of the same section (cues, history, playlists stay)
+            tdir = os.path.normpath(str(d["folder"])).strip("/")
+            if tdir.split("/")[0] != rel.split("/")[0] or ".." in tdir.split("/") or not os.path.isdir(os.path.join(ROOT, tdir)):
+                return {"ok": False, "error": "choose a folder of the same section"}
+            if not d.get("name"): d = dict(d, name=os.path.splitext(os.path.basename(rel))[0])
         name = re.sub(r"\s+", " ", str(d.get("name") or "")).strip()
         if name.lower().endswith(ext.lower()): name = name[:-len(ext)].strip()
         if not name or len(name) > 180 or BAD_NAME.search(name) or any(ch in name for ch in '/\\:*?"<>|') or name.startswith("."):
             return {"ok": False, "error": 'not a valid name (no / \\ : * ? " < > |)'}
-        fn = name + ext; new = os.path.join(os.path.dirname(rel), fn)
+        fn = name + (d.get("ext") or ext); new = os.path.join(tdir, fn)
         if new == rel: return {"ok": True, "path": rel}
         if os.path.exists(os.path.join(ROOT, new)) and new.lower() != rel.lower(): return {"ok": False, "error": "a file with that name is already there"}
         os.rename(src, os.path.join(ROOT, new))
@@ -1993,7 +1999,7 @@ class Engine:
             fa, ft = _ix.split_name(fn)
             row = c.execute("SELECT section, artist, title FROM items WHERE path=?", (rel,)).fetchone()
             artist, title = (fa, _ix.clean_title(ft)) if fa else (row[1], row[2]) if row[0] == "music" else ("", _ix.clean_title(ft))
-            c.execute("UPDATE items SET path=?, filename=?, artist=?, title=? WHERE path=?", (new, fn, artist, title, rel))
+            c.execute("UPDATE items SET path=?, filename=?, artist=?, title=?, folder=? WHERE path=?", (new, fn, artist, title, "/".join(new.split("/")[1:-1]), rel))
             for sql in ("UPDATE items SET clip_path=? WHERE clip_path=?", "UPDATE items SET overlay_path=? WHERE overlay_path=?",
                         "UPDATE asrun SET path=? WHERE path=?", "UPDATE pad_items SET path=? WHERE path=?", "UPDATE ad_spots SET path=? WHERE path=?",
                         "UPDATE events SET ref=? WHERE ref=?", "UPDATE playlist_sources SET ref=? WHERE kind='song' AND ref=?",
@@ -2019,6 +2025,9 @@ class Engine:
         try: self.aux_save_file()
         except Exception: pass
         LM_CACHE.pop(rel, None); log.info("renamed: %s -> %s", rel, new)
+        try:
+            sc = audstats.db(); sc.execute("UPDATE plays SET path=? WHERE path=?", (new, rel)); sc.commit(); sc.close()
+        except Exception: pass
         return {"ok": True, "path": new, "artist": artist, "title": title, "filename": fn}
     # ---------- AUX players: two lists you fill by dragging, fire into the log ----------
     def aux_save_file(self):
@@ -2134,8 +2143,34 @@ def tv_file(c, path):
 
 KIND_SQL = {"audio": "COALESCE(mode, 'audio') IN ('audio', 'pair')", "pair": "mode = 'pair'",
             "noclip": "COALESCE(mode, 'audio') = 'audio'", "video": "mode = 'clip'"}
+def to_replace(c, folder="", q=""):
+    """Library → ⚠ To replace: songs with something to improve, most played (90 days) first:
+    no music video · video under 720p · audio under 190 kbps · a replaced file whose cues need a check."""
+    clip_h = dict(c.execute("SELECT path, COALESCE(height, 0) FROM items WHERE section='clips'").fetchall())
+    plays = dict(c.execute("SELECT path, COUNT(*) FROM asrun WHERE started > ? GROUP BY path", (time.time() - 90 * 86400,)).fetchall())
+    sql = ("SELECT path, artist, title, folder, mode, clip_path, duration, has_video, COALESCE(height,0), size, COALESCE(cue_check,0), filename FROM items "
+           "WHERE section='music' AND problem IS NULL AND folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%'")
+    args = []
+    if folder: sql += " AND (folder=? OR folder LIKE ?)"; args += [folder, folder + "/%"]
+    for w in q.lower().split(): sql += " AND fold(artist||' '||title||' '||filename) LIKE ?"; args.append(f"%{fold(w)}%")
+    out = {}
+    for path, ar, ti, fo, mode, cp, dur, hv, h, size, chk, fn in c.execute(sql, args):
+        why = []
+        if chk: why.append("check cues")
+        if mode == "pair": vh = clip_h.get(cp or "", 0)
+        elif hv: vh = h
+        else: vh = None
+        if vh is None: why.append("no video")
+        elif 0 < vh < 720: why.append("%dp video" % vh)
+        if not hv and dur and size:
+            kbps = size * 8 / dur / 1000
+            if kbps < 190: why.append("audio %d kbps" % kbps)
+        if why: out[path] = (why, plays.get(path, 0))
+    return out
 def library(qs):
     c = dbc(); q = (qs.get("q", [""])[0]).strip(); sec = qs.get("section", ["music"])[0]; folder = qs.get("folder", [""])[0]
+    fix = qs.get("fix", ["0"])[0] == "1" and sec == "music"
+    FIX = to_replace(c, folder, q) if fix else None
     sql = "SELECT path, artist, title, folder, mode, clip_path, clip_suggest, clip_score, duration, has_video, problem, overlay_mode, overlay_path, cue_start, cue_mix, cue_end, cues_edited, added_at, COALESCE(mix_set, 0), COALESCE(cue_check, 0) FROM items WHERE section=?"
     mixes = sec == "mixes"; recs = sec == "recordings"
     if recs: sec = "music"; sql += " AND folder LIKE 'RECORDINGS%'"           # recordings (REC / GO LIVE / auto): a Library tab of their own
@@ -2146,17 +2181,22 @@ def library(qs):
     kind = qs.get("kind", [""])[0]
     if sec == "music" and kind in KIND_SQL: sql += " AND " + KIND_SQL[kind]
     if qs.get("auto", ["0"])[0] == "1": sql += " AND COALESCE(cues_edited, 0) = 0"
+    if fix:
+        sql += " AND path IN (SELECT value FROM json_each(?))"; args.append(json.dumps(list(FIX)))
     for w in q.lower().split():
         sql += " AND fold(artist||' '||title||' '||filename) LIKE ?"; args.append(f"%{fold(w)}%")
     total = c.execute("SELECT COUNT(*) FROM (" + sql + ")", args).fetchone()[0]
     try: lim = max(1, min(1000, int(qs.get("limit", ["300"])[0]))); off = max(0, int(qs.get("offset", ["0"])[0]))
     except ValueError: lim, off = 300, 0
-    sql += " ORDER BY " + ("added_at DESC, artist, title" if sort == "new" else "(problem IS NULL), problem, artist, title" if sort == "problems" else "artist, title") + " LIMIT ? OFFSET ?"; args += [lim, off]
+    if fix:        # most played first: fix what matters most
+        sql += " ORDER BY (SELECT COUNT(*) FROM asrun a WHERE a.path = items.path AND a.started > %d) DESC, artist, title LIMIT ? OFFSET ?" % int(time.time() - 90 * 86400); args += [lim, off]
+    else: sql += " ORDER BY " + ("added_at DESC, artist, title" if sort == "new" else "(problem IS NULL), problem, artist, title" if sort == "problems" else "artist, title") + " LIMIT ? OFFSET ?"; args += [lim, off]
     last = {r[0]: r[1] for r in c.execute("SELECT path, MAX(started) FROM asrun GROUP BY path")}
     k = ["path", "artist", "title", "folder", "mode", "clip_path", "clip_suggest", "clip_score", "duration", "has_video", "problem", "overlay_mode", "overlay_path", "cue_start", "cue_mix", "cue_end", "cues_edited", "added_at", "mix_set", "cue_check"]
     out = []
     for r in c.execute(sql, args):
         d = dict(zip(k, r)); d["last"] = last.get(d["path"]); out.append(d)
+        if fix: d["fix"], d["plays90"] = FIX.get(d["path"], ([], 0))
     folders = [r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section=? ORDER BY folder", (sec,))]
     if recs: folders = [f for f in folders if (f or "").upper().startswith("RECORDINGS")]
     elif sec == "music": folders = [f for f in folders if (f or "").upper().startswith("MIXES") == mixes and not (f or "").upper().startswith("RECORDINGS")]
@@ -2167,7 +2207,12 @@ def library(qs):
     counts["mixes"] -= counts["recordings"]
     counts["music"] = counts.get("music", 0) - counts["mixes"] - counts["recordings"]
     psql = "SELECT COUNT(*) FROM items WHERE section=? AND problem IS NOT NULL" + ((" AND folder LIKE 'MIXES%'" if mixes else " AND folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%'") if sec == "music" else "")
-    return {"problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "counts": counts, "total": total, "offset": off}
+    fixn = None
+    if sec == "music" and not mixes and not recs:
+        fx = FIX if FIX is not None else to_replace(c); fixn = {"total": len(fx)}
+        for why, _n in fx.values():
+            for w in why: k_ = "no video" if w == "no video" else "low video" if w.endswith("p video") else "low audio" if w.startswith("audio") else "check cues"; fixn[k_] = fixn.get(k_, 0) + 1
+    return {"fixn": fixn, "problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "counts": counts, "total": total, "offset": off}
 
 # ---------- upload from the Library page (WinSCP stays the main way; this is for a phone / someone without server access) ----------
 UP_DIR = "/srv/hype-data/uploads"; UP_SECTIONS = ("music", "clips", "jingles", "ads")
@@ -2228,7 +2273,22 @@ def up_chunk(qs, rfile, n):
     if have > total: os.remove(part); return {"ok": False, "error": "received more than the file size - try again"}
     if have < total: return {"ok": True, "have": have}
     stem, ext = os.path.splitext(name); dst = os.path.join(d, name); k = 2
-    while os.path.exists(dst): dst = os.path.join(d, f"{stem} ({k}){ext}"); k += 1
+    rep = (qs.get("replace") or [""])[0]
+    if rep:        # Library → To replace: the new file takes the place of the old one (same name; cues, history, playlists stay)
+        try: full_old = lib_file(rep)
+        except ValueError: os.remove(part); return {"ok": False, "error": "the song to replace is not there any more"}
+        old_ext = os.path.splitext(rep)[1].lower()
+        if ext.lower() == old_ext:
+            dst = full_old
+        else:      # another type (e.g. an MP3 replaced by its music video): the old file gets the new name and every link
+            dst = os.path.splitext(full_old)[0] + ext.lower()         # follows it (rename_item); then the new file is written over it
+            if os.path.exists(dst): os.remove(part); return {"ok": False, "error": "a file with that name and type is already there"}
+            try: r_ = E.rename_item(dbc(), {"path": rep, "name": os.path.splitext(os.path.basename(rep))[0], "ext": ext.lower()})
+            except Exception as e: r_ = {"ok": False, "error": str(e)}
+            if not r_ or r_.get("ok") is False: os.remove(part); return {"ok": False, "error": (r_ or {}).get("error") or "could not replace"}
+        log.info("replaced from the Library page: %s -> %s", rep, os.path.relpath(dst, ROOT))
+    else:
+        while os.path.exists(dst): dst = os.path.join(d, f"{stem} ({k}){ext}"); k += 1
     shutil.move(part, dst)
     try:
         import pwd, grp; os.chown(dst, pwd.getpwnam("upload").pw_uid, grp.getgrnam("hype").gr_gid)

@@ -44,6 +44,12 @@ h1{margin:0;font-size:20px;font-weight:900}h1 small{color:var(--mut);font-weight
 .ri:hover .racts,.ri:has(:focus-visible) .racts{opacity:1;pointer-events:auto}@media (hover:none){.ri:hover .racts{opacity:0;pointer-events:none}.ri.sel .racts{opacity:1;pointer-events:auto}}
 .ri .racts button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--soft);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .ri .racts svg{width:17px;height:17px}.ri .del:hover{color:#FF8A97;border-color:#FF8A97}.ri .addpl:hover{color:var(--y);border-color:var(--y)}.ri .ren:hover{color:var(--b);border-color:var(--b)}
+.ri .ck{width:18px;height:18px;flex:0 0 auto;accent-color:#FFE000;cursor:pointer}.ri.picked{background:rgba(255,224,0,.07);border-color:rgba(255,224,0,.35)}
+.ri.dropover{outline:2px dashed var(--y)}.ri .rep:hover{color:var(--y);border-color:var(--y)}
+.fx{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:rgba(255,181,71,.15);color:#FFB54D;font-weight:700}
+#selBar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border-radius:12px;background:rgba(255,224,0,.08);border:1px solid rgba(255,224,0,.35)}
+#selBar select{min-height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);padding:0 8px;font:inherit;font-weight:700;max-width:280px}
+#subfolders .btn.dropok,#folders .btn.dropok{outline:2px dashed var(--y)}
 .delq input{flex:1;min-width:120px;max-width:520px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);padding:0 10px;font:inherit;font-weight:600}
 .plmenu{position:fixed;z-index:50;width:260px;max-height:340px;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:8px;gap:6px}
 .plmenu input{min-height:34px;border-radius:8px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);padding:0 10px;font:inherit;font-size:13px}
@@ -161,10 +167,12 @@ dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
       <div class="chipwrap" id="subfolders" hidden></div>
       <div class="fpanel" id="fpanel" hidden>
         <div class="fr"><span class="fl">Type</span><div class="row" id="kinds" style="flex-wrap:wrap;gap:5px"><button class="btn sm on" data-k="">All</button><button class="btn sm" data-k="audio" title="Audio files (with or without a clip)">Audio</button><button class="btn sm" data-k="pair" title="Audio file + its own clip (same name in /clips)">With clip</button><button class="btn sm" data-k="noclip" title="Audio file, no clip → TV shows the Hype Screen">No clip</button><button class="btn sm" data-k="video" title="Video files (radio and TV play the same file)">Video</button></div></div>
-        <div class="fr"><span class="fl">Show</span><div class="row" style="flex-wrap:wrap;gap:5px"><button class="btn sm" id="bRecent" title="Uploaded in the last 7 days, newest first">Uploaded last 7 days</button><button class="btn sm" id="onlyNew" title="Only songs that still have automatic cue points">Only automatic cue points</button></div></div>
+        <div class="fr"><span class="fl">Show</span><div class="row" style="flex-wrap:wrap;gap:5px"><button class="btn sm" id="bRecent" title="Uploaded in the last 7 days, newest first">Uploaded last 7 days</button><button class="btn sm" id="onlyNew" title="Only songs that still have automatic cue points">Only automatic cue points</button><button class="btn sm" id="bFix" title="Songs with something to improve (no music video, video under 720p, low audio quality, cues to check) – most played first. Drop the better file on a song to replace it.">⚠ To replace</button></div></div>
         <div class="fr"><span class="fl">Sort</span><div class="row" style="gap:5px"><button class="btn sm" id="bSort">A–Z</button></div></div>
       </div>
       <div class="chips" id="chips"><span class="muted" id="cnt"></span></div>
+      <div id="selBar" hidden><b id="selN"></b><span class="muted">Move to</span><select id="selTo" aria-label="Move to folder"></select><button class="btn sm yellow" id="selGo">Move</button><button class="btn sm" id="selClr">Clear</button><span class="muted">or drag them onto a folder button</span></div>
+      <input type="file" id="repFile" hidden accept="audio/*,video/*,.mp3,.m4a,.wav,.flac,.mp4,.mov,.mkv,.m4v,.webm">
       <div class="res" id="res" role="listbox" aria-label="Songs"></div>
     </section>
     <section class="card ed" id="ed">
@@ -221,9 +229,11 @@ let SORT = 'az', RECENT = 0;
 try { const st = JSON.parse(localStorage.getItem('hypeLib') || '{}'); SEC = st.sec || SEC; GENRE = st.genre || ''; FOLDER = st.folder || ''; SORT = st.sort || 'az'; RECENT = st.recent || 0; } catch (e) {}
 function remember() { try { localStorage.setItem('hypeLib', JSON.stringify({sec: SEC, genre: GENRE, folder: FOLDER, sort: SORT, recent: RECENT})); } catch (e) {} }
 function added(t) { if (!t) return ''; const d = new Date(t * 1000), h = (Date.now() / 1000 - t) / 3600; return 'added ' + (h < 1 / 60 ? 'just now' : h < 1 ? Math.round(h * 60) + ' min ago' : h < 24 ? Math.round(h) + ' h ago' : d.toLocaleDateString('nl-NL', {day: 'numeric', month: 'short'})); }
-let KIND = '', AUTOC = 0;
+let KIND = '', AUTOC = 0, FIXV = 0;
+const PICK = new Set(); let LASTCK = null;     // ticked songs (Move to …)
+const SECROOT = () => ({clips: 'clips', jingles: 'jingles', ads: 'ads'}[SEC] || 'music');
 function visible() { return LIB ? LIB.items : []; }
-function libUrl(off) { return 'library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + (RECENT ? 'new' : SORT) + '&recent=' + RECENT + (MUS() && KIND ? '&kind=' + KIND : '') + (AUTOC ? '&auto=1' : '') + '&offset=' + off; }
+function libUrl(off) { return 'library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + (RECENT ? 'new' : SORT) + '&recent=' + RECENT + (MUS() && KIND ? '&kind=' + KIND : '') + (AUTOC ? '&auto=1' : '') + (FIXV && SEC === 'music' ? '&fix=1' : '') + '&offset=' + off; }
 let MORE = false;     // the next 300 songs are loading (scrolled to the bottom)
 function more() {
   if (MORE || !LIB || LIB.items.length >= (LIB.total || 0)) return; MORE = true; const u = libUrl(LIB.items.length), mine = LIB;
@@ -250,6 +260,14 @@ function lib(keepSel) {
     $('#subfolders').hidden = !subs.length;
     $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(1).join('/')) : (one ? 'All' : 'All ' + esc(G))}</button>`).join('');
     $$('#subfolders [data-f]').forEach(b => b.onclick = () => { FOLDER = b.dataset.f; lib(); });
+    $('#bFix').hidden = SEC !== 'music'; $('#bFix').classList.toggle('yellow', !!FIXV);
+    $('#bFix').innerHTML = '⚠ To replace' + (d.fixn ? ` <b>${d.fixn.total}</b>` : '');
+    if (d.fixn) $('#bFix').title = `Songs with something to improve, most played first: ${d.fixn['no video'] || 0} without music video · ${d.fixn['low video'] || 0} video under 720p · ${d.fixn['low audio'] || 0} low audio quality · ${d.fixn['check cues'] || 0} cues to check. Drop the better file on a song to replace it.`;
+    $$('#subfolders [data-f], #folders [data-g]').forEach(b => { const f = b.dataset.f ?? b.dataset.g; if (!f) return;
+      b.ondragover = e => { if (e.dataTransfer.types.includes('text/hype-move')) { e.preventDefault(); b.classList.add('dropok'); } };
+      b.ondragleave = () => b.classList.remove('dropok');
+      b.ondrop = e => { e.preventDefault(); b.classList.remove('dropok'); const ps = JSON.parse(e.dataTransfer.getData('text/hype-move') || '[]'); moveTo(ps, f); }; });
+    selUi();
     renderList(); if (keepSel && SEL) { const n = LIB.items.find(x => x.path === SEL.path); if (n) Object.assign(SEL, n); }
   });
 }
@@ -262,9 +280,10 @@ function renderChips() {
   if (AUTOC) on.push(['auto', 'Only automatic cue points']);
   if (SORT === 'new' && !RECENT) on.push(['sort', 'Newest first']);
   if (SORT === 'problems') on.push(['sort', '⚠ Problems first']);
+  if (FIXV && SEC === 'music') on.push(['fix', '⚠ To replace – most played first']);
   $$('#chips .fc').forEach(e => e.remove());
   $('#chips').insertAdjacentHTML('afterbegin', on.map(([k, l]) => `<button class="fc" data-off="${k}" title="Switch off">${esc(l)} <b>×</b></button>`).join(''));
-  $$('#chips [data-off]').forEach(b => b.onclick = () => { const k = b.dataset.off; if (k === 'kind') KIND = ''; if (k === 'recent') RECENT = 0; if (k === 'auto') AUTOC = 0; if (k === 'sort') SORT = 'az'; lib(); });
+  $$('#chips [data-off]').forEach(b => b.onclick = () => { const k = b.dataset.off; if (k === 'kind') KIND = ''; if (k === 'recent') RECENT = 0; if (k === 'auto') AUTOC = 0; if (k === 'sort') SORT = 'az'; if (k === 'fix') FIXV = 0; lib(); });
   $('#bFilter').innerHTML = '⚙<span class="bl"> Filter</span>' + (on.length ? ` <b style="color:#FFE000">${on.length}</b>` : '');
 }
 // the song list ends at the bottom of the window: only the list scrolls, not the page.
@@ -286,11 +305,59 @@ function fitRes() { const r = $('#res'), ed = $('#ed'), m = $('#m'); if (!r) ret
   if (fit() < 0) { $('#box').classList.add('tight'); fit(); } }      // small screen: a more compact editor, the page never scrolls
 addEventListener('resize', fitRes); new ResizeObserver(fitRes).observe(document.body); setTimeout(fitRes, 60);
 $('#bFilter').onclick = () => { const p = $('#fpanel'); p.hidden = !p.hidden; setTimeout(fitRes, 0); $('#bFilter').setAttribute('aria-expanded', String(!p.hidden)); $('#bFilter').classList.toggle('on', !p.hidden); };
+// ---- select songs → Move to another folder (the same file; cues, history, playlists stay) ----
+function tick(path, on, range) {
+  const L = visible().map(x => x.path);
+  if (range && LASTCK != null) { const a = L.indexOf(LASTCK), b = L.indexOf(path); if (a >= 0 && b >= 0) L.slice(Math.min(a, b), Math.max(a, b) + 1).forEach(p => on ? PICK.add(p) : PICK.delete(p)); }
+  else on ? PICK.add(path) : PICK.delete(path);
+  LASTCK = path; selUi(); renderList();
+}
+function selUi() {
+  $('#selBar').hidden = !PICK.size; if (!PICK.size || !LIB) return;
+  $('#selN').textContent = PICK.size + (PICK.size === 1 ? ' song selected' : ' songs selected');
+  const cur = (visible().find(x => PICK.has(x.path)) || {}).folder || '', g = cur.split('/')[0];
+  const fs = [...LIB.all_folders].sort((a, b) => ((b.split('/')[0] === g) - (a.split('/')[0] === g)) || a.localeCompare(b));
+  const keep = $('#selTo').value; $('#selTo').innerHTML = fs.map(f => `<option value="${esc(f)}" ${f === keep ? 'selected' : ''}>${esc(f)}</option>`).join('');
+}
+async function moveTo(paths, folder) {
+  if (!paths.length || !folder) return;
+  let ok = 0, bad = '';
+  for (const p of paths) {
+    const r = await api('cmd/rename_item', {path: p, folder: SECROOT() + '/' + folder}).catch(() => null);
+    if (r && r.ok !== false) { ok++; PICK.delete(p); if (SEL && SEL.path === p) SEL.path = r.path; } else bad = (r && r.error) || 'failed';
+  }
+  toast(ok ? `${ok} ${ok === 1 ? 'song' : 'songs'} moved to ${folder}` + (bad ? ' · some not: ' + bad : '') : 'Not moved: ' + bad);
+  lib(true);
+}
+$('#selGo').onclick = () => moveTo([...PICK], $('#selTo').value);
+$('#selClr').onclick = () => { PICK.clear(); selUi(); renderList(); };
+$('#bFix').onclick = () => { FIXV = FIXV ? 0 : 1; lib(); };
+// ---- replace a song with a better file (same name, or the same name with the new type, e.g. .mp3 → .mp4) ----
+let REPP = null;
+$('#repFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f && REPP) replaceWith(REPP, f); };
+function replaceWith(path, f) {
+  if (!/\.(mp3|m4a|aac|wav|flac|ogg|opus|mp4|mov|mkv|m4v|webm)$/i.test(f.name)) return toast('Only audio or video files');
+  const it = visible().find(x => x.path === path) || {}, name = path.split('/').pop(), stem = name.replace(/\.[^.]+$/, ''), ext = f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
+  if (!confirm(`Replace "${name}" with "${f.name}"?\n\nIt keeps the name ${stem + ext}, its cues, history and playlists. Studio measures the new file again (about a minute).`)) return;
+  const folder = path.split('/').slice(0, -1).join('/');
+  const el = document.createElement('div'); el.className = 'upi'; el.innerHTML = `<b>Replacing ${esc(stem)}</b><span class="st">waiting</span><div class="bar"><i></i></div>`;
+  $('#upList').prepend(el); $('#upDlg').showModal();
+  UPQ.push({f: new File([f], stem + ext, {type: f.type, lastModified: f.lastModified}), folder, el, replace: path}); upRun();
+}
 function renderList() {
   const L = visible(); $('#cnt').textContent = (LIB && LIB.total > L.length ? L.length + ' of ' + LIB.total : L.length) + ' items';
   $('#res').innerHTML = L.map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
-    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''}" role="option" data-p="${esc(it.path)}"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}${it.cue_check ? ' · <span style="color:#FFE000" title="This file was replaced by a version of another length. Your own START / MIX / END were kept – open it and check them (saving clears this).">⚠ new version – check cues</span>' : ''}</span></div><span class="racts"><button class="addpl" data-addpl title="Add to a playlist" aria-label="Add ${esc(it.title || '')} to a playlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="ren" data-ren title="Rename this file" aria-label="Rename ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="del" data-del title="Delete this file" aria-label="Delete ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
-  $$('#res .ri').forEach(el => el.onclick = e => { if (e.target.closest('.racts, .delq')) return; pick(LIB.items.find(x => x.path === el.dataset.p)); });
+    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''} ${PICK.has(it.path) ? 'picked' : ''}" role="option" data-p="${esc(it.path)}" draggable="true"><input type="checkbox" class="ck" data-ck ${PICK.has(it.path) ? 'checked' : ''} aria-label="Select ${esc(it.title || '')}" title="Select (Shift = a range) – then Move to …"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}${it.cue_check ? ' · <span style="color:#FFE000" title="This file was replaced by a version of another length. Your own START / MIX / END were kept – open it and check them (saving clears this).">⚠ new version – check cues</span>' : ''}${it.fix ? it.fix.filter(w => w !== 'check cues').map(w => `<span class="fx">${esc(w)}</span>`).join('') + ` <span class="muted">· ${it.plays90}× in 90 days</span>` : ''}</span></div><span class="racts"><button class="rep" data-rep title="Replace with a better file (same name; cues, history, playlists stay) – or drop the file on the row" aria-label="Replace ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13l-3-3M20 15H7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="addpl" data-addpl title="Add to a playlist" aria-label="Add ${esc(it.title || '')} to a playlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="ren" data-ren title="Rename this file" aria-label="Rename ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="del" data-del title="Delete this file" aria-label="Delete ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
+  $$('#res .ri').forEach(el => {
+    el.onclick = e => { if (e.target.closest('.racts, .delq')) return;
+      if (e.target.matches('[data-ck]')) { e.stopPropagation(); return tick(el.dataset.p, e.target.checked, e.shiftKey); }
+      pick(LIB.items.find(x => x.path === el.dataset.p)); };
+    el.ondragstart = e => { const ps = PICK.has(el.dataset.p) ? [...PICK] : [el.dataset.p]; e.dataTransfer.setData('text/hype-move', JSON.stringify(ps)); e.dataTransfer.effectAllowed = 'move'; };
+    el.ondragover = e => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); el.classList.add('dropover'); } };
+    el.ondragleave = () => el.classList.remove('dropover');
+    el.ondrop = e => { if (!e.dataTransfer.files.length) return; e.preventDefault(); el.classList.remove('dropover'); replaceWith(el.dataset.p, e.dataTransfer.files[0]); };
+  });
+  $$('#res .rep').forEach(b => b.onclick = e => { e.stopPropagation(); REPP = b.closest('.ri').dataset.p; $('#repFile').click(); });
   $$('#res .addpl').forEach(b => b.onclick = e => { e.stopPropagation(); plMenu(b, b.closest('.ri').dataset.p); });
   // rename: the file name (without .mp3/.mp4); "Artist - Title" also sets artist and title. Cues, history, playlists keep it.
   $$('#res .ren').forEach(b => b.onclick = e => { e.stopPropagation(); const row = b.closest('.ri'); if (row.querySelector('.delq')) return;
@@ -449,9 +516,9 @@ function upAdd(files) { const folder = $('#upFolder').value; if (!folder) { toas
 async function upRun() { if (upBusy) return; upBusy = true;
   while (UPQ.length) { const job = UPQ.shift(); await upOne(job); }
   upBusy = false; setTimeout(() => lib(true), 45000); }
-async function upOne({f, folder, el}) {
-  const st = el.querySelector('.st'), bar = el.querySelector('.bar i'), id = await upId(f, folder);
-  const q = '&id=' + id + '&name=' + encodeURIComponent(f.name) + '&folder=' + encodeURIComponent(folder) + '&total=' + f.size;
+async function upOne({f, folder, el, replace}) {
+  const st = el.querySelector('.st'), bar = el.querySelector('.bar i'), id = await upId(f, folder + (replace ? '|replace|' + Date.now() : ''));
+  const q = '&id=' + id + '&name=' + encodeURIComponent(f.name) + '&folder=' + encodeURIComponent(folder) + '&total=' + f.size + (replace ? '&replace=' + encodeURIComponent(replace) : '');
   let off = 0, tries = 0;
   const done = r => { bar.style.width = '100%'; el.classList.add('ok'); st.textContent = 'done'; toast('Uploaded: ' + f.name); };
   try { const r = await api('upload/status?id=' + id); if (r && r.done) return done(r); off = r.have || 0; } catch (e) {}      // already in (e.g. the last answer got lost)
