@@ -2820,15 +2820,20 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, {"v": v})
             if p == "/audsongs":
                 days = max(1, min(400, int((qs.get("days") or ["30"])[0] or 30))); by = (qs.get("by") or ["song"])[0]
+                def day_(k, plus=0):     # your own period: from / to as YYYY-MM-DD (to = that whole day)
+                    v = (qs.get(k) or [""])[0]
+                    try: return time.mktime(time.strptime(v[:10], "%Y-%m-%d")) + plus
+                    except ValueError: return None
+                t0, t1 = day_("from"), day_("to", 86400)
                 if (qs.get("csv") or [""])[0]:
-                    body = audstats.plays_csv(days).encode("utf-8-sig")
+                    body = audstats.plays_csv(days, t0, t1).encode("utf-8-sig")
                     self.send_response(200); self.send_header("Content-Type", "text/csv; charset=utf-8")
                     self.send_header("Content-Disposition", f'attachment; filename="hype-song-plays-{days}d.csv"'); self.send_header("Content-Length", str(len(body)))
                     self.end_headers(); self.wfile.write(body); return
-                if (qs.get("key") or [""])[0]: return self.send(200, {"plays": audstats.song_plays(qs["key"][0], days, by)})
+                if (qs.get("key") or [""])[0]: return self.send(200, {"plays": audstats.song_plays(qs["key"][0], days, by, t0, t1)})
                 try: imp = json.load(open(HL_IMPORT))
                 except Exception: imp = {}
-                return self.send(200, dict(audstats.songs(days, by), imported={k: imp.get(k) for k in ("done", "plays", "aud", "error")}))
+                return self.send(200, dict(audstats.songs(days, by, t0, t1), imported={k: imp.get(k) for k in ("done", "plays", "aud", "error")}))
             if p == "/aud24": return self.send(200, audstats.last24(5, (qs.get("by") or ["song"])[0]))
             if p == "/audtime": return self.send(200, audstats.bytime((qs.get("view") or ["today"])[0]))
             if p == "/audstats":

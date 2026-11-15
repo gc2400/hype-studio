@@ -142,7 +142,7 @@ html{scrollbar-gutter:stable}
       document.querySelectorAll('a[href="/panel/hypelive.html"]').forEach(a => {
         let b = a.querySelector('.hlneeds');
         if (!b) { b = document.createElement('b'); b.className = 'hlneeds'; b.style.cssText = 'margin-left:6px;background:#FF4D5E;color:#fff;border-radius:9px;padding:0 6px;font:800 10px/16px Inter,system-ui,sans-serif;display:inline-block;min-width:16px;text-align:center'; a.appendChild(b); }
-        b.textContent = n; b.hidden = !(n > 0 && fresh);
+        b.textContent = n; b.style.display = n > 0 && fresh ? 'inline-block' : 'none';   // (hidden alone loses against the inline display)
         const k = d.needs || {}; b.title = `Waiting in Hype Live: ${k.messages || 0} messages · ${k.photos || 0} photos · ${k.voices || 0} voices · ${k.videos || 0} videos · ${k.forms || 0} forms`;
       });
     }).catch(() => {});

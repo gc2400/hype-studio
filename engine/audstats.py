@@ -256,10 +256,11 @@ def _norms(c, t1, days=90):
 ART_SPLIT = re.compile(r"\s+(?:x|ft\.?|feat\.?|featuring|&|and|vs\.?|with)\s+|\s*,\s*", re.I)
 
 
-def _plays(days):
-    now = time.time(); c = db()
-    rows = c.execute("SELECT t, end, artist, title, r0, r1, v0, v1, fire, src FROM plays WHERE t >= ? AND r0 IS NOT NULL ORDER BY t", (now - days * 86400,)).fetchall()
-    norm = _norms(c, now); c.close(); out = []
+def _plays(days, t0=None, t1=None):
+    """Plays of the last `days` days, or of t0 … t1 (your own period); the normal is taken over the 90 days before the end."""
+    now = time.time(); t1 = min(t1 or now, now); t0 = t0 if t0 is not None else now - days * 86400; c = db()
+    rows = c.execute("SELECT t, end, artist, title, r0, r1, v0, v1, fire, src FROM plays WHERE t >= ? AND t < ? AND r0 IS NOT NULL ORDER BY t", (t0, t1)).fetchall()
+    norm = _norms(c, t1); c.close(); out = []
     for t, end, ar, ti, r0, r1, v0, v1, fire, src in rows:
         d, h = _lt(t); nr, nv = norm(src, d, h)
         out.append({"t": t, "len": round((end or t) - t), "artist": ar or "", "title": ti or "", "src": src, "fire": fire,
@@ -268,9 +269,9 @@ def _plays(days):
     return out
 
 
-def songs(days=30, by="song"):
+def songs(days=30, by="song", t0=None, t1=None):
     """Gainers and losers: per song (or artist) the average radio / TV change against a normal song at that weekday + hour."""
-    ps = _plays(days); g = {}
+    ps = _plays(days, t0, t1); g = {}
     for p in ps:
         keys = [p["artist"].strip()] if by != "artist" else [a.strip() for a in ART_SPLIT.split(p["artist"] or "") if a.strip()]
         for k0 in keys or [""]:
@@ -292,19 +293,19 @@ def songs(days=30, by="song"):
             "since": int(ps[0]["t"]) if ps else None}
 
 
-def song_plays(key, days=90, by="song"):
+def song_plays(key, days=90, by="song", t0=None, t1=None):
     key = (key or "").lower(); out = []
-    for p in _plays(days):
+    for p in _plays(days, t0, t1):
         names = [(p["artist"].strip() + " – " + p["title"]).lower()] if by != "artist" else [a.strip().lower() for a in ART_SPLIT.split(p["artist"] or "")]
         if key in names: out.append(p)
     return list(reversed(out))
 
 
-def plays_csv(days=90):
+def plays_csv(days=90, t0=None, t1=None):
     import csv, io
     f = io.StringIO(); w = csv.writer(f)
     w.writerow(["date", "time", "artist", "title", "length_s", "radio_start", "radio_end", "radio_vs_normal", "tv_start", "tv_end", "tv_vs_normal", "fire", "source"])
-    for p in _plays(days):
+    for p in _plays(days, t0, t1):
         w.writerow([time.strftime("%Y-%m-%d", time.localtime(p["t"])), time.strftime("%H:%M:%S", time.localtime(p["t"])), p["artist"], p["title"], p["len"],
                     p["r0"], p["r1"], p["radio"], p["v0"], p["v1"], p["tv"], p["fire"] if p["fire"] is not None else "", "Hype Studio" if p["src"] == "h" else "AzuraCast"])
     return f.getvalue()
