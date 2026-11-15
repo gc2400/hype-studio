@@ -334,3 +334,4 @@
 2026-11-14T01:29:05 ok 83e8d879 Install the master_me leveler change now (Gianno asked; a few seconds of radio restart)
 2026-11-14T01:49:19 ok e85e30cb Listeners / viewers: test tools, scripts and bots are not counted (Python-urllib, curl, wget, bots, crawlers, uptime monitors …); real players (browsers, iPhone, ExoPlayer, VLC, Lavf, IPTV boxes) still are
 2026-11-14T23:03:11 ok 094f9696 Library: a section with only one top folder (Mixes: MIXES/…) shows its subfolders straight away
+2026-11-15T14:37:19 ok 7471c278 Throwback sweeper only before songs from the CLASSICS folder (not CHILL/CHILL-CLASSICS); the Throwback badge rule is set to CLASSICS too

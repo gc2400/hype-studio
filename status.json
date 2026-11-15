@@ -1,15 +1,16 @@
 {
- "time": "2026-11-14T23:03:11",
+ "time": "2026-11-15T14:37:19",
  "result": "ok",
- "commit": "094f96967e925256086e393a4b36d084095ddf92",
- "subject": "Library: a section with only one top folder (Mixes: MIXES/\u2026) shows its subfolders straight away",
+ "commit": "7471c278be66c9b8575bd4ea760e638c21f4a451",
+ "subject": "Throwback sweeper only before songs from the CLASSICS folder (not CHILL/CHILL-CLASSICS); the Throwback badge rule is set to CLASSICS too",
  "log": [
-  "23:03:11 update e85e30cb \u2192 094f9696 \u00b7 1 file(s): web/panel/library.html",
-  "23:03:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:36:34 update 094f9696 \u2192 7471c278 \u00b7 1 file(s): engine/engine.py",
+  "14:36:34 restart hype-engine",
+  "14:37:19 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Jeon \u2013 Curason",
-  "listeners": 3,
+  "song": "Be\u00e9le x Ovy On The Drums \u2013 Mi Refe",
+  "listeners": 2,
   "obs": true,
   "seg_age": 0.4,
   "problems": [],
