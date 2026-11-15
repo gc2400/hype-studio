@@ -3806,7 +3806,9 @@ def fetch_url(c, d):
     if re.search(r"(youtube\.com|youtu\.be|instagram\.com|tiktok\.com|facebook\.com|fb\.watch)", u.hostname or ""):
         return {"ok": False, "error": "YouTube / Instagram / TikTok / Facebook pages can't be dropped – only direct picture / video / sound files"}
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (HypeStudio)"})
-    r = urllib.request.urlopen(req, timeout=60)
+    try: r = urllib.request.urlopen(req, timeout=60)
+    except urllib.error.HTTPError as e: return {"ok": False, "error": "The website refused it (%s). Open the picture / video on its own and drag that, or save it and drop the file" % e.code}
+    except Exception as e: return {"ok": False, "error": "Could not fetch it: %s" % str(e)[:80]}
     ct = (r.headers.get("Content-Type") or "").split(";")[0].strip().lower()
     ext = os.path.splitext(u.path)[1].lower()
     kind = ("picture" if ct.startswith("image/") or ext in (".jpg", ".jpeg", ".png", ".webp", ".gif") else
