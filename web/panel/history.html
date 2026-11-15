@@ -49,7 +49,8 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
 .bar{height:8px;border-radius:6px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--b)}
 .gen{display:grid;grid-template-columns:110px 1fr 70px;gap:8px;align-items:center;font-size:12px;margin-bottom:6px}.gen span:last-child{text-align:right;color:var(--mut);font-family:'JetBrains Mono',monospace}
 .scroll2{max-height:340px;overflow:auto}
-.gen small{color:var(--mut);font-weight:500}.kpi i{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--b);display:block}
+.gen small{color:var(--mut);font-weight:500}
+.atab td{padding:8px}.atab td.n{font-family:'JetBrains Mono',monospace;text-align:right;white-space:nowrap;width:1%}.atab td.b{width:45%}.atab td small{color:var(--mut);margin-left:8px}.kpi i{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--b);display:block}
 .ev{font-size:12px;padding:5px 0;border-bottom:1px solid var(--line)}.ev .mono{color:var(--mut);margin-right:8px}.ev.bad b{color:var(--r)}.ev.repair b{color:#FFB547}
 </style>
 </head>
@@ -63,13 +64,8 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
       <span class="muted">Our own streams, devices counted once per day. Song gains / losses and listeners per hour: Hype Live → Reports.</span></div>
     <div class="kpis" id="aKpi"></div>
     <div><h3>Now <small id="aNowS"></small></h3><div class="scroll2"><table><thead><tr><th></th><th>Stream</th><th>Device</th><th>App / browser</th><th>Where</th><th>Since</th></tr></thead><tbody id="aNow"></tbody></table></div></div>
-    <div class="wgrid">
-      <div><h3>Countries <small>– devices · hours</small></h3><div id="aCtry" class="scroll2"></div></div>
-      <div><h3>How long they stay <small>– visits</small></h3><div id="aLen"></div></div>
-      <div><h3>Devices <small>– devices · hours</small></h3><div id="aDev"></div></div>
-      <div><h3>Apps / browsers <small>– devices · hours</small></h3><div id="aApp" class="scroll2"></div></div>
-      <div><h3>Streams <small>– devices · hours</small></h3><div id="aStr"></div></div>
-    </div>
+    <div class="row" style="gap:4px" id="aTabs" role="tablist" aria-label="Breakdown"><button class="btn on" data-t="countries">Countries</button><button class="btn" data-t="devices">Devices</button><button class="btn" data-t="apps">Apps / browsers</button><button class="btn" data-t="streams">Streams</button><button class="btn" data-t="length">How long they stay</button></div>
+    <div class="scroll2" style="max-height:none"><table class="atab"><thead id="aHead"></thead><tbody id="aBody"></tbody></table></div>
   </section>
   <section class="card" id="weekCard" hidden>
     <div class="row"><button class="btn" id="wPrev" aria-label="Previous week">◀</button><b id="wTitle" style="min-width:230px;text-align:center">…</b><button class="btn" id="wNext" aria-label="Next week">▶</button><span class="muted" id="wNote"></span><span style="flex:1"></span><button class="btn" id="wCsv" title="Download this week as a spreadsheet (Excel / Google Sheets)">⬇ CSV</button><button class="btn" id="wPdf" title="Save this week as a PDF (choose &quot;Save as PDF&quot; as the printer)">⬇ PDF</button></div>
@@ -176,10 +172,22 @@ const CN = (() => { try { return new Intl.DisplayNames(['en'], {type: 'region'})
 const cname = c => c && c !== '?' ? ((CN && CN.of(c)) || c) : 'Unknown';
 const hrs = h => h >= 10 ? Math.round(h) + ' h' : h >= 1 ? h.toFixed(1) + ' h' : Math.round(h * 60) + ' min';
 const since = t => { const s = Math.max(0, Date.now() / 1000 - t), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + ' h ' + m + ' min' : m + ' min'; };
-function bars(el, list, label) {
-  const mx = Math.max(1, ...list.map(x => x.hours));
-  $(el).innerHTML = list.length ? list.map(x => `<div class="gen"><span>${esc(label ? label(x) : x.name)}${x.cities && x.cities.length ? `<br><small>${esc(x.cities.map(c => c[0]).join(', '))}</small>` : ''}</span><div class="bar"><i style="width:${Math.max(2, x.hours / mx * 100)}%"></i></div><span>${x.devices} · ${hrs(x.hours)}</span></div>`).join('') : '<div class="muted">–</div>';
+let ATAB = 'countries', ADATA = null;
+function aTable() {
+  const d = ADATA; if (!d) return;
+  if (ATAB === 'length') {
+    const tot = d.length.reduce((a, x) => a + x.sessions, 0) || 1, mx = Math.max(1, ...d.length.map(x => x.sessions));
+    $('#aHead').innerHTML = '<tr><th>Visit length</th><th></th><th style="text-align:right">Visits</th><th style="text-align:right">Share</th></tr>';
+    $('#aBody').innerHTML = d.length.map(x => `<tr><td>${esc(x.name)}</td><td class="b"><div class="bar"><i style="width:${x.sessions ? Math.max(2, x.sessions / mx * 100) : 0}%"></i></div></td><td class="n">${x.sessions}</td><td class="n">${Math.round(x.sessions / tot * 100)}%</td></tr>`).join('');
+    return;
+  }
+  const list = d[ATAB] || [], mx = Math.max(0.0001, ...list.map(x => x.hours)), tot = list.reduce((a, x) => a + x.hours, 0) || 1;
+  const nm = {countries: 'Country', devices: 'Device', apps: 'App / browser', streams: 'Stream'}[ATAB];
+  $('#aHead').innerHTML = `<tr><th>${nm}</th><th>Listening / watching time</th><th style="text-align:right">Devices</th><th style="text-align:right">Time</th><th style="text-align:right">Share</th></tr>`;
+  $('#aBody').innerHTML = list.length ? list.map(x => `<tr><td><b>${esc(ATAB === 'countries' ? cname(x.name) : x.name)}</b>${x.cities && x.cities.length ? `<small>${esc(x.cities.map(c => c[0]).join(', '))}</small>` : ''}</td><td class="b"><div class="bar"><i style="width:${Math.max(2, x.hours / mx * 100)}%"></i></div></td><td class="n">${x.devices}</td><td class="n">${hrs(x.hours)}</td><td class="n">${Math.round(x.hours / tot * 100)}%</td></tr>`).join('')
+    : '<tr><td colspan="5" class="muted">Nothing yet</td></tr>';
 }
+$$('#aTabs [data-t]').forEach(b => b.onclick = () => { ATAB = b.dataset.t; $$('#aTabs [data-t]').forEach(x => x.classList.toggle('on', x === b)); aTable(); });
 function aLoad() {
   fetch('../api/audstats?days=' + AD + '&kind=' + AK).then(r => r.json()).then(d => {
     const k = [], T_ = d.totals;
@@ -191,9 +199,7 @@ function aLoad() {
     $('#aKpi').innerHTML = k.join('');
     $('#aNowS').textContent = '– ' + d.now.length + (d.now.length === 1 ? ' device' : ' devices');
     $('#aNow').innerHTML = d.now.length ? d.now.map(s => `<tr><td><span class="tag ${s.kind === 'tv' ? 'jingles' : 'music'}">${s.kind === 'tv' ? 'TV' : 'RADIO'}</span></td><td>${esc(s.stream)}</td><td>${esc(s.dev)}</td><td>${esc(s.app)}</td><td>${esc([s.city, cname(s.cc)].filter(Boolean).join(', '))}</td><td class="mono">${since(s.since)}</td></tr>`).join('') : '<tr><td colspan="6" class="muted">Nobody right now</td></tr>';
-    bars('#aCtry', d.countries, x => cname(x.name)); bars('#aDev', d.devices); bars('#aApp', d.apps); bars('#aStr', d.streams);
-    const mx = Math.max(1, ...d.length.map(x => x.sessions));
-    $('#aLen').innerHTML = d.length.map(x => `<div class="gen"><span>${esc(x.name)}</span><div class="bar"><i style="width:${Math.max(x.sessions ? 2 : 0, x.sessions / mx * 100)}%"></i></div><span>${x.sessions}</span></div>`).join('');
+    ADATA = d; aTable();
   }).catch(() => {});
 }
 $$('#aDays [data-d]').forEach(b => b.onclick = () => { AD = +b.dataset.d; $$('#aDays [data-d]').forEach(x => x.classList.toggle('on', x === b)); aLoad(); });

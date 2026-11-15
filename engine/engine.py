@@ -577,6 +577,18 @@ class TV:
             with self.olock: self.client().set_source_filter_enabled("Logo", "Hide", bool(hide))
             self._logo_hidden = hide
         except Exception as e: log.warning("logo hide: %s", e); self.cl = None
+    def ll_hide(self, hide):
+        """The Live Layer out of sight while a jingle / TOH plays and on the Branding scene (Gianno, 15 Nov): a "Hide" filter
+        (opacity 0) on the source - the page keeps running, so nothing reloads and it is back at once after the jingle."""
+        if getattr(self, "_ll_hidden", None) == hide: return
+        try:
+            with self.olock:
+                cl = self.client()
+                if not any(f["filterName"] == "Hide" for f in cl.get_source_filter_list("Live Layer").filters):
+                    cl.create_source_filter("Live Layer", "Hide", "color_filter_v2", {"opacity": 0.0})
+                cl.set_source_filter_enabled("Live Layer", "Hide", bool(hide))
+            self._ll_hidden = hide
+        except Exception as e: log.warning("Live Layer hide: %s", e); self.cl = None
     def layer_top(self, cl):
         """The Hype Live Layer is the top layer in every scene (above Graphics, the On Air box, logo, clock, Now Playing,
         the show intro): from Hype Live 2.25.2 it shows full-screen moments that must cover everything (New Year countdown,
@@ -640,6 +652,10 @@ class TV:
         try:   # clean screen during a jingle only in the Music video scene: another scene (cameras …) -> the logo back at once
             n = E.now or {}
             self.jingle_graphics(bool(JINGLE_HIDE and self.scene == "Music video" and not E.live.live and n.get("path") and n.get("section") != "music"))
+        except Exception: pass
+        try:
+            n = E.now or {}
+            self.ll_hide(bool(self.scene == "Branding" or (self.scene == "Music video" and n.get("path") and n.get("section") == "jingles")))
         except Exception: pass
     def pip_done(self):
         """A PIP showing ended: log frame + seconds for Hype Live's sponsor report (the frame name = the sponsor, e.g. PIP_Brand.png)."""
