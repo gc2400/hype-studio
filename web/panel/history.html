@@ -56,8 +56,11 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
 .sbox{background:var(--deep);border:1px solid var(--line);border-radius:14px;padding:12px}.sbox h3{letter-spacing:.06em}
 .stab td.rk{color:var(--mut);font-weight:800;width:1%;text-align:left!important;font-family:Inter,system-ui,sans-serif}.stab td.nm b{display:block;font-weight:800}.stab td.nm span{color:var(--mut);font-size:12px}
 .sbar{display:inline-block;width:70px;height:8px;border-radius:6px;background:var(--line);overflow:hidden;vertical-align:middle;margin-left:8px}.sbar i{display:block;height:100%}
-.l24 td{padding:7px 8px;vertical-align:middle}.l24 td.c{width:1%;white-space:nowrap;text-align:center;font-family:'JetBrains Mono',monospace}.l24 td.c b{font-size:16px;display:block}.l24 td.c small{color:var(--mut);font-size:11px}
-.l24 td.s b{display:block}.l24 td.s span{color:var(--mut);font-size:12px}.l24 td.w{width:1%;white-space:nowrap;color:var(--mut);font-size:12px;font-family:'JetBrains Mono',monospace}
+.l24{border-collapse:separate;border-spacing:0 6px}.l24 td{padding:10px 12px;vertical-align:middle;background:var(--deep);border:0}
+.l24 td:first-child{border-radius:12px 0 0 12px}.l24 td:last-child{border-radius:0 12px 12px 0}
+.l24 td.c{width:96px;text-align:center}.l24 td.c b{font-size:20px;font-weight:900;display:block;line-height:1.1}
+.l24 td.d{width:1%;white-space:nowrap;font-size:12px;color:var(--mut);line-height:1.5}.l24 td.d b{color:var(--txt);font-weight:700;font-family:'JetBrains Mono',monospace}
+.l24 td.s b{display:block;font-weight:800}.l24 td.s span{color:var(--mut);font-size:12px}.l24 td.w{width:1%;white-space:nowrap;color:var(--mut);font-size:12px;font-family:'JetBrains Mono',monospace;text-align:right}
 th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-size:10px;margin-top:2px}
 .stab td{padding:6px 8px}.stab td:not(:first-child){font-family:'JetBrains Mono',monospace;text-align:right;white-space:nowrap;width:1%}.stab th:not(:first-child){text-align:right}.stab tr{cursor:pointer}.stab tr:hover td{background:var(--card2)}
 .up{color:var(--g)}.dn{color:var(--r)}.stab td small{display:block;color:var(--mut);font-family:Inter,system-ui,sans-serif}
@@ -262,11 +265,15 @@ function sRows(list) {
     : '<tr><td colspan="6" class="muted">Not enough plays yet (a song needs 3+ plays)</td></tr>';
 }
 function l24(list, up) {
-  return list.length ? list.map(p => `<tr><td class="c"><b class="${up ? 'up' : 'dn'}">${up ? '▲ +' : '▼ '}${p.ch}</b><small>radio ${p.r0 ?? '–'}→${p.r1 ?? '–'} · TV ${p.v0 ?? '–'}→${p.v1 ?? '–'}</small></td><td class="s"><b>${esc(p.title)}</b><span>${esc(p.artist)}</span></td><td class="w">${new Date(p.t * 1000).toTimeString().slice(0, 5)}</td></tr>`).join('')
-    : `<tr><td class="muted">No ${up ? 'gains' : 'losses'} in the last 24 hours</td></tr>`;
+  const r = v => v == null ? '–' : Math.round(v);
+  return list.length ? list.map(p => `<tr><td class="c"><b class="${up ? 'up' : 'dn'}">${up ? '▲ +' : '▼ '}${p.ch}</b></td>` +
+    `<td class="d">radio <b>${r(p.r0)} → ${r(p.r1)}</b><br>TV <b>${r(p.v0)} → ${r(p.v1)}</b></td>` +
+    `<td class="s">${SB === 'artist' ? `<b>${esc(p.artist)}</b><span>${p.plays} ${p.plays === 1 ? 'play' : 'plays'} · numbers added up</span>` : `<b>${esc(p.title)}</b><span>${esc(p.artist)}</span>`}</td>` +
+    `<td class="w">${SB === 'artist' ? 'last ' : ''}${new Date(p.t * 1000).toTimeString().slice(0, 5)}</td></tr>`).join('')
+    : `<tr><td class="muted" style="border-radius:12px">No ${up ? 'gains' : 'losses'} in the last 24 hours</td></tr>`;
 }
 function sLoad() {
-  fetch('../api/aud24').then(r => r.json()).then(d => { $('#lBest').innerHTML = l24(d.best, true); $('#lWorst').innerHTML = l24(d.worst, false); }).catch(() => {});
+  fetch('../api/aud24?by=' + SB).then(r => r.json()).then(d => { $('#lBest').innerHTML = l24(d.best, true); $('#lWorst').innerHTML = l24(d.worst, false); }).catch(() => {});
   $('#sCsv').href = '../api/audsongs?csv=1&days=' + SD;
   fetch('../api/audsongs?days=' + SD + '&by=' + SB).then(r => r.json()).then(d => {
     $('#sBest').innerHTML = sRows(d.best); $('#sWorst').innerHTML = sRows(d.worst);

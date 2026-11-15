@@ -276,6 +276,9 @@ def songs(days=30, by="song"):
         for k0 in keys or [""]:
             k = (k0 + " – " + p["title"]) if by != "artist" else k0
             x = g.setdefault(k.lower(), {"name": k, "artist": p["artist"], "title": p["title"] if by != "artist" else "", "plays": 0, "radio": 0.0, "tv": 0.0, "fire": 0, "fired": 0, "last": 0})
+            if p["t"] >= x["last"]:      # the newest play's spelling (imported AzuraCast plays are often ALL CAPS)
+                x["name"] = k; x["artist"] = p["artist"]
+                if by != "artist": x["title"] = p["title"]
             x["plays"] += 1; x["radio"] += p["radio"]; x["tv"] += p["tv"]; x["last"] = max(x["last"], p["t"])
             if p["fire"] is not None: x["fire"] += p["fire"]; x["fired"] += 1
     out = []
@@ -361,12 +364,20 @@ def bytime(view="today"):
             "devices": {"radio": dev.get("radio", 0), "tv": dev.get("tv", 0)}, "heat": hm}
 
 
-def last24(n=5):
+def last24(n=5, by="song"):
     """The plays of the last 24 hours with the biggest raw gain / loss (radio + TV from start to end) – a quick look."""
     c = db()
     rows = c.execute("SELECT t, artist, title, r0, r1, v0, v1 FROM plays WHERE t >= ? AND r0 IS NOT NULL", (time.time() - 86400,)).fetchall(); c.close()
     ps = [{"t": int(t), "artist": a or "", "title": ti or "", "r0": r0, "r1": r1, "v0": v0, "v1": v1,
            "ch": round(((r1 or 0) - (r0 or 0)) + (((v1 or 0) - (v0 or 0)) if v0 is not None and v1 is not None else 0))} for t, a, ti, r0, r1, v0, v1 in rows]
+    if by == "artist":        # per artist: all their plays of the last 24 h added up
+        g = {}
+        for p in ps:
+            for a in [x.strip() for x in ART_SPLIT.split(p["artist"]) if x.strip()] or [""]:
+                x = g.setdefault(a.lower(), {"t": p["t"], "artist": a, "title": "", "r0": 0, "r1": 0, "v0": 0, "v1": 0, "ch": 0, "plays": 0})
+                x["plays"] += 1; x["ch"] += p["ch"]; x["t"] = max(x["t"], p["t"])
+                x["r0"] += p["r0"] or 0; x["r1"] += p["r1"] or 0; x["v0"] += p["v0"] or 0; x["v1"] += p["v1"] or 0
+        ps = list(g.values())
     best = sorted([p for p in ps if p["ch"] > 0], key=lambda p: (-p["ch"], -p["t"]))[:n]
     worst = sorted([p for p in ps if p["ch"] < 0], key=lambda p: (p["ch"], -p["t"]))[:n]
     return {"best": best, "worst": worst, "plays": len(ps)}
