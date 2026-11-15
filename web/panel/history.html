@@ -36,7 +36,7 @@ td b{font-weight:700}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
 .au{white-space:nowrap;font-size:12px;display:inline-flex;align-items:center}.au b{font-family:ui-monospace,Menlo,Consolas,monospace;min-width:26px}.au b:first-child{text-align:right}.au b:last-child{text-align:left}.au i{width:5px;height:5px;border-radius:50%;background:#6F86A0;margin:0 8px;flex:none}.au .up{color:var(--g)}.au .dn{color:var(--r)}.au .eq{color:var(--mut)}
 .ov{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:700;color:var(--b,#05A9C6);border:1px solid currentColor;white-space:nowrap}.ov.id{color:#FFE000}
-@media print{body{background:#fff!important;color:#000!important}#hhead,[role=tablist],#dayCard,#wPrev,#wNext,#wCsv,#wPdf{display:none!important}
+@media print{body{background:#fff!important;color:#000!important}#hhead,[role=tablist],#dayCard,#audCard,#wPrev,#wNext,#wCsv,#wPdf{display:none!important}
   .card{border:0!important;background:#fff!important;padding:0!important}.kpi{background:#fff!important;border:1px solid #ccc!important}.kpi b{color:#000!important}
   .scroll2{max-height:none!important;overflow:visible!important}th{background:#fff!important;color:#444!important;position:static!important}td,th,.ev{border-color:#ddd!important}
   .muted,h3 small,.kpi span,.wl li span,.gen span:last-child{color:#555!important}.bar{background:#eee!important}.bar i{background:#05A9C6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -49,13 +49,28 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
 .bar{height:8px;border-radius:6px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--b)}
 .gen{display:grid;grid-template-columns:110px 1fr 70px;gap:8px;align-items:center;font-size:12px;margin-bottom:6px}.gen span:last-child{text-align:right;color:var(--mut);font-family:'JetBrains Mono',monospace}
 .scroll2{max-height:340px;overflow:auto}
+.gen small{color:var(--mut);font-weight:500}.kpi i{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--b);display:block}
 .ev{font-size:12px;padding:5px 0;border-bottom:1px solid var(--line)}.ev .mono{color:var(--mut);margin-right:8px}.ev.bad b{color:var(--r)}.ev.repair b{color:#FFB547}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header id="hhead"></header><script src="/panel/header.js?v=1793567541"></script>
-  <div class="row" style="gap:6px" role="tablist" aria-label="View"><button class="btn on" id="vDay" role="tab">Played list</button><button class="btn" id="vWeek" role="tab">Week report</button></div>
+  <div class="row" style="gap:6px" role="tablist" aria-label="View"><button class="btn on" id="vDay" role="tab">Played list</button><button class="btn" id="vWeek" role="tab">Week report</button><button class="btn" id="vAud" role="tab">Audience</button></div>
+  <section class="card" id="audCard" hidden>
+    <div class="row"><span class="row" style="gap:4px" id="aDays"><button class="btn on" data-d="1">Today</button><button class="btn" data-d="7">7 days</button><button class="btn" data-d="30">30 days</button></span>
+      <span class="row" style="gap:4px" id="aKind"><button class="btn on" data-k="">Radio + TV</button><button class="btn" data-k="radio">Radio</button><button class="btn" data-k="tv">TV</button></span>
+      <span class="muted">Our own streams, devices counted once per day. Song gains / losses and listeners per hour: Hype Live → Reports.</span></div>
+    <div class="kpis" id="aKpi"></div>
+    <div><h3>Now <small id="aNowS"></small></h3><div class="scroll2"><table><thead><tr><th></th><th>Stream</th><th>Device</th><th>App / browser</th><th>Where</th><th>Since</th></tr></thead><tbody id="aNow"></tbody></table></div></div>
+    <div class="wgrid">
+      <div><h3>Countries <small>– devices · hours</small></h3><div id="aCtry" class="scroll2"></div></div>
+      <div><h3>How long they stay <small>– visits</small></h3><div id="aLen"></div></div>
+      <div><h3>Devices <small>– devices · hours</small></h3><div id="aDev"></div></div>
+      <div><h3>Apps / browsers <small>– devices · hours</small></h3><div id="aApp" class="scroll2"></div></div>
+      <div><h3>Streams <small>– devices · hours</small></h3><div id="aStr"></div></div>
+    </div>
+  </section>
   <section class="card" id="weekCard" hidden>
     <div class="row"><button class="btn" id="wPrev" aria-label="Previous week">◀</button><b id="wTitle" style="min-width:230px;text-align:center">…</b><button class="btn" id="wNext" aria-label="Next week">▶</button><span class="muted" id="wNote"></span><span style="flex:1"></span><button class="btn" id="wCsv" title="Download this week as a spreadsheet (Excel / Google Sheets)">⬇ CSV</button><button class="btn" id="wPdf" title="Save this week as a PDF (choose &quot;Save as PDF&quot; as the printer)">⬇ PDF</button></div>
     <div class="kpis" id="wKpi"></div>
@@ -155,9 +170,44 @@ $('#wCsv').onclick = () => {
 };
 $('#wPdf').onclick = () => { const t = document.title; document.title = 'Hype week report ' + (WD ? WD.from : ''); window.print(); setTimeout(() => document.title = t, 500); };
 $('#wPrev').onclick = () => { W++; wLoad(); }; $('#wNext').onclick = () => { if (W > 0) { W--; wLoad(); } };
-function view(week) { $('#weekCard').hidden = !week; $('#dayCard').hidden = week; $('#vWeek').classList.toggle('on', week); $('#vDay').classList.toggle('on', !week); if (week) wLoad(); try { localStorage.setItem('hypeHistView', week ? 'w' : 'd'); } catch (e) {} }
-$('#vDay').onclick = () => view(false); $('#vWeek').onclick = () => view(true);
-try { if (localStorage.getItem('hypeHistView') === 'w') view(true); } catch (e) {}
+// ---- Audience: who listens / watches on our own streams (sessions: device, app, country, how long) ----
+let AD = 1, AK = '', AT = null;
+const CN = (() => { try { return new Intl.DisplayNames(['en'], {type: 'region'}); } catch (e) { return null; } })();
+const cname = c => c && c !== '?' ? ((CN && CN.of(c)) || c) : 'Unknown';
+const hrs = h => h >= 10 ? Math.round(h) + ' h' : h >= 1 ? h.toFixed(1) + ' h' : Math.round(h * 60) + ' min';
+const since = t => { const s = Math.max(0, Date.now() / 1000 - t), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + ' h ' + m + ' min' : m + ' min'; };
+function bars(el, list, label) {
+  const mx = Math.max(1, ...list.map(x => x.hours));
+  $(el).innerHTML = list.length ? list.map(x => `<div class="gen"><span>${esc(label ? label(x) : x.name)}${x.cities && x.cities.length ? `<br><small>${esc(x.cities.map(c => c[0]).join(', '))}</small>` : ''}</span><div class="bar"><i style="width:${Math.max(2, x.hours / mx * 100)}%"></i></div><span>${x.devices} · ${hrs(x.hours)}</span></div>`).join('') : '<div class="muted">–</div>';
+}
+function aLoad() {
+  fetch('../api/audstats?days=' + AD + '&kind=' + AK).then(r => r.json()).then(d => {
+    const k = [], T_ = d.totals;
+    for (const [kd, n] of [['radio', 'RADIO'], ['tv', 'TV']]) {
+      if (AK && AK !== kd) continue; const t = T_[kd];
+      k.push(`<div class="kpi"><i>${n}</i><b>${t.now}</b><span>now</span></div>`, `<div class="kpi"><i>${n}</i><b>${t.devices}</b><span>different devices</span></div>`,
+             `<div class="kpi"><i>${n}</i><b>${hrs(t.hours)}</b><span>listened / watched in total</span></div>`, `<div class="kpi"><i>${n}</i><b>${t.avg_min} min</b><span>average visit (1 min +)</span></div>`);
+    }
+    $('#aKpi').innerHTML = k.join('');
+    $('#aNowS').textContent = '– ' + d.now.length + (d.now.length === 1 ? ' device' : ' devices');
+    $('#aNow').innerHTML = d.now.length ? d.now.map(s => `<tr><td><span class="tag ${s.kind === 'tv' ? 'jingles' : 'music'}">${s.kind === 'tv' ? 'TV' : 'RADIO'}</span></td><td>${esc(s.stream)}</td><td>${esc(s.dev)}</td><td>${esc(s.app)}</td><td>${esc([s.city, cname(s.cc)].filter(Boolean).join(', '))}</td><td class="mono">${since(s.since)}</td></tr>`).join('') : '<tr><td colspan="6" class="muted">Nobody right now</td></tr>';
+    bars('#aCtry', d.countries, x => cname(x.name)); bars('#aDev', d.devices); bars('#aApp', d.apps); bars('#aStr', d.streams);
+    const mx = Math.max(1, ...d.length.map(x => x.sessions));
+    $('#aLen').innerHTML = d.length.map(x => `<div class="gen"><span>${esc(x.name)}</span><div class="bar"><i style="width:${Math.max(x.sessions ? 2 : 0, x.sessions / mx * 100)}%"></i></div><span>${x.sessions}</span></div>`).join('');
+  }).catch(() => {});
+}
+$$('#aDays [data-d]').forEach(b => b.onclick = () => { AD = +b.dataset.d; $$('#aDays [data-d]').forEach(x => x.classList.toggle('on', x === b)); aLoad(); });
+$$('#aKind [data-k]').forEach(b => b.onclick = () => { AK = b.dataset.k; $$('#aKind [data-k]').forEach(x => x.classList.toggle('on', x === b)); aLoad(); });
+function view(v) {
+  v = v === true ? 'w' : v === false ? 'd' : v;
+  $('#weekCard').hidden = v !== 'w'; $('#dayCard').hidden = v !== 'd'; $('#audCard').hidden = v !== 'a';
+  $('#vWeek').classList.toggle('on', v === 'w'); $('#vDay').classList.toggle('on', v === 'd'); $('#vAud').classList.toggle('on', v === 'a');
+  if (v === 'w') wLoad();
+  clearInterval(AT); if (v === 'a') { aLoad(); AT = setInterval(() => { if (!document.hidden) aLoad(); }, 15000); }
+  try { localStorage.setItem('hypeHistView', v); } catch (e) {}
+}
+$('#vDay').onclick = () => view('d'); $('#vWeek').onclick = () => view('w'); $('#vAud').onclick = () => view('a');
+try { const v = localStorage.getItem('hypeHistView'); if (v === 'w' || v === 'a') view(v); } catch (e) {}
 load(); setInterval(() => { if ($('#day').value === iso(new Date()) && !document.hidden) load(); }, 30000);
 </script>
 </body>

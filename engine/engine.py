@@ -6,7 +6,7 @@ import shutil, os, re, json, time, random, sqlite3, socket, threading, logging, 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 import obsws_python as obs
-import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live, tickers
+import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live, tickers, audstats
 
 ROOT = "/srv/hype"; DB = "/srv/hype-data/library.db"; WEB = "/var/www/studio"; WAVES = "/srv/hype-data/wave"
 CONF = json.load(open("/etc/hype/engine.json"))
@@ -2522,9 +2522,13 @@ def aud_sampler():
                     pub["n"] = int((j.get("listeners") or {}).get("current", 0))
                 except Exception: pub["n"] = None
             r = listeners()["current"]; tv = viewers()["current"]
+            try: audstats.update(LISTEN.get("mp3keys") or set(), is_player)      # sessions for History → Audience
+            except Exception as e: log.warning("audience sessions: %s", e)
             c = dbc(); c.execute("INSERT OR REPLACE INTO aud_samples VALUES(?,?,?,?)", (time.time(), r, pub["n"], tv))
             if time.time() - last_clean > 3600:
                 last_clean = time.time(); c.execute("DELETE FROM aud_samples WHERE t < ?", (time.time() - 14 * 86400,))
+                try: audstats.clean(); threading.Thread(target=audstats.geo_refresh, daemon=True).start()
+                except Exception as e: log.warning("audience clean: %s", e)
             c.commit()
         except Exception as e: log.warning("audience sample: %s", e)
         time.sleep(15)
@@ -2718,6 +2722,9 @@ class H(BaseHTTPRequestHandler):
                 try: v = open("/var/lib/hype/deployed_commit").read().strip()[:12]
                 except Exception: v = ""
                 return self.send(200, {"v": v})
+            if p == "/audstats":
+                days = max(1, min(400, int((qs.get("days") or ["1"])[0] or 1))); kind = (qs.get("kind") or [""])[0]
+                return self.send(200, audstats.report(days, kind))
             if p == "/audience": return self.send(200, {"radio": listeners(), "tv": viewers(), "t": int(time.time())})
             if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))
@@ -3287,7 +3294,7 @@ def _listeners():
             n = sum(int(x.get("listeners", 0)) for x in ice if str(x.get("listenurl", "")).endswith("/radio.mp3"))
             mp3s = {f"conn{i}|" for i in range(n)}
         except Exception: pass
-    hls = hls_radio_ips(); devs = mp3s | hls; now_n = len(devs)
+    hls = hls_radio_ips(); devs = mp3s | hls; now_n = len(devs); LISTEN["mp3keys"] = set(mp3s)
     day = time.strftime("%Y-%m-%d")
     try: st = json.load(open(LSTATS_FILE))
     except Exception: st = {}
@@ -3993,7 +4000,7 @@ if __name__ == "__main__":
     threading.Thread(target=agc_loop, daemon=True).start()
     threading.Thread(target=voice_loop, daemon=True).start()
     threading.Thread(target=autorec_loop, daemon=True).start()
-    threading.Thread(target=aud_sampler, daemon=True).start()
+    audstats.load_live(); threading.Thread(target=aud_sampler, daemon=True).start()
     threading.Thread(target=sponsors_loop, daemon=True).start()
     threading.Thread(target=recap_loop, daemon=True).start()
     threading.Thread(target=media_in_loop, daemon=True).start()
