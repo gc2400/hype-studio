@@ -2522,7 +2522,7 @@ def aud_sampler():
                     pub["n"] = int((j.get("listeners") or {}).get("current", 0))
                 except Exception: pub["n"] = None
             r = listeners()["current"]; tv = viewers()["current"]
-            try: jdump(MP3_HITS[-500:], MP3_HITS_FILE)       # who started the MP3 when: kept over an engine restart (else running listeners lose their address)
+            try: jdump(MP3_HITS[-500:], MP3_HITS_FILE, mode=0o600)       # who started the MP3 when: kept over an engine restart (else running listeners lose their address)
             except Exception: pass
             try: audstats.update(LISTEN.get("mp3keys") or set(), is_player)      # sessions for History → Audience
             except Exception as e: log.warning("audience sessions: %s", e)
