@@ -2528,7 +2528,7 @@ def meter_loop():
 AUD_LAG = 8.0     # listeners hear / see a song this long after it starts on air (stream buffers)
 def aud_sampler():
     """Every 15 s: radio listeners on our own streams, on Streamerr (public radio) and TV viewers -> aud_samples (14 days)."""
-    pub = {"t": 0, "n": None}; last_clean = 0
+    pub = {"t": 0, "n": None}; last_clean = 0; last_jobs = time.time() - 240
     while True:
         try:
             if time.time() - pub["t"] > 30:
@@ -2548,8 +2548,83 @@ def aud_sampler():
                 try: audstats.clean(); threading.Thread(target=audstats.geo_refresh, daemon=True).start()
                 except Exception as e: log.warning("audience clean: %s", e)
             c.commit()
+            if time.time() - last_jobs > 300 and not STATS_BUSY.locked():
+                last_jobs = time.time(); threading.Thread(target=stats_jobs_safe, daemon=True).start()
         except Exception as e: log.warning("audience sample: %s", e)
         time.sleep(15)
+HL_IMPORT = "/var/lib/hype/hl_stats_import.json"
+STATS_BUSY = threading.Lock()
+def stats_jobs_safe():
+    with STATS_BUSY:
+        try: stats_jobs()
+        except Exception as e: log.warning("audience stats: %s", e)
+def stats_jobs():
+    """Every 5 min: (1) each song that has ended -> one play row with the audience when listeners started to hear it and at
+    its end (History → Audience → Songs); (2) the audience per 5 minutes (→ By time); (3) once: Hype Live's history."""
+    now = time.time(); c = dbc()
+    # 1. plays
+    _, last = audstats.own_since("plays"); t_from = max(last or 0, now - 14 * 86400) + 1
+    rows = c.execute("""SELECT a.started, a.artist, a.title, a.path FROM asrun a LEFT JOIN items i ON i.path = a.path
+                        WHERE a.started >= ? ORDER BY a.started""", (t_from - 86400,)).fetchall()
+    starts = [r[0] for r in rows]
+    smp = c.execute("SELECT t, r, p, tv FROM aud_samples WHERE t >= ? ORDER BY t", (t_from - 120,)).fetchall()
+    out = []
+    for k, (st, ar, ti, path) in enumerate(rows):
+        if st < t_from or not (path or "").startswith("music/") or "/MIXES/" in "/" + (path or "") or "/RECORDINGS/" in "/" + (path or ""): continue
+        end = starts[k + 1] if k + 1 < len(starts) else None
+        if end is None or end + AUD_LAG + 30 > now: break               # still playing / its end not measured yet
+        if end - st < 90: continue                                       # cut off: not a real play
+        a0 = aud_at(smp, st + AUD_LAG); a1 = aud_at(smp, end + AUD_LAG)
+        if not a0 or not a1: continue
+        out.append((st, end, ar or "", ti or "", path, a0[0], a1[0], a0[1], a1[1], None, "h"))
+    audstats.add_plays(out)
+    # 2. 5-minute points
+    _, last5 = audstats.own_since("aud5"); b = int(max((last5 or 0) + 300, (now - 14 * 86400) // 300 * 300)); cut = int(now // 300 * 300)
+    pts = []
+    if b < cut:
+        acc = {}
+        for t, r, p_, tv in c.execute("SELECT t, r, p, tv FROM aud_samples WHERE t >= ? AND t < ?", (b, cut)):
+            a = acc.setdefault(int(t // 300 * 300), [0, 0.0, 0.0, 0, 0]); rr = (r or 0) + (p_ or 0)
+            a[0] += 1; a[1] += rr; a[2] += tv or 0; a[3] = max(a[3], rr); a[4] = max(a[4], tv or 0)
+        pts = [(t, round(a[1] / a[0], 2), round(a[2] / a[0], 2), a[3], a[4], "h") for t, a in sorted(acc.items())]
+    audstats.add_aud5(pts)
+    # 3. Hype Live's history (13 months of plays, 400 days of audience) – once, before Studio's own numbers start
+    try: st_ = json.load(open(HL_IMPORT))
+    except Exception: st_ = {}
+    if not st_.get("done") and now - st_.get("tried", 0) > 3600:
+        st_["tried"] = now
+        try:
+            if "cut_plays" not in st_:
+                st_["cut_plays"] = audstats.own_since("plays")[0] or now; st_["cut_aud"] = audstats.own_since("aud5")[0] or now
+            n_p = n_a = 0
+            for what, cut_ in (("plays", st_["cut_plays"]), ("aud", st_["cut_aud"])):
+                frm = st_.get("next_" + what, 0)
+                while frm is not None:
+                    d = json.loads(hl_call("hype_studio_stats_export", "&what=" + what + "&from=" + str(int(frm)) + "&limit=3000", timeout=60))
+                    items = d.get("items") or []
+                    if what == "plays":
+                        rows_ = []
+                        for x in items:
+                            t = float(x.get("t") or 0)
+                            if not t or t >= cut_: continue
+                            r0, r1 = (x.get("r0"), x.get("r1")) if x.get("r0") is not None else (0, x.get("radio"))
+                            v0, v1 = (x.get("v0"), x.get("v1")) if x.get("v0") is not None else (0, x.get("tv"))
+                            if r1 is None: continue
+                            rows_.append((t, t + float(x.get("len") or 0), x.get("artist") or "", x.get("title") or "", "", r0, r1, v0, v1,
+                                          x.get("fire"), "a" if x.get("s") == "a" else "h"))
+                        audstats.add_plays(rows_); n_p += len(rows_)
+                    else:
+                        rows_ = [(int(float(x["t"]) // 300 * 300), x.get("r") or 0, x.get("tv") or 0, x.get("r") or 0, x.get("tv") or 0, "a" if x.get("s") == "a" else "h")
+                                 for x in items if x.get("t") and float(x["t"]) < cut_]
+                        audstats.add_aud5(rows_); n_a += len(rows_)
+                    nxt = d.get("next"); st_["next_" + what] = nxt; frm = nxt if (nxt and items) else None
+                    jdump(st_, HL_IMPORT)
+            st_.update(done=True, plays=n_p + st_.get("plays", 0), aud=n_a + st_.get("aud", 0), t=now); st_.pop("error", None)
+            log.info("Hype Live history imported: %d plays, %d audience points", n_p, n_a)
+        except Exception as e:
+            st_["error"] = str(e)[:200]; log.info("Hype Live history import not possible yet: %s", e)
+        jdump(st_, HL_IMPORT)
+
 def aud_at(samples, t):
     """(radio total, tv) of the sample closest to t (within 40 s), or None."""
     import bisect
@@ -2740,6 +2815,18 @@ class H(BaseHTTPRequestHandler):
                 try: v = open("/var/lib/hype/deployed_commit").read().strip()[:12]
                 except Exception: v = ""
                 return self.send(200, {"v": v})
+            if p == "/audsongs":
+                days = max(1, min(400, int((qs.get("days") or ["30"])[0] or 30))); by = (qs.get("by") or ["song"])[0]
+                if (qs.get("csv") or [""])[0]:
+                    body = audstats.plays_csv(days).encode("utf-8-sig")
+                    self.send_response(200); self.send_header("Content-Type", "text/csv; charset=utf-8")
+                    self.send_header("Content-Disposition", f'attachment; filename="hype-song-plays-{days}d.csv"'); self.send_header("Content-Length", str(len(body)))
+                    self.end_headers(); self.wfile.write(body); return
+                if (qs.get("key") or [""])[0]: return self.send(200, {"plays": audstats.song_plays(qs["key"][0], days, by)})
+                try: imp = json.load(open(HL_IMPORT))
+                except Exception: imp = {}
+                return self.send(200, dict(audstats.songs(days, by), imported={k: imp.get(k) for k in ("done", "plays", "aud", "error")}))
+            if p == "/audtime": return self.send(200, audstats.bytime((qs.get("view") or ["today"])[0]))
             if p == "/audstats":
                 days = max(1, min(400, int((qs.get("days") or ["1"])[0] or 1))); kind = (qs.get("kind") or [""])[0]
                 return self.send(200, audstats.report(days, kind))
@@ -3834,6 +3921,9 @@ def hl_sync_loop():
                     st = media_in_state(); ok["media"] = all(re.sub(r"[^A-Za-z0-9_-]", "", str(i.get("id") or "")) in st for i in (d["media"] or {}).get("items") or [])
                 except Exception as e: ok["media"] = False; log.warning("sync media: %s", e)
             MEDIA_LINK.update(t=time.time(), ok=True, error="")
+            if d.get("fire"):          # 🔥 votes per play (Hype Live keeps the votes; Studio's song report shows them per play)
+                try: audstats.set_fire(d["fire"])
+                except Exception as e: log.warning("sync fire: %s", e)
             if d.get("covers"):
                 try: sync_covers(d["covers"])
                 except Exception as e: log.warning("sync covers: %s", e)

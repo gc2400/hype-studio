@@ -26,6 +26,12 @@ def db():
     c.execute("""CREATE TABLE IF NOT EXISTS sessions(kind TEXT, start REAL, end REAL, stream TEXT, dev TEXT, app TEXT,
                  os TEXT, cc TEXT, city TEXT, dk TEXT)""")
     c.execute("CREATE INDEX IF NOT EXISTS s_end ON sessions(end)")
+    # one row per song play: listeners (radio) / viewers (tv) when listeners started to hear it and when it ended;
+    # src "h" = Hype Studio's own numbers, "a" = AzuraCast (imported from Hype Live, before the switch)
+    c.execute("""CREATE TABLE IF NOT EXISTS plays(t REAL PRIMARY KEY, end REAL, artist TEXT, title TEXT, path TEXT,
+                 r0 REAL, r1 REAL, v0 REAL, v1 REAL, fire INT, src TEXT)""")
+    # the audience every 5 minutes (average + peak), for the day graph and the weekday x hour heatmap
+    c.execute("CREATE TABLE IF NOT EXISTS aud5(t INTEGER PRIMARY KEY, r REAL, tv REAL, rmax REAL, tvmax REAL, src TEXT)")
     return c
 
 
@@ -197,3 +203,156 @@ def report(days=1, kind=""):
                     "since": int(s["start"])} for s in live if not kind or s["kind"] == kind), key=lambda s: s["since"])
     return {"from": int(t0), "totals": tot, "now": nowl, "length": buckets, "devices": group("dev"), "apps": group("app"),
             "countries": ctry, "streams": group("stream")}
+
+
+# ---------------- songs: gainers and losers ----------------
+def add_plays(rows):
+    """rows: (t, end, artist, title, path, r0, r1, v0, v1, fire, src)"""
+    if not rows: return
+    c = db(); c.executemany("INSERT OR IGNORE INTO plays VALUES(?,?,?,?,?,?,?,?,?,?,?)", rows); c.commit(); c.close()
+
+
+def add_aud5(rows):
+    """rows: (t, r, tv, rmax, tvmax, src)"""
+    if not rows: return
+    c = db(); c.executemany("INSERT OR REPLACE INTO aud5 VALUES(?,?,?,?,?,?)", rows); c.commit(); c.close()
+
+
+def own_since(table):
+    """The first / last moment Hype Studio's own numbers cover in plays / aud5 (None, None when empty)."""
+    c = db(); r = c.execute(f"SELECT MIN(t), MAX(t) FROM {table} WHERE src='h'").fetchone(); c.close()
+    return r
+
+
+def set_fire(items):
+    """🔥 votes per play from Hype Live (sync): [{"t": play start, "n": votes}] – matched to the play that started within 30 s."""
+    if not items: return
+    c = db()
+    for x in items:
+        try: c.execute("UPDATE plays SET fire=? WHERE t BETWEEN ? AND ?", (int(x.get("n") or 0), float(x["t"]) - 30, float(x["t"]) + 30))
+        except Exception: pass
+    c.commit(); c.close()
+
+
+def _lt(t): lt = time.localtime(t); return lt.tm_wday, lt.tm_hour
+
+
+def _norms(c, t1, days=90):
+    """The normal radio / TV change of a song per (source, weekday, hour), over the plays of the last 90 days before t1.
+    A slot with few plays falls back to that hour on any day, then to the source's overall average."""
+    acc = {}
+    for t, r0, r1, v0, v1, src in c.execute("SELECT t, r0, r1, v0, v1, src FROM plays WHERE t >= ? AND t < ? AND r0 IS NOT NULL", (t1 - days * 86400, t1)):
+        d, h = _lt(t); dr = (r1 or 0) - (r0 or 0); dv = (v1 or 0) - (v0 or 0) if v0 is not None and v1 is not None else 0
+        for k in ((src, d, h), (src, None, h), (src, None, None)):
+            a = acc.setdefault(k, [0, 0.0, 0.0]); a[0] += 1; a[1] += dr; a[2] += dv
+    def norm(src, d, h):
+        for k, need in (((src, d, h), 3), ((src, None, h), 3), ((src, None, None), 1)):
+            a = acc.get(k)
+            if a and a[0] >= need: return a[1] / a[0], a[2] / a[0]
+        return 0.0, 0.0
+    return norm
+
+
+ART_SPLIT = re.compile(r"\s+(?:x|ft\.?|feat\.?|featuring|&|and|vs\.?|with)\s+|\s*,\s*", re.I)
+
+
+def _plays(days):
+    now = time.time(); c = db()
+    rows = c.execute("SELECT t, end, artist, title, r0, r1, v0, v1, fire, src FROM plays WHERE t >= ? AND r0 IS NOT NULL ORDER BY t", (now - days * 86400,)).fetchall()
+    norm = _norms(c, now); c.close(); out = []
+    for t, end, ar, ti, r0, r1, v0, v1, fire, src in rows:
+        d, h = _lt(t); nr, nv = norm(src, d, h)
+        out.append({"t": t, "len": round((end or t) - t), "artist": ar or "", "title": ti or "", "src": src, "fire": fire,
+                    "radio": round((r1 or 0) - (r0 or 0) - nr, 2), "tv": round(((v1 or 0) - (v0 or 0) if v0 is not None and v1 is not None else 0) - nv, 2),
+                    "r0": r0, "r1": r1, "v0": v0, "v1": v1})
+    return out
+
+
+def songs(days=30, by="song"):
+    """Gainers and losers: per song (or artist) the average radio / TV change against a normal song at that weekday + hour."""
+    ps = _plays(days); g = {}
+    for p in ps:
+        keys = [p["artist"].strip()] if by != "artist" else [a.strip() for a in ART_SPLIT.split(p["artist"] or "") if a.strip()]
+        for k0 in keys or [""]:
+            k = (k0 + " – " + p["title"]) if by != "artist" else k0
+            x = g.setdefault(k.lower(), {"name": k, "artist": p["artist"], "title": p["title"] if by != "artist" else "", "plays": 0, "radio": 0.0, "tv": 0.0, "fire": 0, "fired": 0, "last": 0})
+            x["plays"] += 1; x["radio"] += p["radio"]; x["tv"] += p["tv"]; x["last"] = max(x["last"], p["t"])
+            if p["fire"] is not None: x["fire"] += p["fire"]; x["fired"] += 1
+    out = []
+    for k, x in g.items():
+        if x["plays"] < 3: continue
+        r, v = x["radio"] / x["plays"], x["tv"] / x["plays"]; f = x["fire"] / x["fired"] if x["fired"] else None
+        out.append({"key": k, "name": x["name"], "plays": x["plays"], "radio": round(r, 2), "tv": round(v, 2), "fire": round(f, 1) if f is not None else None,
+                    "score": round(r + v + 0.5 * (f or 0), 2), "last": int(x["last"])})
+    out.sort(key=lambda x: -x["score"])
+    return {"days": days, "by": by, "measured": len(ps), "listed": len(out), "best": out[:25], "worst": list(reversed(out[-25:])) if len(out) > 25 else list(reversed(out)),
+            "since": int(ps[0]["t"]) if ps else None}
+
+
+def song_plays(key, days=90, by="song"):
+    key = (key or "").lower(); out = []
+    for p in _plays(days):
+        names = [(p["artist"].strip() + " – " + p["title"]).lower()] if by != "artist" else [a.strip().lower() for a in ART_SPLIT.split(p["artist"] or "")]
+        if key in names: out.append(p)
+    return list(reversed(out))
+
+
+def plays_csv(days=90):
+    import csv, io
+    f = io.StringIO(); w = csv.writer(f)
+    w.writerow(["date", "time", "artist", "title", "length_s", "radio_start", "radio_end", "radio_vs_normal", "tv_start", "tv_end", "tv_vs_normal", "fire", "source"])
+    for p in _plays(days):
+        w.writerow([time.strftime("%Y-%m-%d", time.localtime(p["t"])), time.strftime("%H:%M:%S", time.localtime(p["t"])), p["artist"], p["title"], p["len"],
+                    p["r0"], p["r1"], p["radio"], p["v0"], p["v1"], p["tv"], p["fire"] if p["fire"] is not None else "", "Hype Studio" if p["src"] == "h" else "AzuraCast"])
+    return f.getvalue()
+
+
+# ---------------- listeners by time ----------------
+def bytime(view="today"):
+    """The day graph (5-min points + "normal for this weekday"), peaks, best hour, different devices, weekday x hour heatmap."""
+    now = time.time(); lt = time.localtime(now); today0 = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 0, 0, 0, 0, 0, -1))
+    c = db()
+    def day_points(d0):
+        return {int((t - d0) // 300): (r, tv, rm, tm) for t, r, tv, rm, tm in c.execute("SELECT t, r, tv, rmax, tvmax FROM aud5 WHERE t >= ? AND t < ?", (d0, d0 + 86400))}
+    def avg_points(days_list):
+        acc = {}
+        for d0 in days_list:
+            for k, (r, tv, rm, tm) in day_points(d0).items():
+                a = acc.setdefault(k, [0, 0.0, 0.0]); a[0] += 1; a[1] += r or 0; a[2] += tv or 0
+        return {k: (a[1] / a[0], a[2] / a[0]) for k, a in acc.items()}
+    if view in ("today", "yesterday"):
+        d0 = today0 if view == "today" else today0 - 86400
+        pts = day_points(d0); t0, t1 = d0, d0 + 86400
+        normal = avg_points([d0 - 7 * 86400 * w for w in (1, 2, 3, 4)])
+        series = [{"i": k, "r": round(v[0] or 0, 1), "tv": round(v[1] or 0, 1)} for k, v in sorted(pts.items())]
+        peaks = {"r": max(((v[2] or 0, k) for k, v in pts.items()), default=(0, None)), "tv": max(((v[3] or 0, k) for k, v in pts.items()), default=(0, None))}
+    else:
+        n = 7 if view == "avg7" else 30; days = [today0 - 86400 * i for i in range(1, n + 1)]
+        avg = avg_points(days); t0, t1 = today0 - n * 86400, today0; normal = {}
+        series = [{"i": k, "r": round(v[0], 1), "tv": round(v[1], 1)} for k, v in sorted(avg.items())]
+        rows = c.execute("SELECT t, rmax, tvmax FROM aud5 WHERE t >= ? AND t < ?", (t0, t1)).fetchall()
+        peaks = {"r": max(((r or 0, t) for t, r, _ in rows), default=(0, None)), "tv": max(((tv or 0, t) for t, _, tv in rows), default=(0, None))}
+    # heatmap + best hour: last 30 days
+    heat = [[[0, 0.0, 0.0] for _ in range(24)] for _ in range(7)]
+    for t, r, tv in c.execute("SELECT t, r, tv FROM aud5 WHERE t >= ?", (today0 - 30 * 86400,)):
+        d, h = _lt(t); x = heat[d][h]; x[0] += 1; x[1] += r or 0; x[2] += tv or 0
+    hm = [[{"r": round(x[1] / x[0], 1) if x[0] else None, "tv": round(x[2] / x[0], 1) if x[0] else None} for x in row] for row in heat]
+    hours = [[0, 0.0] for _ in range(24)]
+    for d in range(7):
+        for h in range(24):
+            x = heat[d][h]
+            if x[0]: hours[h][0] += x[0]; hours[h][1] += x[1] + x[2]
+    best = max(range(24), key=lambda h: hours[h][1] / hours[h][0] if hours[h][0] else -1)
+    dev = {k: n for k, n in c.execute("SELECT kind, COUNT(DISTINCT dk) FROM sessions WHERE end >= ? AND start < ? GROUP BY kind", (t0, t1))}
+    c.close()
+    with LOCK:
+        for s in LIVE.values():
+            if t1 > now - 60: dev.setdefault(s["kind"], 0)
+    def pk(x):
+        v, k = x
+        if k is None: return {"n": 0, "at": None}
+        at = (t0 + k * 300) if view in ("today", "yesterday") else k
+        return {"n": round(v), "at": int(at)}
+    return {"view": view, "from": int(t0), "series": series, "normal": [{"i": k, "r": round(v[0], 1), "tv": round(v[1], 1)} for k, v in sorted(normal.items())],
+            "peak_r": pk(peaks["r"]), "peak_tv": pk(peaks["tv"]), "best_hour": best if hours[best][0] else None,
+            "devices": {"radio": dev.get("radio", 0), "tv": dev.get("tv", 0)}, "heat": hm}

@@ -50,6 +50,9 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
 .gen{display:grid;grid-template-columns:110px 1fr 70px;gap:8px;align-items:center;font-size:12px;margin-bottom:6px}.gen span:last-child{text-align:right;color:var(--mut);font-family:'JetBrains Mono',monospace}
 .scroll2{max-height:340px;overflow:auto}
 .gen small{color:var(--mut);font-weight:500}
+.stab td{padding:6px 8px}.stab td:not(:first-child){font-family:'JetBrains Mono',monospace;text-align:right;white-space:nowrap;width:1%}.stab th:not(:first-child){text-align:right}.stab tr{cursor:pointer}.stab tr:hover td{background:var(--card2)}
+.up{color:var(--g)}.dn{color:var(--r)}.stab td small{display:block;color:var(--mut);font-family:Inter,system-ui,sans-serif}
+.hm{border-collapse:separate;border-spacing:2px;font-size:11px}.hm td{width:34px;height:24px;text-align:center;border-radius:5px;padding:0;border:0;font-family:'JetBrains Mono',monospace}.hm th{position:static;padding:2px 4px;font-size:10px;letter-spacing:0;border:0}
 .atab td{padding:8px}.atab td.n{font-family:'JetBrains Mono',monospace;text-align:right;white-space:nowrap;width:1%}.atab td.b{width:45%}.atab td small{color:var(--mut);margin-left:8px}.kpi i{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--b);display:block}
 .ev{font-size:12px;padding:5px 0;border-bottom:1px solid var(--line)}.ev .mono{color:var(--mut);margin-right:8px}.ev.bad b{color:var(--r)}.ev.repair b{color:#FFB547}
 </style>
@@ -59,6 +62,24 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
   <header id="hhead"></header><script src="/panel/header.js?v=1793567541"></script>
   <div class="row" style="gap:6px" role="tablist" aria-label="View"><button class="btn on" id="vDay" role="tab">Played list</button><button class="btn" id="vWeek" role="tab">Week report</button><button class="btn" id="vAud" role="tab">Audience</button></div>
   <section class="card" id="audCard" hidden>
+    <div class="row" style="gap:4px" id="aViews" role="tablist" aria-label="Audience view"><button class="btn on" data-v="who">Who</button><button class="btn" data-v="songs">Songs</button><button class="btn" data-v="time">By time</button></div>
+    <div id="sView" hidden style="display:flex;flex-direction:column;gap:10px">
+      <div class="row"><span class="row" style="gap:4px" id="sDays"><button class="btn" data-d="7">7 days</button><button class="btn on" data-d="30">30 days</button><button class="btn" data-d="90">90 days</button></span>
+        <span class="row" style="gap:4px" id="sBy"><button class="btn on" data-b="song">By song</button><button class="btn" data-b="artist">By artist</button></span>
+        <a class="btn" id="sCsv" title="Every measured play as a spreadsheet">⬇ CSV</a><span class="muted" id="sNote"></span></div>
+      <div class="wgrid">
+        <div><h3>Gainers <small>– listeners / viewers gained compared with a normal song at that weekday + hour</small></h3><table class="stab"><thead><tr><th>Song</th><th>Plays</th><th>Radio</th><th>TV</th><th>🔥</th><th>Score</th></tr></thead><tbody id="sBest"></tbody></table></div>
+        <div><h3>Losers <small>– lost the most</small></h3><table class="stab"><thead><tr><th>Song</th><th>Plays</th><th>Radio</th><th>TV</th><th>🔥</th><th>Score</th></tr></thead><tbody id="sWorst"></tbody></table></div>
+      </div>
+      <div id="sPlays" hidden><h3 id="sPlaysT"></h3><div class="scroll2"><table><thead><tr><th>When</th><th>Radio</th><th>TV</th><th>vs normal</th><th>🔥</th></tr></thead><tbody id="sPlaysB"></tbody></table></div></div>
+    </div>
+    <div id="tView" hidden style="display:flex;flex-direction:column;gap:10px">
+      <div class="row"><span class="row" style="gap:4px" id="tWhich"><button class="btn on" data-w="today">Today</button><button class="btn" data-w="yesterday">Yesterday</button><button class="btn" data-w="avg7">Average day · 7 days</button><button class="btn" data-w="avg30">Average day · 30 days</button></span></div>
+      <div class="kpis" id="tKpi"></div>
+      <div><h3>Through the day <small id="tLeg"></small></h3><div id="tChart"></div></div>
+      <div><h3>Weekday × hour <small>– average over the last 30 days</small> <span class="row" style="gap:4px;display:inline-flex;margin-left:8px" id="tHm"><button class="btn on" data-h="r" style="min-height:26px">Radio</button><button class="btn" data-h="tv" style="min-height:26px">TV</button></span></h3><div id="tHeat" style="overflow:auto"></div></div>
+    </div>
+    <div id="wView" style="display:flex;flex-direction:column;gap:10px">
     <div class="row"><span class="row" style="gap:4px" id="aDays"><button class="btn on" data-d="1">Today</button><button class="btn" data-d="7">7 days</button><button class="btn" data-d="30">30 days</button></span>
       <span class="row" style="gap:4px" id="aKind"><button class="btn on" data-k="">Radio + TV</button><button class="btn" data-k="radio">Radio</button><button class="btn" data-k="tv">TV</button></span>
       <span class="muted">Our own streams, devices counted once per day. Song gains / losses and listeners per hour: Hype Live → Reports.</span></div>
@@ -66,6 +87,7 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
     <div><h3>Now <small id="aNowS"></small></h3><div class="scroll2"><table><thead><tr><th></th><th>Stream</th><th>Device</th><th>App / browser</th><th>Where</th><th>Since</th></tr></thead><tbody id="aNow"></tbody></table></div></div>
     <div class="row" style="gap:4px" id="aTabs" role="tablist" aria-label="Breakdown"><button class="btn on" data-t="countries">Countries</button><button class="btn" data-t="devices">Devices</button><button class="btn" data-t="apps">Apps / browsers</button><button class="btn" data-t="streams">Streams</button><button class="btn" data-t="length">How long they stay</button></div>
     <div class="scroll2" style="max-height:none"><table class="atab"><thead id="aHead"></thead><tbody id="aBody"></tbody></table></div>
+    </div>
   </section>
   <section class="card" id="weekCard" hidden>
     <div class="row"><button class="btn" id="wPrev" aria-label="Previous week">◀</button><b id="wTitle" style="min-width:230px;text-align:center">…</b><button class="btn" id="wNext" aria-label="Next week">▶</button><span class="muted" id="wNote"></span><span style="flex:1"></span><button class="btn" id="wCsv" title="Download this week as a spreadsheet (Excel / Google Sheets)">⬇ CSV</button><button class="btn" id="wPdf" title="Save this week as a PDF (choose &quot;Save as PDF&quot; as the printer)">⬇ PDF</button></div>
@@ -204,12 +226,82 @@ function aLoad() {
 }
 $$('#aDays [data-d]').forEach(b => b.onclick = () => { AD = +b.dataset.d; $$('#aDays [data-d]').forEach(x => x.classList.toggle('on', x === b)); aLoad(); });
 $$('#aKind [data-k]').forEach(b => b.onclick = () => { AK = b.dataset.k; $$('#aKind [data-k]').forEach(x => x.classList.toggle('on', x === b)); aLoad(); });
+// ---- Audience → Songs / By time ----
+let AV = 'who', SD = 30, SB = 'song', TW = 'today', HM = 'r', TD = null;
+const sg = v => v == null ? '–' : `<span class="${v > 0.05 ? 'up' : v < -0.05 ? 'dn' : ''}">${v > 0 ? '+' : ''}${v.toFixed(1)}</span>`;
+const dt = t => { const d = new Date(t * 1000); return d.toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'}) + ' ' + d.toTimeString().slice(0, 5); };
+function sRows(list) {
+  return list.length ? list.map(x => `<tr data-k="${esc(x.key)}" data-n="${esc(x.name)}"><td>${esc(x.name)}</td><td>${x.plays}</td><td>${sg(x.radio)}</td><td>${sg(x.tv)}</td><td>${x.fire == null ? '–' : x.fire}</td><td>${sg(x.score)}</td></tr>`).join('')
+    : '<tr><td colspan="6" class="muted">Not enough plays yet (a song needs 3+ plays)</td></tr>';
+}
+function sLoad() {
+  $('#sCsv').href = '../api/audsongs?csv=1&days=' + SD;
+  fetch('../api/audsongs?days=' + SD + '&by=' + SB).then(r => r.json()).then(d => {
+    $('#sBest').innerHTML = sRows(d.best); $('#sWorst').innerHTML = sRows(d.worst);
+    const im = d.imported || {};
+    $('#sNote').textContent = d.measured + ' plays measured' + (d.since ? ' since ' + dt(d.since).replace(/ \d\d:\d\d$/, '') : '') + ' · ' + d.listed + ' with 3+ plays' +
+      (im.done ? '' : im.error ? ' · Hype Live history: not imported yet' : ' · Hype Live history: importing…');
+    $$('.stab tbody tr[data-k]').forEach(tr => tr.onclick = () => sPlays(tr.dataset.k, tr.dataset.n));
+    $('#sPlays').hidden = true;
+  }).catch(() => {});
+}
+function sPlays(k, n) {
+  fetch('../api/audsongs?days=' + Math.max(SD, 90) + '&by=' + SB + '&key=' + encodeURIComponent(k)).then(r => r.json()).then(d => {
+    $('#sPlaysT').innerHTML = esc(n) + ' <small>– every play (90 days); Radio / TV = start → end; vs normal = radio · TV</small>';
+    $('#sPlaysB').innerHTML = d.plays.map(p => `<tr><td class="mono">${dt(p.t)}</td><td class="mono">${p.r0 ?? '–'} → ${p.r1 ?? '–'}</td><td class="mono">${p.v0 ?? '–'} → ${p.v1 ?? '–'}</td><td>${sg(p.radio)} · ${sg(p.tv)}</td><td>${p.fire ?? '–'}</td></tr>`).join('');
+    $('#sPlays').hidden = false; $('#sPlays').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  });
+}
+function chart(d) {
+  const W = 1100, H = 220, P = 30, pts = d.series, nor = d.normal;
+  const mx = Math.max(2, ...pts.map(p => Math.max(p.r, p.tv)), ...nor.map(p => Math.max(p.r, p.tv))) * 1.1;
+  const x = i => P + i / 287 * (W - P - 6), y = v => H - 18 - v / mx * (H - 30);
+  const line = (a, k) => a.map((p, j) => (j && p.i - a[j - 1].i > 3 ? 'M' : j ? 'L' : 'M') + x(p.i).toFixed(1) + ',' + y(p[k]).toFixed(1)).join(' ');
+  let g = '';
+  for (let v = 0; v <= mx; v += Math.max(1, Math.ceil(mx / 5))) g += `<line x1="${P}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#17344F"/><text x="${P - 6}" y="${y(v) + 4}" fill="#A9BCCD" font-size="10" text-anchor="end">${v}</text>`;
+  for (let h = 0; h <= 24; h += 3) g += `<text x="${x(h * 12)}" y="${H - 3}" fill="#A9BCCD" font-size="10" text-anchor="middle">${String(h).padStart(2, '0')}:00</text>`;
+  const nl = nor.length ? `<path d="${line(nor, 'r')}" fill="none" stroke="#05A9C6" stroke-width="1.5" stroke-dasharray="4 4" opacity=".55"/><path d="${line(nor, 'tv')}" fill="none" stroke="#FFE000" stroke-width="1.5" stroke-dasharray="4 4" opacity=".55"/>` : '';
+  $('#tChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Listeners and viewers through the day">${g}${nl}<path d="${line(pts, 'r')}" fill="none" stroke="#05A9C6" stroke-width="2.2"/><path d="${line(pts, 'tv')}" fill="none" stroke="#FFE000" stroke-width="2.2"/></svg>`;
+  $('#tLeg').innerHTML = '– <b style="color:var(--b)">radio</b> · <b style="color:var(--y)">TV</b>' + (nor.length ? ' · dashed = normal for this weekday (same day, last 4 weeks)' : '') + ' · 5-minute averages';
+}
+function heat() {
+  const d = TD; if (!d) return; const D = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const mx = Math.max(0.5, ...d.heat.flat().map(c => c[HM] || 0)), col = HM === 'r' ? '5,169,198' : '255,224,0';
+  let h = '<table class="hm"><tr><th></th>' + [...Array(24).keys()].map(i => `<th>${String(i).padStart(2, '0')}</th>`).join('') + '</tr>';
+  d.heat.forEach((row, i) => { h += `<tr><th>${D[i]}</th>` + row.map(c => { const v = c[HM]; return `<td style="background:rgba(${col},${v == null ? 0.03 : 0.08 + 0.85 * v / mx});color:${v != null && v / mx > 0.55 ? '#061423' : '#A9BCCD'}" title="${D[i]} ${v == null ? '–' : v}">${v == null ? '' : v >= 10 ? Math.round(v) : v.toFixed(1)}</td>`; }).join('') + '</tr>'; });
+  $('#tHeat').innerHTML = h + '</table>';
+}
+function tLoad() {
+  fetch('../api/audtime?view=' + TW).then(r => r.json()).then(d => {
+    TD = d; const tm = t => t ? new Date(t * 1000).toTimeString().slice(0, 5) : '';
+    const day = TW === 'today' || TW === 'yesterday';
+    $('#tKpi').innerHTML = `<div class="kpi"><i>RADIO</i><b>${d.peak_r.n}</b><span>peak ${day ? tm(d.peak_r.at) : d.peak_r.at ? dt(d.peak_r.at) : ''}</span></div>` +
+      `<div class="kpi"><i>TV</i><b>${d.peak_tv.n}</b><span>peak ${day ? tm(d.peak_tv.at) : d.peak_tv.at ? dt(d.peak_tv.at) : ''}</span></div>` +
+      `<div class="kpi"><i>RADIO</i><b>${d.devices.radio}</b><span>different devices</span></div><div class="kpi"><i>TV</i><b>${d.devices.tv}</b><span>different devices</span></div>` +
+      `<div class="kpi"><i>BEST HOUR</i><b>${d.best_hour == null ? '–' : String(d.best_hour).padStart(2, '0') + ':00'}</b><span>most listeners + viewers (30 days)</span></div>`;
+    chart(d); heat();
+  }).catch(() => {});
+}
+$$('#sDays [data-d]').forEach(b => b.onclick = () => { SD = +b.dataset.d; $$('#sDays [data-d]').forEach(x => x.classList.toggle('on', x === b)); sLoad(); });
+$$('#sBy [data-b]').forEach(b => b.onclick = () => { SB = b.dataset.b; $$('#sBy [data-b]').forEach(x => x.classList.toggle('on', x === b)); sLoad(); });
+$$('#tWhich [data-w]').forEach(b => b.onclick = () => { TW = b.dataset.w; $$('#tWhich [data-w]').forEach(x => x.classList.toggle('on', x === b)); tLoad(); });
+$$('#tHm [data-h]').forEach(b => b.onclick = () => { HM = b.dataset.h; $$('#tHm [data-h]').forEach(x => x.classList.toggle('on', x === b)); heat(); });
+function aView(v) {
+  AV = v; $$('#aViews [data-v]').forEach(x => x.classList.toggle('on', x.dataset.v === v));
+  $('#wView').hidden = v !== 'who'; $('#sView').hidden = v !== 'songs'; $('#tView').hidden = v !== 'time';
+  clearInterval(AT);
+  if (v === 'who') { aLoad(); AT = setInterval(() => { if (!document.hidden) aLoad(); }, 15000); }
+  if (v === 'songs') sLoad();
+  if (v === 'time') { tLoad(); AT = setInterval(() => { if (!document.hidden && TW === 'today') tLoad(); }, 60000); }
+  try { localStorage.setItem('hypeAudView', v); } catch (e) {}
+}
+$$('#aViews [data-v]').forEach(b => b.onclick = () => aView(b.dataset.v));
 function view(v) {
   v = v === true ? 'w' : v === false ? 'd' : v;
   $('#weekCard').hidden = v !== 'w'; $('#dayCard').hidden = v !== 'd'; $('#audCard').hidden = v !== 'a';
   $('#vWeek').classList.toggle('on', v === 'w'); $('#vDay').classList.toggle('on', v === 'd'); $('#vAud').classList.toggle('on', v === 'a');
   if (v === 'w') wLoad();
-  clearInterval(AT); if (v === 'a') { aLoad(); AT = setInterval(() => { if (!document.hidden) aLoad(); }, 15000); }
+  clearInterval(AT); if (v === 'a') { let av = 'who'; try { av = localStorage.getItem('hypeAudView') || 'who'; } catch (e) {} aView(av); }
   try { localStorage.setItem('hypeHistView', v); } catch (e) {}
 }
 $('#vDay').onclick = () => view('d'); $('#vWeek').onclick = () => view('w'); $('#vAud').onclick = () => view('a');
