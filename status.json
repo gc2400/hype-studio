@@ -1,18 +1,18 @@
 {
- "time": "2026-11-15T20:57:42",
+ "time": "2026-11-15T21:01:33",
  "result": "ok",
- "commit": "b92b5398fe9cd08d5003b642ce8e5f66586f5623",
- "subject": "SLIDESHOW scenes: every subfolder of branding/slideshow/photos and /videos becomes a full-screen scene ('Photos \u00b7 Drone', 'Videos \u00b7 Party EQ') with graphics, show name, ticker and Live Layer on top; photos random 8 s with a crossfade (OBS slideshow), videos random one after another without their own sound; SLIDESHOW tab in the panel's scenes (+ NEW, drop photos / videos on a button); Settings: seconds per photo, crossfade, random",
+ "commit": "a120e0b2d2c381632be4c25ea2ea0a55dad0c629",
+ "subject": "Listeners slideshow: only Studio's own links are removed; no drop box on it",
  "log": [
-  "20:56:57 update 2b164eca \u2192 b92b5398 \u00b7 4 file(s): engine/engine.py, engine/slideshow.py, web/panel/index.html, web/panel/settings.html",
-  "20:56:57 restart hype-engine",
-  "20:57:42 installed OK \u00b7 restarted: hype-engine"
+  "21:00:48 update b92b5398 \u2192 a120e0b2 \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "21:00:48 restart hype-engine",
+  "21:01:33 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Broederliefde \u2013 Brasa Mi",
+  "song": "ISKI \u2013 GOIDO",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },

@@ -358,3 +358,4 @@
 2026-11-15T20:36:26 ok da2b4221 Library: the selection clears on a normal click on a song, a click elsewhere, Escape, or another folder / search
 2026-11-15T20:38:31 ok 2b164eca Library: Shift / Ctrl-click select works again (the re-drawn row counted as a click outside)
 2026-11-15T20:57:42 ok b92b5398 SLIDESHOW scenes: every subfolder of branding/slideshow/photos and /videos becomes a full-screen scene ('Photos · Drone', 'Videos · Party EQ') with graphics, show name, ticker and Live Layer on top; photos random 8 s with a crossfade (OBS slideshow), videos random one after another without their own sound; SLIDESHOW tab in the panel's scenes (+ NEW, drop photos / videos on a button); Settings: seconds per photo, crossfade, random
+2026-11-15T21:01:33 ok a120e0b2 Listeners slideshow: only Studio's own links are removed; no drop box on it
