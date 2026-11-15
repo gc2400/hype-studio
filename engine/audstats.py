@@ -282,7 +282,7 @@ def songs(days=30, by="song"):
     for k, x in g.items():
         if x["plays"] < 3: continue
         r, v = x["radio"] / x["plays"], x["tv"] / x["plays"]; f = x["fire"] / x["fired"] if x["fired"] else None
-        out.append({"key": k, "name": x["name"], "plays": x["plays"], "radio": round(r, 2), "tv": round(v, 2), "fire": round(f, 1) if f is not None else None,
+        out.append({"key": k, "name": x["name"], "artist": x["artist"] if by != "artist" else x["name"], "title": x["title"], "plays": x["plays"], "radio": round(r, 2), "tv": round(v, 2), "fire": round(f, 1) if f is not None else None,
                     "score": round(r + v + 0.5 * (f or 0), 2), "last": int(x["last"])})
     out.sort(key=lambda x: -x["score"])
     return {"days": days, "by": by, "measured": len(ps), "listed": len(out), "best": out[:25], "worst": list(reversed(out[-25:])) if len(out) > 25 else list(reversed(out)),
@@ -336,7 +336,8 @@ def bytime(view="today"):
     heat = [[[0, 0.0, 0.0] for _ in range(24)] for _ in range(7)]
     for t, r, tv in c.execute("SELECT t, r, tv FROM aud5 WHERE t >= ?", (today0 - 30 * 86400,)):
         d, h = _lt(t); x = heat[d][h]; x[0] += 1; x[1] += r or 0; x[2] += tv or 0
-    hm = [[{"r": round(x[1] / x[0], 1) if x[0] else None, "tv": round(x[2] / x[0], 1) if x[0] else None} for x in row] for row in heat]
+    hm = [[{"r": round(x[1] / x[0], 1) if x[0] else None, "tv": round(x[2] / x[0], 1) if x[0] else None,
+            "rt": round((x[1] + x[2]) / x[0], 1) if x[0] else None} for x in row] for row in heat]
     hours = [[0, 0.0] for _ in range(24)]
     for d in range(7):
         for h in range(24):
@@ -353,6 +354,8 @@ def bytime(view="today"):
         if k is None: return {"n": 0, "at": None}
         at = (t0 + k * 300) if view in ("today", "yesterday") else k
         return {"n": round(v), "at": int(at)}
-    return {"view": view, "from": int(t0), "series": series, "normal": [{"i": k, "r": round(v[0], 1), "tv": round(v[1], 1)} for k, v in sorted(normal.items())],
+    avg_r = round(sum(p["r"] for p in series) / len(series), 1) if series else 0
+    avg_tv = round(sum(p["tv"] for p in series) / len(series), 1) if series else 0
+    return {"view": view, "from": int(t0), "series": series, "avg_r": avg_r, "avg_tv": avg_tv, "normal": [{"i": k, "r": round(v[0], 1), "tv": round(v[1], 1)} for k, v in sorted(normal.items())],
             "peak_r": pk(peaks["r"]), "peak_tv": pk(peaks["tv"]), "best_hour": best if hours[best][0] else None,
             "devices": {"radio": dev.get("radio", 0), "tv": dev.get("tv", 0)}, "heat": hm}
