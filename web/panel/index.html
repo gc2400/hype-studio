@@ -950,7 +950,7 @@ $('#bDuck').onclick = () => { DUCK = !DUCK; try { localStorage.setItem('hypeDuck
 // ---------- library ----------
 let SEC = 'music', GENRE = '', FOLDER = '', SEL = null, LIB = null, LSORT = 'az';
 try { LSORT = localStorage.getItem('hypeLibSort') || 'az'; } catch (e) {}
-const SECS = [['music', 'Music'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['recordings', 'Recordings'], ['playlists', 'Playlists'], ['clocks', 'Hour plans']];
+const SECS = [['music', 'Music'], ['mixes', 'Mixes'], ['clips', 'Clips'], ['jingles', 'Jingles'], ['ads', 'Ads'], ['recordings', 'Recordings'], ['playlists', 'Playlists'], ['clocks', 'Hour plans']];
 const nfx = t => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 let PLC = {pl: [], ck: []}, PLCN = {};   // PLCN: how many playlists / hour plans (shown on the tabs)
 function plcCount() { return Promise.all([api('playlists'), api('clocks')]).then(([pl, ck]) => { PLCN = {playlists: pl.length, clocks: ck.length}; $$('#secs [data-sec="playlists"] span, #secs [data-sec="clocks"] span').forEach(el => el.textContent = PLCN[el.parentNode.dataset.sec]); }).catch(() => {}); }
@@ -1009,9 +1009,12 @@ function lib() {
     const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];
     $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g ? esc(g) : 'All'}</button>`).join('');
     $('#folders').querySelectorAll('[data-g]').forEach(b => b.onclick = () => { GENRE = b.dataset.g; FOLDER = ''; lib(); });
-    const subs = GENRE ? [...new Set(d.all_folders.filter(f => f.startsWith(GENRE + '/')).map(f => f.split('/').slice(0, 2).join('/')))] : [];
+    // one top folder only (Mixes: everything is in MIXES/…): skip it and show its subfolders straight away
+    const one = genres.length === 1 ? genres[0] : '', G = GENRE || one;
+    $('#folders').hidden = !!one;
+    const subs = G ? [...new Set(d.all_folders.filter(f => f.startsWith(G + '/')).map(f => f.split('/').slice(0, 2).join('/')))] : [];
     $('#subfolders').hidden = !subs.length;
-    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(1).join('/')) : 'All ' + esc(GENRE)}</button>`).join('');
+    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(1).join('/')) : (one ? 'All' : 'All ' + esc(G))}</button>`).join('');
     $('#subfolders').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FOLDER = b.dataset.f; lib(); });
     $('#res').innerHTML = d.items.map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
       const last = it.last ? 'played ' + ago(it.last) : 'not played yet';
