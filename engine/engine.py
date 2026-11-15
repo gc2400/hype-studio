@@ -536,7 +536,7 @@ def intro_kind(it):
 def song_kind(it):
     f = (it.get("folder") or "").upper()
     if f == "NEW" or f.startswith("NEW/") or f.startswith("NEW MUSIC") or f.endswith("/SUBMISSIONS"): return "new"
-    if "CLASSICS" in f: return "throwback"          # only the CLASSICS folders get the Throwback jingle (not GOLD)
+    if f == "CLASSICS" or f.startswith("CLASSICS/"): return "throwback"   # only the CLASSICS folder (and its subfolders) gets the Throwback jingle – not CHILL-CLASSICS, not GOLD (15 Nov)
     return None     # the ad box slideshow on the Hype Screen scene
 
 def scene_has_video(scene):
