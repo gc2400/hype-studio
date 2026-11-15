@@ -1,18 +1,18 @@
 {
- "time": "2026-11-15T16:06:38",
+ "time": "2026-11-15T16:22:46",
  "result": "ok",
- "commit": "fdc0806ac68838be81a835e20ab02f3f43cd94f9",
- "subject": "History \u2192 Audience: the breakdown as tabs (Countries \u00b7 Devices \u00b7 Apps / browsers \u00b7 Streams \u00b7 How long they stay) in one clean table with devices, time and share; Live Layer hidden (opacity filter) while a jingle / TOH plays in Music video and on the Branding scene",
+ "commit": "f5c8233a1bc2e75d7f7a329148badd6f697999bc",
+ "subject": "History \u2192 Audience: Songs (gainers / losers vs a normal song at that weekday + hour, by song or artist, 7/30/90 days, every play, CSV, \ud83d\udd25 from Hype Live) and By time (day graph with normal-for-this-weekday, peaks, devices, best hour, weekday x hour heatmap); plays + 5-min points kept 400 days; one-time import of Hype Live's history (?hype_studio_stats_export)",
  "log": [
-  "16:05:53 update 28cc0aca \u2192 fdc0806a \u00b7 2 file(s): engine/engine.py, web/panel/history.html",
-  "16:05:53 restart hype-engine",
-  "16:06:38 installed OK \u00b7 restarted: hype-engine"
+  "16:22:01 update fdc0806a \u2192 f5c8233a \u00b7 3 file(s): engine/audstats.py, engine/engine.py, web/panel/history.html",
+  "16:22:01 restart hype-engine",
+  "16:22:46 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Ozuna x Jory Boy x \u00d1engo Flow \u2013 Vulnerable",
-  "listeners": 5,
+  "song": "Shenseea x Asake \u2013 Playtime",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
