@@ -2074,6 +2074,8 @@ class Engine:
             upcoming = ([dict(self.liq_next, locked=True)] if self.liq_next else []) + self.plan
             upcoming = [dict(u, air=round(self.length(u), 1)) for u in upcoming]      # air = START → (smart) MIX: what is really heard
             if n.get("path"): n["air"] = round(self.length(n), 1)
+            if n.get("section") == "music" and FIRE_NOW.get("t") and abs(float(FIRE_NOW["t"]) - (n.get("started") or 0)) < 30:
+                n["fire"] = int(FIRE_NOW.get("n") or 0)       # 🔥 votes for the song on air (Hype Live sync, ~every minute)
             try:      # the cover (Hype Live's cover store) for the player; the next songs are fetched ahead so theirs is ready
                 if n.get("section") == "music": n["cover"] = cover_url(n.get("artist"), n.get("title"))
                 for u in [u for u in upcoming if u.get("section") == "music"][:3]: cover_url(u.get("artist"), u.get("title"))
@@ -2554,6 +2556,7 @@ def aud_sampler():
         time.sleep(15)
 HL_IMPORT = "/var/lib/hype/hl_stats_import.json"
 STATS_BUSY = threading.Lock()
+FIRE_NOW = {}     # {"t": start of the song on air, "n": 🔥 votes so far} from Hype Live's sync answer
 def stats_jobs_safe():
     with STATS_BUSY:
         try: stats_jobs()
@@ -3921,6 +3924,7 @@ def hl_sync_loop():
                     st = media_in_state(); ok["media"] = all(re.sub(r"[^A-Za-z0-9_-]", "", str(i.get("id") or "")) in st for i in (d["media"] or {}).get("items") or [])
                 except Exception as e: ok["media"] = False; log.warning("sync media: %s", e)
             MEDIA_LINK.update(t=time.time(), ok=True, error="")
+            if isinstance(d.get("fire_now"), dict): FIRE_NOW.clear(); FIRE_NOW.update(d["fire_now"])
             if d.get("fire"):          # 🔥 votes per play (Hype Live keeps the votes; Studio's song report shows them per play)
                 try: audstats.set_fire(d["fire"])
                 except Exception as e: log.warning("sync fire: %s", e)

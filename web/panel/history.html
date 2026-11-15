@@ -53,6 +53,7 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
 .sbox{background:var(--deep);border:1px solid var(--line);border-radius:14px;padding:12px}.sbox h3{letter-spacing:.06em}
 .stab td.rk{color:var(--mut);font-weight:800;width:1%;text-align:left!important;font-family:Inter,system-ui,sans-serif}.stab td.nm b{display:block;font-weight:800}.stab td.nm span{color:var(--mut);font-size:12px}
 .sbar{display:inline-block;width:70px;height:8px;border-radius:6px;background:var(--line);overflow:hidden;vertical-align:middle;margin-left:8px}.sbar i{display:block;height:100%}
+th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-size:10px;margin-top:2px}
 .stab td{padding:6px 8px}.stab td:not(:first-child){font-family:'JetBrains Mono',monospace;text-align:right;white-space:nowrap;width:1%}.stab th:not(:first-child){text-align:right}.stab tr{cursor:pointer}.stab tr:hover td{background:var(--card2)}
 .up{color:var(--g)}.dn{color:var(--r)}.stab td small{display:block;color:var(--mut);font-family:Inter,system-ui,sans-serif}
 .hm{border-collapse:separate;border-spacing:2px;font-size:11px}.hm td{width:34px;height:24px;text-align:center;border-radius:5px;padding:0;border:0;font-family:'JetBrains Mono',monospace}.hm th{position:static;padding:2px 4px;font-size:10px;letter-spacing:0;border:0}
@@ -63,20 +64,20 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
 <body>
 <div class="wrap">
   <header id="hhead"></header><script src="/panel/header.js?v=1793567541"></script>
-  <div class="row" style="gap:6px" role="tablist" aria-label="View"><button class="btn on" id="vDay" role="tab">Played list</button><button class="btn" id="vSongs" role="tab">Song report</button><button class="btn" id="vAud" role="tab">Audience</button><button class="btn" id="vWeek" role="tab">Library report</button></div>
+  <div class="row" style="gap:6px" role="tablist" aria-label="View"><button class="btn on" id="vDay" role="tab">Played list</button><button class="btn" id="vSongs" role="tab">Song report</button><button class="btn" id="vAud" role="tab">Audience</button><button class="btn" id="vWeek" role="tab">Station report</button></div>
     <section class="card" id="songCard" hidden>
       <div class="row"><span class="row" style="gap:4px" id="sDays"><button class="btn" data-d="7">7 days</button><button class="btn on" data-d="30">30 days</button><button class="btn" data-d="90">90 days</button></span>
         <span class="row" style="gap:4px" id="sBy"><button class="btn on" data-b="song">By song</button><button class="btn" data-b="artist">By artist</button></span>
         <a class="btn" id="sCsv" title="Every measured play as a spreadsheet">⬇ CSV</a><span class="muted" id="sNote"></span></div>
       <div class="wgrid">
-        <div class="sbox"><h3 class="up">▲ GAINERS</h3><table class="stab"><thead><tr><th></th><th id="sHd1">Song</th><th>Plays</th><th>Radio</th><th>TV</th><th>🔥 / play</th><th>Score</th></tr></thead><tbody id="sBest"></tbody></table></div>
-        <div class="sbox"><h3 class="dn">▼ LOSERS</h3><table class="stab"><thead><tr><th></th><th id="sHd2">Song</th><th>Plays</th><th>Radio</th><th>TV</th><th>🔥 / play</th><th>Score</th></tr></thead><tbody id="sWorst"></tbody></table></div>
+        <div><h3>Gainers <small>– listeners / viewers gained compared with a normal song at that weekday + hour</small></h3><table class="stab"><thead><tr><th id="sHd1">Song</th><th>Plays</th><th>Radio</th><th>TV</th><th>🔥</th><th>Score</th></tr></thead><tbody id="sBest"></tbody></table></div>
+        <div><h3>Losers <small>– lost the most</small></h3><table class="stab"><thead><tr><th id="sHd2">Song</th><th>Plays</th><th>Radio</th><th>TV</th><th>🔥</th><th>Score</th></tr></thead><tbody id="sWorst"></tbody></table></div>
       </div>
       <div class="muted">Radio / TV = listeners / viewers gained or lost while the song played, compared with a normal song at that weekday and hour (so late-night songs aren't punished), measured when people hear it. Score = radio + TV + ½ × 🔥 per play. Only songs with 3+ plays. Click a row for every play. With a small audience one play says little: trust songs with many plays.</div>
       <div id="sPlays" hidden><h3 id="sPlaysT"></h3><div class="scroll2"><table><thead><tr><th>When</th><th>Radio</th><th>TV</th><th>vs normal</th><th>🔥</th></tr></thead><tbody id="sPlaysB"></tbody></table></div></div>
     </section>
   <section class="card" id="audCard" hidden>
-    <div class="row" style="gap:4px" id="aViews" role="tablist" aria-label="Audience view"><button class="btn on" data-v="time">By time</button><button class="btn" data-v="who">Who &amp; where</button></div>
+    <div class="row" style="gap:4px" id="aViews" role="tablist" aria-label="Audience view"><button class="btn on" data-v="who">Listeners &amp; viewers</button><button class="btn" data-v="time">Trends</button></div>
     <div id="tView" hidden style="display:flex;flex-direction:column;gap:10px">
       <div class="row"><span class="row" style="gap:4px" id="tWhich"><button class="btn on" data-w="today">Today</button><button class="btn" data-w="yesterday">Yesterday</button><button class="btn" data-w="avg7">Average day · 7 days</button><button class="btn" data-w="avg30">Average day · 30 days</button></span></div>
       <div class="kpis" id="tKpi"></div>
@@ -118,7 +119,7 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
       <a class="btn" id="csv" title="Download this day as a spreadsheet (proof of play)">⬇ CSV</a>
     </div>
     <div class="muted" id="sum"></div>
-    <div class="scroll"><table><thead><tr><th>Time</th><th>Artist – title</th><th>Folder</th><th>Type</th><th>Length</th><th>TV</th><th title="Radio listeners (own streams + Streamerr) · TV viewers, at the end of the item">Audience <span style="font-weight:500;text-transform:none;letter-spacing:0">radio • TV</span></th><th title="Radio · TV gained ▲ / lost ▼ during the item (from its start to the start of the next)">Change</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <div class="scroll"><table><thead><tr><th>Time</th><th>Artist – title</th><th>Folder</th><th>Type</th><th>Length</th><th>TV</th><th title="Radio listeners (own streams + Streamerr) · TV viewers, at the end of the item">Audience<span class="sub">radio • TV</span></th><th title="Radio · TV gained ▲ / lost ▼ during the item (from its start to the start of the next)">Change<span class="sub">radio • TV</span></th></tr></thead><tbody id="rows"></tbody></table></div>
   </section>
 </div>
 <script>
@@ -178,7 +179,7 @@ let WD = null;
 $('#wCsv').onclick = () => {
   const d = WD; if (!d) return;
   const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"', L = [], row = (...a) => L.push(a.map(q).join(';'));
-  row('Hype Studio – library report', 'week ' + d.week, d.from + ' – ' + d.to); row();
+  row('Hype Studio – station report', 'week ' + d.week, d.from + ' – ' + d.to); row();
   const T = d.totals; row('Totals'); row('Songs played', T.songs); row('Different songs', T.unique_songs); row('With a music video', T.videos); row('Jingles & sweepers', T.jingles); row('Mixes', T.mixes); row('Never played', d.never.count, 'of ' + d.never.of); row();
   row('Top songs', 'Plays'); d.top_songs.forEach(r => row(...r)); row();
   row('Top artists', 'Plays'); d.top_artists.forEach(r => row(...r)); row();
@@ -191,7 +192,7 @@ $('#wCsv').onclick = () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + L.join('\r\n')], {type: 'text/csv'}));
   a.download = 'Hype_week_report_' + d.from + '.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 };
-$('#wPdf').onclick = () => { const t = document.title; document.title = 'Hype library report ' + (WD ? WD.from : ''); window.print(); setTimeout(() => document.title = t, 500); };
+$('#wPdf').onclick = () => { const t = document.title; document.title = 'Hype station report ' + (WD ? WD.from : ''); window.print(); setTimeout(() => document.title = t, 500); };
 $('#wPrev').onclick = () => { W++; wLoad(); }; $('#wNext').onclick = () => { if (W > 0) { W--; wLoad(); } };
 // ---- Audience: who listens / watches on our own streams (sessions: device, app, country, how long) ----
 let AD = 1, AK = '', AT = null;
@@ -232,18 +233,17 @@ function aLoad() {
 $$('#aDays [data-d]').forEach(b => b.onclick = () => { AD = +b.dataset.d; $$('#aDays [data-d]').forEach(x => x.classList.toggle('on', x === b)); aLoad(); });
 $$('#aKind [data-k]').forEach(b => b.onclick = () => { AK = b.dataset.k; $$('#aKind [data-k]').forEach(x => x.classList.toggle('on', x === b)); aLoad(); });
 // ---- Audience → Songs / By time ----
-let AV = 'time', SD = 30, SB = 'song', TW = 'today', HM = 'rt', TD = null;
+let AV = 'who', SD = 30, SB = 'song', TW = 'today', HM = 'rt', TD = null;
 const sg = v => v == null ? '–' : `<span class="${v > 0.05 ? 'up' : v < -0.05 ? 'dn' : ''}">${v > 0 ? '+' : ''}${v.toFixed(1)}</span>`;
 const dt = t => { const d = new Date(t * 1000); return d.toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'}) + ' ' + d.toTimeString().slice(0, 5); };
-function sRows(list, good) {
-  const mx = Math.max(0.1, ...list.map(x => Math.abs(x.score)));
-  return list.length ? list.map((x, i) => `<tr data-k="${esc(x.key)}" data-n="${esc(x.name)}"><td class="rk">${i + 1}</td><td class="nm">${SB === 'artist' ? `<b>${esc(x.name)}</b>` : `<b>${esc(x.title)}</b><span>${esc(x.artist)}</span>`}</td><td>${x.plays}</td><td>${sg(x.radio)}</td><td>${sg(x.tv)}</td><td>${x.fire == null ? '–' : x.fire}</td><td>${sg(x.score)}<span class="sbar"><i style="width:${Math.max(4, Math.abs(x.score) / mx * 100)}%;background:${good ? 'var(--g)' : 'var(--r)'}"></i></span></td></tr>`).join('')
-    : '<tr><td colspan="7" class="muted">Not enough plays yet (a song needs 3+ plays)</td></tr>';
+function sRows(list) {
+  return list.length ? list.map(x => `<tr data-k="${esc(x.key)}" data-n="${esc(x.name)}"><td>${esc(x.name)}</td><td>${x.plays}</td><td>${sg(x.radio)}</td><td>${sg(x.tv)}</td><td>${x.fire == null ? '–' : x.fire}</td><td>${sg(x.score)}</td></tr>`).join('')
+    : '<tr><td colspan="6" class="muted">Not enough plays yet (a song needs 3+ plays)</td></tr>';
 }
 function sLoad() {
   $('#sCsv').href = '../api/audsongs?csv=1&days=' + SD;
   fetch('../api/audsongs?days=' + SD + '&by=' + SB).then(r => r.json()).then(d => {
-    $('#sBest').innerHTML = sRows(d.best, true); $('#sWorst').innerHTML = sRows(d.worst, false);
+    $('#sBest').innerHTML = sRows(d.best); $('#sWorst').innerHTML = sRows(d.worst);
     $('#sHd1').textContent = $('#sHd2').textContent = SB === 'artist' ? 'Artist' : 'Song';
     const im = d.imported || {};
     $('#sNote').textContent = d.measured + ' plays measured' + (d.since ? ' since ' + dt(d.since).replace(/ \d\d:\d\d$/, '') : '') + ' · ' + d.listed + ' with 3+ plays' +
@@ -312,7 +312,7 @@ function view(v) {
   $('#vWeek').classList.toggle('on', v === 'w'); $('#vDay').classList.toggle('on', v === 'd'); $('#vAud').classList.toggle('on', v === 'a'); $('#vSongs').classList.toggle('on', v === 's');
   if (v === 's') sLoad();
   if (v === 'w') wLoad();
-  clearInterval(AT); if (v === 'a') { let av = 'time'; try { av = localStorage.getItem('hypeAudView') || 'time'; } catch (e) {} aView(av === 'songs' ? 'time' : av); }
+  clearInterval(AT); if (v === 'a') { aView('who'); }
   try { localStorage.setItem('hypeHistView', v); } catch (e) {}
 }
 $('#vDay').onclick = () => view('d'); $('#vWeek').onclick = () => view('w'); $('#vAud').onclick = () => view('a'); $('#vSongs').onclick = () => view('s');
