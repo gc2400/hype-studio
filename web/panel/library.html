@@ -320,7 +320,7 @@ function range(a, b) {      // Shift-click: everything from the song you clicked
 let MVTO = '';
 function clearPick() { if (!PICK.size) return; PICK.clear(); MVTO = ''; LASTCK = null; selUi(); renderList(); }
 // the selection goes when you do something else: a click outside the list / move panel, Escape, another folder / search
-document.addEventListener('click', e => { if (PICK.size && !e.target.closest('#res, #mvBox')) clearPick(); });
+document.addEventListener('click', e => { if (PICK.size && e.target.isConnected && !e.target.closest('#res, #mvBox')) clearPick(); });   // (a re-drawn row / folder button is no longer in the page: not "outside")
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && PICK.size) clearPick(); });
 function selUi() {      // songs selected: the move panel takes the place of the editor on the right
   const on = PICK.size > 0;
