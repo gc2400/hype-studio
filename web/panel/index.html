@@ -674,8 +674,9 @@ function renderScenes() {
     `<button class="btn scene llbtn ${ll ? 'llon' : ''}" id="bLL" aria-pressed="${ll}" title="Shoutouts, polls, chat, photos … from Hype Live on every scene. Off is temporary: Music video, Hype Screen, Branding or AUTO SCENES turns it on again">Live Layer<small>${ll ? 'on · all scenes' : 'off · for now'}</small></button>`;
   if ($('#scenes').dataset.h !== sb) { $('#scenes').innerHTML = sb; $('#scenes').dataset.h = sb;
     $('#bLL').onclick = () => { const on = !(S.live_layer !== false); cmd('live_layer', {on}).then(() => { S.live_layer = on; $('#scenes').dataset.h = ''; renderScenes(); toast(on ? 'Live Layer on' : 'Live Layer off – back on at Music video, Hype Screen, Branding or AUTO'); }); }; }
-  const G = SGEDIT ? SGEDIT.list : groups(); if (SG >= G.length || SG < -3) SG = -1;
-  const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras ${SG === -1 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP ${SG === -2 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA ${SG === -3 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)} ${SG === i ? (SGHIDE ? '▸' : '▾') : ''}</button>`).join('') + (SGEDIT ? '' : '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ GROUP</button>') + (!SGEDIT && SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">✎</button>' : '') + (!SGEDIT && !CAMEDIT && SG < 0 && !SGHIDE ? '<button class="btn sm" data-camedit title="Arrange these scenes: move, remove, add back">✎</button>' : '');
+  const G = SGEDIT ? SGEDIT.list : groups(); if (SG >= G.length || SG < -4) SG = -1;
+  const SSL = S.slideshows || [], SSN = SSL.map(x => x.scene);
+  const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras ${SG === -1 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP ${SG === -2 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA ${SG === -3 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -4 && !SGHIDE ? 'on' : ''}" data-sg="-4" title="Full-screen slideshows: every folder in branding/slideshow/photos and /videos is a scene">SLIDESHOW ${SG === -4 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)} ${SG === i ? (SGHIDE ? '▸' : '▾') : ''}</button>`).join('') + (SGEDIT ? '' : '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ GROUP</button>') + (!SGEDIT && SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">✎</button>' : '') + (!SGEDIT && !CAMEDIT && SG < 0 && !SGHIDE ? '<button class="btn sm" data-camedit title="Arrange these scenes: move, remove, add back">✎</button>' : '');
   if ($('#sgTabs').dataset.h !== tabs) { $('#sgTabs').innerHTML = tabs; $('#sgTabs').dataset.h = tabs;
     $$('#sgTabs [data-sg]').forEach(b => b.onclick = () => { const n = +b.dataset.sg;
       if (n === SG && !SGEDIT) SGHIDE = !SGHIDE; else { SG = n; SGHIDE = false; }      // click the open group again = fold it away
@@ -686,22 +687,53 @@ function renderScenes() {
   }
   $('#sgEdit').hidden = !SGEDIT; if (SGEDIT && SG >= 0 && document.activeElement !== $('#sgName')) $('#sgName').value = (G[SG] || {}).name || '';
   const PIPS = (S.pip_frames || []).map(f => 'PIP@' + f).concat(['Up next']);
-  const list = SGEDIT && SG >= 0 ? [...SCENES.map(x => x[0]), ...CAMS, ...PIPS, ...MSC] : SG === -1 ? CAMS : SG === -2 ? PIPS : SG === -3 ? MSC : ((G[SG] || {}).scenes || []);
+  const list = SGEDIT && SG >= 0 ? [...SCENES.map(x => x[0]), ...CAMS, ...PIPS, ...MSC, ...SSN] : SG === -1 ? CAMS : SG === -2 ? PIPS : SG === -3 ? MSC : SG === -4 ? SSN : ((G[SG] || {}).scenes || []);
   const scLive = n => n.startsWith('PIP@') ? S.scene === 'PIP' && S.pip === n.slice(4) : S.scene === n;
   const inG = SGEDIT && SG >= 0 ? new Set(G[SG].scenes) : null;
-  const btn = n => `<button class="btn scene ${scLive(n) ? 'live' : ''} ${inG && inG.has(n) ? 'ing' : ''}" data-scene="${esc(n)}">${esc(scName(n))}</button>`;
-  const mx = SG < 0 && !SGEDIT; if (CAMEDIT && (SG >= 0 || CAMEDIT.tab !== LTAB())) CAMEDIT = null;
+  const ssi = n => SSL.find(x => x.scene === n);
+  const btn = n => { const x = ssi(n); return `<button class="btn scene ${scLive(n) ? 'live' : ''} ${inG && inG.has(n) ? 'ing' : ''}" data-scene="${esc(n)}" ${x ? `data-ssf="${esc(x.folder)}" title="Drop ${x.kind} here to add them"` : ''}>${esc(scName(n))}${x ? `<small>${x.n} ${x.kind === 'photos' ? 'photo' : 'video'}${x.n === 1 ? '' : 's'}</small>` : ''}</button>`; };
+  const mx = SG < 0 && SG !== -4 && !SGEDIT; if (CAMEDIT && (SG >= 0 || CAMEDIT.tab !== LTAB())) CAMEDIT = null;
   const CL = mx ? camLayout() : null;
   const html = mx && CAMEDIT ? CL.cells.map((n, i) => n ? `<div class="camc ${CAMPICK === i ? 'pick' : ''}" draggable="true" data-ci="${i}"><span class="btn scene">${esc(scName(n))}</span><button class="camx" data-cx="${i}" aria-label="Remove ${esc(scName(n))}" title="Take it off the grid">×</button></div>`
         : `<div class="camc empty ${CAMPICK === i ? 'pick' : ''}" data-ci="${i}"></div>`).join('')
     : mx ? CL.cells.map(n => n ? btn(n) : '<span></span>').join('')
-    : list.map(btn).join('') || '<span class="muted" style="grid-column:1/-1">Empty group – press ✎ and click scenes to add them.</span>';
+    : list.map(btn).join('') + (SG === -4 && !SGEDIT ? '<button class="btn scene" data-ssnew title="A new slideshow = a new folder; drop photos or videos on its button">+ NEW<small>slideshow</small></button>' : '')
+      || '<span class="muted" style="grid-column:1/-1">Empty group – press ✎ and click scenes to add them.</span>';
   const cg = $('#camScenes'); cg.hidden = SGHIDE && !SGEDIT; cg.classList.toggle('mx', mx); cg.classList.toggle('cedit', !!CAMEDIT); if (cg.dataset.h !== html) { cg.innerHTML = html; cg.dataset.h = html; }
   $('#camEdit').hidden = !CAMEDIT;
   if (CAMEDIT) camEditBind();
+  const nb = $('#camScenes [data-ssnew]'); if (nb) nb.onclick = () => {
+    const name = prompt('Name of the new slideshow (e.g. Drone, Party EQ):'); if (!name) return;
+    const kind = confirm('OK = a PHOTO slideshow\nCancel = a VIDEO slideshow') ? 'photos' : 'videos';
+    cmd('slideshow_new', {name, kind}).then(r => { if (!r || r.ok === false) return toast((r && r.error) || 'Not made', 1); toast(r.scene + ' – drop ' + kind + ' on its button (or in ' + r.folder + '); the scene is ready within 30 s'); }); };
+  $$('#camScenes [data-ssf]').forEach(b => { b.ondragover = e => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); b.classList.add('over'); } };
+    b.ondragleave = () => b.classList.remove('over');
+    b.ondrop = e => { e.preventDefault(); b.classList.remove('over'); ssUpload([...e.dataTransfer.files], b.dataset.ssf); }; });
   $$('#scenes [data-scene], #camScenes [data-scene]').forEach(b => b.onclick = () => {
     if (SGEDIT && SG >= 0 && b.closest('#camScenes')) { const g = SGEDIT.list[SG], n = b.dataset.scene; g.scenes = g.scenes.includes(n) ? g.scenes.filter(x => x !== n) : [...g.scenes, n]; return renderScenes(); }
     cmd('scene', {scene: b.dataset.scene}).then(r => toast(r && r.auto ? b.dataset.scene + ' – AUTO SCENES on, the TV follows the music' : r && r.hold ? b.dataset.scene + ' held for this song – the next song is automatic again (AUTO SCENES off = keep it)' : 'Scene held: press AUTO SCENES to follow the music again')); });
+}
+// drop photos / videos on a SLIDESHOW button: uploaded in pieces into its folder (like the media pads)
+async function ssUpload(files, folder) {
+  const vid = folder.includes('/videos/'), ok_ = vid ? /\.(mp4|mov|mkv|webm|m4v)$/i : /\.(jpe?g|png|webp)$/i;
+  files = files.filter(f => ok_.test(f.name)); if (!files.length) return toast(vid ? 'Only videos (mp4, mov, webm) in a video slideshow' : 'Only photos (jpg, png, webp) in a photo slideshow', 1);
+  let n = 0;
+  for (const f of files) {
+    const id = [...new Uint8Array(await crypto.subtle.digest('SHA-1', new TextEncoder().encode([f.name, f.size, f.lastModified, folder].join('|'))))].map(x => x.toString(16).padStart(2, '0')).join('');
+    const q = '&id=' + id + '&name=' + encodeURIComponent(f.name) + '&folder=' + encodeURIComponent(folder) + '&total=' + f.size, CH = 8 * 1024 * 1024;
+    let off = 0, tries = 0, done = false;
+    try { const r = await api('upload/status?id=' + id); if (r && r.done) done = true; else off = (r && r.have) || 0; } catch (e) {}
+    while (!done) {
+      toast(f.name + ' · ' + (f.size ? Math.floor(off / f.size * 100) : 0) + ' %');
+      let r = null;
+      try { const res = await fetch('../api/upload/chunk?off=' + off + q, {method: 'POST', headers: {'Content-Type': 'application/octet-stream'}, body: f.slice(off, Math.min(f.size, off + CH))}); r = await res.json(); } catch (e) {}
+      if (!r) { if (++tries > 20) { toast(f.name + ': upload stopped – try again', 1); break; } await new Promise(k => setTimeout(k, 1000 * tries)); continue; }
+      if (r.ok === false) { toast(f.name + ': ' + (r.error || 'failed'), 1); break; }
+      tries = 0; if (r.done) done = true; else off = +r.have || 0;
+    }
+    if (done) n++;
+  }
+  if (n) toast(n + (n === 1 ? ' file' : ' files') + ' added – in the slideshow within 30 s');
 }
 function camEditBind() {
   const L = CAMEDIT, swap = (a, b) => { if (a === b || a < 0 || b < 0) return; [L.cells[a], L.cells[b]] = [L.cells[b], L.cells[a]]; };

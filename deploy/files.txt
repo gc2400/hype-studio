@@ -75,3 +75,4 @@ engine/mp3gate.py|/opt/hype/mp3gate.py|644|hype-mp3gate
 system/hype-mp3gate.service|/etc/systemd/system/hype-mp3gate.service|644|daemon-reload
 deploy/reload_pages.txt|/var/lib/hype/reload_pages|644|-
 engine/audstats.py|/opt/hype/audstats.py|644|hype-engine
+engine/slideshow.py|/opt/hype/slideshow.py|644|hype-engine

@@ -6,7 +6,7 @@ import shutil, os, re, json, time, random, sqlite3, socket, threading, logging, 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 import obsws_python as obs
-import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live, tickers, audstats
+import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live, tickers, audstats, slideshow
 
 ROOT = "/srv/hype"; DB = "/srv/hype-data/library.db"; WEB = "/var/www/studio"; WAVES = "/srv/hype-data/wave"
 CONF = json.load(open("/etc/hype/engine.json"))
@@ -1800,6 +1800,16 @@ class Engine:
                         if v_.get("file") == d.get("id"): v_[k_] = on_
                     jdump(st_, MEDIA_IN)
                 return {"ok": True}
+            elif action == "slideshow_new":     # Scenes → SLIDESHOW → + NEW: a new folder = a new scene within ~30 s
+                kind = d.get("kind") if d.get("kind") in ("photos", "videos") else "photos"
+                name = re.sub(r"[^\w .&()'-]", "", str(d.get("name") or ""), flags=re.U).strip()[:40]
+                if not name: return {"ok": False, "error": "give it a name"}
+                os.makedirs(os.path.join(slideshow.ROOT, kind, name), exist_ok=True)
+                try:
+                    import pwd, grp; os.chown(os.path.join(slideshow.ROOT, kind, name), pwd.getpwnam("upload").pw_uid, grp.getgrnam("hype").gr_gid)
+                except Exception: pass
+                os.chmod(os.path.join(slideshow.ROOT, kind, name), 0o2775)
+                return {"ok": True, "scene": slideshow.scene_name(kind, name), "folder": "branding/slideshow/%s/%s" % (kind, name)}
             elif action == "fetch_url":      # a picture / video / sound dragged from a website onto the pads: the server fetches it
                 return fetch_url(c, d)
             elif action == "media_stop":
@@ -2118,7 +2128,7 @@ class Engine:
             return {"show": SHOW["title"], "clock": cname[0] if cname else None, "now": n, "elapsed": round(el, 1), "upcoming": upcoming, "history": hist, "auto": self.auto,
                     "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
                     "tv_sound": "clip" if self.tv.split else "radio", "live_layer": bool(planner.get_setting(c, "live_layer", True)),
-                    "time": time.strftime("%H:%M:%S"), "server_time": time.time()}
+                    "time": time.strftime("%H:%M:%S"), "server_time": time.time(), "slideshows": slideshow.STATE["list"]}
 
 def pair_clip(c, clip_path):
     """Paired song: the TV plays the clip itself, with its own sound, from its own start cue, at radio loudness."""
@@ -2221,7 +2231,7 @@ def up_check(qs):
     uid = qs.get("id", [""])[0]
     if not re.fullmatch(r"[a-f0-9]{16,64}", uid): raise ValueError("bad upload id")
     folder = os.path.normpath(qs.get("folder", [""])[0]).strip("/"); parts = folder.split("/")
-    media = folder == "branding/media"          # Pads → MEDIA → ✎ EDIT: drop pictures / videos for the media pads
+    media = folder == "branding/media" or (len(parts) == 4 and parts[:2] == ["branding", "slideshow"] and parts[2] in ("photos", "videos"))   # media pads / a slideshow
     if (parts[0] not in UP_SECTIONS and not media) or ".." in parts or folder.startswith("."): raise ValueError("choose a library folder")
     d = os.path.join(ROOT, folder)
     if not os.path.isdir(d): raise ValueError("folder not found")
@@ -2417,6 +2427,25 @@ def load_specials():
     return str(d.get("version") or "")
 try: planner.SPECIALS[:] = json.load(open(SPECIALS_F))
 except Exception: pass
+
+def slideshow_loop():
+    """SLIDESHOW scenes (branding/slideshow/photos|videos/<name>): folders -> scenes every 30 s; a Videos scene on air gets
+    its next random video when one ends (checked every second)."""
+    last = 0
+    while True:
+        time.sleep(1)
+        try:
+            if time.time() - last > 30:
+                last = time.time(); c = dbc()
+                with E.tv.olock:
+                    slideshow.sync(E.tv.client(), float(planner.get_setting(c, "ss_photo_s", 8)), float(planner.get_setting(c, "ss_fade_s", 1)),
+                                   bool(planner.get_setting(c, "ss_random", True)))
+            if slideshow.is_slideshow(E.tv.scene) or slideshow.STATE.get("cur"):
+                with E.tv.olock:
+                    cl = E.tv.client()
+                    slideshow.drive(cl, cl.get_current_program_scene().current_program_scene_name)
+        except Exception as e:
+            log.warning("slideshow: %s", e); E.tv.cl = None; time.sleep(5)
 
 def watch_show():
     """Current show from hyperadio.nl (Pro.Radio schedule) every minute; week schedule hourly; temperature every 10 minutes."""
@@ -2749,7 +2778,7 @@ def get_settings():
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
             "jingle_hide": bool(planner.get_setting(c, "jingle_hide", True)), "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
-            "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "voice_per_hour": VOICE_AIR["per_hour"], "listener_keep_days": float(planner.get_setting(c, "listener_keep_days", 7)), "voice_max_plays": VOICE_AIR["max_plays"], "voice_intro": VOICE_AIR["intro"], "voices": voice_overview(), "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
+            "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "voice_per_hour": VOICE_AIR["per_hour"], "listener_keep_days": float(planner.get_setting(c, "listener_keep_days", 7)), "ss_photo_s": float(planner.get_setting(c, "ss_photo_s", 8)), "ss_fade_s": float(planner.get_setting(c, "ss_fade_s", 1)), "ss_random": bool(planner.get_setting(c, "ss_random", True)), "voice_max_plays": VOICE_AIR["max_plays"], "voice_intro": VOICE_AIR["intro"], "voices": voice_overview(), "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd, "relay": relay_public()}
 RELAY_CFG = "/etc/hype/relay.json"
 def relay_cfg():
@@ -2817,6 +2846,9 @@ def set_settings(d):
     if "id_intro" in d: planner.set_setting(c, "id_intro", bool(d["id_intro"]))
     if "voice_intro" in d: planner.set_setting(c, "voice_intro", bool(d["voice_intro"]))
     if "voice_per_hour" in d: planner.set_setting(c, "voice_per_hour", max(0, min(6, int(float(d["voice_per_hour"])))))
+    if "ss_photo_s" in d: planner.set_setting(c, "ss_photo_s", max(2.0, min(60.0, float(d["ss_photo_s"])))); slideshow.STATE["sig"].clear()
+    if "ss_fade_s" in d: planner.set_setting(c, "ss_fade_s", max(0.0, min(5.0, float(d["ss_fade_s"])))); slideshow.STATE["sig"].clear()
+    if "ss_random" in d: planner.set_setting(c, "ss_random", bool(d["ss_random"])); slideshow.STATE["sig"].clear()
     if "listener_keep_days" in d: planner.set_setting(c, "listener_keep_days", max(1, min(90, int(float(d["listener_keep_days"])))))
     if "voice_max_plays" in d: planner.set_setting(c, "voice_max_plays", max(1, min(20, int(float(d["voice_max_plays"])))))
     if "id_intro_max" in d: planner.set_setting(c, "id_intro_max", max(1, min(12, int(float(d["id_intro_max"])))))
@@ -4315,6 +4347,7 @@ if __name__ == "__main__":
     threading.Thread(target=recap_loop, daemon=True).start()
     threading.Thread(target=media_in_loop, daemon=True).start()
     threading.Thread(target=hl_sync_loop, daemon=True).start()
+    threading.Thread(target=slideshow_loop, daemon=True).start()
     # (charts go to the website only when you press Publish in the chart – no automatic sending any more)
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()
