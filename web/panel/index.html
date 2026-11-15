@@ -238,6 +238,12 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .pad.playing{box-shadow:0 0 0 3px var(--y)}
 .pad .bar{position:absolute;left:0;bottom:0;height:4px;background:var(--y);width:0}
 .pad.missing{opacity:.45}
+.lpad{padding-left:30px;padding-right:44px;text-shadow:0 1px 2px rgba(0,0,0,.6)}.lpad .lic{position:absolute;left:8px;top:7px;font-size:14px}
+.lpad.aired{filter:saturate(.55) brightness(.8)}.lpad .lpv,.lpad .lpin{position:absolute;top:3px;font-size:13px;line-height:1;padding:3px 4px;border-radius:6px;background:rgba(0,0,0,.4);cursor:pointer}
+.lpad .lpv{right:24px}.lpad .lpin{right:3px;color:#7A8FA3}.lpad .lpin.on{color:#FFE000}.lpad .rm{top:auto;bottom:6px}
+.padadd.over{outline:2px dashed var(--y)}
+#lpvBox{position:fixed;inset:0;background:rgba(3,10,18,.78);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+#lpvBox .in{background:var(--card,#0B2238);border:1px solid #17344F;border-radius:16px;padding:14px;width:min(720px,100%);display:flex;flex-direction:column;gap:10px}
 .pad .rm{position:absolute;top:2px;right:4px;border:0;background:rgba(0,0,0,.45);color:#fff;border-radius:6px;font-size:14px;line-height:1;padding:2px 6px;cursor:pointer}
 .pads.edit .pad{cursor:grab;outline:1px dashed rgba(255,255,255,.35)}
 .padadd.over{border-color:var(--y);color:var(--y)}
@@ -425,7 +431,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         <div class="row" id="mediaBar" hidden style="gap:6px;flex-wrap:wrap">
           <select id="mScene" aria-label="Media scene" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px"></select>
           <span class="row" style="gap:3px" id="mSound"><button class="btn sm" data-ms="mute" title="The video plays without sound">Mute</button><button class="btn sm" data-ms="duck" title="The video's sound plays, the music goes down">Duck</button><button class="btn sm" data-ms="off" title="The video's sound plays, the music is off">Music off</button></span>
-          <button class="btn sm yellow" id="mediaDone" hidden title="Stop editing">Done</button><input type="file" id="mFile" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,.mkv,.m4v" hidden>
+          <button class="btn sm yellow" id="mediaDone" hidden title="Stop editing">Done</button><div id="lpvBox" hidden role="dialog" aria-modal="true" aria-label="Preview"><div class="in"><div class="row" style="justify-content:space-between;gap:8px"><b class="lpvT"></b><button class="btn sm" onclick="lPreviewClose()">Close</button></div><div class="lpvBody"></div><div class="muted lpvC"></div></div></div><input type="file" id="mFile" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,.mkv,.m4v" hidden>
         </div>
         <div class="grid4 pads" id="pads"></div>
         <div class="padpg" id="padPg" hidden><button class="btn sm" id="pgPrev" aria-label="Previous page">◀</button><span id="pgTxt"></span><button class="btn sm" id="pgNext" aria-label="Next page">▶</button></div>
@@ -825,15 +831,19 @@ const PLAYING = {};   // path -> end time (ms)
 function loadPads() { return api('padbanks').then(b => { BANKS = b; if (bank >= BANKS.length) bank = 0; renderPads(); }); }
 setInterval(() => { if (!PEDIT && !document.hidden) api('padbanks').then(b => { if (JSON.stringify(b) !== JSON.stringify(BANKS)) { BANKS = b; if (bank >= BANKS.length) bank = 0; renderPads(); } }); }, 20000);   // new voice messages show up by themselves
 function renderPads() {
-  $('#padBanks').innerHTML = `<button class="btn sm ${bank === -1 ? 'on' : ''}" data-bank="-1" title="Pictures and videos from branding/media">MEDIA</button>` + BANKS.map((b, i) => { const nv = b.items.filter(p => p.voice && !p.played).length; return `<button class="btn sm ${i === bank ? 'on' : ''}" data-bank="${i}">${esc(b.name.replace(/^[^A-Za-z0-9]+\s*/u, ''))}${nv ? ` <b style="background:#FFE000;color:#061423;border-radius:8px;padding:0 5px;font-size:10px">${nv}</b>` : ''}</button>`; }).join('');
-  $$('#padBanks [data-bank]').forEach(b => b.onclick = () => { bank = +b.dataset.bank; if (bank === -1) loadMedia(); renderPads(); });
-  $('#mediaBar').hidden = bank !== -1;
-  $('#mediaDone').hidden = !(PEDIT && bank === -1);
+  const nl = LSN.items.filter(x => !x.played).length;
+  $('#padBanks').innerHTML = `<button class="btn sm ${bank === -2 ? 'on' : ''}" data-bank="-2" title="Voices, photos and videos from listeners (Hype Live), newest first">LISTENERS${nl ? ` <b style="background:#FFE000;color:#061423;border-radius:8px;padding:0 5px;font-size:10px">${nl}</b>` : ''}</button>` +
+    `<button class="btn sm ${bank === -1 ? 'on' : ''}" data-bank="-1" title="Your own pictures and videos from branding/media">MEDIA</button>` +
+    BANKS.map((b, i) => /^\W*VOICE$/u.test(b.name) ? '' : `<button class="btn sm ${i === bank ? 'on' : ''}" data-bank="${i}">${esc(b.name.replace(/^[^A-Za-z0-9]+\s*/u, ''))}</button>`).join('');
+  $$('#padBanks [data-bank]').forEach(b => b.onclick = () => { bank = +b.dataset.bank; if (bank === -1) loadMedia(); if (bank === -2) loadListeners(); renderPads(); });
+  $('#mediaBar').hidden = bank > -1;
+  $('#mediaDone').hidden = !(PEDIT && bank < 0);
   if (bank === -1) { $('#padEditBar').hidden = true; return renderMediaPads(); }
+  if (bank === -2) { $('#padEditBar').hidden = true; return renderListenerPads(); }
   const B = BANKS[bank] || {items: []}; $('#bankName').value = B.name || ''; $('#pads').classList.toggle('edit', PEDIT); $('#padEditBar').hidden = !PEDIT;
   const pg = padPage(B.items.length);
   $('#pads').innerHTML = B.items.map((p, i) => (!PEDIT && (i < pg[0] || i >= pg[1])) ? '' : `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE RADIO\s*[-–]\s*/i, '').replace(/^[^A-Za-z0-9]+\s*/u, ''))}<small>${fmt(p.duration)}${p.voice ? (p.played ? ' · ✓ played' : ' · NEW') : ''}${p.has_video ? ' · video' : ''}${p.missing ? ' · not found' : ''}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmpad="${i}" title="Remove">×</span>` : ''}</button>`).join('')
-    + (PEDIT ? '<button class="padadd" id="padDrop">drop here</button>' : '') || '<span class="muted">This bank is empty. Press ✎ EDIT and drag jingles from the library onto it.</span>';
+    + '<button class="padadd" id="padDrop" title="Drop a jingle from the library, or a sound file / link from a website">drop here</button>';
   $$('#pads [data-pad]').forEach(b => {
     const p = B.items[+b.dataset.pad];
 
@@ -847,7 +857,14 @@ function renderPads() {
     b.ondragover = e => { if (PEDIT) e.preventDefault(); };
     b.ondrop = e => { e.preventDefault(); e.stopPropagation(); padDrop(e.dataTransfer.getData('text/plain'), +b.dataset.pad); };
   });
-  if ($('#padDrop')) { $('#padDrop').ondragover = e => e.preventDefault(); $('#padDrop').ondrop = e => { e.preventDefault(); padDrop(e.dataTransfer.getData('text/plain'), B.items.length); }; }
+  if ($('#padDrop')) { const pd = $('#padDrop'); pd.ondragover = e => { e.preventDefault(); pd.classList.add('over'); }; pd.ondragleave = () => pd.classList.remove('over');
+    pd.ondrop = e => { e.preventDefault(); pd.classList.remove('over'); const t = e.dataTransfer.getData('text/plain') || '';
+      if (t.startsWith('lib:') || t.startsWith('pad:')) { padDrop(t, B.items.length); if (!PEDIT) padSaveQuiet(); return; }
+      const url = webUrl(e.dataTransfer); if (!url) return toast('Drop a jingle from the library, or a sound from a website', 1);
+      pd.textContent = 'fetching…';
+      cmd('fetch_url', {url, target: 'bank', bank_id: PEDIT ? null : B.id}).then(r => { if (!r || r.ok === false) { renderPads(); return toast((r && r.error) || 'Could not fetch it', 1); }
+        toast('Added: ' + r.path.split('/').pop() + ' (plays in about a minute, once the library has it)');
+        if (PEDIT) { B.items.push({path: r.path, label: r.path.split('/').pop().replace(/\.[^.]+$/, '')}); renderPads(); } else loadPads(); }); }; }
 }
 // pads in pages of 4 rows (16): ◀ ▶ under the pads; while editing all pads show (drag anywhere)
 const PADS_PER_PAGE = 16, PGS = {};
@@ -860,6 +877,15 @@ function padPage(n) {
 }
 $('#pgPrev').onclick = () => { PGS[String(bank)] = Math.max(0, (PGS[String(bank)] || 0) - 1); renderPads(); };
 $('#pgNext').onclick = () => { PGS[String(bank)] = (PGS[String(bank)] || 0) + 1; renderPads(); };
+function padSaveQuiet() { api('plan/save_padbanks', {banks: BANKS}).then(r => { if (r.error) toast(r.error, 1); else toast('Pad added'); loadPads(); }); }
+// a link dragged from a website: the picture / video / sound link (an image's own address, or a link to a file)
+function webUrl(dt) {
+  let u = (dt.getData('text/uri-list') || '').split('\n').map(x => x.trim()).find(x => x && !x.startsWith('#'));
+  const h = dt.getData('text/html'); const m = h && h.match(/<(?:img|video|source|audio)[^>]+src="([^"]+)"/i);
+  if (m && /^https?:/i.test(m[1].replace(/&amp;/g, '&'))) u = m[1].replace(/&amp;/g, '&');
+  if (!u) { const t = dt.getData('text/plain'); if (/^https?:\/\//i.test(t || '')) u = t.trim(); }
+  return u || null;
+}
 function padDrop(d, pos) {
   const B = BANKS[bank]; if (!B) return;
   if (d.startsWith('pad:')) { const it = B.items.splice(+d.slice(4), 1)[0]; B.items.splice(Math.min(pos, B.items.length), 0, it); return renderPads(); }
@@ -874,25 +900,71 @@ function renderMediaPads() {
   $('#mScene').innerHTML = `<option value="manual" ${MSCENE === 'manual' ? 'selected' : ''}>Manual – I pick the scene</option>` + MEDIA.scenes.map(n => `<option ${n === MSCENE ? 'selected' : ''}>${esc(n)}</option>`).join('');
   $$('#mSound [data-ms]').forEach(b => b.classList.toggle('on', b.dataset.ms === MSOUND));
   const cur = (S && S.media) || null;
-  const pg = padPage(MEDIA.files.length);
-  $('#pads').innerHTML = MEDIA.files.map((m, i) => (!PEDIT && (i < pg[0] || i >= pg[1])) ? '' : `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.listener ? '#062A1E' : m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.listener ? '#3DDC97' : m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}" ${m.listener && m.listener.caption ? `title="${esc(m.listener.caption)}"` : ''}>${m.listener ? '📱 ' + esc(m.listener.name + (m.listener.city ? ' · ' + m.listener.city : '')) : esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.listener ? 'listener ' + (m.kind === 'video' ? 'video · ' + fmt(m.duration) : 'photo') + (Date.now() / 1000 - (m.listener.added || 0) < 86400 ? ' · NEW' : '') : m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('') + (PEDIT ? '<button class="padadd" id="mDrop" title="Drop pictures or videos here, or click to choose them">drop here</button>' : '')
-    || '<span class="muted">Upload pictures (png, jpg) and videos (mp4, mov) to <b>branding/media</b>, then they show here.</span>';
+  const own = MEDIA.files.filter(m => !m.listener), pg = padPage(own.length); let J = -1;
+  $('#pads').innerHTML = MEDIA.files.map((m, i) => m.listener ? '' : (++J, !PEDIT && (J < pg[0] || J >= pg[1])) ? '' : `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.listener ? '#062A1E' : m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.listener ? '#3DDC97' : m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}" ${m.listener && m.listener.caption ? `title="${esc(m.listener.caption)}"` : ''}>${m.listener ? '📱 ' + esc(m.listener.name + (m.listener.city ? ' · ' + m.listener.city : '')) : esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.listener ? 'listener ' + (m.kind === 'video' ? 'video · ' + fmt(m.duration) : 'photo') + (Date.now() / 1000 - (m.listener.added || 0) < 86400 ? ' · NEW' : '') : m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('') + '<button class="padadd" id="mDrop" title="Drop pictures or videos here (from your computer or a website), or click to choose them">drop here</button>';
   $('#pads').classList.toggle('edit', PEDIT);
   const md = $('#mDrop'); if (md) { md.onclick = () => $('#mFile').click();
     md.ondragover = e => { e.preventDefault(); md.classList.add('over'); }; md.ondragleave = () => md.classList.remove('over');
-    md.ondrop = e => { e.preventDefault(); md.classList.remove('over'); mediaUpload([...e.dataTransfer.files]); }; }
+    md.ondrop = e => { e.preventDefault(); md.classList.remove('over');
+      if (e.dataTransfer.files && e.dataTransfer.files.length) return mediaUpload([...e.dataTransfer.files]);
+      const url = webUrl(e.dataTransfer); if (!url) return;
+      md.textContent = 'fetching…';
+      cmd('fetch_url', {url, target: 'media'}).then(r => { if (!r || r.ok === false) { renderPads(); return toast((r && r.error) || 'Could not fetch it', 1); }
+        toast(r.later ? 'Video fetched – it shows as a pad in a minute or two (being made 16:9)' : 'Added to media: ' + r.file); setTimeout(loadMedia, r.later ? 60000 : 2500); setTimeout(loadMedia, 25000); }); }; }
   $$('#pads [data-mf]').forEach(b => b.onclick = e => { const m = MEDIA.files[+b.dataset.mf], cur_ = S && S.media;
     if (PEDIT) { if (e.target.dataset.rmmedia !== undefined && confirm('Delete "' + m.file + '" from branding/media?')) cmd('media_delete', {file: m.file}).then(r => { if (r && r.ok === false) return toast(r.error, 1); toast(m.file + ' deleted'); loadMedia(); }); return; }
     if (cur_ && cur_.file === m.file) return cmd('media_stop', {}).then(() => toast('Media off – back to the automatic scene'));
     b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit');
     cmd('media_play', {file: m.file, scene: MSCENE, sound: MSOUND, loop: PLOOP}).then(r => r && r.ok === false ? toast(r.error, 1) : toast(m.file + (MSCENE === 'manual' ? ' loaded – pick an M scene yourself' : ' on ' + MSCENE) + (m.kind === 'video' ? (PLOOP ? ' · loops' : ' · stays on the last frame') : ''))); });
 }
+// ---------- LISTENERS pads: voices, photos and videos from listeners ----------
+let LSN = {items: [], keep_days: 7};
+function loadListeners() { return api('listener_pads').then(d => { if (JSON.stringify(d) !== JSON.stringify(LSN)) { LSN = d; if (bank === -2 || true) renderPads(); } }).catch(() => {}); }
+const ago_ = t => { const s = Date.now() / 1000 - t; return s < 3600 ? Math.max(1, Math.round(s / 60)) + ' min' : s < 86400 ? Math.round(s / 3600) + ' h' : Math.round(s / 86400) + ' d'; };
+const hm_ = t => new Date(t * 1000).toTimeString().slice(0, 5);
+function renderListenerPads() {
+  $('#mScene').innerHTML = `<option value="manual" ${MSCENE === 'manual' ? 'selected' : ''}>Manual – I pick the scene</option>` + MEDIA.scenes.map(n => `<option ${n === MSCENE ? 'selected' : ''}>${esc(n)}</option>`).join('');
+  $$('#mSound [data-ms]').forEach(b => b.classList.toggle('on', b.dataset.ms === MSOUND));
+  const cur = (S && S.media) || null, L = LSN.items, pg = padPage(L.length);
+  const ic = {voice: '🎤', photo: '📷', video: '🎬'};
+  $('#pads').innerHTML = L.map((x, i) => (!PEDIT && (i < pg[0] || i >= pg[1])) ? '' :
+    `<button class="btn pad lpad ${x.played ? 'aired' : ''} ${cur && cur.file === x.id ? 'looping' : ''}" data-li="${i}" style="${x.thumb ? `background:linear-gradient(rgba(6,20,35,.55),rgba(6,20,35,.85)),url('${x.thumb}') center/cover;` : 'background:#0B3550;'}border-color:${x.kind === 'voice' ? '#05A9C6' : '#3DDC97'}" title="${esc(x.caption || '')}">` +
+    `<span class="lic">${ic[x.kind] || ''}</span>${esc(x.name + (x.city ? ' · ' + x.city : ''))}` +
+    `<small>${x.kind === 'photo' ? 'photo' : fmt(x.duration)} · ${ago_(x.received)}${x.played ? ' · ✓ on air ' + hm_(x.played) : ' · NEW'}</small>` +
+    `<span class="lpv" data-pv="${i}" title="Preview here (not on air)">👁</span><span class="lpin ${x.pinned ? 'on' : ''}" data-pin="${i}" title="${x.pinned ? 'Pinned: stays on the pads' : 'Pin: keep it on the pads (else it leaves after ' + LSN.keep_days + ' days)'}">★</span>` +
+    `<span class="bar"></span>${PEDIT ? `<span class="rm" data-rml="${i}" title="Off the pads (the file stays)">×</span>` : ''}</button>`).join('')
+    || `<span class="muted">No listener messages in the last ${LSN.keep_days} days. Voices, photos and videos you approve in Hype Live land here.</span>`;
+  $('#pads').classList.toggle('edit', PEDIT);
+  $$('#pads [data-li]').forEach(b => b.onclick = e => {
+    const x = L[+b.dataset.li], t = e.target.dataset;
+    if (t.pv !== undefined) { e.stopPropagation(); return lPreview(x); }
+    if (t.pin !== undefined) { e.stopPropagation(); return cmd('listener_pin', {kind: x.kind, id: x.id, on: !x.pinned}).then(() => { x.pinned = !x.pinned; renderPads(); toast(x.pinned ? 'Pinned – stays on the pads' : 'Not pinned any more'); }); }
+    if (t.rml !== undefined) { e.stopPropagation(); return cmd('listener_hide', {kind: x.kind, id: x.id}).then(() => { L.splice(+t.rml, 1); renderPads(); toast('Off the pads (the file stays)'); }); }
+    if (PEDIT) return;
+    b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit');
+    if (x.kind === 'voice') return cmd('pad', {path: x.id, duck: true, loop: false, video: false}).then(() => { PLAYING[x.id] = Date.now() + (x.duration || 5) * 1000; x.played = Date.now() / 1000; renderPads(); });
+    if (cur && cur.file === x.id) return cmd('media_stop', {}).then(() => toast('Media off – back to the automatic scene'));
+    cmd('media_play', {file: x.id, scene: MSCENE, sound: MSOUND, loop: false}).then(r => { if (r && r.ok === false) return toast(r.error, 1); x.played = Date.now() / 1000; renderPads(); toast(x.name + (MSCENE === 'manual' ? ' loaded – pick an M scene yourself' : ' on ' + MSCENE)); });
+  });
+}
+function lPreview(x) {
+  const box = $('#lpvBox');
+  box.querySelector('.lpvBody').innerHTML = x.kind === 'voice' ? `<audio src="${x.url}" controls autoplay style="width:100%"></audio>` : x.kind === 'video' ? `<video src="${x.url}" controls autoplay playsinline style="width:100%;max-height:60vh;border-radius:10px;background:#000"></video>` : `<img src="${x.url}" alt="" style="width:100%;max-height:60vh;object-fit:contain;border-radius:10px">`;
+  box.querySelector('.lpvT').textContent = (x.kind === 'voice' ? 'Voice' : x.kind === 'video' ? 'Video' : 'Photo') + ' from ' + x.name + (x.city ? ' · ' + x.city : '') + ' – preview, not on air';
+  box.querySelector('.lpvC').textContent = x.caption || ''; box.hidden = false;
+}
+$('#lpvBox').onclick = e => { if (e.target.id === 'lpvBox') lPreviewClose(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#lpvBox').hidden) lPreviewClose(); });
+function lPreviewClose() { const box = $('#lpvBox'); box.hidden = true; box.querySelector('.lpvBody').innerHTML = ''; }
+setInterval(() => { if (!document.hidden && !PEDIT) loadListeners(); }, 20000); loadListeners();
 $('#mScene').onchange = () => { MSCENE = $('#mScene').value; try { localStorage.setItem('hypeMScene', MSCENE); } catch (e) {} };
 $$('#mSound [data-ms]').forEach(b => b.onclick = () => { MSOUND = b.dataset.ms; try { localStorage.setItem('hypeMSound', MSOUND); } catch (e) {} renderMediaPads(); });
 setInterval(() => { if (bank === -1 && !document.hidden && !MUP) { loadMedia(); } }, 20000);
-setInterval(() => { if (bank === -1) { const k = JSON.stringify((S && S.media) || null); if (k !== renderMediaPads._k) { renderMediaPads._k = k; renderMediaPads(); } } }, 1000);
+setInterval(() => { if (bank < 0) { const k = JSON.stringify((S && S.media) || null); if (k !== renderMediaPads._k) { renderMediaPads._k = k; renderPads(); } } }, 1000);
 function padTick() {   // the playing bar on each pad
   const now = Date.now();
+  if (bank === -2) $$('#pads [data-li]').forEach(b => { const x = LSN.items[+b.dataset.li]; if (!x) return; const end = PLAYING[x.id], len = (x.duration || 5) * 1000, on = end && end > now;
+    b.classList.toggle('playing', !!on); const br = b.querySelector('.bar'); if (br) br.style.width = on ? (100 * (end - now) / len) + '%' : '0'; });
   $$('#pads [data-pad]').forEach(b => { const p = (BANKS[bank] || {items: []}).items[+b.dataset.pad]; if (!p) return;
     const lp = (S && S.pad_loops || []).includes(p.path); b.classList.toggle('looping', lp);
     let end = PLAYING[p.path]; const len = (p.duration || 3) * 1000;
@@ -926,7 +998,7 @@ async function mediaUpload(files) {
   }
 }
 $('#mediaDone').onclick = () => { PEDIT = false; $('#padEdit').classList.remove('on'); renderPads(); };
-$('#padEdit').onclick = () => { if (bank === -1) { PEDIT = !PEDIT; $('#padEdit').classList.toggle('on', PEDIT); return renderPads(); } PEDIT = !PEDIT; $('#padEdit').classList.toggle('on', PEDIT); if (!PEDIT) loadPads(); else renderPads(); if (PEDIT) toast('Edit pads: drag jingles from the library onto the pads, then Save'); };
+$('#padEdit').onclick = () => { if (bank < 0) { PEDIT = !PEDIT; $('#padEdit').classList.toggle('on', PEDIT); return renderPads(); } PEDIT = !PEDIT; $('#padEdit').classList.toggle('on', PEDIT); if (!PEDIT) loadPads(); else renderPads(); if (PEDIT) toast('Edit pads: drag jingles from the library onto the pads, then Save'); };
 $('#bankName').oninput = () => { if (BANKS[bank]) BANKS[bank].name = $('#bankName').value; };
 $('#bankNew').onclick = () => { BANKS.push({name: 'Bank ' + (BANKS.length + 1), items: []}); bank = BANKS.length - 1; renderPads(); };
 $('#bankDel').onclick = () => { if (BANKS[bank] && confirm('Delete bank "' + BANKS[bank].name + '"? (the jingles stay in the library)')) { BANKS.splice(bank, 1); bank = 0; renderPads(); } };

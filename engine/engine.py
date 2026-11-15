@@ -1780,7 +1780,28 @@ class Engine:
                 if self.now: self.tv.set_scene(self.now.get("scene") or "Hype Screen")
                 return {"ok": True, "auto": True}
             elif action == "media_play":
-                return {"ok": True, "media": self.media.play(self, d)}
+                res = self.media.play(self, d)
+                try:
+                    st_ = media_in_state(); f_ = os.path.basename(d.get("file") or "")
+                    for v_ in st_.values():
+                        if v_.get("file") == f_: v_["played"] = time.time(); v_["plays"] = v_.get("plays", 0) + 1; jdump(st_, MEDIA_IN)
+                except Exception as e: log.warning("listener media played: %s", e)
+                return {"ok": True, "media": res}
+            elif action in ("listener_pin", "listener_hide"):      # LISTENERS pads: ★ keep it / × off the pads (the file stays)
+                k_ = "pinned" if action == "listener_pin" else "hidden"; on_ = bool(d.get("on", True))
+                if d.get("kind") == "voice":
+                    st_ = voice_state()
+                    for v_ in st_.values():
+                        if v_.get("path") == d.get("id"): v_[k_] = on_
+                    voice_save(st_)
+                else:
+                    st_ = media_in_state()
+                    for v_ in st_.values():
+                        if v_.get("file") == d.get("id"): v_[k_] = on_
+                    jdump(st_, MEDIA_IN)
+                return {"ok": True}
+            elif action == "fetch_url":      # a picture / video / sound dragged from a website onto the pads: the server fetches it
+                return fetch_url(c, d)
             elif action == "media_stop":
                 self.media.stop(self, keep_scene=bool(d.get("keep_scene"))); return {"ok": True}
             elif action == "media_delete":     # Pads → MEDIA → ✎ EDIT → ×: the file goes to branding/media/.deleted (can be put back by hand)
@@ -2668,7 +2689,7 @@ def get_settings():
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
             "jingle_hide": bool(planner.get_setting(c, "jingle_hide", True)), "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
-            "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "voice_per_hour": VOICE_AIR["per_hour"], "voice_max_plays": VOICE_AIR["max_plays"], "voice_intro": VOICE_AIR["intro"], "voices": voice_overview(), "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
+            "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "voice_per_hour": VOICE_AIR["per_hour"], "listener_keep_days": float(planner.get_setting(c, "listener_keep_days", 7)), "voice_max_plays": VOICE_AIR["max_plays"], "voice_intro": VOICE_AIR["intro"], "voices": voice_overview(), "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd, "relay": relay_public()}
 RELAY_CFG = "/etc/hype/relay.json"
 def relay_cfg():
@@ -2736,6 +2757,7 @@ def set_settings(d):
     if "id_intro" in d: planner.set_setting(c, "id_intro", bool(d["id_intro"]))
     if "voice_intro" in d: planner.set_setting(c, "voice_intro", bool(d["voice_intro"]))
     if "voice_per_hour" in d: planner.set_setting(c, "voice_per_hour", max(0, min(6, int(float(d["voice_per_hour"])))))
+    if "listener_keep_days" in d: planner.set_setting(c, "listener_keep_days", max(1, min(90, int(float(d["listener_keep_days"])))))
     if "voice_max_plays" in d: planner.set_setting(c, "voice_max_plays", max(1, min(20, int(float(d["voice_max_plays"])))))
     if "id_intro_max" in d: planner.set_setting(c, "id_intro_max", max(1, min(12, int(float(d["id_intro_max"])))))
     if "id_intro_gap" in d: planner.set_setting(c, "id_intro_gap", max(0.0, min(60.0, float(d["id_intro_gap"]))))
@@ -2909,6 +2931,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/lower": return self.send(200, dict(LOWER, scene=E.tv.scene, live_layer=getattr(E.tv, "ll_on", True)))
             if p == "/settings": return self.send(200, get_settings())
             if p == "/autorec": return self.send(200, autorec_status())
+            if p == "/listener_pads": return self.send(200, listener_pads())
             if p == "/padbanks":
                 b = planner.api_padbanks(dbc()); played = {v.get("path"): v.get("played") for v in voice_state().values()}
                 for bk in b:
@@ -3725,6 +3748,109 @@ def media_in_loop():
             media_apply(d, ack)
         except Exception as e: MEDIA_LINK.update(t=time.time(), ok=False, error=str(e)[:80]); log.warning("listener media: %s", e)
 
+THUMBS = os.path.join(MEDIA_DIR, ".thumbs")
+def media_thumb(f):
+    """A small picture (320 px) of a media file for its pad: branding/media/.thumbs/<file>.jpg (made once)."""
+    src = os.path.join(MEDIA_DIR, f); dst = os.path.join(THUMBS, f + ".jpg")
+    try:
+        if os.path.exists(dst) and os.path.getmtime(dst) >= os.path.getmtime(src): return dst
+        os.makedirs(THUMBS, exist_ok=True)
+        video = os.path.splitext(f)[1].lower() in (".mp4", ".mov", ".webm", ".mkv", ".m4v")
+        subprocess.run(["ffmpeg", "-v", "error", "-y"] + (["-ss", "1"] if video else []) + ["-i", src, "-frames:v", "1", "-vf", "scale=320:-2", "-q:v", "5", dst],
+                       capture_output=True, timeout=30)
+        return dst if os.path.exists(dst) else None
+    except Exception: return None
+def listener_pads():
+    """The LISTENERS pads: listener voices, photos and videos, newest first. A pad leaves after N days (Settings) unless ★ pinned;
+    × takes it off at once. The files themselves stay (jingles/VOICE, branding/media)."""
+    c = dbc(); keep = float(planner.get_setting(c, "listener_keep_days", 7)) * 86400; now = time.time(); out = []
+    plays = voice_plays()
+    for v in voice_state().values():
+        if not v.get("path") or not v.get("acked") or v.get("hidden"): continue
+        when = v.get("received") or 0
+        if not v.get("pinned") and now - when > keep: continue
+        r = c.execute("SELECT duration, problem FROM items WHERE path=?", (v["path"],)).fetchone()
+        if not r or r[1]: continue
+        pl = plays.get(v["path"]) or []; last = max(pl + [v.get("played") or 0]) or None
+        out.append({"kind": "voice", "id": v["path"], "name": v.get("name") or "Listener", "city": v.get("city") or "", "source": v.get("source") or "",
+                    "received": when, "duration": r[0], "played": last, "plays": len(pl) + (1 if v.get("played") and not pl else 0),
+                    "pinned": bool(v.get("pinned")), "air": bool(v.get("air")), "url": "/media/" + urllib.parse.quote(v["path"])})
+    files = {m["file"]: m for m in media_files()}
+    for v in media_in_state().values():
+        f = v.get("file")
+        if not f or f not in files or v.get("hidden"): continue
+        when = v.get("received") or v.get("added") or 0
+        if not v.get("pinned") and now - when > keep: continue
+        th = media_thumb(f)
+        out.append({"kind": v.get("kind") or "photo", "id": f, "name": v.get("name") or "Listener", "city": v.get("city") or "", "source": v.get("source") or "",
+                    "caption": v.get("caption") or "", "received": when, "duration": files[f].get("duration") or 0, "played": v.get("played"), "plays": v.get("plays", 0),
+                    "pinned": bool(v.get("pinned")), "url": "/media/branding/media/" + urllib.parse.quote(f),
+                    "thumb": ("/media/branding/media/.thumbs/" + urllib.parse.quote(f) + ".jpg?v=" + str(int(os.path.getmtime(th)))) if th else None})
+    out.sort(key=lambda x: -(x["received"] or 0))
+    return {"items": out, "keep_days": keep / 86400}
+
+WEB_MAX = 400_000_000
+def fetch_url(c, d):
+    """A picture / video / sound dragged from a website onto the pads. The server downloads the file (public http(s) only,
+    max 400 MB): pictures + videos -> a 16:9 media pad (blurred fill, no name card) in branding/media; sounds ->
+    jingles/WEB, added to the pad bank you dropped it on."""
+    import ipaddress, socket
+    url = str(d.get("url") or "").strip(); target = d.get("target") or "media"
+    u = urlparse(url)
+    if u.scheme not in ("http", "https") or not u.hostname: return {"ok": False, "error": "Not a web link"}
+    try:
+        for ai in socket.getaddrinfo(u.hostname, None):
+            ip = ipaddress.ip_address(ai[4][0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast: return {"ok": False, "error": "That address is not allowed"}
+    except socket.gaierror: return {"ok": False, "error": "That website can't be found"}
+    if re.search(r"(youtube\.com|youtu\.be|instagram\.com|tiktok\.com|facebook\.com|fb\.watch)", u.hostname or ""):
+        return {"ok": False, "error": "YouTube / Instagram / TikTok / Facebook pages can't be dropped – only direct picture / video / sound files"}
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (HypeStudio)"})
+    r = urllib.request.urlopen(req, timeout=60)
+    ct = (r.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+    ext = os.path.splitext(u.path)[1].lower()
+    kind = ("picture" if ct.startswith("image/") or ext in (".jpg", ".jpeg", ".png", ".webp", ".gif") else
+            "video" if ct.startswith("video/") or ext in (".mp4", ".mov", ".webm", ".m4v", ".mkv") else
+            "audio" if ct.startswith("audio/") or ext in (".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac") else None)
+    if not kind: return {"ok": False, "error": "That link is not a picture, video or sound file (it is %s)" % (ct or "a web page")}
+    if target == "media" and kind == "audio": return {"ok": False, "error": "A sound goes on a sound bank, not on MEDIA"}
+    if target == "bank" and kind != "audio": return {"ok": False, "error": "Pictures and videos go on the MEDIA pads"}
+    base = re.sub(r"[^\w .()-]", "", urllib.parse.unquote(os.path.splitext(os.path.basename(u.path))[0]), flags=re.U).strip()[:50] or ("web " + time.strftime("%Y%m%d-%H%M%S"))
+    tmp = os.path.join("/tmp", "web_" + uuid.uuid4().hex)
+    n = 0
+    with open(tmp, "wb") as f:
+        while True:
+            b = r.read(1 << 20)
+            if not b: break
+            n += len(b)
+            if n > WEB_MAX: f.close(); os.remove(tmp); return {"ok": False, "error": "The file is bigger than 400 MB"}
+            f.write(b)
+    import listener_media as LM
+    if kind == "picture":
+        fn = f"Web - {base}.jpg"
+        try: LM.make_photo(tmp, os.path.join(MEDIA_DIR, fn), "", "", "", "")
+        finally: os.remove(tmp)
+        log.info("web drop: picture %s -> %s", url[:80], fn); return {"ok": True, "kind": kind, "file": fn}
+    if kind == "video":
+        fn = f"Web - {base}.mp4"
+        def work():
+            try: LM.make_video(tmp, os.path.join(MEDIA_DIR, fn), "", "", "", "", max_s=900); log.info("web drop: video %s -> %s", url[:80], fn)
+            except Exception as e: log.warning("web drop video: %s", e)
+            finally:
+                try: os.remove(tmp)
+                except FileNotFoundError: pass
+        threading.Thread(target=work, daemon=True).start()
+        return {"ok": True, "kind": kind, "file": fn, "later": True}
+    # a sound: into jingles/WEB, onto the bank (it plays once the library has indexed it, ~1 min)
+    os.makedirs(os.path.join(ROOT, "jingles", "WEB"), exist_ok=True)
+    fn = f"{base}{ext if ext in ('.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac') else '.mp3'}"; rel = os.path.join("jingles", "WEB", fn)
+    shutil.move(tmp, os.path.join(ROOT, rel)); os.chmod(os.path.join(ROOT, rel), 0o664)
+    bid = d.get("bank_id")
+    if bid:
+        pos = (c.execute("SELECT MAX(pos) FROM pad_items WHERE bank_id=?", (bid,)).fetchone()[0] or 0) + 1
+        c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (int(bid), pos, rel, base, None)); c.commit()
+    log.info("web drop: sound %s -> %s", url[:80], rel); return {"ok": True, "kind": kind, "path": rel}
+
 def hl_open(url, timeout=60):
     """Open a file link Hype Live gave (only on hyperadio.nl)."""
     if not re.match(r"^https://(www\.)?hyperadio\.nl/", url or ""): raise ValueError("not a Hype Live link")
@@ -3993,10 +4119,7 @@ def voice_apply(d, fetch, ack):
         if not r: continue                                   # the indexer has not seen it yet
         if r[0]: log.warning("voice: %s unusable: %s", vid, r[0])
         elif not v.get("in_bank"):
-            bid = voice_bank(c)
-            c.execute("UPDATE pad_items SET pos=pos+1 WHERE bank_id=?", (bid,))
-            c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, 0, v["path"], v["name"] + (" · " + v["city"] if v["city"] else ""), "#0277b8"))
-            c.commit(); v["in_bank"] = True
+            v["in_bank"] = True          # shown on the LISTENERS pads (from voice_state), no longer copied into a pad bank (15 Nov)
         a = ack(vid)
         v["acked"] = True; changed = True; log.info("voice: ack %s -> %s", vid, a[:30])
     if changed: voice_save(st)

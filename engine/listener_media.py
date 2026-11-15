@@ -83,12 +83,14 @@ def make_photo(src, out, name, city, caption, source):
     ImageDraw.Draw(sh).rectangle([px, py + 10, px + fg.width, py + fg.height + 10], fill=(0, 0, 0, 140))
     canvas = Image.alpha_composite(canvas, sh.filter(ImageFilter.GaussianBlur(18)))
     canvas.paste(fg, (px, py))
-    canvas = Image.alpha_composite(canvas, card(name, city, caption, source, "photo"))
+    if name: canvas = Image.alpha_composite(canvas, card(name, city, caption, source, "photo"))     # (from the internet: no name card)
     tmp = out + ".part.jpg"; canvas.convert("RGB").save(tmp, "JPEG", quality=90); os.replace(tmp, out)
 
 
 def make_video(src, out, name, city, caption, source, max_s=120):
-    ov = out + ".card.png"; card(name, city, caption, source, "video").save(ov)
+    ov = out + ".card.png"
+    if name: card(name, city, caption, source, "video").save(ov)
+    else: Image.new("RGBA", (W, H), (0, 0, 0, 0)).save(ov)           # (from the internet: no name card)
     tmp = os.path.join(os.path.dirname(out), "." + os.path.basename(out) + ".part.mp4")
     fc = ("[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,gblur=sigma=40,eq=brightness=-0.12:saturation=0.8[bg];"
           "[0:v]scale=1920-160:1080-80:force_original_aspect_ratio=decrease[fg];"
