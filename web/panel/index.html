@@ -691,7 +691,7 @@ function renderScenes() {
   const scLive = n => n.startsWith('PIP@') ? S.scene === 'PIP' && S.pip === n.slice(4) : S.scene === n;
   const inG = SGEDIT && SG >= 0 ? new Set(G[SG].scenes) : null;
   const ssi = n => SSL.find(x => x.scene === n);
-  const btn = n => { const x = ssi(n); return `<button class="btn scene ${scLive(n) ? 'live' : ''} ${inG && inG.has(n) ? 'ing' : ''}" data-scene="${esc(n)}" ${x ? `data-ssf="${esc(x.folder)}" title="Drop ${x.kind} here to add them"` : ''}>${esc(scName(n))}${x ? `<small>${x.n} ${x.kind === 'photos' ? 'photo' : 'video'}${x.n === 1 ? '' : 's'}</small>` : ''}</button>`; };
+  const btn = n => { const x = ssi(n); return `<button class="btn scene ${scLive(n) ? 'live' : ''} ${inG && inG.has(n) ? 'ing' : ''}" data-scene="${esc(n)}" ${x && x.name !== 'Listeners' ? `data-ssf="${esc(x.folder)}" title="Drop ${x.kind} here to add them"` : x ? 'title="The listener photos / videos on the LISTENERS pads (filled by itself)"' : ''}>${esc(scName(n))}${x ? `<small>${x.n} ${x.kind === 'photos' ? 'photo' : 'video'}${x.n === 1 ? '' : 's'}</small>` : ''}</button>`; };
   const mx = SG < 0 && SG !== -4 && !SGEDIT; if (CAMEDIT && (SG >= 0 || CAMEDIT.tab !== LTAB())) CAMEDIT = null;
   const CL = mx ? camLayout() : null;
   const html = mx && CAMEDIT ? CL.cells.map((n, i) => n ? `<div class="camc ${CAMPICK === i ? 'pick' : ''}" draggable="true" data-ci="${i}"><span class="btn scene">${esc(scName(n))}</span><button class="camx" data-cx="${i}" aria-label="Remove ${esc(scName(n))}" title="Take it off the grid">×</button></div>`

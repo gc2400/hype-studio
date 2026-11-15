@@ -2439,6 +2439,7 @@ def listener_slideshow():
         d = os.path.join(slideshow.ROOT, kind, "Listeners"); os.makedirs(d, exist_ok=True)
         have = set(os.listdir(d))
         for f in have - set(files):
+            if not os.path.islink(os.path.join(d, f)): continue      # only our own links go (a file someone put here stays)
             try: os.remove(os.path.join(d, f))
             except OSError: pass
         for f, src in files.items():
