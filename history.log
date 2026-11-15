@@ -336,3 +336,4 @@
 2026-11-14T23:03:11 ok 094f9696 Library: a section with only one top folder (Mixes: MIXES/…) shows its subfolders straight away
 2026-11-15T14:37:19 ok 7471c278 Throwback sweeper only before songs from the CLASSICS folder (not CHILL/CHILL-CLASSICS); the Throwback badge rule is set to CLASSICS too
 2026-11-15T15:51:47 ok bc14a795 History → Audience: who listens and watches on our own streams – now (stream, device, app, city/country, since), devices / hours / average visit for radio and TV, countries, visit length, devices, apps, streams (today / 7 / 30 days). Sessions per device, no addresses stored; country file DB-IP Lite (local, monthly)
+2026-11-15T15:54:36 ok 28cc0aca mp3hits.json readable by root only

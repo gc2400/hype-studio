@@ -1,18 +1,18 @@
 {
- "time": "2026-11-15T15:51:47",
+ "time": "2026-11-15T15:54:36",
  "result": "ok",
- "commit": "bc14a7954a426d02780fb26bdab34cc7e03ec467",
- "subject": "History \u2192 Audience: who listens and watches on our own streams \u2013 now (stream, device, app, city/country, since), devices / hours / average visit for radio and TV, countries, visit length, devices, apps, streams (today / 7 / 30 days). Sessions per device, no addresses stored; country file DB-IP Lite (local, monthly)",
+ "commit": "28cc0acab37606461c69f214b9ee12ed65a5a7a7",
+ "subject": "mp3hits.json readable by root only",
  "log": [
-  "15:51:02 update 7471c278 \u2192 bc14a795 \u00b7 3 file(s): engine/audstats.py, engine/engine.py, web/panel/history.html",
-  "15:51:02 restart hype-engine",
-  "15:51:47 installed OK \u00b7 restarted: hype-engine"
+  "15:53:51 update bc14a795 \u2192 28cc0aca \u00b7 1 file(s): engine/engine.py",
+  "15:53:51 restart hype-engine",
+  "15:54:36 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "bees & honey x Omah Lay x BEAM x Gyptian \u2013 As We Get High",
+  "song": "Broederliefde \u2013 Maak Me Niet Heet",
   "listeners": 5,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
