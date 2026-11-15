@@ -2829,6 +2829,7 @@ class H(BaseHTTPRequestHandler):
                 try: imp = json.load(open(HL_IMPORT))
                 except Exception: imp = {}
                 return self.send(200, dict(audstats.songs(days, by), imported={k: imp.get(k) for k in ("done", "plays", "aud", "error")}))
+            if p == "/aud24": return self.send(200, audstats.last24())
             if p == "/audtime": return self.send(200, audstats.bytime((qs.get("view") or ["today"])[0]))
             if p == "/audstats":
                 days = max(1, min(400, int((qs.get("days") or ["1"])[0] or 1))); kind = (qs.get("kind") or [""])[0]

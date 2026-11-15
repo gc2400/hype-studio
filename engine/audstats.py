@@ -359,3 +359,14 @@ def bytime(view="today"):
     return {"view": view, "from": int(t0), "series": series, "avg_r": avg_r, "avg_tv": avg_tv, "normal": [{"i": k, "r": round(v[0], 1), "tv": round(v[1], 1)} for k, v in sorted(normal.items())],
             "peak_r": pk(peaks["r"]), "peak_tv": pk(peaks["tv"]), "best_hour": best if hours[best][0] else None,
             "devices": {"radio": dev.get("radio", 0), "tv": dev.get("tv", 0)}, "heat": hm}
+
+
+def last24(n=5):
+    """The plays of the last 24 hours with the biggest raw gain / loss (radio + TV from start to end) – a quick look."""
+    c = db()
+    rows = c.execute("SELECT t, artist, title, r0, r1, v0, v1 FROM plays WHERE t >= ? AND r0 IS NOT NULL", (time.time() - 86400,)).fetchall(); c.close()
+    ps = [{"t": int(t), "artist": a or "", "title": ti or "", "r0": r0, "r1": r1, "v0": v0, "v1": v1,
+           "ch": round(((r1 or 0) - (r0 or 0)) + (((v1 or 0) - (v0 or 0)) if v0 is not None and v1 is not None else 0))} for t, a, ti, r0, r1, v0, v1 in rows]
+    best = sorted([p for p in ps if p["ch"] > 0], key=lambda p: (-p["ch"], -p["t"]))[:n]
+    worst = sorted([p for p in ps if p["ch"] < 0], key=lambda p: (p["ch"], -p["t"]))[:n]
+    return {"best": best, "worst": worst, "plays": len(ps)}

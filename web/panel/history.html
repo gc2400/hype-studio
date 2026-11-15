@@ -53,6 +53,8 @@ h3{margin:4px 0 8px;font-size:13px;font-weight:800}h3 small{color:var(--mut);fon
 .sbox{background:var(--deep);border:1px solid var(--line);border-radius:14px;padding:12px}.sbox h3{letter-spacing:.06em}
 .stab td.rk{color:var(--mut);font-weight:800;width:1%;text-align:left!important;font-family:Inter,system-ui,sans-serif}.stab td.nm b{display:block;font-weight:800}.stab td.nm span{color:var(--mut);font-size:12px}
 .sbar{display:inline-block;width:70px;height:8px;border-radius:6px;background:var(--line);overflow:hidden;vertical-align:middle;margin-left:8px}.sbar i{display:block;height:100%}
+.l24 td{padding:7px 8px;vertical-align:middle}.l24 td.c{width:1%;white-space:nowrap;text-align:center;font-family:'JetBrains Mono',monospace}.l24 td.c b{font-size:16px;display:block}.l24 td.c small{color:var(--mut);font-size:11px}
+.l24 td.s b{display:block}.l24 td.s span{color:var(--mut);font-size:12px}.l24 td.w{width:1%;white-space:nowrap;color:var(--mut);font-size:12px;font-family:'JetBrains Mono',monospace}
 th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-size:10px;margin-top:2px}
 .stab td{padding:6px 8px}.stab td:not(:first-child){font-family:'JetBrains Mono',monospace;text-align:right;white-space:nowrap;width:1%}.stab th:not(:first-child){text-align:right}.stab tr{cursor:pointer}.stab tr:hover td{background:var(--card2)}
 .up{color:var(--g)}.dn{color:var(--r)}.stab td small{display:block;color:var(--mut);font-family:Inter,system-ui,sans-serif}
@@ -69,6 +71,10 @@ th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-
       <div class="row"><span class="row" style="gap:4px" id="sDays"><button class="btn" data-d="7">7 days</button><button class="btn on" data-d="30">30 days</button><button class="btn" data-d="90">90 days</button></span>
         <span class="row" style="gap:4px" id="sBy"><button class="btn on" data-b="song">By song</button><button class="btn" data-b="artist">By artist</button></span>
         <a class="btn" id="sCsv" title="Every measured play as a spreadsheet">⬇ CSV</a><span class="muted" id="sNote"></span></div>
+      <div class="wgrid">
+        <div><h3>Best of the last 24 hours <small>– biggest gain while it played (radio + TV, start → end)</small></h3><table class="l24"><tbody id="lBest"></tbody></table></div>
+        <div><h3>Worst of the last 24 hours <small>– biggest loss</small></h3><table class="l24"><tbody id="lWorst"></tbody></table></div>
+      </div>
       <div class="wgrid">
         <div><h3>Gainers <small>– listeners / viewers gained compared with a normal song at that weekday + hour</small></h3><table class="stab"><thead><tr><th id="sHd1">Song</th><th>Plays</th><th>Radio</th><th>TV</th><th>🔥</th><th>Score</th></tr></thead><tbody id="sBest"></tbody></table></div>
         <div><h3>Losers <small>– lost the most</small></h3><table class="stab"><thead><tr><th id="sHd2">Song</th><th>Plays</th><th>Radio</th><th>TV</th><th>🔥</th><th>Score</th></tr></thead><tbody id="sWorst"></tbody></table></div>
@@ -240,7 +246,12 @@ function sRows(list) {
   return list.length ? list.map(x => `<tr data-k="${esc(x.key)}" data-n="${esc(x.name)}"><td>${esc(x.name)}</td><td>${x.plays}</td><td>${sg(x.radio)}</td><td>${sg(x.tv)}</td><td>${x.fire == null ? '–' : x.fire}</td><td>${sg(x.score)}</td></tr>`).join('')
     : '<tr><td colspan="6" class="muted">Not enough plays yet (a song needs 3+ plays)</td></tr>';
 }
+function l24(list, up) {
+  return list.length ? list.map(p => `<tr><td class="c"><b class="${up ? 'up' : 'dn'}">${up ? '▲ +' : '▼ '}${p.ch}</b><small>radio ${p.r0 ?? '–'}→${p.r1 ?? '–'} · TV ${p.v0 ?? '–'}→${p.v1 ?? '–'}</small></td><td class="s"><b>${esc(p.title)}</b><span>${esc(p.artist)}</span></td><td class="w">${new Date(p.t * 1000).toTimeString().slice(0, 5)}</td></tr>`).join('')
+    : `<tr><td class="muted">No ${up ? 'gains' : 'losses'} in the last 24 hours</td></tr>`;
+}
 function sLoad() {
+  fetch('../api/aud24').then(r => r.json()).then(d => { $('#lBest').innerHTML = l24(d.best, true); $('#lWorst').innerHTML = l24(d.worst, false); }).catch(() => {});
   $('#sCsv').href = '../api/audsongs?csv=1&days=' + SD;
   fetch('../api/audsongs?days=' + SD + '&by=' + SB).then(r => r.json()).then(d => {
     $('#sBest').innerHTML = sRows(d.best); $('#sWorst').innerHTML = sRows(d.worst);
@@ -289,7 +300,8 @@ function tLoad() {
     $('#tKpi').innerHTML = `<div class="kpi"><i>RADIO PEAK</i><b>${d.peak_r.n}</b><span>most at once · ${day ? tm(d.peak_r.at) : d.peak_r.at ? dt(d.peak_r.at) : ''} · avg ${d.avg_r}</span></div>` +
       `<div class="kpi"><i>TV PEAK</i><b>${d.peak_tv.n}</b><span>most at once · ${day ? tm(d.peak_tv.at) : d.peak_tv.at ? dt(d.peak_tv.at) : ''} · avg ${d.avg_tv}</span></div>` +
       `<div class="kpi"><i>BEST HOUR (30 DAYS)</i><b style="font-size:19px">${bh}</b><span>radio + TV together</span></div>` +
-      `<div class="kpi"><i>${day ? (TW === 'today' ? 'TODAY' : 'YESTERDAY') : 'IN THESE DAYS'}</i><b>${d.devices.radio} · ${d.devices.tv}</b><span>different devices · radio · TV</span></div>`;
+      `<div class="kpi"><i>RADIO LISTENERS</i><b>${d.devices.radio}</b><span>different devices ${day ? (TW === 'today' ? 'today' : 'yesterday') : 'in these days'}</span></div>` +
+      `<div class="kpi"><i>TV VIEWERS</i><b>${d.devices.tv}</b><span>different devices ${day ? (TW === 'today' ? 'today' : 'yesterday') : 'in these days'}</span></div>`;
     chart(d); heat();
   }).catch(() => {});
 }
