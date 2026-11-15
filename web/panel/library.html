@@ -245,6 +245,7 @@ function more() {
   api(u).then(d => { MORE = false; if (LIB !== mine) return; const st = $('#res').scrollTop; LIB.items = LIB.items.concat(d.items || []); renderList(); $('#res').scrollTop = st; }).catch(() => { MORE = false; });
 }
 function lib(keepSel) {
+  if (!keepSel && PICK.size) { PICK.clear(); MVTO = ''; LASTCK = null; selUi(); }
   $('#bSort').textContent = SORT === 'new' ? 'Newest first' : 'A–Z'; $('#bProb').classList.toggle('yellow', SORT === 'problems'); $('#bRecent').classList.toggle('on', !!RECENT);
   return api(libUrl(0)).then(d => {
     $$('#kinds [data-k]').forEach(b => b.classList.toggle('on', b.dataset.k === KIND)); $('#kinds').hidden = !MUS() && !AUTOC && false;
@@ -317,6 +318,10 @@ function range(a, b) {      // Shift-click: everything from the song you clicked
   L.slice(Math.min(i, j), Math.max(i, j) + 1).forEach(x => PICK.add(x));
 }
 let MVTO = '';
+function clearPick() { if (!PICK.size) return; PICK.clear(); MVTO = ''; LASTCK = null; selUi(); renderList(); }
+// the selection goes when you do something else: a click outside the list / move panel, Escape, another folder / search
+document.addEventListener('click', e => { if (PICK.size && !e.target.closest('#res, #mvBox')) clearPick(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && PICK.size) clearPick(); });
 function selUi() {      // songs selected: the move panel takes the place of the editor on the right
   const on = PICK.size > 0;
   $('#mvBox').hidden = !on;
@@ -335,7 +340,7 @@ function selUi() {      // songs selected: the move panel takes the place of the
   $$('#mvList [data-mv]').forEach(b => b.onclick = () => { MVTO = b.dataset.mv; selUi(); });
 }
 $('#mvGo').onclick = () => { if (MVTO) moveTo([...PICK], MVTO); };
-$('#mvClr').onclick = () => { PICK.clear(); MVTO = ''; selUi(); renderList(); };
+$('#mvClr').onclick = () => clearPick();
 async function moveTo(paths, folder) {
   if (!paths.length || !folder) return;
   let ok = 0, bad = '';
@@ -369,7 +374,7 @@ function renderList() {
       if ((e.shiftKey || e.ctrlKey || e.metaKey) && SEL && !PICK.size) PICK.add(SEL.path);      // the open song stays selected
       if (e.shiftKey) { e.preventDefault(); const a = LASTCK || (SEL && SEL.path); if (a && a !== p) range(a, p); else PICK.add(p); LASTCK = LASTCK || p; selUi(); return renderList(); }
       if (e.ctrlKey || e.metaKey) { PICK.has(p) ? PICK.delete(p) : PICK.add(p); LASTCK = p; selUi(); return renderList(); }
-      if (PICK.size) { PICK.clear(); MVTO = ''; selUi(); }
+      if (PICK.size) { clearPick(); }
       LASTCK = p; pick(LIB.items.find(x => x.path === p)); };
     el.ondragstart = e => { const ps = PICK.has(el.dataset.p) ? [...PICK] : [el.dataset.p]; e.dataTransfer.setData('text/hype-move', JSON.stringify(ps)); e.dataTransfer.effectAllowed = 'move'; };
     el.ondragover = e => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); el.classList.add('dropover'); } };
