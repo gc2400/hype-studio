@@ -1,17 +1,17 @@
 {
- "time": "2026-11-15T20:24:02",
+ "time": "2026-11-15T20:29:11",
  "result": "ok",
- "commit": "c3612aab34357f1823500955d68d141ede909f94",
- "subject": "RELOAD PAGES moved from the panel to Settings (Screen part: Reload the screen pages)",
+ "commit": "2acc8e0738f430b4a12a5b2c8d438723ceebf5ea",
+ "subject": "Library: no tick boxes \u2013 Shift-click selects a range, Ctrl-click one more (yellow border); 'Move\u2026' opens a folder window, then Move; dragging the selected songs onto a folder button still works",
  "log": [
-  "20:24:02 update 35c90b96 \u2192 c3612aab \u00b7 2 file(s): web/panel/index.html, web/panel/settings.html",
-  "20:24:02 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:29:11 update c3612aab \u2192 2acc8e07 \u00b7 1 file(s): web/panel/library.html",
+  "20:29:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Myke Towers \u2013 CARITA FELIZ",
-  "listeners": 4,
+  "song": "Noano x Ronnie Flex \u2013 Damage",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
