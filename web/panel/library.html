@@ -44,11 +44,11 @@ h1{margin:0;font-size:20px;font-weight:900}h1 small{color:var(--mut);font-weight
 .ri:hover .racts,.ri:has(:focus-visible) .racts{opacity:1;pointer-events:auto}@media (hover:none){.ri:hover .racts{opacity:0;pointer-events:none}.ri.sel .racts{opacity:1;pointer-events:auto}}
 .ri .racts button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--soft);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .ri .racts svg{width:17px;height:17px}.ri .del:hover{color:#FF8A97;border-color:#FF8A97}.ri .addpl:hover{color:var(--y);border-color:var(--y)}.ri .ren:hover{color:var(--b);border-color:var(--b)}
-.ri .ck{width:18px;height:18px;flex:0 0 auto;accent-color:#FFE000;cursor:pointer}.ri.picked{background:rgba(255,224,0,.07);border-color:rgba(255,224,0,.35)}
+.ri .ck{width:18px;height:18px;flex:0 0 auto;accent-color:#FFE000;cursor:pointer}.ri.picked,.ri.picked.sel{background:rgba(255,224,0,.09);border-color:var(--y)}
+#mvBox{display:flex;flex-direction:column;gap:10px;min-height:0;flex:1}#mvBox[hidden]{display:none}#mvBox .sl{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--soft);max-height:150px;overflow:auto}
+#mvBox .mvl{max-height:none;flex:1}
 .ri.dropover{outline:2px dashed var(--y)}.ri .rep:hover{color:var(--y);border-color:var(--y)}
 .fx{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:rgba(255,181,71,.15);color:#FFB54D;font-weight:700}
-#selBar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border-radius:12px;background:rgba(255,224,0,.08);border:1px solid rgba(255,224,0,.35)}
-#selBar select{min-height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);padding:0 8px;font:inherit;font-weight:700;max-width:280px}
 #subfolders .btn.dropok,#folders .btn.dropok{outline:2px dashed var(--y)}
 .delq input{flex:1;min-width:120px;max-width:520px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);padding:0 10px;font:inherit;font-weight:600}
 .plmenu{position:fixed;z-index:50;width:260px;max-height:340px;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:8px;gap:6px}
@@ -134,9 +134,7 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
 @media (hover:none) and (max-width:640px){.keys{display:none}}
 
 dialog#upDlg{background:var(--card);color:var(--txt);border:1px solid var(--line2);border-radius:16px;padding:14px 16px;width:min(560px,94vw);max-height:90vh;overflow:auto}
-dialog#upDlg::backdrop,dialog#mvDlg::backdrop{background:rgba(2,8,16,.7)}
-dialog#mvDlg{background:var(--card);color:var(--txt);border:1px solid var(--line2);border-radius:16px;padding:14px 16px;width:min(520px,94vw);max-height:86vh}
-#mvDlg{display:none}#mvDlg[open]{display:flex;flex-direction:column;gap:10px}
+dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
 .mvl{overflow:auto;max-height:60vh;display:flex;flex-direction:column;gap:3px}.mvl .g{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--mut);margin:8px 2px 2px}
 .mvl button{text-align:left;padding:8px 12px;border-radius:9px;border:1px solid transparent;background:var(--deep);color:var(--txt);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .mvl button:hover{border-color:var(--line2)}.mvl button.on{border-color:var(--y);background:rgba(255,224,0,.1);color:var(--y)}.mvl button.cur{opacity:.45}
@@ -176,12 +174,14 @@ dialog#mvDlg{background:var(--card);color:var(--txt);border:1px solid var(--line
         <div class="fr"><span class="fl">Sort</span><div class="row" style="gap:5px"><button class="btn sm" id="bSort">A–Z</button></div></div>
       </div>
       <div class="chips" id="chips"><span class="muted" id="cnt"></span></div>
-      <div id="selBar" hidden><b id="selN"></b><button class="btn sm yellow" id="selMove">Move…</button><button class="btn sm" id="selClr">Clear</button><span class="muted">Shift-click = a range · Ctrl-click = one more · or drag them onto a folder button</span></div>
       <input type="file" id="repFile" hidden accept="audio/*,video/*,.mp3,.m4a,.wav,.flac,.mp4,.mov,.mkv,.m4v,.webm">
       <div class="res" id="res" role="listbox" aria-label="Songs"></div>
     </section>
     <section class="card ed" id="ed">
       <div class="empty" id="none">Click a song on the left.</div>
+      <div id="mvBox" hidden><div class="row" style="justify-content:space-between;gap:8px"><b id="mvT" style="font-size:16px"></b><button class="btn sm" id="mvClr">Clear selection</button></div>
+        <div class="sl" id="mvSel"></div><b style="font-size:12px;letter-spacing:.08em;color:var(--mut)">MOVE TO</b><div class="mvl" id="mvList"></div>
+        <button class="btn yellow" id="mvGo" disabled>Choose a folder</button></div>
       <div id="box" hidden style="display:flex;flex-direction:column;gap:8px">
         <div class="cdh"><div class="t"><b id="eTitle"></b><span id="eSub"></span><span id="eTv"></span></div><span class="chip" id="eBadge"></span></div>
         <div class="cdg" id="cdg">
@@ -209,11 +209,6 @@ dialog#mvDlg{background:var(--card);color:var(--txt);border:1px solid var(--line
     </section>
   </div>
 </div>
-<dialog id="mvDlg" aria-label="Move songs">
-  <div class="uph"><b id="mvT">Move to</b><button class="btn sm" id="mvClose" aria-label="Close">✕</button></div>
-  <div class="mvl" id="mvList"></div>
-  <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn sm" id="mvCancel">Cancel</button><button class="btn sm yellow" id="mvGo" disabled>Move</button></div>
-</dialog>
 <dialog id="upDlg" aria-label="Upload files">
   <div class="uph"><b>Upload to the library</b><button class="btn sm" id="upClose" aria-label="Close">✕</button></div>
   <div class="upr"><select class="f" id="upSec" aria-label="Section"></select><select class="f" id="upFolder" aria-label="Folder"></select></div>
@@ -321,24 +316,26 @@ function range(a, b) {      // Shift-click: everything from the song you clicked
   if (i < 0 || j < 0) { PICK.add(b); return; }
   L.slice(Math.min(i, j), Math.max(i, j) + 1).forEach(x => PICK.add(x));
 }
-function selUi() {
-  $('#selBar').hidden = !PICK.size; if (!PICK.size) return;
-  $('#selN').textContent = PICK.size + (PICK.size === 1 ? ' song selected' : ' songs selected');
-}
 let MVTO = '';
-$('#selMove').onclick = () => {
-  if (!LIB) return; const cur = (visible().find(x => PICK.has(x.path)) || {}).folder || '', g = cur.split('/')[0];
-  const fs = [...LIB.all_folders].filter(Boolean).sort((a, b) => ((b.split('/')[0] === g) - (a.split('/')[0] === g)) || a.localeCompare(b));
+function selUi() {      // songs selected: the move panel takes the place of the editor on the right
+  const on = PICK.size > 0;
+  $('#mvBox').hidden = !on;
+  if (on) { $('#box').hidden = true; $('#none').hidden = true; try { $('#m').pause(); } catch (e) {} }
+  else { $('#box').hidden = !SEL; $('#none').hidden = !!SEL; return; }
+  const items = visible().filter(x => PICK.has(x.path));
+  $('#mvT').textContent = PICK.size + (PICK.size === 1 ? ' song selected' : ' songs selected');
+  $('#mvSel').innerHTML = items.slice(0, 8).map(x => `<span>${esc((x.artist ? x.artist + ' – ' : '') + (x.title || x.path.split('/').pop()))} <span class="muted">· ${esc(x.folder)}</span></span>`).join('') + (PICK.size > 8 ? `<span class="muted">and ${PICK.size - 8} more</span>` : '');
+  const cur = (items[0] || {}).folder || '', g = cur.split('/')[0];
+  const fs = [...((LIB && LIB.all_folders) || [])].filter(Boolean).sort((a, b) => ((b.split('/')[0] === g) - (a.split('/')[0] === g)) || a.localeCompare(b));
   let last = null, h = '';
   fs.forEach(f => { const top = f.split('/')[0]; if (top !== last) { h += `<div class="g">${esc(top)}</div>`; last = top; }
-    h += `<button data-mv="${esc(f)}" class="${f === cur ? 'cur' : ''}">${esc(f.includes('/') ? f.split('/').slice(1).join('/') : f)}</button>`; });
-  MVTO = ''; $('#mvList').innerHTML = h; $('#mvGo').disabled = true;
-  $('#mvT').textContent = 'Move ' + PICK.size + (PICK.size === 1 ? ' song' : ' songs') + ' to';
-  $$('#mvList [data-mv]').forEach(b => b.onclick = () => { MVTO = b.dataset.mv; $$('#mvList [data-mv]').forEach(x => x.classList.toggle('on', x === b)); $('#mvGo').disabled = false; $('#mvGo').textContent = 'Move to ' + MVTO; });
-  $('#mvDlg').showModal();
-};
-$('#mvGo').onclick = () => { $('#mvDlg').close(); moveTo([...PICK], MVTO); };
-$('#mvClose').onclick = $('#mvCancel').onclick = () => $('#mvDlg').close();
+    h += `<button data-mv="${esc(f)}" class="${f === MVTO ? 'on' : ''} ${f === cur ? 'cur' : ''}">${esc(f.includes('/') ? f.split('/').slice(1).join('/') : f)}</button>`; });
+  $('#mvList').innerHTML = h;
+  $('#mvGo').disabled = !MVTO; $('#mvGo').textContent = MVTO ? 'Move to ' + MVTO : 'Choose a folder';
+  $$('#mvList [data-mv]').forEach(b => b.onclick = () => { MVTO = b.dataset.mv; selUi(); });
+}
+$('#mvGo').onclick = () => { if (MVTO) moveTo([...PICK], MVTO); };
+$('#mvClr').onclick = () => { PICK.clear(); MVTO = ''; selUi(); renderList(); };
 async function moveTo(paths, folder) {
   if (!paths.length || !folder) return;
   let ok = 0, bad = '';
@@ -349,7 +346,6 @@ async function moveTo(paths, folder) {
   toast(ok ? `${ok} ${ok === 1 ? 'song' : 'songs'} moved to ${folder}` + (bad ? ' · some not: ' + bad : '') : 'Not moved: ' + bad);
   lib(true);
 }
-$('#selClr').onclick = () => { PICK.clear(); selUi(); renderList(); };
 $('#bFix').onclick = () => { FIXV = FIXV ? 0 : 1; lib(); };
 // ---- replace a song with a better file (same name, or the same name with the new type, e.g. .mp3 → .mp4) ----
 let REPP = null;
@@ -370,9 +366,10 @@ function renderList() {
   $$('#res .ri').forEach(el => {
     el.onclick = e => { if (e.target.closest('.racts, .delq')) return;
       const p = el.dataset.p;
-      if (e.shiftKey) { e.preventDefault(); const a = LASTCK || (SEL && SEL.path); if (a && a !== p) { range(a, p); } else PICK.add(p); LASTCK = LASTCK || p; selUi(); return renderList(); }
-      if (e.ctrlKey || e.metaKey) { PICK.has(p) ? PICK.delete(p) : PICK.add(p); if (SEL && SEL.path !== p && !PICK.size) {} LASTCK = p; selUi(); return renderList(); }
-      if (PICK.size) { PICK.clear(); selUi(); }
+      if ((e.shiftKey || e.ctrlKey || e.metaKey) && SEL && !PICK.size) PICK.add(SEL.path);      // the open song stays selected
+      if (e.shiftKey) { e.preventDefault(); const a = LASTCK || (SEL && SEL.path); if (a && a !== p) range(a, p); else PICK.add(p); LASTCK = LASTCK || p; selUi(); return renderList(); }
+      if (e.ctrlKey || e.metaKey) { PICK.has(p) ? PICK.delete(p) : PICK.add(p); LASTCK = p; selUi(); return renderList(); }
+      if (PICK.size) { PICK.clear(); MVTO = ''; selUi(); }
       LASTCK = p; pick(LIB.items.find(x => x.path === p)); };
     el.ondragstart = e => { const ps = PICK.has(el.dataset.p) ? [...PICK] : [el.dataset.p]; e.dataTransfer.setData('text/hype-move', JSON.stringify(ps)); e.dataTransfer.effectAllowed = 'move'; };
     el.ondragover = e => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); el.classList.add('dropover'); } };
