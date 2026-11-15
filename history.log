@@ -347,3 +347,4 @@
 2026-11-15T17:27:24 ok a27b718d Page History is now called Reports; its first tab Played list is now Playback history
 2026-11-15T17:37:23 ok 6becd602 After logging in: the panel instead of the status page; last-24-hours cards say R / TV; Audience tiles 'listened in total' (radio) and 'watched in total' (TV)
 2026-11-15T17:43:17 ok c4a3d816 Song report: Own period (from – to dates) next to 7 / 30 / 90 days, also for CSV and PDF; the Hype Live 'needs you' badge no longer shows 0
+2026-11-15T17:46:07 ok 1817d510 Audience: Own period (from – to) for Listeners & viewers and for Trends (average day, peaks, devices and heatmap over your days); also in the PDF title
