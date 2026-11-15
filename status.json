@@ -1,18 +1,18 @@
 {
- "time": "2026-11-15T21:01:33",
+ "time": "2026-11-15T21:15:38",
  "result": "ok",
- "commit": "a120e0b2d2c381632be4c25ea2ea0a55dad0c629",
- "subject": "Listeners slideshow: only Studio's own links are removed; no drop box on it",
+ "commit": "dbe4d405bff9f1738b15d506017b3e892a10df6a",
+ "subject": "SLIDESHOW tab: \u270e shows + NEW and \u00d7 per slideshow (folder to branding/slideshow/.deleted, scene gone within seconds; off air first if it was on); the Listeners slideshows can't be deleted",
  "log": [
-  "21:00:48 update b92b5398 \u2192 a120e0b2 \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
-  "21:00:48 restart hype-engine",
-  "21:01:33 installed OK \u00b7 restarted: hype-engine"
+  "21:14:53 update a120e0b2 \u2192 dbe4d405 \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "21:14:53 restart hype-engine",
+  "21:15:38 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "ISKI \u2013 GOIDO",
+  "song": "Rich Kalashh \u2013 Taurus",
   "listeners": 3,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
