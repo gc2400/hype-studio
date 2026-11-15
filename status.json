@@ -1,18 +1,18 @@
 {
- "time": "2026-11-15T14:37:19",
+ "time": "2026-11-15T15:51:47",
  "result": "ok",
- "commit": "7471c278be66c9b8575bd4ea760e638c21f4a451",
- "subject": "Throwback sweeper only before songs from the CLASSICS folder (not CHILL/CHILL-CLASSICS); the Throwback badge rule is set to CLASSICS too",
+ "commit": "bc14a7954a426d02780fb26bdab34cc7e03ec467",
+ "subject": "History \u2192 Audience: who listens and watches on our own streams \u2013 now (stream, device, app, city/country, since), devices / hours / average visit for radio and TV, countries, visit length, devices, apps, streams (today / 7 / 30 days). Sessions per device, no addresses stored; country file DB-IP Lite (local, monthly)",
  "log": [
-  "14:36:34 update 094f9696 \u2192 7471c278 \u00b7 1 file(s): engine/engine.py",
-  "14:36:34 restart hype-engine",
-  "14:37:19 installed OK \u00b7 restarted: hype-engine"
+  "15:51:02 update 7471c278 \u2192 bc14a795 \u00b7 3 file(s): engine/audstats.py, engine/engine.py, web/panel/history.html",
+  "15:51:02 restart hype-engine",
+  "15:51:47 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Be\u00e9le x Ovy On The Drums \u2013 Mi Refe",
-  "listeners": 2,
+  "song": "bees & honey x Omah Lay x BEAM x Gyptian \u2013 As We Get High",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
