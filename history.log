@@ -337,3 +337,4 @@
 2026-11-15T14:37:19 ok 7471c278 Throwback sweeper only before songs from the CLASSICS folder (not CHILL/CHILL-CLASSICS); the Throwback badge rule is set to CLASSICS too
 2026-11-15T15:51:47 ok bc14a795 History → Audience: who listens and watches on our own streams – now (stream, device, app, city/country, since), devices / hours / average visit for radio and TV, countries, visit length, devices, apps, streams (today / 7 / 30 days). Sessions per device, no addresses stored; country file DB-IP Lite (local, monthly)
 2026-11-15T15:54:36 ok 28cc0aca mp3hits.json readable by root only
+2026-11-15T16:06:38 ok fdc0806a History → Audience: the breakdown as tabs (Countries · Devices · Apps / browsers · Streams · How long they stay) in one clean table with devices, time and share; Live Layer hidden (opacity filter) while a jingle / TOH plays in Music video and on the Branding scene

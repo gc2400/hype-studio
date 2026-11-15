@@ -1,18 +1,18 @@
 {
- "time": "2026-11-15T15:54:36",
+ "time": "2026-11-15T16:06:38",
  "result": "ok",
- "commit": "28cc0acab37606461c69f214b9ee12ed65a5a7a7",
- "subject": "mp3hits.json readable by root only",
+ "commit": "fdc0806ac68838be81a835e20ab02f3f43cd94f9",
+ "subject": "History \u2192 Audience: the breakdown as tabs (Countries \u00b7 Devices \u00b7 Apps / browsers \u00b7 Streams \u00b7 How long they stay) in one clean table with devices, time and share; Live Layer hidden (opacity filter) while a jingle / TOH plays in Music video and on the Branding scene",
  "log": [
-  "15:53:51 update bc14a795 \u2192 28cc0aca \u00b7 1 file(s): engine/engine.py",
-  "15:53:51 restart hype-engine",
-  "15:54:36 installed OK \u00b7 restarted: hype-engine"
+  "16:05:53 update 28cc0aca \u2192 fdc0806a \u00b7 2 file(s): engine/engine.py, web/panel/history.html",
+  "16:05:53 restart hype-engine",
+  "16:06:38 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Broederliefde \u2013 Maak Me Niet Heet",
+  "song": "Ozuna x Jory Boy x \u00d1engo Flow \u2013 Vulnerable",
   "listeners": 5,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
