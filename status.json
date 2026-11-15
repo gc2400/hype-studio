@@ -1,18 +1,18 @@
 {
- "time": "2026-11-15T16:22:46",
+ "time": "2026-11-15T16:38:54",
  "result": "ok",
- "commit": "f5c8233a1bc2e75d7f7a329148badd6f697999bc",
- "subject": "History \u2192 Audience: Songs (gainers / losers vs a normal song at that weekday + hour, by song or artist, 7/30/90 days, every play, CSV, \ud83d\udd25 from Hype Live) and By time (day graph with normal-for-this-weekday, peaks, devices, best hour, weekday x hour heatmap); plays + 5-min points kept 400 days; one-time import of Hype Live's history (?hype_studio_stats_export)",
+ "commit": "68d639d86311c8917cacca89fd004108b3332361",
+ "subject": "History: own tabs Played list \u00b7 Song report \u00b7 Audience \u00b7 Library report (was Week report, now with tabs: Most played \u00b7 Rotation \u00b7 Never played \u00b7 Streams & stability; PDF still prints everything). Song report in the Hype Live style (rank, title + artist, score bar). Audience: By time first, clear tiles (radio / TV peak with time + average, best hour as a range, different devices radio \u00b7 TV), hover values on the graph, heatmap Radio + TV / Radio / TV without numbers (hover)",
  "log": [
-  "16:22:01 update fdc0806a \u2192 f5c8233a \u00b7 3 file(s): engine/audstats.py, engine/engine.py, web/panel/history.html",
-  "16:22:01 restart hype-engine",
-  "16:22:46 installed OK \u00b7 restarted: hype-engine"
+  "16:38:09 update f5c8233a \u2192 68d639d8 \u00b7 2 file(s): engine/audstats.py, web/panel/history.html",
+  "16:38:09 restart hype-engine",
+  "16:38:54 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Shenseea x Asake \u2013 Playtime",
-  "listeners": 4,
+  "song": "Ryan Castro \u2013 BOTAPAFO",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
