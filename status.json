@@ -1,17 +1,18 @@
 {
- "time": "2026-11-15T17:27:24",
+ "time": "2026-11-15T17:37:23",
  "result": "ok",
- "commit": "a27b718d807475322f5c6699ca33bb52470607b9",
- "subject": "Page History is now called Reports; its first tab Played list is now Playback history",
+ "commit": "6becd6026ffabd3bca692684bcc92bb9e2f09f04",
+ "subject": "After logging in: the panel instead of the status page; last-24-hours cards say R / TV; Audience tiles 'listened in total' (radio) and 'watched in total' (TV)",
  "log": [
-  "17:27:24 update 9087a2d0 \u2192 a27b718d \u00b7 3 file(s): web/panel/header.js, web/panel/help.html, web/panel/history.html",
-  "17:27:24 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "17:36:37 update a27b718d \u2192 6becd602 \u00b7 2 file(s): engine/hype_auth.py, web/panel/history.html",
+  "17:36:38 restart hype-auth",
+  "17:37:23 installed OK \u00b7 restarted: hype-auth"
  ],
  "guard": {
   "song": "Club Hype \u2013 Mix It Like Rive VOL.2 by Rivaldo",
   "listeners": 7,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
