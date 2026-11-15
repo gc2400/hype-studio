@@ -191,7 +191,8 @@ class H(BaseHTTPRequestHandler):
     def log_message(s, *a): pass
 
 def safe(nxt):
-    return nxt if nxt.startswith("/") and not nxt.startswith("//") and "\\" not in nxt and not nxt.startswith("/login") else "/"
+    ok = nxt.startswith("/") and not nxt.startswith("//") and "\\" not in nxt and not nxt.startswith("/login")
+    return nxt if ok and nxt != "/" else "/panel/"      # after logging in: the panel (not the status page), unless a page was asked
 
 def cli():
     import getpass
