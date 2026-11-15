@@ -1810,6 +1810,16 @@ class Engine:
                 except Exception: pass
                 os.chmod(os.path.join(slideshow.ROOT, kind, name), 0o2775)
                 return {"ok": True, "scene": slideshow.scene_name(kind, name), "folder": "branding/slideshow/%s/%s" % (kind, name)}
+            elif action == "slideshow_delete":   # Scenes → SLIDESHOW → ✎ → ×: the folder to branding/slideshow/.deleted, its scene goes
+                f = os.path.normpath(str(d.get("folder") or "")).split("/")
+                if len(f) != 4 or f[:2] != ["branding", "slideshow"] or f[2] not in ("photos", "videos") or f[3] in ("Listeners", "", ".", ".."):
+                    return {"ok": False, "error": "this slideshow can't be deleted"}
+                src = os.path.join(slideshow.ROOT, f[2], f[3])
+                if not os.path.isdir(src): return {"ok": False, "error": "not found"}
+                os.makedirs(os.path.join(slideshow.ROOT, ".deleted"), exist_ok=True)
+                os.replace(src, os.path.join(slideshow.ROOT, ".deleted", time.strftime("%Y%m%d-%H%M%S-") + f[2] + "-" + f[3]))
+                if self.tv.scene == slideshow.scene_name(f[2], f[3]): self.tv.auto = True; self.tv.scene = None; self.tv.set_scene((self.now or {}).get("scene") or "Hype Screen")
+                slideshow.STATE["force"] = True; log.info("slideshow deleted: %s", "/".join(f)); return {"ok": True}
             elif action == "fetch_url":      # a picture / video / sound dragged from a website onto the pads: the server fetches it
                 return fetch_url(c, d)
             elif action == "media_stop":
@@ -2454,7 +2464,7 @@ def slideshow_loop():
     while True:
         time.sleep(1)
         try:
-            if time.time() - last > 30:
+            if time.time() - last > 30 or slideshow.STATE.pop("force", False):
                 last = time.time(); c = dbc()
                 listener_slideshow()
                 with E.tv.olock:

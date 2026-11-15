@@ -246,6 +246,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .padadd.over{outline:2px dashed var(--y)}
 #lpvBox{position:fixed;inset:0;background:rgba(3,10,18,.78);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
 #lpvBox .in{background:var(--card,#0B2238);border:1px solid #17344F;border-radius:16px;padding:14px;width:min(720px,100%);display:flex;flex-direction:column;gap:10px}
+#camScenes .scene{position:relative}.ssx{position:absolute;top:3px;right:4px;background:rgba(0,0,0,.55);color:#fff;border-radius:6px;font-size:14px;line-height:1;padding:2px 6px;cursor:pointer}
 .pad .rm{position:absolute;top:2px;right:4px;border:0;background:rgba(0,0,0,.45);color:#fff;border-radius:6px;font-size:14px;line-height:1;padding:2px 6px;cursor:pointer}
 .pads.edit .pad{cursor:grab;outline:1px dashed rgba(255,255,255,.35)}
 .padadd.over{border-color:var(--y);color:var(--y)}
@@ -664,7 +665,7 @@ function camLayout(t = LTAB()) {      // your own arrangement (saved on the serv
   const have = new Set([...L.cells, ...L.hidden]), cells = [...L.cells, ...CAMS.filter(n => !have.has(n))];
   return {cells: cells.filter(n => !n || CAMS.includes(n)), hidden: L.hidden.filter(n => CAMS.includes(n))};
 }
-let SG = -1, SGEDIT = null, SGHIDE = false;
+let SG = -1, SGEDIT = null, SGHIDE = false, SSEDIT = false;     // SSEDIT: SLIDESHOW tab in edit (+ NEW, × delete)
 try { SGHIDE = localStorage.getItem('hypeSGhide') === '1'; } catch (e) {}   // -1 = Cameras (all layouts); n = your group n
 try { SG = +(localStorage.getItem('hypeSG') ?? -1); } catch (e) {}
 function groups() { return (S && S.scene_groups) || []; }
@@ -676,13 +677,14 @@ function renderScenes() {
     $('#bLL').onclick = () => { const on = !(S.live_layer !== false); cmd('live_layer', {on}).then(() => { S.live_layer = on; $('#scenes').dataset.h = ''; renderScenes(); toast(on ? 'Live Layer on' : 'Live Layer off – back on at Music video, Hype Screen, Branding or AUTO'); }); }; }
   const G = SGEDIT ? SGEDIT.list : groups(); if (SG >= G.length || SG < -4) SG = -1;
   const SSL = S.slideshows || [], SSN = SSL.map(x => x.scene);
-  const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras ${SG === -1 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP ${SG === -2 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA ${SG === -3 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -4 && !SGHIDE ? 'on' : ''}" data-sg="-4" title="Full-screen slideshows: every folder in branding/slideshow/photos and /videos is a scene">SLIDESHOW ${SG === -4 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)} ${SG === i ? (SGHIDE ? '▸' : '▾') : ''}</button>`).join('') + (SGEDIT ? '' : '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ GROUP</button>') + (!SGEDIT && SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">✎</button>' : '') + (!SGEDIT && !CAMEDIT && SG < 0 && !SGHIDE ? '<button class="btn sm" data-camedit title="Arrange these scenes: move, remove, add back">✎</button>' : '');
+  const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras ${SG === -1 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP ${SG === -2 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA ${SG === -3 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -4 && !SGHIDE ? 'on' : ''}" data-sg="-4" title="Full-screen slideshows: every folder in branding/slideshow/photos and /videos is a scene">SLIDESHOW ${SG === -4 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)} ${SG === i ? (SGHIDE ? '▸' : '▾') : ''}</button>`).join('') + (SGEDIT ? '' : '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ GROUP</button>') + (!SGEDIT && SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">✎</button>' : '') + (!SGEDIT && !CAMEDIT && SG < 0 && SG !== -4 && !SGHIDE ? '<button class="btn sm" data-camedit title="Arrange these scenes: move, remove, add back">✎</button>' : '') + (SG === -4 && !SGHIDE ? `<button class="btn sm ${SSEDIT ? 'yellow' : ''}" data-ssedit title="New slideshow / delete slideshows">${SSEDIT ? 'Done' : '✎'}</button>` : '');
   if ($('#sgTabs').dataset.h !== tabs) { $('#sgTabs').innerHTML = tabs; $('#sgTabs').dataset.h = tabs;
     $$('#sgTabs [data-sg]').forEach(b => b.onclick = () => { const n = +b.dataset.sg;
       if (n === SG && !SGEDIT) SGHIDE = !SGHIDE; else { SG = n; SGHIDE = false; }      // click the open group again = fold it away
       try { localStorage.setItem('hypeSG', SG); localStorage.setItem('hypeSGhide', SGHIDE ? '1' : '0'); } catch (e) {} if (SGEDIT) SGEDIT.i = SG; $('#sgTabs').dataset.h = ''; renderScenes(); });
     const nw = $('#sgTabs [data-sgnew]'); if (nw) nw.onclick = () => { const n = prompt('Name of the new group (e.g. a show):'); if (!n) return; SGEDIT = {list: JSON.parse(JSON.stringify(groups()))}; SGEDIT.list.push({name: n.slice(0, 30), scenes: []}); SG = SGEDIT.i = SGEDIT.list.length - 1; renderScenes(); };
     const ce = $('#sgTabs [data-camedit]'); if (ce) ce.onclick = () => { CAMEDIT = Object.assign(JSON.parse(JSON.stringify(camLayout())), {tab: LTAB()}); CAMPICK = -1; $('#sgTabs').dataset.h = ''; renderScenes(); };
+    const se = $('#sgTabs [data-ssedit]'); if (se) se.onclick = () => { SSEDIT = !SSEDIT; $('#sgTabs').dataset.h = ''; $('#camScenes').dataset.h = ''; renderScenes(); };
     const ed = $('#sgTabs [data-sgedit]'); if (ed) ed.onclick = () => { SGEDIT = {list: JSON.parse(JSON.stringify(groups())), i: SG}; renderScenes(); };
   }
   $('#sgEdit').hidden = !SGEDIT; if (SGEDIT && SG >= 0 && document.activeElement !== $('#sgName')) $('#sgName').value = (G[SG] || {}).name || '';
@@ -691,13 +693,13 @@ function renderScenes() {
   const scLive = n => n.startsWith('PIP@') ? S.scene === 'PIP' && S.pip === n.slice(4) : S.scene === n;
   const inG = SGEDIT && SG >= 0 ? new Set(G[SG].scenes) : null;
   const ssi = n => SSL.find(x => x.scene === n);
-  const btn = n => { const x = ssi(n); return `<button class="btn scene ${scLive(n) ? 'live' : ''} ${inG && inG.has(n) ? 'ing' : ''}" data-scene="${esc(n)}" ${x && x.name !== 'Listeners' ? `data-ssf="${esc(x.folder)}" title="Drop ${x.kind} here to add them"` : x ? 'title="The listener photos / videos on the LISTENERS pads (filled by itself)"' : ''}>${esc(scName(n))}${x ? `<small>${x.n} ${x.kind === 'photos' ? 'photo' : 'video'}${x.n === 1 ? '' : 's'}</small>` : ''}</button>`; };
+  const btn = n => { const x = ssi(n); return `<button class="btn scene ${scLive(n) ? 'live' : ''} ${inG && inG.has(n) ? 'ing' : ''}" data-scene="${esc(n)}" ${x && x.name !== 'Listeners' ? `data-ssf="${esc(x.folder)}" title="Drop ${x.kind} here to add them"` : x ? 'title="The listener photos / videos on the LISTENERS pads (filled by itself)"' : ''}>${esc(scName(n))}${x ? `<small>${x.n} ${x.kind === 'photos' ? 'photo' : 'video'}${x.n === 1 ? '' : 's'}</small>` : ''}${x && SSEDIT && SG === -4 && x.name !== 'Listeners' ? `<span class="ssx" data-ssdel="${esc(x.folder)}" title="Delete this slideshow">×</span>` : ''}</button>`; };
   const mx = SG < 0 && SG !== -4 && !SGEDIT; if (CAMEDIT && (SG >= 0 || CAMEDIT.tab !== LTAB())) CAMEDIT = null;
   const CL = mx ? camLayout() : null;
   const html = mx && CAMEDIT ? CL.cells.map((n, i) => n ? `<div class="camc ${CAMPICK === i ? 'pick' : ''}" draggable="true" data-ci="${i}"><span class="btn scene">${esc(scName(n))}</span><button class="camx" data-cx="${i}" aria-label="Remove ${esc(scName(n))}" title="Take it off the grid">×</button></div>`
         : `<div class="camc empty ${CAMPICK === i ? 'pick' : ''}" data-ci="${i}"></div>`).join('')
     : mx ? CL.cells.map(n => n ? btn(n) : '<span></span>').join('')
-    : list.map(btn).join('') + (SG === -4 && !SGEDIT ? '<button class="btn scene" data-ssnew title="A new slideshow = a new folder; drop photos or videos on its button">+ NEW<small>slideshow</small></button>' : '')
+    : list.map(btn).join('') + (SG === -4 && !SGEDIT && SSEDIT ? '<button class="btn scene" data-ssnew title="A new slideshow = a new folder; drop photos or videos on its button">+ NEW<small>slideshow</small></button>' : '')
       || '<span class="muted" style="grid-column:1/-1">Empty group – press ✎ and click scenes to add them.</span>';
   const cg = $('#camScenes'); cg.hidden = SGHIDE && !SGEDIT; cg.classList.toggle('mx', mx); cg.classList.toggle('cedit', !!CAMEDIT); if (cg.dataset.h !== html) { cg.innerHTML = html; cg.dataset.h = html; }
   $('#camEdit').hidden = !CAMEDIT;
@@ -709,7 +711,10 @@ function renderScenes() {
   $$('#camScenes [data-ssf]').forEach(b => { b.ondragover = e => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); b.classList.add('over'); } };
     b.ondragleave = () => b.classList.remove('over');
     b.ondrop = e => { e.preventDefault(); b.classList.remove('over'); ssUpload([...e.dataTransfer.files], b.dataset.ssf); }; });
-  $$('#scenes [data-scene], #camScenes [data-scene]').forEach(b => b.onclick = () => {
+  $$('#camScenes [data-ssdel]').forEach(x => x.onclick = e => { e.stopPropagation(); const f = x.dataset.ssdel, nm = f.split('/').pop();
+    if (!confirm('Delete the slideshow "' + nm + '" and its scene? (the folder goes to branding/slideshow/.deleted, so it can be put back)')) return;
+    cmd('slideshow_delete', {folder: f}).then(r => { if (!r || r.ok === false) return toast((r && r.error) || 'Not deleted', 1); toast(nm + ' deleted – its scene goes within a few seconds'); }); });
+  $$('#scenes [data-scene], #camScenes [data-scene]').forEach(b => b.onclick = e => { if (SSEDIT && SG === -4 && b.closest('#camScenes')) return;
     if (SGEDIT && SG >= 0 && b.closest('#camScenes')) { const g = SGEDIT.list[SG], n = b.dataset.scene; g.scenes = g.scenes.includes(n) ? g.scenes.filter(x => x !== n) : [...g.scenes, n]; return renderScenes(); }
     cmd('scene', {scene: b.dataset.scene}).then(r => toast(r && r.auto ? b.dataset.scene + ' – AUTO SCENES on, the TV follows the music' : r && r.hold ? b.dataset.scene + ' held for this song – the next song is automatic again (AUTO SCENES off = keep it)' : 'Scene held: press AUTO SCENES to follow the music again')); });
 }
