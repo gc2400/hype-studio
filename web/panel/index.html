@@ -876,7 +876,7 @@ function renderPads() {
   const B = BANKS[bank] || {items: []}; $('#bankName').value = B.name || ''; $('#pads').classList.toggle('edit', PEDIT); $('#padEditBar').hidden = !PEDIT;
   const pg = padPage(B.items.length);
   $('#pads').innerHTML = B.items.map((p, i) => (!PEDIT && (i < pg[0] || i >= pg[1])) ? '' : `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE RADIO\s*[-–]\s*/i, '').replace(/^[^A-Za-z0-9]+\s*/u, ''))}<small>${fmt(p.duration)}${p.voice ? (p.played ? ' · ✓ played' : ' · NEW') : ''}${p.has_video ? ' · video' : ''}${p.missing ? ' · not found' : ''}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmpad="${i}" title="Remove">×</span>` : ''}</button>`).join('')
-    + '<button class="padadd" id="padDrop" title="Drop a jingle from the library, or a sound file / link from a website">drop here</button>';
+    + (PEDIT ? '<button class="padadd" id="padDrop" title="Drop a jingle from the library, or a sound file / link from a website">drop here</button>' : '') || '<span class="muted">This bank is empty. Press ✎ EDIT and drag jingles from the library onto it.</span>';
   $$('#pads [data-pad]').forEach(b => {
     const p = B.items[+b.dataset.pad];
 

@@ -2428,6 +2428,24 @@ def load_specials():
 try: planner.SPECIALS[:] = json.load(open(SPECIALS_F))
 except Exception: pass
 
+def listener_slideshow():
+    """The listeners' slideshow: photos/Listeners and videos/Listeners hold links to the listener photos / videos that are on
+    the LISTENERS pads now (same days-to-keep, pinned, ×) – so 'Photos · Listeners' / 'Videos · Listeners' always show the
+    current ones. Hype Studio keeps these two folders itself."""
+    want = {"photos": {}, "videos": {}}
+    for x in listener_pads()["items"]:
+        if x["kind"] in ("photo", "video"): want["photos" if x["kind"] == "photo" else "videos"][x["id"]] = os.path.join(MEDIA_DIR, x["id"])
+    for kind, files in want.items():
+        d = os.path.join(slideshow.ROOT, kind, "Listeners"); os.makedirs(d, exist_ok=True)
+        have = set(os.listdir(d))
+        for f in have - set(files):
+            try: os.remove(os.path.join(d, f))
+            except OSError: pass
+        for f, src in files.items():
+            if f not in have and os.path.exists(src):
+                try: os.symlink(src, os.path.join(d, f))
+                except OSError: pass
+
 def slideshow_loop():
     """SLIDESHOW scenes (branding/slideshow/photos|videos/<name>): folders -> scenes every 30 s; a Videos scene on air gets
     its next random video when one ends (checked every second)."""
@@ -2437,6 +2455,7 @@ def slideshow_loop():
         try:
             if time.time() - last > 30:
                 last = time.time(); c = dbc()
+                listener_slideshow()
                 with E.tv.olock:
                     slideshow.sync(E.tv.client(), float(planner.get_setting(c, "ss_photo_s", 8)), float(planner.get_setting(c, "ss_fade_s", 1)),
                                    bool(planner.get_setting(c, "ss_random", True)))
