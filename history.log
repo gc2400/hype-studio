@@ -354,3 +354,4 @@
 2026-11-15T20:21:55 ok 35c90b96 Pads: LISTENERS tab in green (MEDIA stays yellow)
 2026-11-15T20:24:02 ok c3612aab RELOAD PAGES moved from the panel to Settings (Screen part: Reload the screen pages)
 2026-11-15T20:29:11 ok 2acc8e07 Library: no tick boxes – Shift-click selects a range, Ctrl-click one more (yellow border); 'Move…' opens a folder window, then Move; dragging the selected songs onto a folder button still works
+2026-11-15T20:34:21 ok 56ace920 Library: selected songs (Shift / Ctrl-click, the open song stays selected) show a Move panel on the right in place of the editor: the songs, the folders by genre, Move

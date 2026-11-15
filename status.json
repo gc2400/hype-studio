@@ -1,17 +1,17 @@
 {
- "time": "2026-11-15T20:29:11",
+ "time": "2026-11-15T20:34:21",
  "result": "ok",
- "commit": "2acc8e0738f430b4a12a5b2c8d438723ceebf5ea",
- "subject": "Library: no tick boxes \u2013 Shift-click selects a range, Ctrl-click one more (yellow border); 'Move\u2026' opens a folder window, then Move; dragging the selected songs onto a folder button still works",
+ "commit": "56ace920c594195c42298def5f63b04259e8d661",
+ "subject": "Library: selected songs (Shift / Ctrl-click, the open song stays selected) show a Move panel on the right in place of the editor: the songs, the folders by genre, Move",
  "log": [
-  "20:29:11 update c3612aab \u2192 2acc8e07 \u00b7 1 file(s): web/panel/library.html",
-  "20:29:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:34:20 update 2acc8e07 \u2192 56ace920 \u00b7 1 file(s): web/panel/library.html",
+  "20:34:21 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Noano x Ronnie Flex \u2013 Damage",
+  "song": "Kybba x Bounty Killer x Kalash x Busy Signal x Barrington Levy \u2013 90s",
   "listeners": 3,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
