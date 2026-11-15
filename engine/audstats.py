@@ -159,19 +159,22 @@ BUCKETS = [(30, "under 30 s"), (60, "30 s – 1 min"), (300, "1 – 5 min"), (60
            (3600, "30 min – 1 h"), (7200, "1 – 2 h"), (10 ** 9, "over 2 h")]
 
 
-def report(days=1, kind=""):
-    """Sessions of the last `days` days (1 = today since 00:00), radio / tv / both. Running sessions count too."""
+def report(days=1, kind="", t0=None, t1=None):
+    """Sessions of the last `days` days (1 = today since 00:00) or of your own period t0 … t1, radio / tv / both.
+    Running sessions count too (when the period reaches now)."""
     now = time.time()
-    if days <= 1:
-        lt = time.localtime(now); t0 = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 0, 0, 0, 0, 0, -1))
-    else: t0 = now - days * 86400
+    if t0 is None:
+        if days <= 1:
+            lt = time.localtime(now); t0 = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 0, 0, 0, 0, 0, -1))
+        else: t0 = now - days * 86400
+    t1 = min(t1 or now, now)
     c = db()
-    rows = c.execute("SELECT kind, start, end, stream, dev, app, cc, city, dk FROM sessions WHERE end >= ?", (t0,)).fetchall(); c.close()
-    with LOCK: live = [dict(v) for v in LIVE.values()]
+    rows = c.execute("SELECT kind, start, end, stream, dev, app, cc, city, dk FROM sessions WHERE end >= ? AND start < ?", (t0, t1)).fetchall(); c.close()
+    with LOCK: live = [dict(v) for v in LIVE.values()] if t1 >= now - 60 else []
     rows = [dict(zip(("kind", "start", "end", "stream", "dev", "app", "cc", "city", "dk"), r)) for r in rows]
     rows += [dict(s, end=s["last"], live=True) for s in live]
     if kind in ("radio", "tv"): rows = [r for r in rows if r["kind"] == kind]
-    for r in rows: r["dur"] = max(0.0, r["end"] - max(r["start"], t0)) + 15      # seen every 15 s: count the last interval too
+    for r in rows: r["dur"] = max(0.0, min(r["end"], t1) - max(r["start"], t0)) + 15      # seen every 15 s: count the last interval too
 
     def group(key):
         g = {}
@@ -312,7 +315,7 @@ def plays_csv(days=90, t0=None, t1=None):
 
 
 # ---------------- listeners by time ----------------
-def bytime(view="today"):
+def bytime(view="today", f0=None, f1=None):
     """The day graph (5-min points + "normal for this weekday"), peaks, best hour, different devices, weekday x hour heatmap."""
     now = time.time(); lt = time.localtime(now); today0 = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 0, 0, 0, 0, 0, -1))
     c = db()
@@ -331,14 +334,18 @@ def bytime(view="today"):
         series = [{"i": k, "r": round(v[0] or 0, 1), "tv": round(v[1] or 0, 1)} for k, v in sorted(pts.items())]
         peaks = {"r": max(((v[2] or 0, k) for k, v in pts.items()), default=(0, None)), "tv": max(((v[3] or 0, k) for k, v in pts.items()), default=(0, None))}
     else:
-        n = 7 if view == "avg7" else 30; days = [today0 - 86400 * i for i in range(1, n + 1)]
-        avg = avg_points(days); t0, t1 = today0 - n * 86400, today0; normal = {}
+        if view == "own" and f0 is not None and f1 is not None:      # your own period: an average day over those days
+            t0, t1 = f0, min(f1, today0 + 86400); days = [d for d in (t0 + 86400 * i for i in range(int((t1 - t0) // 86400) + 1)) if d < t1]
+        else:
+            n = 7 if view == "avg7" else 30; days = [today0 - 86400 * i for i in range(1, n + 1)]; t0, t1 = today0 - n * 86400, today0
+        avg = avg_points(days); normal = {}
         series = [{"i": k, "r": round(v[0], 1), "tv": round(v[1], 1)} for k, v in sorted(avg.items())]
         rows = c.execute("SELECT t, rmax, tvmax FROM aud5 WHERE t >= ? AND t < ?", (t0, t1)).fetchall()
         peaks = {"r": max(((r or 0, t) for t, r, _ in rows), default=(0, None)), "tv": max(((tv or 0, t) for t, _, tv in rows), default=(0, None))}
-    # heatmap + best hour: last 30 days
+    # heatmap + best hour: last 30 days (own period: those days)
     heat = [[[0, 0.0, 0.0] for _ in range(24)] for _ in range(7)]
-    for t, r, tv in c.execute("SELECT t, r, tv FROM aud5 WHERE t >= ?", (today0 - 30 * 86400,)):
+    h0, h1 = (t0, t1) if view == "own" else (today0 - 30 * 86400, now + 1)
+    for t, r, tv in c.execute("SELECT t, r, tv FROM aud5 WHERE t >= ? AND t < ?", (h0, h1)):
         d, h = _lt(t); x = heat[d][h]; x[0] += 1; x[1] += r or 0; x[2] += tv or 0
     hm = [[{"r": round(x[1] / x[0], 1) if x[0] else None, "tv": round(x[2] / x[0], 1) if x[0] else None,
             "rt": round((x[1] + x[2]) / x[0], 1) if x[0] else None} for x in row] for row in heat]

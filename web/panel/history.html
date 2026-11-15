@@ -92,13 +92,15 @@ th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-
   <section class="card" id="audCard" hidden>
     <div class="row" style="gap:4px" id="aViews" role="tablist" aria-label="Audience view"><button class="btn on" data-v="who">Listeners &amp; viewers</button><button class="btn" data-v="time">Trends</button><span style="flex:1"></span><button class="btn" data-pdf="audCard" title="Save this view as a PDF (choose &quot;Save as PDF&quot; as the printer)">⬇ PDF</button></div>
     <div id="tView" hidden style="display:flex;flex-direction:column;gap:10px">
-      <div class="row"><span class="row" style="gap:4px" id="tWhich"><button class="btn on" data-w="today">Today</button><button class="btn" data-w="yesterday">Yesterday</button><button class="btn" data-w="avg7">Average day · 7 days</button><button class="btn" data-w="avg30">Average day · 30 days</button></span></div>
+      <div class="row"><span class="row" style="gap:4px" id="tWhich"><button class="btn on" data-w="today">Today</button><button class="btn" data-w="yesterday">Yesterday</button><button class="btn" data-w="avg7">Average day · 7 days</button><button class="btn" data-w="avg30">Average day · 30 days</button><button class="btn" data-w="own">Own period</button></span>
+        <span class="row" style="gap:4px" id="tOwn" hidden><input type="date" id="tFrom" aria-label="From"><span class="muted">to</span><input type="date" id="tTo" aria-label="To"></span></div>
       <div class="kpis" id="tKpi"></div>
       <div><h3>Through the day <small id="tLeg"></small></h3><div id="tChart"></div></div>
-      <div><h3>When are people there? <small>– average listeners / viewers per weekday and hour, last 30 days (hover for the number)</small> <span class="row" style="gap:4px;display:inline-flex;margin-left:8px" id="tHm"><button class="btn on" data-h="rt" style="min-height:26px">Radio + TV</button><button class="btn" data-h="r" style="min-height:26px">Radio</button><button class="btn" data-h="tv" style="min-height:26px">TV</button></span></h3><div id="tHeat" style="overflow:auto"></div></div>
+      <div><h3>When are people there? <small id="tHmS">– average listeners / viewers per weekday and hour, last 30 days (hover for the number)</small> <span class="row" style="gap:4px;display:inline-flex;margin-left:8px" id="tHm"><button class="btn on" data-h="rt" style="min-height:26px">Radio + TV</button><button class="btn" data-h="r" style="min-height:26px">Radio</button><button class="btn" data-h="tv" style="min-height:26px">TV</button></span></h3><div id="tHeat" style="overflow:auto"></div></div>
     </div>
     <div id="wView" style="display:flex;flex-direction:column;gap:10px">
-    <div class="row"><span class="row" style="gap:4px" id="aDays"><button class="btn on" data-d="1">Today</button><button class="btn" data-d="7">7 days</button><button class="btn" data-d="30">30 days</button></span>
+    <div class="row"><span class="row" style="gap:4px" id="aDays"><button class="btn on" data-d="1">Today</button><button class="btn" data-d="7">7 days</button><button class="btn" data-d="30">30 days</button><button class="btn" data-d="0">Own period</button></span>
+      <span class="row" style="gap:4px" id="aOwn" hidden><input type="date" id="aFrom" aria-label="From"><span class="muted">to</span><input type="date" id="aTo" aria-label="To"></span>
       <span class="row" style="gap:4px" id="aKind"><button class="btn on" data-k="">Radio + TV</button><button class="btn" data-k="radio">Radio</button><button class="btn" data-k="tv">TV</button></span>
       <span class="muted">Our own streams, devices counted once per day. Song gains / losses and listeners per hour: Hype Live → Reports.</span></div>
     <div class="kpis" id="aKpi"></div>
@@ -215,7 +217,7 @@ const today_ = () => new Date().toISOString().slice(0, 10);
 $$('[data-pdf]').forEach(b => b.onclick = () => {
   const c = b.dataset.pdf;
   if (c === 'songCard') pdf(c, 'Hype song report ' + today_(), 'Hype Radio TV – song report · ' + (SD ? 'last ' + SD + ' days' : $('#sFrom').value + ' – ' + $('#sTo').value) + ' · ' + (SB === 'artist' ? 'by artist' : 'by song'));
-  if (c === 'audCard') pdf(c, 'Hype audience ' + today_(), 'Hype Radio TV – audience · ' + (AV === 'who' ? 'listeners & viewers · ' + ({1: 'today', 7: 'last 7 days', 30: 'last 30 days'}[AD] || '') : 'trends · ' + ({today: 'today', yesterday: 'yesterday', avg7: 'average day, 7 days', avg30: 'average day, 30 days'}[TW])));
+  if (c === 'audCard') pdf(c, 'Hype audience ' + today_(), 'Hype Radio TV – audience · ' + (AV === 'who' ? 'listeners & viewers · ' + ({1: 'today', 7: 'last 7 days', 30: 'last 30 days'}[AD] || ($('#aFrom').value + ' – ' + $('#aTo').value)) : 'trends · ' + ({today: 'today', yesterday: 'yesterday', avg7: 'average day, 7 days', avg30: 'average day, 30 days', own: 'average day, ' + $('#tFrom').value + ' – ' + $('#tTo').value}[TW])));
   if (c === 'dayCard') pdf(c, 'Hype playback history ' + $('#day').value, 'Hype Radio TV – playback history · ' + $('#day').value);
 });
 $('#wPrev').onclick = () => { W++; wLoad(); }; $('#wNext').onclick = () => { if (W > 0) { W--; wLoad(); } };
@@ -241,8 +243,10 @@ function aTable() {
     : '<tr><td colspan="5" class="muted">Nothing yet</td></tr>';
 }
 $$('#aTabs [data-t]').forEach(b => b.onclick = () => { ATAB = b.dataset.t; $$('#aTabs [data-t]').forEach(x => x.classList.toggle('on', x === b)); aTable(); });
+const ownDates = (f, t) => { if (!$(f).value || !$(t).value) { const n = new Date(); $(t).value = iso(n); $(f).value = iso(new Date(n - 13 * 864e5)); } return 'from=' + $(f).value + '&to=' + $(t).value; };
 function aLoad() {
-  fetch('../api/audstats?days=' + AD + '&kind=' + AK).then(r => r.json()).then(d => {
+  $('#aOwn').hidden = !!AD;
+  fetch('../api/audstats?' + (AD ? 'days=' + AD : ownDates('#aFrom', '#aTo')) + '&kind=' + AK).then(r => r.json()).then(d => {
     const k = [], T_ = d.totals;
     for (const [kd, n] of [['radio', 'RADIO'], ['tv', 'TV']]) {
       if (AK && AK !== kd) continue; const t = T_[kd];
@@ -319,7 +323,9 @@ function heat() {
   $('#tHeat').innerHTML = h + '</table>';
 }
 function tLoad() {
-  fetch('../api/audtime?view=' + TW).then(r => r.json()).then(d => {
+  $('#tOwn').hidden = TW !== 'own';
+  $('#tHmS').textContent = '– average listeners / viewers per weekday and hour, ' + (TW === 'own' ? 'your period' : 'last 30 days') + ' (hover for the number)';
+  fetch('../api/audtime?view=' + TW + (TW === 'own' ? '&' + ownDates('#tFrom', '#tTo') : '')).then(r => r.json()).then(d => {
     TD = d; const tm = t => t ? new Date(t * 1000).toTimeString().slice(0, 5) : '';
     const day = TW === 'today' || TW === 'yesterday';
     const bh = d.best_hour == null ? '–' : String(d.best_hour).padStart(2, '0') + ':00–' + String((d.best_hour + 1) % 24).padStart(2, '0') + ':00';
@@ -334,6 +340,7 @@ function tLoad() {
 $('#sFrom').onchange = $('#sTo').onchange = () => sLoad();
 $$('#sDays [data-d]').forEach(b => b.onclick = () => { SD = +b.dataset.d; $$('#sDays [data-d]').forEach(x => x.classList.toggle('on', x === b)); sLoad(); });
 $$('#sBy [data-b]').forEach(b => b.onclick = () => { SB = b.dataset.b; $$('#sBy [data-b]').forEach(x => x.classList.toggle('on', x === b)); sLoad(); });
+$('#aFrom').onchange = $('#aTo').onchange = () => aLoad(); $('#tFrom').onchange = $('#tTo').onchange = () => tLoad();
 $$('#tWhich [data-w]').forEach(b => b.onclick = () => { TW = b.dataset.w; $$('#tWhich [data-w]').forEach(x => x.classList.toggle('on', x === b)); tLoad(); });
 $$('#tHm [data-h]').forEach(b => b.onclick = () => { HM = b.dataset.h; $$('#tHm [data-h]').forEach(x => x.classList.toggle('on', x === b)); heat(); });
 function aView(v) {
