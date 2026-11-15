@@ -1,17 +1,18 @@
 {
- "time": "2026-11-15T17:07:05",
+ "time": "2026-11-15T17:10:56",
  "result": "ok",
- "commit": "3a9843362e847ec2cb2e1dbdbf8282a5ed925a34",
- "subject": "History: \u2b07 PDF also for the played list, the song report and the audience views (each prints only its own part, with a title line)",
+ "commit": "9087a2d0c2dc0e2cd1c2275d519dd82d181d5e93",
+ "subject": "Song report: last-24-hours rows as cards (big change, radio and TV start \u2192 end on two lines, title / artist, time); By artist also changes the 24-hour lists (all plays of an artist added up); song / artist names in their newest spelling",
  "log": [
-  "17:07:05 update ec449708 \u2192 3a984336 \u00b7 1 file(s): web/panel/history.html",
-  "17:07:05 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "17:10:11 update 3a984336 \u2192 9087a2d0 \u00b7 3 file(s): engine/audstats.py, engine/engine.py, web/panel/history.html",
+  "17:10:11 restart hype-engine",
+  "17:10:56 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
   "song": "Club Hype \u2013 Mix It Like Rive VOL.2 by Rivaldo",
-  "listeners": 4,
+  "listeners": 5,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },

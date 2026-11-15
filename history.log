@@ -343,3 +343,4 @@
 2026-11-15T16:50:55 ok 12b1ba2a Song report back in the simple table style; Week/Library report renamed Station report; Audience views 'Listeners & viewers' (first) and 'Trends'; History headers Audience / Change with 'radio • TV' on a second line; 🔥 for the song on air in the panel player (Hype Live sync fire_now)
 2026-11-15T17:05:00 ok ec449708 Song report: best / worst single plays of the last 24 hours on top (radio + TV start → end); Trends: radio listeners and TV viewers today as two clear tiles
 2026-11-15T17:07:05 ok 3a984336 History: ⬇ PDF also for the played list, the song report and the audience views (each prints only its own part, with a title line)
+2026-11-15T17:10:56 ok 9087a2d0 Song report: last-24-hours rows as cards (big change, radio and TV start → end on two lines, title / artist, time); By artist also changes the 24-hour lists (all plays of an artist added up); song / artist names in their newest spelling
