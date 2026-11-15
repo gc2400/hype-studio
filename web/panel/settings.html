@@ -192,6 +192,7 @@ table{border-collapse:collapse;width:100%}
       <div class="sl" data-find="clip sound tv loudness"><label>Clip sound on TV<small>dB compared to the radio</small></label><input type="range" id="tv_clip_offset" min="-10" max="10" step="0.5"><span class="v" id="tv_clip_offset_v"></span></div>
     </section>
     <section class="card sec" data-sec="tv">
+      <div class="opt" data-find="reload pages screen graphics live layer hype screen old version" style="align-items:center"><div style="flex:1"><b>Reload the screen pages</b><span>Graphics, ad box, Live Layer and Hype Screen load fresh in OBS (each blank for about a second). For when the screen seems to run an old version.</span></div><button class="btn sm" id="bReload" type="button">Reload now</button></div>
       <label class="opt" data-find="jingle hide logo show name clock graphics"><input type="checkbox" id="jingle_hide"><div><b>Clean screen during jingles</b><span>While a jingle, sweeper or TOH plays: no logo, show name, clock / temperature or Top 10 number. They come back when the song starts.</span></div></label>
       <span class="lab">TV · Up next PIP</span>
       <p class="muted" style="margin:0">The music video in a window with NOW PLAYING, NEXT and THEN (start times + covers). Only over a music video, with scenes on AUTO, never when LIVE. You can also put it on yourself: Scenes → PIP → Up next.</p>
@@ -265,6 +266,7 @@ function relaySend(extra) {
   if ($('#rlPass').value) d.password = $('#rlPass').value;
   return post('settings', {relay: d}).then(x => { ST = x; relayPaint(x.relay); });
 }
+setTimeout(() => { const b = document.getElementById('bReload'); if (b) b.onclick = () => post('reload_pages', {}).then(() => toast('The screen pages reload within ~10 s')); }, 0);
 const post = (p, d) => fetch('../api/' + p, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d)}).then(authed).then(r => r.json());
 function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('show'), 2000); }
 // live processing meters (Settings → Sound): dB the compressor / limiter take off, short-term loudness of what goes on air
