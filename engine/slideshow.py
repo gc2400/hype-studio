@@ -49,6 +49,27 @@ def photo_settings(d, sec, fade, rnd):
             "playback_behavior": "always_play", "slide_mode": "mode_auto", "use_custom_size": "1920x1080"}
 
 
+def fit(cl, sc, iid):
+    """The whole photo / video, as big as fits, centred - never cut off (the Hype blue background shows around it)."""
+    cl.set_scene_item_transform(sc, iid, {"positionX": 0, "positionY": 0, "alignment": 5, "boundsType": "OBS_BOUNDS_SCALE_INNER",
+                                         "boundsWidth": 1920, "boundsHeight": 1080, "boundsAlignment": 0})
+
+
+def ensure_bg(cl, sc, src):
+    """Hype blue behind it (the 'Media background' of the MEDIA scenes), at the bottom; the slideshow itself fitted on top."""
+    items = cl.get_scene_item_list(sc).scene_items
+    if not any(i["sourceName"] == "Media background" for i in items):
+        bid = cl.create_scene_item(sc, "Media background", True).scene_item_id
+        try:
+            ref = next(i for i in cl.get_scene_item_list("MEDIA FULL").scene_items if i["sourceName"] == "Media background")
+            t = cl.get_scene_item_transform("MEDIA FULL", ref["sceneItemId"]).scene_item_transform
+            cl.set_scene_item_transform(sc, bid, {k: v for k, v in t.items() if k in KEEP_T and not (k in ("boundsWidth", "boundsHeight") and v < 1)})
+        except StopIteration: pass
+        cl.set_scene_item_index(sc, bid, 0)
+    sid = next((i["sceneItemId"] for i in cl.get_scene_item_list(sc).scene_items if i["sourceName"] == src), None)
+    if sid is not None: fit(cl, sc, sid); cl.set_scene_item_index(sc, sid, 1)
+
+
 def sync(cl, sec=8.0, fade=1.0, rnd=True):
     """Make OBS match the folders: create / remove scenes, refresh a photo slideshow when its files or settings changed."""
     have = {s["sceneName"] for s in cl.get_scene_list().scenes}
@@ -66,8 +87,7 @@ def sync(cl, sec=8.0, fade=1.0, rnd=True):
                 iid = cl.create_input(sc, src, "ffmpeg_source", {"is_local_file": True, "local_file": "", "looping": False, "restart_on_activate": False,
                                                                   "close_when_inactive": True, "clear_on_media_end": False, "hw_decode": True}, True).scene_item_id
                 cl.set_input_mute(src, True)
-            cl.set_scene_item_transform(sc, iid, {"positionX": 0, "positionY": 0, "alignment": 5, "boundsType": "OBS_BOUNDS_SCALE_OUTER",
-                                                 "boundsWidth": 1920, "boundsHeight": 1080, "boundsAlignment": 0})
+            fit(cl, sc, iid)
             for it in tmpl:        # graphics, logo, clock, show intro, ticker / lower third, audio, Live Layer … as on the Hype Screen
                 nid = cl.create_scene_item(sc, it["sourceName"], it["sceneItemEnabled"]).scene_item_id
                 try:
@@ -75,6 +95,9 @@ def sync(cl, sec=8.0, fade=1.0, rnd=True):
                     cl.set_scene_item_transform(sc, nid, {k: v for k, v in t.items() if k in KEEP_T and not (k == "boundsWidth" and v < 1) and not (k == "boundsHeight" and v < 1)})
                 except Exception as e: log.warning("slideshow %s: %s transform: %s", sc, it["sourceName"], e)
             STATE["sig"][sc] = sig; log.info("slideshow: scene %s made (%d files)", sc, len(files))
+        if sc not in STATE.setdefault("fitted", set()):    # (also scenes made before 15 Nov: whole picture on Hype blue)
+            try: ensure_bg(cl, sc, src); STATE["fitted"].add(sc)
+            except Exception as e: log.warning("slideshow %s background: %s", sc, e)
         elif kind == "photos" and STATE["sig"].get(sc) != sig:
             cl.set_input_settings(src, photo_settings(d, sec, fade, rnd), False); STATE["sig"][sc] = sig
         elif kind == "videos": STATE["sig"][sc] = sig
