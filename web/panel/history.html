@@ -36,7 +36,10 @@ td b{font-weight:700}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
 .au{white-space:nowrap;font-size:12px;display:inline-flex;align-items:center}.au b{font-family:ui-monospace,Menlo,Consolas,monospace;min-width:26px}.au b:first-child{text-align:right}.au b:last-child{text-align:left}.au i{width:5px;height:5px;border-radius:50%;background:#6F86A0;margin:0 8px;flex:none}.au .up{color:var(--g)}.au .dn{color:var(--r)}.au .eq{color:var(--mut)}
 .ov{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:700;color:var(--b,#05A9C6);border:1px solid currentColor;white-space:nowrap}.ov.id{color:#FFE000}
-@media print{.wpane[hidden]{display:block!important}#wTabs,#songCard,#audCard{display:none!important}body{background:#fff!important;color:#000!important}#hhead,[role=tablist],#dayCard,#audCard,#wPrev,#wNext,#wCsv,#wPdf{display:none!important}
+@media print{section.card{display:none!important}body[data-print=weekCard] #weekCard,body[data-print=songCard] #songCard,body[data-print=audCard] #audCard,body[data-print=dayCard] #dayCard{display:flex!important}
+  body[data-print=weekCard] .wpane[hidden]{display:block!important}#tView[hidden],#wView[hidden]{display:none!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}.scroll{max-height:none!important;overflow:visible!important}#tChart svg text{fill:#555!important}.stab tr:hover td{background:none!important}
+  body{background:#fff!important;color:#000!important}#hhead,[role=tablist],.btn,input,#types,#aDays,#aKind,#sDays,#sBy,#tWhich,#tHm,#aTabs{display:none!important}#pTitle{display:block!important}
   .card{border:0!important;background:#fff!important;padding:0!important}.kpi{background:#fff!important;border:1px solid #ccc!important}.kpi b{color:#000!important}
   .scroll2{max-height:none!important;overflow:visible!important}th{background:#fff!important;color:#444!important;position:static!important}td,th,.ev{border-color:#ddd!important}
   .muted,h3 small,.kpi span,.wl li span,.gen span:last-child{color:#555!important}.bar{background:#eee!important}.bar i{background:#05A9C6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -70,7 +73,7 @@ th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-
     <section class="card" id="songCard" hidden>
       <div class="row"><span class="row" style="gap:4px" id="sDays"><button class="btn" data-d="7">7 days</button><button class="btn on" data-d="30">30 days</button><button class="btn" data-d="90">90 days</button></span>
         <span class="row" style="gap:4px" id="sBy"><button class="btn on" data-b="song">By song</button><button class="btn" data-b="artist">By artist</button></span>
-        <a class="btn" id="sCsv" title="Every measured play as a spreadsheet">⬇ CSV</a><span class="muted" id="sNote"></span></div>
+        <a class="btn" id="sCsv" title="Every measured play as a spreadsheet">⬇ CSV</a><button class="btn" data-pdf="songCard" title="Save this report as a PDF (choose &quot;Save as PDF&quot; as the printer)">⬇ PDF</button><span class="muted" id="sNote"></span></div>
       <div class="wgrid">
         <div><h3>Best of the last 24 hours <small>– biggest gain while it played (radio + TV, start → end)</small></h3><table class="l24"><tbody id="lBest"></tbody></table></div>
         <div><h3>Worst of the last 24 hours <small>– biggest loss</small></h3><table class="l24"><tbody id="lWorst"></tbody></table></div>
@@ -83,7 +86,7 @@ th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-
       <div id="sPlays" hidden><h3 id="sPlaysT"></h3><div class="scroll2"><table><thead><tr><th>When</th><th>Radio</th><th>TV</th><th>vs normal</th><th>🔥</th></tr></thead><tbody id="sPlaysB"></tbody></table></div></div>
     </section>
   <section class="card" id="audCard" hidden>
-    <div class="row" style="gap:4px" id="aViews" role="tablist" aria-label="Audience view"><button class="btn on" data-v="who">Listeners &amp; viewers</button><button class="btn" data-v="time">Trends</button></div>
+    <div class="row" style="gap:4px" id="aViews" role="tablist" aria-label="Audience view"><button class="btn on" data-v="who">Listeners &amp; viewers</button><button class="btn" data-v="time">Trends</button><span style="flex:1"></span><button class="btn" data-pdf="audCard" title="Save this view as a PDF (choose &quot;Save as PDF&quot; as the printer)">⬇ PDF</button></div>
     <div id="tView" hidden style="display:flex;flex-direction:column;gap:10px">
       <div class="row"><span class="row" style="gap:4px" id="tWhich"><button class="btn on" data-w="today">Today</button><button class="btn" data-w="yesterday">Yesterday</button><button class="btn" data-w="avg7">Average day · 7 days</button><button class="btn" data-w="avg30">Average day · 30 days</button></span></div>
       <div class="kpis" id="tKpi"></div>
@@ -100,6 +103,7 @@ th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-
     <div class="scroll2" style="max-height:none"><table class="atab"><thead id="aHead"></thead><tbody id="aBody"></tbody></table></div>
     </div>
   </section>
+  <h2 id="pTitle" style="display:none;margin:0 0 8px;font-size:18px"></h2>
   <section class="card" id="weekCard" hidden>
     <div class="row"><button class="btn" id="wPrev" aria-label="Previous week">◀</button><b id="wTitle" style="min-width:230px;text-align:center">…</b><button class="btn" id="wNext" aria-label="Next week">▶</button><span class="muted" id="wNote"></span><span style="flex:1"></span><button class="btn" id="wCsv" title="Download this week as a spreadsheet (Excel / Google Sheets)">⬇ CSV</button><button class="btn" id="wPdf" title="Save this week as a PDF (choose &quot;Save as PDF&quot; as the printer)">⬇ PDF</button></div>
     <div class="row" style="gap:4px" id="wTabs" role="tablist" aria-label="Report part"><button class="btn on" data-p="top">Most played</button><button class="btn" data-p="rot">Rotation</button><button class="btn" data-p="nev">Never played</button><button class="btn" data-p="stab">Streams &amp; stability</button></div>
@@ -122,7 +126,7 @@ th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-
       <button class="btn" id="prev" aria-label="Previous day">◀</button><input type="date" id="day" aria-label="Day"><button class="btn" id="next" aria-label="Next day">▶</button><button class="btn" id="today">Today</button>
       <input type="search" id="q" placeholder="Search artist, title or folder…" aria-label="Search">
       <span class="row" style="gap:4px" id="types"><button class="btn on" data-t="">All</button><button class="btn" data-t="music">Songs</button><button class="btn" data-t="jingles">Jingles</button><button class="btn" data-t="ads">Ads</button></span>
-      <a class="btn" id="csv" title="Download this day as a spreadsheet (proof of play)">⬇ CSV</a>
+      <a class="btn" id="csv" title="Download this day as a spreadsheet (proof of play)">⬇ CSV</a><button class="btn" data-pdf="dayCard" title="Save this day as a PDF (choose &quot;Save as PDF&quot; as the printer)">⬇ PDF</button>
     </div>
     <div class="muted" id="sum"></div>
     <div class="scroll"><table><thead><tr><th>Time</th><th>Artist – title</th><th>Folder</th><th>Type</th><th>Length</th><th>TV</th><th title="Radio listeners (own streams + Streamerr) · TV viewers, at the end of the item">Audience<span class="sub">radio • TV</span></th><th title="Radio · TV gained ▲ / lost ▼ during the item (from its start to the start of the next)">Change<span class="sub">radio • TV</span></th></tr></thead><tbody id="rows"></tbody></table></div>
@@ -198,7 +202,18 @@ $('#wCsv').onclick = () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + L.join('\r\n')], {type: 'text/csv'}));
   a.download = 'Hype_week_report_' + d.from + '.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 };
-$('#wPdf').onclick = () => { const t = document.title; document.title = 'Hype station report ' + (WD ? WD.from : ''); window.print(); setTimeout(() => document.title = t, 500); };
+function pdf(card, name, title) {
+  const t = document.title; document.title = name; document.body.dataset.print = card; $('#pTitle').textContent = title;
+  window.print(); setTimeout(() => { document.title = t; delete document.body.dataset.print; }, 500);
+}
+$('#wPdf').onclick = () => pdf('weekCard', 'Hype station report ' + (WD ? WD.from : ''), '');
+const today_ = () => new Date().toISOString().slice(0, 10);
+$$('[data-pdf]').forEach(b => b.onclick = () => {
+  const c = b.dataset.pdf;
+  if (c === 'songCard') pdf(c, 'Hype song report ' + today_(), 'Hype Radio TV – song report · last ' + SD + ' days · ' + (SB === 'artist' ? 'by artist' : 'by song'));
+  if (c === 'audCard') pdf(c, 'Hype audience ' + today_(), 'Hype Radio TV – audience · ' + (AV === 'who' ? 'listeners & viewers · ' + ({1: 'today', 7: 'last 7 days', 30: 'last 30 days'}[AD] || '') : 'trends · ' + ({today: 'today', yesterday: 'yesterday', avg7: 'average day, 7 days', avg30: 'average day, 30 days'}[TW])));
+  if (c === 'dayCard') pdf(c, 'Hype played list ' + $('#day').value, 'Hype Radio TV – played list · ' + $('#day').value);
+});
 $('#wPrev').onclick = () => { W++; wLoad(); }; $('#wNext').onclick = () => { if (W > 0) { W--; wLoad(); } };
 // ---- Audience: who listens / watches on our own streams (sessions: device, app, country, how long) ----
 let AD = 1, AK = '', AT = null;
