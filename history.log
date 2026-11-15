@@ -352,3 +352,4 @@
 2026-11-15T20:15:14 ok 26bac0f4 Pads: LISTENERS bank (voices, photos, videos from listeners, newest first: icon, thumbnail, name · city, age, ✓ on air time, 👁 preview in the panel only, ★ pin; leaves after N days (Settings), × takes it off – files stay); VOICE bank and listener media no longer mixed into your own pads; drop box always there (library jingles save at once); drag a picture / video / sound link from a website onto the pads (server fetches it: pictures + videos made 16:9, sounds into jingles/WEB)
 2026-11-15T20:18:04 ok 78aabafe Web drop: a friendly message when the website refuses the download
 2026-11-15T20:21:55 ok 35c90b96 Pads: LISTENERS tab in green (MEDIA stays yellow)
+2026-11-15T20:24:02 ok c3612aab RELOAD PAGES moved from the panel to Settings (Screen part: Reload the screen pages)
