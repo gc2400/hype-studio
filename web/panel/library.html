@@ -35,7 +35,7 @@ h1{margin:0;font-size:20px;font-weight:900}h1 small{color:var(--mut);font-weight
 .search{display:flex;align-items:center;gap:8px;background:var(--deep);border:1px solid var(--line2);border-radius:12px;padding:0 12px;min-height:46px}
 .search input{background:transparent;border:0;color:var(--txt);font-size:15px;width:100%;outline:none}
 .res{display:flex;flex-direction:column;max-height:calc(100vh - 270px);min-height:240px;overflow:auto}
-#res .ri{position:relative}
+#res .ri{position:relative;user-select:none}
 .ri{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;border:1px solid transparent;cursor:pointer}
 .ri:hover{background:var(--card2)}.ri.sel{background:var(--card2);border-color:var(--y)}
 .ri .tx{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -134,7 +134,12 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
 @media (hover:none) and (max-width:640px){.keys{display:none}}
 
 dialog#upDlg{background:var(--card);color:var(--txt);border:1px solid var(--line2);border-radius:16px;padding:14px 16px;width:min(560px,94vw);max-height:90vh;overflow:auto}
-dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
+dialog#upDlg::backdrop,dialog#mvDlg::backdrop{background:rgba(2,8,16,.7)}
+dialog#mvDlg{background:var(--card);color:var(--txt);border:1px solid var(--line2);border-radius:16px;padding:14px 16px;width:min(520px,94vw);max-height:86vh}
+#mvDlg{display:none}#mvDlg[open]{display:flex;flex-direction:column;gap:10px}
+.mvl{overflow:auto;max-height:60vh;display:flex;flex-direction:column;gap:3px}.mvl .g{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--mut);margin:8px 2px 2px}
+.mvl button{text-align:left;padding:8px 12px;border-radius:9px;border:1px solid transparent;background:var(--deep);color:var(--txt);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.mvl button:hover{border-color:var(--line2)}.mvl button.on{border-color:var(--y);background:rgba(255,224,0,.1);color:var(--y)}.mvl button.cur{opacity:.45}
 #upDlg{display:none}#upDlg[open]{display:flex;flex-direction:column;gap:10px}
 .uph{display:flex;align-items:center;justify-content:space-between;font-size:16px}
 .upr{display:flex;gap:8px}
@@ -171,7 +176,7 @@ dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
         <div class="fr"><span class="fl">Sort</span><div class="row" style="gap:5px"><button class="btn sm" id="bSort">A–Z</button></div></div>
       </div>
       <div class="chips" id="chips"><span class="muted" id="cnt"></span></div>
-      <div id="selBar" hidden><b id="selN"></b><span class="muted">Move to</span><select id="selTo" aria-label="Move to folder"></select><button class="btn sm yellow" id="selGo">Move</button><button class="btn sm" id="selClr">Clear</button><span class="muted">or drag them onto a folder button</span></div>
+      <div id="selBar" hidden><b id="selN"></b><button class="btn sm yellow" id="selMove">Move…</button><button class="btn sm" id="selClr">Clear</button><span class="muted">Shift-click = a range · Ctrl-click = one more · or drag them onto a folder button</span></div>
       <input type="file" id="repFile" hidden accept="audio/*,video/*,.mp3,.m4a,.wav,.flac,.mp4,.mov,.mkv,.m4v,.webm">
       <div class="res" id="res" role="listbox" aria-label="Songs"></div>
     </section>
@@ -204,6 +209,11 @@ dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
     </section>
   </div>
 </div>
+<dialog id="mvDlg" aria-label="Move songs">
+  <div class="uph"><b id="mvT">Move to</b><button class="btn sm" id="mvClose" aria-label="Close">✕</button></div>
+  <div class="mvl" id="mvList"></div>
+  <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn sm" id="mvCancel">Cancel</button><button class="btn sm yellow" id="mvGo" disabled>Move</button></div>
+</dialog>
 <dialog id="upDlg" aria-label="Upload files">
   <div class="uph"><b>Upload to the library</b><button class="btn sm" id="upClose" aria-label="Close">✕</button></div>
   <div class="upr"><select class="f" id="upSec" aria-label="Section"></select><select class="f" id="upFolder" aria-label="Folder"></select></div>
@@ -306,19 +316,29 @@ function fitRes() { const r = $('#res'), ed = $('#ed'), m = $('#m'); if (!r) ret
 addEventListener('resize', fitRes); new ResizeObserver(fitRes).observe(document.body); setTimeout(fitRes, 60);
 $('#bFilter').onclick = () => { const p = $('#fpanel'); p.hidden = !p.hidden; setTimeout(fitRes, 0); $('#bFilter').setAttribute('aria-expanded', String(!p.hidden)); $('#bFilter').classList.toggle('on', !p.hidden); };
 // ---- select songs → Move to another folder (the same file; cues, history, playlists stay) ----
-function tick(path, on, range) {
-  const L = visible().map(x => x.path);
-  if (range && LASTCK != null) { const a = L.indexOf(LASTCK), b = L.indexOf(path); if (a >= 0 && b >= 0) L.slice(Math.min(a, b), Math.max(a, b) + 1).forEach(p => on ? PICK.add(p) : PICK.delete(p)); }
-  else on ? PICK.add(path) : PICK.delete(path);
-  LASTCK = path; selUi(); renderList();
+function range(a, b) {      // Shift-click: everything from the song you clicked before (or the open one) to this one
+  const L = visible().map(x => x.path), i = L.indexOf(a), j = L.indexOf(b);
+  if (i < 0 || j < 0) { PICK.add(b); return; }
+  L.slice(Math.min(i, j), Math.max(i, j) + 1).forEach(x => PICK.add(x));
 }
 function selUi() {
-  $('#selBar').hidden = !PICK.size; if (!PICK.size || !LIB) return;
+  $('#selBar').hidden = !PICK.size; if (!PICK.size) return;
   $('#selN').textContent = PICK.size + (PICK.size === 1 ? ' song selected' : ' songs selected');
-  const cur = (visible().find(x => PICK.has(x.path)) || {}).folder || '', g = cur.split('/')[0];
-  const fs = [...LIB.all_folders].sort((a, b) => ((b.split('/')[0] === g) - (a.split('/')[0] === g)) || a.localeCompare(b));
-  const keep = $('#selTo').value; $('#selTo').innerHTML = fs.map(f => `<option value="${esc(f)}" ${f === keep ? 'selected' : ''}>${esc(f)}</option>`).join('');
 }
+let MVTO = '';
+$('#selMove').onclick = () => {
+  if (!LIB) return; const cur = (visible().find(x => PICK.has(x.path)) || {}).folder || '', g = cur.split('/')[0];
+  const fs = [...LIB.all_folders].filter(Boolean).sort((a, b) => ((b.split('/')[0] === g) - (a.split('/')[0] === g)) || a.localeCompare(b));
+  let last = null, h = '';
+  fs.forEach(f => { const top = f.split('/')[0]; if (top !== last) { h += `<div class="g">${esc(top)}</div>`; last = top; }
+    h += `<button data-mv="${esc(f)}" class="${f === cur ? 'cur' : ''}">${esc(f.includes('/') ? f.split('/').slice(1).join('/') : f)}</button>`; });
+  MVTO = ''; $('#mvList').innerHTML = h; $('#mvGo').disabled = true;
+  $('#mvT').textContent = 'Move ' + PICK.size + (PICK.size === 1 ? ' song' : ' songs') + ' to';
+  $$('#mvList [data-mv]').forEach(b => b.onclick = () => { MVTO = b.dataset.mv; $$('#mvList [data-mv]').forEach(x => x.classList.toggle('on', x === b)); $('#mvGo').disabled = false; $('#mvGo').textContent = 'Move to ' + MVTO; });
+  $('#mvDlg').showModal();
+};
+$('#mvGo').onclick = () => { $('#mvDlg').close(); moveTo([...PICK], MVTO); };
+$('#mvClose').onclick = $('#mvCancel').onclick = () => $('#mvDlg').close();
 async function moveTo(paths, folder) {
   if (!paths.length || !folder) return;
   let ok = 0, bad = '';
@@ -329,7 +349,6 @@ async function moveTo(paths, folder) {
   toast(ok ? `${ok} ${ok === 1 ? 'song' : 'songs'} moved to ${folder}` + (bad ? ' · some not: ' + bad : '') : 'Not moved: ' + bad);
   lib(true);
 }
-$('#selGo').onclick = () => moveTo([...PICK], $('#selTo').value);
 $('#selClr').onclick = () => { PICK.clear(); selUi(); renderList(); };
 $('#bFix').onclick = () => { FIXV = FIXV ? 0 : 1; lib(); };
 // ---- replace a song with a better file (same name, or the same name with the new type, e.g. .mp3 → .mp4) ----
@@ -347,11 +366,14 @@ function replaceWith(path, f) {
 function renderList() {
   const L = visible(); $('#cnt').textContent = (LIB && LIB.total > L.length ? L.length + ' of ' + LIB.total : L.length) + ' items';
   $('#res').innerHTML = L.map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
-    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''} ${PICK.has(it.path) ? 'picked' : ''}" role="option" data-p="${esc(it.path)}" draggable="true"><input type="checkbox" class="ck" data-ck ${PICK.has(it.path) ? 'checked' : ''} aria-label="Select ${esc(it.title || '')}" title="Select (Shift = a range) – then Move to …"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}${it.cue_check ? ' · <span style="color:#FFE000" title="This file was replaced by a version of another length. Your own START / MIX / END were kept – open it and check them (saving clears this).">⚠ new version – check cues</span>' : ''}${it.fix ? it.fix.filter(w => w !== 'check cues').map(w => `<span class="fx">${esc(w)}</span>`).join('') + ` <span class="muted">· ${it.plays90}× in 90 days</span>` : ''}</span></div><span class="racts"><button class="rep" data-rep title="Replace with a better file (same name; cues, history, playlists stay) – or drop the file on the row" aria-label="Replace ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13l-3-3M20 15H7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="addpl" data-addpl title="Add to a playlist" aria-label="Add ${esc(it.title || '')} to a playlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="ren" data-ren title="Rename this file" aria-label="Rename ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="del" data-del title="Delete this file" aria-label="Delete ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
+    return `<div class="ri ${SEL && SEL.path === it.path ? 'sel' : ''} ${PICK.has(it.path) ? 'picked' : ''}" role="option" data-p="${esc(it.path)}" draggable="true"><span class="ed1 ${it.cues_edited ? 'on' : ''}" title="${it.cues_edited ? 'own cue points' : 'automatic cue points'}"></span><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}${SORT === 'new' || RECENT ? ' · ' + added(it.added_at) : ''}${it.problem ? ' · <span style="color:#FF8A97">⚠ ' + esc(it.problem) + '</span>' : ''}${it.cue_check ? ' · <span style="color:#FFE000" title="This file was replaced by a version of another length. Your own START / MIX / END were kept – open it and check them (saving clears this).">⚠ new version – check cues</span>' : ''}${it.fix ? it.fix.filter(w => w !== 'check cues').map(w => `<span class="fx">${esc(w)}</span>`).join('') + ` <span class="muted">· ${it.plays90}× in 90 days</span>` : ''}</span></div><span class="racts"><button class="rep" data-rep title="Replace with a better file (same name; cues, history, playlists stay) – or drop the file on the row" aria-label="Replace ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13l-3-3M20 15H7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="addpl" data-addpl title="Add to a playlist" aria-label="Add ${esc(it.title || '')} to a playlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="ren" data-ren title="Rename this file" aria-label="Rename ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="del" data-del title="Delete this file" aria-label="Delete ${esc(it.title || '')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div>`; }).join('') || '<div class="empty">Nothing found.</div>';
   $$('#res .ri').forEach(el => {
     el.onclick = e => { if (e.target.closest('.racts, .delq')) return;
-      if (e.target.matches('[data-ck]')) { e.stopPropagation(); return tick(el.dataset.p, e.target.checked, e.shiftKey); }
-      pick(LIB.items.find(x => x.path === el.dataset.p)); };
+      const p = el.dataset.p;
+      if (e.shiftKey) { e.preventDefault(); const a = LASTCK || (SEL && SEL.path); if (a && a !== p) { range(a, p); } else PICK.add(p); LASTCK = LASTCK || p; selUi(); return renderList(); }
+      if (e.ctrlKey || e.metaKey) { PICK.has(p) ? PICK.delete(p) : PICK.add(p); if (SEL && SEL.path !== p && !PICK.size) {} LASTCK = p; selUi(); return renderList(); }
+      if (PICK.size) { PICK.clear(); selUi(); }
+      LASTCK = p; pick(LIB.items.find(x => x.path === p)); };
     el.ondragstart = e => { const ps = PICK.has(el.dataset.p) ? [...PICK] : [el.dataset.p]; e.dataTransfer.setData('text/hype-move', JSON.stringify(ps)); e.dataTransfer.effectAllowed = 'move'; };
     el.ondragover = e => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); el.classList.add('dropover'); } };
     el.ondragleave = () => el.classList.remove('dropover');
