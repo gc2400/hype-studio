@@ -1,17 +1,17 @@
 {
- "time": "2026-11-15T20:34:21",
+ "time": "2026-11-15T20:36:26",
  "result": "ok",
- "commit": "56ace920c594195c42298def5f63b04259e8d661",
- "subject": "Library: selected songs (Shift / Ctrl-click, the open song stays selected) show a Move panel on the right in place of the editor: the songs, the folders by genre, Move",
+ "commit": "da2b4221f4480832177bdadfa4aa4ba110870d0d",
+ "subject": "Library: the selection clears on a normal click on a song, a click elsewhere, Escape, or another folder / search",
  "log": [
-  "20:34:20 update 2acc8e07 \u2192 56ace920 \u00b7 1 file(s): web/panel/library.html",
-  "20:34:21 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:36:25 update 56ace920 \u2192 da2b4221 \u00b7 1 file(s): web/panel/library.html",
+  "20:36:26 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Kybba x Bounty Killer x Kalash x Busy Signal x Barrington Levy \u2013 90s",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
