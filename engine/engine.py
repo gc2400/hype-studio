@@ -2522,6 +2522,8 @@ def aud_sampler():
                     pub["n"] = int((j.get("listeners") or {}).get("current", 0))
                 except Exception: pub["n"] = None
             r = listeners()["current"]; tv = viewers()["current"]
+            try: jdump(MP3_HITS[-500:], MP3_HITS_FILE)       # who started the MP3 when: kept over an engine restart (else running listeners lose their address)
+            except Exception: pass
             try: audstats.update(LISTEN.get("mp3keys") or set(), is_player)      # sessions for History → Audience
             except Exception as e: log.warning("audience sessions: %s", e)
             c = dbc(); c.execute("INSERT OR REPLACE INTO aud_samples VALUES(?,?,?,?)", (time.time(), r, pub["n"], tv))
@@ -3125,6 +3127,9 @@ def log_devices(log_, keep, window):
     return out
 ICE_ADMIN = {"t": 0, "auth": None}
 MP3_HITS = []     # (time, address, player) of every /radio.mp3 start (nginx mirrors it to /mp3hit; nothing waits on it)
+MP3_HITS_FILE = "/var/lib/hype/mp3hits.json"
+try: MP3_HITS.extend(tuple(h) for h in json.load(open(MP3_HITS_FILE)) if time.time() - h[0] < 7 * 86400)
+except Exception: pass
 def mp3_devices():
     """MP3 listeners as devices: Icecast's listener list (player + connected seconds) matched to the start nginx reported
     (address + player + time). An unmatched connection still counts, as its own device."""
