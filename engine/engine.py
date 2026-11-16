@@ -3257,8 +3257,10 @@ def resync_tv():
             with E.tv.olock: shown = E.tv.client().get_input_settings(on[0]).input_settings.get("local_file")
             if not shown or os.path.realpath(shown) == os.path.realpath(f): return
             log.info("TV resync: %s showed another clip (%s) – putting the right one on", on[0], os.path.basename(shown))
+        keep = None if E.tv.auto else E.tv.scene      # a scheduled / manual scene (e.g. PIP shoutout) stays – and still goes back to AUTO after its time
         E.tv.scene = None
         E.tv.show(n["mode"], f, start, snd, gain, None if snd else keyframes(c, n["path"]))
+        if keep is not None: E.tv.scene = keep
         log.info("TV resync: %s at %.0f s", n["title"], el)
     except Exception as e: log.warning("resync: %s", e); E.tv.cl = None
 
