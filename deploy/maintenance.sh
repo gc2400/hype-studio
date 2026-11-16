@@ -2,7 +2,7 @@
 # Weekly planned maintenance (hype-maintenance.timer, Monday 04:00 – the quietest hour).
 # Ubuntu's automatic security updates no longer restart Hype's services (system/needrestart-hype.conf: that caused the
 # dead air of 4 Nov). So once a week, at a planned moment, whatever still runs an old library is restarted here, in a
-# safe order – and the server is rebooted only when an update asks for it (a new kernel, ~once a month).
+# safe order. A reboot (a new kernel, ~once a month) is never done here: it waits for the planned monthly reboot together.
 # Never while LIVE, never during an update. Result: /var/lib/hype/maintenance.json + the journal.
 set -u
 LOG=(); log(){ echo "maintenance: $*"; LOG+=("$(date +%H:%M:%S) $*"); }
@@ -17,8 +17,9 @@ if [ -e /run/hype/guard_pause ] && [ $(( $(date +%s) - $(stat -c %Y /run/hype/gu
   log "an update is being installed – skipped"; save skipped; exit 0; fi
 
 if [ -e /var/run/reboot-required ]; then
-  log "reboot asked for by: $(tr '\n' ' ' < /var/run/reboot-required.pkgs 2>/dev/null)"; save reboot; sync
-  systemctl reboot; exit 0
+  # never by itself any more (16 Nov: the 04:00 reboot left the radio down while everyone slept). It waits for the monthly
+  # reboot that Gianno and Claude do together; the panel's status (⋯ → Server) shows "Reboot needed" until then.
+  log "reboot needed for: $(tr '\n' ' ' < /var/run/reboot-required.pkgs 2>/dev/null) – waiting for the planned monthly reboot (together)"
 fi
 
 # the Hype services (+ nginx, mediamtx) that still use an old (replaced) library

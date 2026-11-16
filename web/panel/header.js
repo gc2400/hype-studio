@@ -132,6 +132,7 @@ html{scrollbar-gutter:stable}
       <h4>Server</h4>
       <div class="r"><span>Load</span><b>${sv.load ?? '–'} / ${sv.cpus ?? '–'} cores</b></div>
       <div class="r"><span>Free on /srv</span><b>${sv.disk_free_gb ?? '–'} GB</b></div>
+      ${sv.reboot ? `<div class="r"><span>Reboot</span><b style="color:#FFB547">● needed since ${new Date(sv.reboot.since * 1000).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'})} – planned monthly, together</b></div>` : ''}
       <div class="note">The public radio still runs via Streamerr; once Hype Studio's own streams are live, all numbers come from here.</div>`;
   }
   let popT = null;

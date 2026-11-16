@@ -3557,6 +3557,10 @@ def streams_status(eng):
     try:
         la = os.getloadavg()[0]; du = shutil_disk("/srv")
         d["server"] = {"load": round(la, 2), "cpus": os.cpu_count(), "disk_free_gb": du}
+        if os.path.exists("/var/run/reboot-required"):      # a security update waits for the monthly reboot (done together, never by itself)
+            try: pk = open("/var/run/reboot-required.pkgs").read().split()
+            except OSError: pk = []
+            d["server"]["reboot"] = {"since": int(os.path.getmtime("/var/run/reboot-required")), "for": sorted(set(pk))[:4]}
     except Exception: pass
     _ST.update(t=time.time(), d=d); return d
 LISTEN = {"t": 0, "d": None}
