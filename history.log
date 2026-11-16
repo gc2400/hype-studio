@@ -361,3 +361,4 @@
 2026-11-15T21:01:33 ok a120e0b2 Listeners slideshow: only Studio's own links are removed; no drop box on it
 2026-11-15T21:15:38 ok dbe4d405 SLIDESHOW tab: ✎ shows + NEW and × per slideshow (folder to branding/slideshow/.deleted, scene gone within seconds; off air first if it was on); the Listeners slideshows can't be deleted
 2026-11-15T21:19:30 ok 3956c5ad Slideshows: the whole photo / video, centred on the Hype blue background (Media background) – nothing cut off
+2026-11-16T08:48:08 ok 2d4c5c5c Audio bus after a reboot: the sinks are made only once PulseAudio answers, and checked again before every radio start (16 Nov: kernel-update reboot at 04:00, sinks missing, radio down 4.5 h); OBS re-opens Radio audio / FX audio when the sinks are new (TV had no sound)

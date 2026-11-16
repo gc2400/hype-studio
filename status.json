@@ -1,18 +1,18 @@
 {
- "time": "2026-11-15T21:19:30",
+ "time": "2026-11-16T08:48:08",
  "result": "ok",
- "commit": "3956c5ad30bd29f392838abf5f833f996e7aaf18",
- "subject": "Slideshows: the whole photo / video, centred on the Hype blue background (Media background) \u2013 nothing cut off",
+ "commit": "2d4c5c5c0ac9e403e50a91baf5147b4d9d0c3789",
+ "subject": "Audio bus after a reboot: the sinks are made only once PulseAudio answers, and checked again before every radio start (16 Nov: kernel-update reboot at 04:00, sinks missing, radio down 4.5 h); OBS re-opens Radio audio / FX audio when the sinks are new (TV had no sound)",
  "log": [
-  "21:18:45 update dbe4d405 \u2192 3956c5ad \u00b7 1 file(s): engine/slideshow.py",
-  "21:18:45 restart hype-engine",
-  "21:19:30 installed OK \u00b7 restarted: hype-engine"
+  "08:47:22 update 3956c5ad \u2192 2d4c5c5c \u00b7 3 file(s): engine/engine.py, system/hype-pulse.service, system/hype-radio.service.d/sinks.conf",
+  "08:47:22 restart hype-engine",
+  "08:48:08 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Noano x KM \u2013 BADBAD",
-  "listeners": 3,
+  "song": "EMMAW \u2013 You",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
