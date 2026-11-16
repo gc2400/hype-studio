@@ -1,18 +1,17 @@
 {
- "time": "2026-11-16T12:35:06",
+ "time": "2026-11-16T12:36:13",
  "result": "ok",
- "commit": "a82a584bb495b1613d6550b9a14ef1a6f6fd5f87",
- "subject": "Songs without a cover: the Hype artwork (no-cover.png) in the panel player and as 'art' in the public nowplaying API; covers + artwork public at stream.hyperadio.nl/cover/ and /no-cover.png",
+ "commit": "441468755302fc0f079dd921075aea0ed010c374",
+ "subject": "DJ decks: the song's cover (or the Hype artwork) instead of the deck letter, with a small A / B badge",
  "log": [
-  "12:34:20 update 68a03cd0 \u2192 a82a584b \u00b7 4 file(s): engine/engine.py, system/nginx-hype.conf, web/panel/index.html, web/panel/no-cover.png",
-  "12:34:21 restart hype-engine",
-  "12:35:06 installed OK \u00b7 restarted: hype-engine, nginx-reload"
+  "12:36:13 update a82a584b \u2192 44146875 \u00b7 1 file(s): web/panel/index.html",
+  "12:36:13 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Davido x YG Marley \u2013 Awuke",
+  "song": "Mabel x King Promise \u2013 All Over You",
   "listeners": 3,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
