@@ -363,3 +363,4 @@
 2026-11-15T21:19:30 ok 3956c5ad Slideshows: the whole photo / video, centred on the Hype blue background (Media background) – nothing cut off
 2026-11-16T08:48:08 ok 2d4c5c5c Audio bus after a reboot: the sinks are made only once PulseAudio answers, and checked again before every radio start (16 Nov: kernel-update reboot at 04:00, sinks missing, radio down 4.5 h); OBS re-opens Radio audio / FX audio when the sinks are new (TV had no sound)
 2026-11-16T08:58:08 ok 68a03cd0 No automatic reboot any more: a kernel update waits for the monthly reboot done together; panel status (⋯ → Server) shows 'Reboot needed since …'
+2026-11-16T12:35:06 ok a82a584b Songs without a cover: the Hype artwork (no-cover.png) in the panel player and as 'art' in the public nowplaying API; covers + artwork public at stream.hyperadio.nl/cover/ and /no-cover.png

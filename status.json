@@ -1,18 +1,18 @@
 {
- "time": "2026-11-16T08:58:08",
+ "time": "2026-11-16T12:35:06",
  "result": "ok",
- "commit": "68a03cd0ed565dbce9277154627930986409941c",
- "subject": "No automatic reboot any more: a kernel update waits for the monthly reboot done together; panel status (\u22ef \u2192 Server) shows 'Reboot needed since \u2026'",
+ "commit": "a82a584bb495b1613d6550b9a14ef1a6f6fd5f87",
+ "subject": "Songs without a cover: the Hype artwork (no-cover.png) in the panel player and as 'art' in the public nowplaying API; covers + artwork public at stream.hyperadio.nl/cover/ and /no-cover.png",
  "log": [
-  "08:57:23 update 2d4c5c5c \u2192 68a03cd0 \u00b7 2 file(s): engine/engine.py, web/panel/header.js",
-  "08:57:23 restart hype-engine",
-  "08:58:08 installed OK \u00b7 restarted: hype-engine"
+  "12:34:20 update 68a03cd0 \u2192 a82a584b \u00b7 4 file(s): engine/engine.py, system/nginx-hype.conf, web/panel/index.html, web/panel/no-cover.png",
+  "12:34:21 restart hype-engine",
+  "12:35:06 installed OK \u00b7 restarted: hype-engine, nginx-reload"
  ],
  "guard": {
-  "song": "DJ Tunez x Shoday \u2013 Na Money",
-  "listeners": 1,
+  "song": "Davido x YG Marley \u2013 Awuke",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
