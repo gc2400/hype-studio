@@ -3605,7 +3605,9 @@ def nowplaying_api():
     n = E.now or {}; t = time.time()
     def song(it, sid=""):
         it = it or {}; a, ti = it.get("artist") or "", it.get("title") or ""
-        return {"id": sid or hashlib.md5((a + ti).encode()).hexdigest(), "text": (a + " - " + ti) if a else ti, "artist": a, "title": ti, "album": "", "genre": it.get("folder") or "", "art": "", "custom_fields": {}}
+        cv = cover_url(a, ti) if a and ti else None      # the cover (public link), else the Hype artwork
+        art = ("https://stream.hyperadio.nl/cover/" + cv.split("/api/cover/", 1)[1].split("?")[0]) if cv else "https://stream.hyperadio.nl/no-cover.png"
+        return {"id": sid or hashlib.md5((a + ti).encode()).hexdigest(), "text": (a + " - " + ti) if a else ti, "artist": a, "title": ti, "album": "", "genre": it.get("folder") or "", "art": art, "custom_fields": {}}
     # only SONGS for the outside world (website, Hype Live, apps): while a jingle / sweeper / ad plays, "now playing" stays
     # the last song, and jingles are left out of the history and "next"
     rows = []

@@ -77,3 +77,4 @@ deploy/reload_pages.txt|/var/lib/hype/reload_pages|644|-
 engine/audstats.py|/opt/hype/audstats.py|644|hype-engine
 engine/slideshow.py|/opt/hype/slideshow.py|644|hype-engine
 system/hype-radio.service.d/sinks.conf|/etc/systemd/system/hype-radio.service.d/sinks.conf|644|daemon-reload
+web/panel/no-cover.png|/var/www/studio/panel/no-cover.png|644|-

@@ -529,7 +529,8 @@ function render() {
   $('#npFolder').textContent = n.folder || '–'; const [bt, bc] = badge(n.mode); $('#npMode').textContent = bt; $('#npMode').className = 'chip ' + bc;
   const art = $('#npArt');
   if (n.cover) { if (art.dataset.cv !== n.cover) { art.dataset.cv = n.cover; art.textContent = ''; art.style.background = `#0B2236 url("${n.cover}") center/cover no-repeat`; } }
-  else { if (art.dataset.cv) { delete art.dataset.cv; art.style.background = ''; } art.textContent = (n.artist || '♪').trim()[0] || '♪'; }
+  else if (n.section === 'music' || n.artist) { if (art.dataset.cv !== 'none') { art.dataset.cv = 'none'; art.textContent = ''; art.style.background = '#0B2236 url("/panel/no-cover.png") center/cover no-repeat'; } }   // no cover: the Hype artwork
+  else { if (art.dataset.cv) { delete art.dataset.cv; art.style.background = ''; } art.textContent = '♪'; }
   if (n.path && waveFor !== n.path) { waveFor = n.path; wavePeaks = null; api('wave?path=' + encodeURIComponent(n.path)).then(p => { if (waveFor === n.path) wavePeaks = p; }); }
   $('#pvScene').textContent = (S.auto_scene ? 'AUTO · ' : 'MANUAL · ') + (S.scene || '–'); $('#bAutoScene').classList.toggle('on', S.auto_scene);
   const manual = !S.auto && !(S.dj && S.dj.on); document.body.classList.toggle('is-auto', !!S.auto);
