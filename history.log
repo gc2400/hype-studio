@@ -365,3 +365,4 @@
 2026-11-16T08:58:08 ok 68a03cd0 No automatic reboot any more: a kernel update waits for the monthly reboot done together; panel status (⋯ → Server) shows 'Reboot needed since …'
 2026-11-16T12:35:06 ok a82a584b Songs without a cover: the Hype artwork (no-cover.png) in the panel player and as 'art' in the public nowplaying API; covers + artwork public at stream.hyperadio.nl/cover/ and /no-cover.png
 2026-11-16T12:36:13 ok 44146875 DJ decks: the song's cover (or the Hype artwork) instead of the deck letter, with a small A / B badge
+2026-11-16T15:32:44 ok 3455243d TV: no more needless OBS restarts and wrong clips (16 Nov) - guard: 'picture black' only when the middle of the picture has (almost) no bright pixel; dark / vertical music videos are not black - resync: also checks that the clip on screen is this song's clip (after an OBS restart OBS came back with the previous song's video)

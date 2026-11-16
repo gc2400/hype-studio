@@ -1,17 +1,19 @@
 {
- "time": "2026-11-16T12:36:13",
+ "time": "2026-11-16T15:32:44",
  "result": "ok",
- "commit": "441468755302fc0f079dd921075aea0ed010c374",
- "subject": "DJ decks: the song's cover (or the Hype artwork) instead of the deck letter, with a small A / B badge",
+ "commit": "3455243dc3d9a2a865ef69a5f229d32be81692b1",
+ "subject": "TV: no more needless OBS restarts and wrong clips (16 Nov) - guard: 'picture black' only when the middle of the picture has (almost) no bright pixel; dark / vertical music videos are not black - resync: also checks that the clip on screen is this song's clip (after an OBS restart OBS came back with the previous song's video)",
  "log": [
-  "12:36:13 update a82a584b \u2192 44146875 \u00b7 1 file(s): web/panel/index.html",
-  "12:36:13 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:31:58 update 44146875 \u2192 3455243d \u00b7 2 file(s): engine/engine.py, engine/guard.py",
+  "15:31:59 restart hype-guard",
+  "15:31:59 restart hype-engine",
+  "15:32:44 installed OK \u00b7 restarted: hype-engine, hype-guard"
  ],
  "guard": {
-  "song": "Mabel x King Promise \u2013 All Over You",
-  "listeners": 3,
+  "song": "KAROL G \u2013 MATADORA",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
