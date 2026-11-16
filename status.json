@@ -1,19 +1,18 @@
 {
- "time": "2026-11-16T15:32:44",
+ "time": "2026-11-16T22:16:38",
  "result": "ok",
- "commit": "3455243dc3d9a2a865ef69a5f229d32be81692b1",
- "subject": "TV: no more needless OBS restarts and wrong clips (16 Nov) - guard: 'picture black' only when the middle of the picture has (almost) no bright pixel; dark / vertical music videos are not black - resync: also checks that the clip on screen is this song's clip (after an OBS restart OBS came back with the previous song's video)",
+ "commit": "d99f0563c9f3e41b6e84ab21a921d8d0b0e16b3f",
+ "subject": "TV resync: keep a scheduled/manual scene (16 Nov: the PIP shoutout stayed on after the clip check, AUTO SCENES never came back)",
  "log": [
-  "15:31:58 update 44146875 \u2192 3455243d \u00b7 2 file(s): engine/engine.py, engine/guard.py",
-  "15:31:59 restart hype-guard",
-  "15:31:59 restart hype-engine",
-  "15:32:44 installed OK \u00b7 restarted: hype-engine, hype-guard"
+  "22:15:53 update 3455243d \u2192 d99f0563 \u00b7 1 file(s): engine/engine.py",
+  "22:15:53 restart hype-engine",
+  "22:16:38 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "KAROL G \u2013 MATADORA",
-  "listeners": 4,
+  "song": "Devi Dev x Rich Kalashh \u2013 Riba Chest",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
