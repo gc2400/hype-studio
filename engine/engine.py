@@ -2457,6 +2457,27 @@ def listener_slideshow():
                 try: os.symlink(src, os.path.join(d, f))
                 except OSError: pass
 
+SINK_IDS = "/var/lib/hype/sink_ids.json"
+def tv_audio_refresh():
+    """After the audio bus was made new (reboot / PulseAudio restart: new sink numbers), OBS's 'Radio audio' / 'FX audio'
+    keep listening to the old, gone sinks -> TV without sound (16 Nov). At engine start: if the sinks changed, OBS
+    re-opens them (a normal engine restart changes nothing, so no blip)."""
+    time.sleep(8)
+    try:
+        env = dict(os.environ, HOME="/root", XDG_RUNTIME_DIR="/run/hype")
+        out = subprocess.run(["pactl", "list", "short", "sinks"], capture_output=True, text=True, timeout=10, env=env).stdout
+        ids = {l.split()[1]: l.split()[0] for l in out.splitlines() if len(l.split()) > 1 and l.split()[1].startswith("hype_")}
+        try: old = json.load(open(SINK_IDS))
+        except Exception: old = None
+        if ids and ids != old:
+            with E.tv.olock:
+                cl = E.tv.client()
+                for n in ("Radio audio", "FX audio"):
+                    dev = cl.get_input_settings(n).input_settings.get("device_id")
+                    if dev: cl.set_input_settings(n, {"device_id": "default"}, True); cl.set_input_settings(n, {"device_id": dev}, True)
+            jdump(ids, SINK_IDS); log.info("audio bus is new (%s): OBS re-opened Radio audio / FX audio", ids)
+    except Exception as e: log.warning("tv audio refresh: %s", e)
+
 def slideshow_loop():
     """SLIDESHOW scenes (branding/slideshow/photos|videos/<name>): folders -> scenes every 30 s; a Videos scene on air gets
     its next random video when one ends (checked every second)."""
@@ -4373,6 +4394,7 @@ if __name__ == "__main__":
     threading.Thread(target=voice_loop, daemon=True).start()
     threading.Thread(target=autorec_loop, daemon=True).start()
     audstats.load_live(); threading.Thread(target=aud_sampler, daemon=True).start()
+    threading.Thread(target=tv_audio_refresh, daemon=True).start()
     threading.Thread(target=sponsors_loop, daemon=True).start()
     threading.Thread(target=recap_loop, daemon=True).start()
     threading.Thread(target=media_in_loop, daemon=True).start()
