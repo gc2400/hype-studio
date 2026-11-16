@@ -3243,7 +3243,6 @@ def resync_tv():
         return
     try:
         with E.tv.olock: items = E.tv.client().get_scene_item_list("Music video").scene_items   # (one OBS request at a time)
-        if any(i["sceneItemEnabled"] for i in items if i["sourceName"] in ("Clip A", "Clip B")) and (E.tv.scene == "Music video" or not E.tv.auto): return
         c = dbc(); el = time.time() - n["started"]
         if n["mode"] == "pair":
             if not n.get("clip_path"): return
@@ -3251,6 +3250,13 @@ def resync_tv():
         else:
             f, start, snd, gain = tv_file(c, n["path"]), (n.get("cue_start") or 0) + el, False, 0.0
         if not f: return
+        on = [i["sourceName"] for i in items if i["sceneItemEnabled"] and i["sourceName"] in ("Clip A", "Clip B")]
+        if on and (E.tv.scene == "Music video" or not E.tv.auto):
+            # a clip is on screen – but is it this song's clip? After an OBS restart OBS comes back with the clip it had
+            # saved (16 Nov: the previous song's video ran under the next song). Only then show the right one.
+            with E.tv.olock: shown = E.tv.client().get_input_settings(on[0]).input_settings.get("local_file")
+            if not shown or os.path.realpath(shown) == os.path.realpath(f): return
+            log.info("TV resync: %s showed another clip (%s) – putting the right one on", on[0], os.path.basename(shown))
         E.tv.scene = None
         E.tv.show(n["mode"], f, start, snd, gain, None if snd else keyframes(c, n["path"]))
         log.info("TV resync: %s at %.0f s", n["title"], el)

@@ -218,7 +218,9 @@ class Guard:
             self._tvp_t = time.time(); fr = tv_frame(); snaps = getattr(self, "_tvp", [])
             if fr: snaps = [x for x in snaps if time.time() - x[0] < 150] + [(time.time(), fr)]
             self._tvp = snaps
-            self._tv_black = bool(fr) and sum(fr) / len(fr) < 10
+            # black = the middle of the picture (logo / clock / show name at the sides left out) has hardly one bright pixel.
+            # Not "dark on average": a dark or vertical music video (black bars) is not a black picture (16 Nov: 2 needless OBS restarts)
+            self._tv_black = bool(fr) and sum(1 for y in range(90) for x in range(40, 130) if fr[y * 160 + x] > 40) < 40
             old = [x for x in snaps if time.time() - x[0] >= 115]
             self._tv_frozen = bool(fr) and len(snaps) >= 5 and bool(old) and all(changed_px(snaps[i][1], snaps[i + 1][1]) <= 40 for i in range(len(snaps) - 1))
         st["tv_black"] = getattr(self, "_tv_black", False); st["tv_frozen"] = getattr(self, "_tv_frozen", False)
