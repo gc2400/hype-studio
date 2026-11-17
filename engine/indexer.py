@@ -162,6 +162,10 @@ def follow_move(c, rel, fp):
         if not os.path.exists(os.path.join(ROOT, old)):
             c.execute("DELETE FROM items WHERE path=?", (rel,))
             c.execute("UPDATE items SET path=? WHERE path=?", (rel, old))
+            # renamed (e.g. by FTP): the shown artist / title follow the new file name, as with a new file ("Artist - Title" wins)
+            fa, ft = split_name(os.path.basename(rel)); sec = rel.split("/")[0]
+            if fa: c.execute("UPDATE items SET artist=?, title=? WHERE path=?", (fa, clean_title(ft), rel))
+            elif sec != "music": c.execute("UPDATE items SET artist='', title=? WHERE path=?", (clean_title(ft or os.path.splitext(os.path.basename(rel))[0]), rel))
             c.execute("UPDATE items SET clip_path=? WHERE clip_path=?", (rel, old))
             c.execute("UPDATE items SET clip_suggest=? WHERE clip_suggest=?", (rel, old))
             try: c.execute("UPDATE asrun SET path=? WHERE path=?", (rel, old))

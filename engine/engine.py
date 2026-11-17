@@ -2011,7 +2011,11 @@ class Engine:
         if not name or len(name) > 180 or BAD_NAME.search(name) or any(ch in name for ch in '/\\:*?"<>|') or name.startswith("."):
             return {"ok": False, "error": 'not a valid name (no / \\ : * ? " < > |)'}
         fn = name + (d.get("ext") or ext); new = os.path.join(tdir, fn)
-        if new == rel: return {"ok": True, "path": rel}
+        if new == rel:     # same name (e.g. already renamed by FTP): the shown artist / title still follow the file name
+            fa, ft = _ix.split_name(fn); row = c.execute("SELECT section FROM items WHERE path=?", (rel,)).fetchone()
+            if fa or row[0] != "music":
+                c.execute("UPDATE items SET artist=?, title=? WHERE path=?", (fa or "", _ix.clean_title(ft or name), rel)); c.commit()
+            return {"ok": True, "path": rel}
         if os.path.exists(os.path.join(ROOT, new)) and new.lower() != rel.lower(): return {"ok": False, "error": "a file with that name is already there"}
         os.rename(src, os.path.join(ROOT, new))
         old_fn = os.path.basename(rel)
