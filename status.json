@@ -1,19 +1,19 @@
 {
- "time": "2026-11-17T16:50:13",
+ "time": "2026-11-18T00:55:57",
  "result": "ok",
- "commit": "a355807c7a8b8e3f5c0e693c827f63244821200c",
- "subject": "Website move to Hetzner: all Hype Live calls on www.hyperadio.nl (no 301 from hyperadio.nl that turns a POST into a GET), the website's address logged when it changes, voice items still listed after an ack are acked again; TV resync no longer restarts a clip that is just being put on (first 8 s of a song)",
+ "commit": "f241a01cb5af1b04867fcf48fbdf3a78e6baf6e7",
+ "subject": "Renamed outside Studio (FTP): the library's artist / title follow the new file name; Rename with the same name refreshes them too",
  "log": [
-  "16:49:28 update d99f0563 \u2192 a355807c \u00b7 3 file(s): engine/engine.py, engine/guard.py, engine/tickers.py",
-  "16:49:28 restart hype-guard",
-  "16:49:28 restart hype-engine",
-  "16:50:13 installed OK \u00b7 restarted: hype-engine, hype-guard"
+  "00:55:11 update a355807c \u2192 f241a01c \u00b7 2 file(s): engine/engine.py, engine/indexer.py",
+  "00:55:12 restart hype-indexer",
+  "00:55:12 restart hype-engine",
+  "00:55:57 installed OK \u00b7 restarted: hype-engine, hype-indexer"
  ],
  "guard": {
-  "song": "Davido x Omah Lay \u2013 With You",
-  "listeners": 6,
+  "song": "Asake X Travis Scott \u2013 Active",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
