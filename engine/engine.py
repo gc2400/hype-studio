@@ -3256,6 +3256,7 @@ def resync_tv():
             # saved (16 Nov: the previous song's video ran under the next song). Only then show the right one.
             with E.tv.olock: shown = E.tv.client().get_input_settings(on[0]).input_settings.get("local_file")
             if not shown or os.path.realpath(shown) == os.path.realpath(f): return
+            if el < 8: return      # the song just started: its clip is still being put on (17 Nov: 13 needless restarts of a clip at 0 s)
             log.info("TV resync: %s showed another clip (%s) – putting the right one on", on[0], os.path.basename(shown))
         keep = None if E.tv.auto else E.tv.scene      # a scheduled / manual scene (e.g. PIP shoutout) stays – and still goes back to AUTO after its time
         E.tv.scene = None
@@ -3656,7 +3657,7 @@ def hl_send_np(c, it):
         body["brand"] = (r[0] if r and r[0] else (it.get("folder") or "").split("/")[-1]) or it.get("title")
     if typ == "song":
         body["next"] = [{"artist": p_.get("artist") or "", "title": p_.get("title") or "", "type": "song" if p_.get("section") == "music" else "jingle"} for p_ in (([E.liq_next] if E.liq_next else []) + E.plan)[:3]]
-    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_np="; hk = hl_key(g)
+    url = g.get("hl_url", "https://www.hyperadio.nl/").rstrip("/") + "/?hype_np="; hk = hl_key(g)
     def go():
         try:
             r = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "User-Agent": "HypeStudio/1", "X-Hype-Key": hk})
@@ -3832,11 +3833,21 @@ def hl_key(g, kind="write"):
     charts and the recap; the write key also reads. The old single key keeps working until it is switched off in Hype Live."""
     if kind == "read": return g.get("hl_key_read") or g.get("hl_key_write") or g.get("hl_key") or ""
     return g.get("hl_key_write") or g.get("hl_key") or ""
+HL_IP = {"t": 0, "ip": None}
+def hl_ip_log(url):
+    """Log the address the website name resolves to, once and whenever it changes (website moved to Hetzner, 17 Nov)."""
+    if time.time() - HL_IP["t"] < 300: return
+    HL_IP["t"] = time.time()
+    try:
+        h = urllib.parse.urlsplit(url).hostname; ips = sorted({a[4][0] for a in socket.getaddrinfo(h, 443, proto=socket.IPPROTO_TCP)})
+        if ips != HL_IP["ip"]: log.info("Hype Live website %s -> %s", h, ", ".join(ips)); HL_IP["ip"] = ips
+    except Exception: pass
 def hl_call(param, extra="", data=None, timeout=20):
     """GET (or POST data) https://hyperadio.nl/?<param>=KEY<extra>: the write key for sending / acks, else the read key."""
     g = json.load(open(GUARD_CONF)); k = hl_key(g, "write" if (data is not None or "&ack=" in extra) else "read")
     if not k: raise RuntimeError("no Hype Live key")
-    url = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?" + param + "=" + extra      # the key goes in X-Hype-Key (Hype Live 2.42), never in a URL
+    hl_ip_log(g.get("hl_url", "https://www.hyperadio.nl/"))
+    url = g.get("hl_url", "https://www.hyperadio.nl/").rstrip("/") + "/?" + param + "=" + extra      # the key goes in X-Hype-Key (Hype Live 2.42), never in a URL
     r = urllib.request.Request(url, data=data, headers={"User-Agent": "HypeStudio/1", "X-Hype-Key": k, **({"Content-Type": "application/json"} if data is not None else {})},
                                method="POST" if data is not None else "GET")
     return urllib.request.urlopen(r, timeout=timeout).read(2_000_000).decode("utf-8", "replace")
@@ -4271,6 +4282,10 @@ def voice_apply(d, fetch, ack):
         st[vid] = {"path": os.path.relpath(os.path.join(VOICE_DIR, fn), ROOT), "name": name, "city": city, "source": it.get("source"),
                    "received": voice_when(it.get("received")), "acked": False, "in_bank": False, "air": bool(it.get("air"))}
         changed = True; log.info("voice: downloaded %s (%s)", vid, name)
+    # Hype Live still lists one we already have and acked (e.g. the ack went to the old website during the move to Hetzner): ack again
+    for it in d.get("items") or []:
+        vid = re.sub(r"[^A-Za-z0-9_-]", "", str(it.get("id") or ""))
+        if vid in st and st[vid].get("acked"): ack(vid)
     # indexed? -> onto the VOICE bank (newest first) -> ack
     for vid, v in st.items():
         if v.get("acked"): continue
@@ -4296,7 +4311,7 @@ def voice_loop():
             try: g = json.load(open(GUARD_CONF))
             except Exception: g = {}
             if not hl_key(g): continue
-            base = g.get("hl_url", "https://hyperadio.nl/").rstrip("/") + "/?hype_studio_voice="; kr, kw = hl_key(g, "read"), hl_key(g)
+            base = g.get("hl_url", "https://www.hyperadio.nl/").rstrip("/") + "/?hype_studio_voice="; kr, kw = hl_key(g, "read"), hl_key(g)
             try: d = json.loads(hl_get(base, key=kr).read(500000).decode("utf-8", "replace"))
             except urllib.error.HTTPError as e:
                 if e.code != 404: log.warning("voice: Hype Live %s", e.code)
@@ -4314,7 +4329,7 @@ def guard_status(full=False):
     if full:
         try: c = json.load(open(GUARD_CONF))
         except Exception: c = {}
-        g["conf"] = {"hl_url": c.get("hl_url", "https://hyperadio.nl/"), "has_key": bool(c.get("hl_key")), "has_read": bool(c.get("hl_key_read")), "has_write": bool(c.get("hl_key_write")), "heartbeat": c.get("heartbeat", True), "repair": c.get("repair", True),
+        g["conf"] = {"hl_url": c.get("hl_url", "https://www.hyperadio.nl/"), "has_key": bool(c.get("hl_key")), "has_read": bool(c.get("hl_key_read")), "has_write": bool(c.get("hl_key_write")), "heartbeat": c.get("heartbeat", True), "repair": c.get("repair", True),
                      "np": bool(c.get("np")), "np_spots": bool(c.get("np_spots"))}
     else:
         g = {k: g.get(k) for k in ("fresh", "ok", "problems", "heartbeat", "events", "tick")}; g["events"] = (g.get("events") or [])[:5]

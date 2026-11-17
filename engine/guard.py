@@ -16,7 +16,7 @@ Repairs (each part at most 3 times per 30 minutes, then it only alarms):
   TV picture black 90 s / frozen 2 min (not LIVE) → restart OBS (the radio is not touched)
   TV without sound 60 s (the radio plays, not LIVE) → reconnect the sound: restart the radio when it no longer sends to the
                                   audio bus, else OBS (4 Nov: after the audio bus restarted, OBS stayed connected to nothing)
-Every 60 s a heartbeat goes to Hype Live (when a key is set): https://hyperadio.nl/?hype_studio=KEY (JSON).
+Every 60 s a heartbeat goes to Hype Live (when a key is set): https://www.hyperadio.nl/?hype_studio=KEY (JSON).
 Pause (deploys): touch /run/hype/guard_pause  (ignored when older than 15 min).
 Status for the panel: /var/lib/hype/guard.json · settings: /var/lib/hype/guard_conf.json
 """
@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("guard")
 logging.getLogger("obsws_python").setLevel(logging.WARNING)   # (it logs the password on every connect)
 
-DEFAULT = {"hl_url": "https://hyperadio.nl/", "hl_key": "", "heartbeat": True, "repair": True}
+DEFAULT = {"hl_url": "https://www.hyperadio.nl/", "hl_key": "", "heartbeat": True, "repair": True}
 HL_SYNC, HL_KNOWN, HL_ACKS = "/var/lib/hype/hl_sync.json", "/var/lib/hype/hl_known.json", "/var/lib/hype/hl_acks.json"
 HL_POKE, HL_SCHED, HL_WANT = "/var/lib/hype/hl_poke", "/var/lib/hype/hl_schedule_version", "/var/lib/hype/hl_want_covers.json"
 

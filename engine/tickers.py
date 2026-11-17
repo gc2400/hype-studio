@@ -17,9 +17,9 @@ BLOCK_NEWS = ("dood, doden, dode, omgekomen, overleden, moord, vermoord, doodges
               "explosie, vliegtuigcrash, ongeluk, drama")
 DEFAULT = [
     {"id": "news", "label": "NEWS", "sub": "NU.NL", "url": "https://www.nu.nl/rss", "always": ["Hype Screen"], "max": 12, "hours": 12, "block": BLOCK_NEWS, "on": True},
-    {"id": "traffic", "label": "TRAFFIC", "sub": "ROAD & RAIL", "url": "https://hyperadio.nl/?hype_ticker=traffic", "always": [], "max": 12, "hours": 24, "block": "", "on": True},
-    {"id": "showbiz", "label": "SHOWBIZZ", "sub": "MUSIC NEWS", "url": "https://hyperadio.nl/?hype_ticker=showbiz", "always": [], "max": 12, "hours": 48, "block": "", "on": True},
-    {"id": "agenda", "label": "AGENDA", "sub": "EVENTS & SHOWS", "url": "https://hyperadio.nl/?hype_ticker=agenda", "always": [], "max": 10, "hours": 0, "block": "", "on": True},
+    {"id": "traffic", "label": "TRAFFIC", "sub": "ROAD & RAIL", "url": "https://www.hyperadio.nl/?hype_ticker=traffic", "always": [], "max": 12, "hours": 24, "block": "", "on": True},
+    {"id": "showbiz", "label": "SHOWBIZZ", "sub": "MUSIC NEWS", "url": "https://www.hyperadio.nl/?hype_ticker=showbiz", "always": [], "max": 12, "hours": 48, "block": "", "on": True},
+    {"id": "agenda", "label": "AGENDA", "sub": "EVENTS & SHOWS", "url": "https://www.hyperadio.nl/?hype_ticker=agenda", "always": [], "max": 10, "hours": 0, "block": "", "on": True},
     {"id": "weather", "label": "WEATHER", "sub": "AMSTERDAM", "url": "https://www.hyperadio.nl/?hype_ticker=weather", "always": [], "max": 8, "hours": 0, "block": "", "on": True},
 ]
 DATA = {}          # id -> {"items": [...], "at": time, "err": str}
