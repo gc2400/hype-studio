@@ -1,19 +1,18 @@
 {
- "time": "2026-11-18T00:55:57",
+ "time": "2026-11-18T01:11:02",
  "result": "ok",
- "commit": "f241a01cb5af1b04867fcf48fbdf3a78e6baf6e7",
- "subject": "Renamed outside Studio (FTP): the library's artist / title follow the new file name; Rename with the same name refreshes them too",
+ "commit": "29b60fdfd96cff76aae761de88e67c0c970966cf",
+ "subject": "Library rename: text in the box can be selected with the mouse (the row no longer drags while renaming); Rename with the same name refreshes the shown artist / title",
  "log": [
-  "00:55:11 update a355807c \u2192 f241a01c \u00b7 2 file(s): engine/engine.py, engine/indexer.py",
-  "00:55:12 restart hype-indexer",
-  "00:55:12 restart hype-engine",
-  "00:55:57 installed OK \u00b7 restarted: hype-engine, hype-indexer"
+  "01:10:17 update f241a01c \u2192 29b60fdf \u00b7 2 file(s): engine/engine.py, web/panel/library.html",
+  "01:10:17 restart hype-engine",
+  "01:11:02 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Asake X Travis Scott \u2013 Active",
+  "song": "Drake \u2013 2 Hard 4 The Radio",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
