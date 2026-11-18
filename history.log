@@ -374,3 +374,4 @@
 2026-11-18T12:31:28 ok 7e93c10e Charts: log the exact JSON of every send (without the song list); Website card shows what the website really has (live / waiting until / not yet) from /top10/weeks
 2026-11-18T13:55:58 ok b841d1d2 Media group: new scene V M PIP (music video big, media small, CAM 1 V PIP frame)
 2026-11-18T13:59:49 ok 4e30533e 🔴 LIVE pads in MEDIA: HLS / RTMP / SRT / YouTube-live streams in the Media window (Mute or Music off), test 👁, reconnect + back to the programme after 15 s on AUTO SCENES (manual: only a warning); YouTube videos dropped on MEDIA become media pads (yt-dlp)
+2026-11-18T14:01:54 waiting c96da28c [night] radio: harbor 'ext' (8006) for the 🔴 LIVE pads' sound (Music off): replaces the automation, which waits; no stream sound -> the music again by itself
