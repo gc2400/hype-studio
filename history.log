@@ -378,3 +378,4 @@
 2026-11-18T14:05:45 ok 78a35ba8 Up next: the text goes 0.45 s BEFORE the scene switches back (was still visible over the music video for up to ~1 s)
 2026-11-18T14:07:50 waiting 361e8375 [night] radio: harbor 'ext' (8006) for the 🔴 LIVE pads' sound (Music off): replaces the automation, which waits; no stream sound -> the music again by itself
 2026-11-18T14:22:11 waiting 22ecfc4c [night] Tidy new file names (Settings, on): 'Artist x Artist x Featured - Title', without (Official Video) / (Video Oficial) / (Lyrics) / (Radio Edit) / (prod. …) / '| …'; logged in /var/lib/hype/tidied.jsonl
+2026-11-18T14:36:31 waiting edb9161b [night] New songs are spread: at most one never-played song per 12 min (~1 in 4), in every folder – no more all new songs after each other

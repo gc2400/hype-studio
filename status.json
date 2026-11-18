@@ -1,17 +1,17 @@
 {
- "time": "2026-11-18T14:22:11",
+ "time": "2026-11-18T14:36:31",
  "result": "waiting",
- "commit": "22ecfc4c4593f286b91c423c10946c99de0c0a13",
- "subject": "[night] Tidy new file names (Settings, on): 'Artist x Artist x Featured - Title', without (Official Video) / (Video Oficial) / (Lyrics) / (Radio Edit) / (prod. \u2026) / '| \u2026'; logged in /var/lib/hype/tidied.jsonl",
+ "commit": "edb9161b9cf5e7ba0e19b348da4b0df6522d9975",
+ "subject": "[night] New songs are spread: at most one never-played song per 12 min (~1 in 4), in every folder \u2013 no more all new songs after each other",
  "log": [
-  "14:22:11 update 78a35ba8 \u2192 22ecfc4c \u00b7 4 file(s): engine/engine.py, engine/indexer.py, radio/radio.liq, web/panel/settings.html",
-  "14:22:11 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "14:36:31 update 78a35ba8 \u2192 edb9161b \u00b7 5 file(s): engine/engine.py, engine/indexer.py, engine/planner.py, radio/radio.liq, web/panel/settings.html",
+  "14:36:31 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Wisin x Kapo \u2013 Luna",
-  "listeners": 3,
+  "song": "Issairo x Ango x Jaido x Devi Dev \u2013 Dal Un Shot",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
