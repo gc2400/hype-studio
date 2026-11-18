@@ -55,6 +55,38 @@ def split_name(fn):
         return a.strip(), t.strip()
     return "", base.strip()
 
+JUNK = (r"official|video|vídeo|oficial|clip|videoclip|lyrics?|letra|audio|visuali[sz]er|hd|hq|4k|uhd|explicit|clean|dirty|radio edit|"
+        r"prod\.?|prod by|produced by|dir\.?|directed by|shot by|music video|performance video|live session")
+def tidy_name(fn):
+    """Gianno's format: 'Artist x Artist x Featured - Title (Remix)': YouTube / download extras out, every artist (also ft. after
+    the title) in front, separated with ' x '. Unsure (no ' - ') -> unchanged."""
+    base, ext = os.path.splitext(fn)
+    b = re.sub(r"\s+", " ", base.replace("_", " ")).strip()
+    b = re.split(r"\s+(?:\||//|¦)\s+", b)[0]
+    feats = []
+    def br(m):
+        inner = m.group(1).strip()
+        mf = re.match(r"(?i)(?:feat\.?|ft\.?|featuring|with)\s+(.+)", inner)
+        if mf: feats.append(mf.group(1)); return ""
+        if re.search(r"(?i)\b(" + JUNK + r")\b", inner) or not inner: return ""
+        return " " + m.group(0).strip()
+    b = re.sub(r"\s*[\(\[]([^\)\]]*)[\)\]]", br, b).strip()
+    if " - " not in b: return fn
+    a, t = b.split(" - ", 1)
+    m = re.search(r"(?i)\s+(?:feat\.?|ft\.?|featuring)\s+(.+?)(\s+[\(\[].*)?$", t)
+    if m: feats.append(m.group(1)); t = t[:m.start()] + (m.group(2) or "")
+    m = re.search(r"(?i)\s+(?:feat\.?|ft\.?|featuring|with)\s+(.+)$", a)
+    if m: feats.insert(0, m.group(1)); a = a[:m.start()]
+    t = re.sub(r"(?i)\s*\b(official\s+(music\s+)?video|video\s+oficial|official\s+audio|lyric\s+video|music\s+video)\b\s*$", "", t).strip(" -–")
+    names, seen = [], set()
+    for part in [a] + feats:
+        for n in re.split(r"\s*,\s*|\s+&\s+|\s+[xX]\s+|\s+×\s+", part):
+            n = n.strip(" -–")
+            if n and n.lower() not in seen: seen.add(n.lower()); names.append(n)
+    if not names or not t: return fn
+    out = " x ".join(names) + " - " + re.sub(r"\s+", " ", t).strip()
+    return re.sub(r'[/\\:*?"<>|]', "", out)[:180] + ext
+
 def clean_title(t):
     t = re.sub(r"\s*[\(\[][^\)\]]*(official|video|oficial|clip|lyric|audio|visualizer|hd|4k)[^\)\]]*[\)\]]", "", t, flags=re.I)
     return t.strip() or t
@@ -343,6 +375,12 @@ def suggest_pairs(c):
         c.execute("UPDATE items SET mode=?, clip_path=?, clip_suggest=NULL, clip_score=NULL, mode_set_by_user=0 WHERE path=?",
                   ("pair" if clip else "audio", clip, path))
 
+def tidy_on(c):
+    try:
+        r = c.execute("SELECT value FROM settings WHERE key='tidy_names'").fetchone()
+        return True if not r else bool(json.loads(r[0]))
+    except Exception: return True
+
 def scan(full=False):
     c = db()
     seen = set(); n_new = 0
@@ -361,6 +399,14 @@ def scan(full=False):
                 try:
                     old = c.execute("SELECT size, mtime FROM items WHERE path=?", (rel,)).fetchone()
                     if old and not full and old[0] == st.st_size and abs(old[1] - st.st_mtime) < 1: continue
+                    if not old and sec in ("music", "clips") and tidy_on(c):     # a new file: Gianno's name format first ("A x B - Title", no YouTube extras)
+                        nn = tidy_name(fn)
+                        if nn != fn and not os.path.exists(os.path.join(dp, nn)):
+                            os.rename(p, os.path.join(dp, nn)); print("tidied:", repr(fn), "->", repr(nn), flush=True)
+                            try:
+                                with open("/var/lib/hype/tidied.jsonl", "a") as f_: f_.write(json.dumps({"t": time.time(), "dir": os.path.relpath(dp, ROOT), "from": fn, "to": nn}) + "\n")
+                            except Exception: pass
+                            continue                                               # indexed under its new name on the next scan
                     index_file(c, p, st); n_new += 1; c.commit()
                 except Exception as e:      # one bad file never stops the scan (and everything after it)
                     print("index error:", repr(rel), repr(e), flush=True); SCAN_FAIL[rel] = (st.st_size, st.st_mtime)
