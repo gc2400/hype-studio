@@ -97,7 +97,7 @@ def mtx_ok(d):
     if not key: return False
     live = load(LIVE_CONF, {})
     if live.get("studio_key") and hmac.compare_digest(key, live["studio_key"]):
-        if action == "read" and path in ("live/program", "preview"): return True     # the panel live preview
+        if action == "read" and path in ("live/program", "preview", "web"): return True     # the panel live preview + the 🌐 browser view
         if path == "guestview": return action == "read"
         return action in ("publish", "read") and (path in STUDIO_PATHS or path.startswith("guest"))
     g = load(GUESTS, {}).get("guests", {})

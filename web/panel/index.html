@@ -942,11 +942,13 @@ function renderMediaPads() {
   $$('#mSound [data-ms]').forEach(b => b.classList.toggle('on', b.dataset.ms === MSOUND));
   const cur = (S && S.media) || null;
   const own = MEDIA.files.filter(m => !m.listener), pg = padPage(own.length); let J = -1;
+  const WB = (S && S.web) || {}, webAir = cur && cur.file === 'live:web';
+  const webPad = `<button class="btn pad lpad ${webAir ? 'looping' : ''}" style="background:#0A2A3A;border-color:#05A9C6" data-webpad title="${webAir ? 'Click: off air' : WB.on ? 'Click: the browser on air (Mute = picture only · Music off = its sound on radio + TV)' : 'Click: open the browser'}">🌐 Browser<small>${webAir ? (cur.error ? '⚠ ' + esc(cur.error) : 'ON AIR · <span data-livet="' + cur.started + '"></span>') : WB.starting ? 'starting…' : WB.on ? 'open · click = on air' : 'browse any page'}</small><span class="lpv" data-webopen title="Open the browser window">🖥</span><span class="bar"></span></button>`;
   const LV = (S && S.streams) || [];      // 🔴 LIVE pads: HLS / RTMP / YouTube live links (always first, not paged)
   const livePads = LV.map((x, i) => { const on = cur && cur.file === 'live:' + x.id;
     return `<button class="btn pad lpad ${on ? 'looping' : ''}" style="background:#3A0A14;border-color:#FF4D6A" data-lv="${i}" title="${on ? 'Click: stop the stream' : 'Click: on air (Mute = picture only · Music off = its sound on radio + TV, the music waits)'}">🔴 ${esc(x.name)}<small>${on ? (cur.error ? '⚠ ' + esc(cur.error) : 'LIVE · <span data-livet="' + cur.started + '"></span>') : 'live stream' + (x.yt ? ' · YouTube' : '')}</small><span class="lpv" data-lvtest="${i}" title="Test the link (not on air)">👁</span><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmlv="${i}" title="Delete this live pad">×</span>` : ''}</button>`; }).join('')
     + (PEDIT ? '<button class="padadd" id="lvAdd" title="A live stream link: https://….m3u8, rtmp://…, srt://… or a YouTube live">+ LIVE</button>' : '');
-  $('#pads').innerHTML = livePads + MEDIA.files.map((m, i) => m.listener ? '' : (++J, !PEDIT && (J < pg[0] || J >= pg[1])) ? '' : `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.listener ? '#062A1E' : m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.listener ? '#3DDC97' : m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}" ${m.listener && m.listener.caption ? `title="${esc(m.listener.caption)}"` : ''}>${m.listener ? '📱 ' + esc(m.listener.name + (m.listener.city ? ' · ' + m.listener.city : '')) : esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.listener ? 'listener ' + (m.kind === 'video' ? 'video · ' + fmt(m.duration) : 'photo') + (Date.now() / 1000 - (m.listener.added || 0) < 86400 ? ' · NEW' : '') : m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('') + '<button class="padadd" id="mDrop" title="Drop pictures or videos here (from your computer or a website), or click to choose them">drop here</button>';
+  $('#pads').innerHTML = webPad + livePads + MEDIA.files.map((m, i) => m.listener ? '' : (++J, !PEDIT && (J < pg[0] || J >= pg[1])) ? '' : `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.listener ? '#062A1E' : m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.listener ? '#3DDC97' : m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}" ${m.listener && m.listener.caption ? `title="${esc(m.listener.caption)}"` : ''}>${m.listener ? '📱 ' + esc(m.listener.name + (m.listener.city ? ' · ' + m.listener.city : '')) : esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.listener ? 'listener ' + (m.kind === 'video' ? 'video · ' + fmt(m.duration) : 'photo') + (Date.now() / 1000 - (m.listener.added || 0) < 86400 ? ' · NEW' : '') : m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('') + '<button class="padadd" id="mDrop" title="Drop pictures or videos here (from your computer or a website), or click to choose them">drop here</button>';
   $('#pads').classList.toggle('edit', PEDIT);
   const md = $('#mDrop'); if (md) { md.onclick = () => $('#mFile').click();
     md.ondragover = e => { e.preventDefault(); md.classList.add('over'); }; md.ondragleave = () => md.classList.remove('over');
@@ -956,6 +958,13 @@ function renderMediaPads() {
       md.textContent = 'fetching…';
       cmd('fetch_url', {url, target: 'media'}).then(r => { if (!r || r.ok === false) { renderPads(); return toast((r && r.error) || 'Could not fetch it', 1); }
         toast(r.later ? 'Video fetched – it shows as a pad in a minute or two (being made 16:9)' : 'Added to media: ' + r.file); setTimeout(loadMedia, r.later ? 60000 : 2500); setTimeout(loadMedia, 25000); }); }; }
+  const wp = $('#pads [data-webpad]'); if (wp) wp.onclick = e => {
+    const W_ = (S && S.web) || {}, cur_ = S && S.media;
+    if (e.target.dataset.webopen !== undefined || !W_.on) return webOpen();
+    if (cur_ && cur_.file === 'live:web') return cmd('media_stop', {}).then(() => toast('Browser off air'));
+    const snd = MSOUND === 'off' ? 'off' : 'mute';
+    if (MSOUND === 'duck') toast('Duck is not for the browser – it plays muted (choose Music off for its sound)');
+    cmd('stream_play', {id: 'web', scene: MSCENE, sound: snd}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('🌐 Browser on air' + (snd === 'off' ? ' · its sound on radio + TV, the music waits' : ' · muted, the music goes on'))); };
   const la = $('#lvAdd'); if (la) la.onclick = () => { const url = prompt('Live stream link (https://….m3u8, rtmp://…, srt://… or a YouTube live link)\nOnly your own streams or streams you have permission for.'); if (!url) return;
     const name = prompt('Name on the pad', 'Live stream'); if (name === null) return;
     cmd('stream_save', {url: url.trim(), name}).then(r => { if (!r || r.ok === false) return toast((r && r.error) || 'Not saved', 1); toast('Live pad added – 👁 tests the link'); }); };
@@ -1019,7 +1028,7 @@ $$('#mSound [data-ms]').forEach(b => b.onclick = () => { MSOUND = b.dataset.ms; 
 setInterval(() => { if (bank === -1 && !document.hidden && !MUP) { loadMedia(); } }, 20000);
 setInterval(() => { $$('[data-livet]').forEach(e => { const s_ = Math.max(0, Date.now() / 1000 - +e.dataset.livet); e.textContent = Math.floor(s_ / 3600) + ':' + String(Math.floor(s_ % 3600 / 60)).padStart(2, '0') + ':' + String(Math.floor(s_ % 60)).padStart(2, '0'); });
   if (S && S.stream_note && S.stream_note.t !== window._snT) { window._snT = S.stream_note.t; toast(S.stream_note.text, 1); } }, 1000);
-setInterval(() => { if (bank < 0) { const k = JSON.stringify([(S && S.media) || null, (S && S.streams) || null]); if (k !== renderMediaPads._k) { renderMediaPads._k = k; renderPads(); } } }, 1000);
+setInterval(() => { if (bank < 0) { const k = JSON.stringify([(S && S.media) || null, (S && S.streams) || null, (S && S.web) || null]); if (k !== renderMediaPads._k) { renderMediaPads._k = k; renderPads(); } } }, 1000);
 function padTick() {   // the playing bar on each pad
   const now = Date.now();
   if (bank === -2) $$('#pads [data-li]').forEach(b => { const x = LSN.items[+b.dataset.li]; if (!x) return; const end = PLAYING[x.id], len = (x.duration || 5) * 1000, on = end && end > now;
@@ -1464,6 +1473,71 @@ setInterval(renderSlotsPv, 1000);
 // ---------- go ----------
 refresh(); setInterval(() => { if (!document.hidden) refresh(); }, 2000); setInterval(tick, 250); lib(); pvLive();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); lvLoad(); ltLoad(); } });      // back on the tab: fresh at once
+</script>
+<div id="webWin" hidden>
+  <div class="wbar">
+    <button data-w="back" title="Back">←</button><button data-w="fwd" title="Forward">→</button><button data-w="reload" title="Reload">↻</button>
+    <input id="webUrl" placeholder="Type an address or search…" autocomplete="off" spellcheck="false">
+    <button data-w="air" id="webAir" title="On air / off air (MEDIA scene + sound choice)">On air</button>
+    <button data-w="snd" id="webSnd" title="Hear the browser here (only in this panel)">🔇</button>
+    <button data-w="off" title="Stop the browser (it also stops by itself after 30 min without use)">⏻</button>
+    <button data-w="close" title="Close this window (the browser keeps running)">✕</button>
+  </div>
+  <div class="wview"><video id="webV" muted autoplay playsinline></video><div id="webHit" tabindex="0" title="Click, scroll and type here – it goes to the browser"></div><div id="webMsg">Starting the browser…</div></div>
+  <div class="wfav"><span class="muted">Only pages you trust · sign in yourself (Studio never types passwords) · own content or with permission on air</span></div>
+</div>
+<style>
+#webWin{position:fixed;z-index:80;left:50%;top:60px;transform:translateX(-50%);width:min(1000px,96vw);background:var(--card);border:1px solid var(--line2);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:10px}
+#webWin .wbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+#webWin .wbar button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--soft);cursor:pointer;font-weight:800;flex:none}
+#webWin .wbar button:hover{color:var(--b);border-color:var(--b)}
+#webWin #webAir{width:auto;padding:0 12px;color:#fff;background:#3A0A14;border-color:#FF4D6A}#webWin #webAir.on{background:#FF4D6A;color:#1A0207}
+#webUrl{flex:1;min-width:0;height:34px;border-radius:9px;border:1px solid var(--line2);background:#071A2B;color:var(--txt);padding:0 10px;font:inherit;font-size:13px}
+#webWin .wview{position:relative;aspect-ratio:16/9;background:#000;border-radius:9px;overflow:hidden}
+#webV{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+#webHit{position:absolute;inset:0;cursor:default;outline:none}#webHit:focus{box-shadow:inset 0 0 0 2px var(--b)}
+#webMsg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--mut);font-size:13px;pointer-events:none}
+#webWin .wfav{margin-top:6px;font-size:11px}
+</style>
+<script>
+let WEBRTC = null;
+function webCmd(a, d) { return cmd('web_' + a, d || {}).then(r => { if (r && r.ok === false) { toast(r.error, 1); return r; } if (r && r.web && document.activeElement !== $('#webUrl')) $('#webUrl').value = r.web.url || ''; return r; }); }
+function webOpen() {
+  const w = $('#webWin'); w.hidden = false; $('#webMsg').textContent = 'Starting the browser…'; $('#webMsg').hidden = false;
+  webCmd('start').then(r => {
+    if (r && r.ok === false) { $('#webMsg').textContent = r.error || 'Could not start'; return; }
+    if (!WEBRTC && typeof HypeRTC !== 'undefined' && LV) WEBRTC = HypeRTC.keep('web', async alive => { const r_ = await HypeRTC.play('web', {key: LV.studio_key, video: true, videoBufferMs: 30}); if (!alive()) return r_; $('#webV').srcObject = r_.stream; $('#webMsg').hidden = true; return r_; },
+      (n, st) => { if (/error|failed/.test(st)) { $('#webMsg').hidden = false; $('#webMsg').textContent = 'Connecting the picture…'; } });
+    setTimeout(() => $('#webHit').focus(), 300);
+  });
+}
+function webClose() { $('#webWin').hidden = true; if (WEBRTC) { WEBRTC.close(); WEBRTC = null; } $('#webV').srcObject = null; }
+(function () {
+  const hit = $('#webHit'), pos = e => { const r = hit.getBoundingClientRect(); return {x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height}; };
+  let lastClick = 0;
+  hit.addEventListener('click', e => { const p = pos(e), n = Date.now() - lastClick < 350 ? 2 : 1; lastClick = Date.now(); hit.focus(); webCmd('click', Object.assign(p, {n})); });
+  let dy = 0, wt = null;
+  hit.addEventListener('wheel', e => { e.preventDefault(); dy += e.deltaY; const p = pos(e); clearTimeout(wt); wt = setTimeout(() => { const v = dy; dy = 0; webCmd('wheel', Object.assign(p, {dy: v})); }, 90); }, {passive: false});
+  const SPECIAL = ['Enter', 'Backspace', 'Tab', 'Escape', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'];
+  hit.addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey) { if (e.key === 'v') { navigator.clipboard && navigator.clipboard.readText().then(t => t && webCmd('type', {text: t})).catch(() => {}); e.preventDefault(); } return; }
+    if (e.key.length === 1 || SPECIAL.includes(e.key)) { e.preventDefault(); webCmd('key', {key: e.key}); }
+  });
+  $('#webUrl').addEventListener('keydown', e => { if (e.key === 'Enter') { webCmd('nav', {url: e.target.value}); hit.focus(); } });
+  $$('#webWin [data-w]').forEach(b => b.onclick = () => {
+    const a = b.dataset.w;
+    if (a === 'close') return webClose();
+    if (a === 'off') return confirm('Stop the browser? (if it is on air, it goes off air)') && cmd('web_stop', {}).then(() => { webClose(); toast('Browser stopped'); });
+    if (a === 'snd') { const v = $('#webV'); v.muted = !v.muted; b.textContent = v.muted ? '🔇' : '🔊'; return; }
+    if (a === 'air') { const cur_ = S && S.media;
+      if (cur_ && cur_.file === 'live:web') return cmd('media_stop', {}).then(() => toast('Browser off air'));
+      const snd = MSOUND === 'off' ? 'off' : 'mute';
+      return cmd('stream_play', {id: 'web', scene: MSCENE, sound: snd}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('🌐 Browser on air' + (snd === 'off' ? ' · its sound on radio + TV' : ' · muted, the music goes on'))); }
+    webCmd(a);
+  });
+  setInterval(() => { if ($('#webWin').hidden) return; const on = S && S.media && S.media.file === 'live:web'; $('#webAir').classList.toggle('on', !!on); $('#webAir').textContent = on ? 'OFF AIR' : 'On air';
+    if (S && S.web && !S.web.on && !S.web.starting) { $('#webMsg').hidden = false; $('#webMsg').textContent = 'The browser is stopped – close and open it again'; } }, 1000);
+})();
 </script>
 </body>
 </html>

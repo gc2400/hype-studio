@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 os.environ["TZ"] = "Europe/Amsterdam"; time.tzset()   # all show times are Amsterdam time, whatever the server's zone
 import obsws_python as obs
-import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live, tickers, audstats, slideshow
+import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live, tickers, audstats, slideshow, hypeweb
 
 ROOT = "/srv/hype"; DB = "/srv/hype-data/library.db"; WEB = "/var/www/studio"; WAVES = "/srv/hype-data/wave"
 CONF = json.load(open("/etc/hype/engine.json"))
@@ -1708,9 +1708,29 @@ class Engine:
         if not planner.get_setting(c, "live_layer", True):
             planner.set_setting(c, "live_layer", True); self.tv.live_layer(True); log.info("Live Layer back on")
     def cmd(self, action, d):
+        if action.startswith("web_"):      # 🌐 the browser (hypeweb.py): never under the engine's lock (starting takes seconds)
+            try:
+                if action == "web_start": hypeweb.start(); return {"ok": True, "web": hypeweb.info()}
+                if action == "web_stop":
+                    if self.media.cur and self.media.cur.get("file") == "live:web":
+                        with LOCK: self.media.stop(self)
+                    hypeweb.stop(); return {"ok": True}
+                if not hypeweb.running(): return {"ok": False, "error": "the browser is not running – open it first"}
+                if action == "web_nav": hypeweb.nav(d.get("url"))
+                elif action == "web_back": hypeweb.back()
+                elif action == "web_fwd": hypeweb.forward()
+                elif action == "web_reload": hypeweb.reload()
+                elif action == "web_click": hypeweb.click(float(d["x"]), float(d["y"]), int(d.get("n") or 1))
+                elif action == "web_wheel": hypeweb.wheel(float(d["x"]), float(d["y"]), float(d.get("dy") or 0))
+                elif action == "web_type": hypeweb.type_text(str(d.get("text") or ""))
+                elif action == "web_key": hypeweb.key(str(d.get("key") or ""))
+                elif action != "web_info": return {"ok": False, "error": "unknown"}
+                return {"ok": True, "web": hypeweb.info()}
+            except Exception as e: return {"ok": False, "error": str(e)[:160]}
         if action == "stream_play":      # 🔴 LIVE pad on air: a YouTube link is asked for first (seconds) – not while holding the engine's lock
             st_ = next((x for x in streams_load() if x["id"] == d.get("id")), None)
             if not st_: return {"ok": False, "error": "that live pad is gone"}
+            if st_["id"] == "web" and not hypeweb.running(): return {"ok": False, "error": "open the browser first (🌐)"}
             try: url_ = stream_resolve(st_["url"])
             except Exception as e: return {"ok": False, "error": str(e)[:160]}
             with LOCK:
@@ -1853,11 +1873,12 @@ class Engine:
             elif action == "stream_save":        # 🔴 LIVE pad: {id?, name, url}
                 u_ = str(d.get("url") or "").strip(); n_ = re.sub(r"\s+", " ", str(d.get("name") or "")).strip()[:40] or "Live stream"
                 if not re.match(r"^(https?|rtmps?|srt|rtsp)://[^\s]+$", u_): return {"ok": False, "error": "Not a stream link (https://….m3u8, rtmp://…, srt://… or a YouTube live)"}
-                L_ = streams_load(); sid = d.get("id") or uuid.uuid4().hex[:8]
+                L_ = streams_load(True); sid = d.get("id") or uuid.uuid4().hex[:8]
+                if sid == "web": return {"ok": False, "error": "that one is the browser"}
                 L_ = [x for x in L_ if x["id"] != sid] + [{"id": sid, "name": n_, "url": u_}]
                 jdump(L_, STREAMS); os.chmod(STREAMS, 0o600); return {"ok": True, "streams": L_}
             elif action == "stream_delete":
-                L_ = [x for x in streams_load() if x["id"] != d.get("id")]; jdump(L_, STREAMS); return {"ok": True, "streams": L_}
+                L_ = [x for x in streams_load(True) if x["id"] != d.get("id")]; jdump(L_, STREAMS); return {"ok": True, "streams": L_}
             elif action == "media_stop":
                 self.media.stop(self, keep_scene=bool(d.get("keep_scene"))); return {"ok": True}
             elif action == "media_delete":     # Pads → MEDIA → ✎ EDIT → ×: the file goes to branding/media/.deleted (can be put back by hand)
@@ -2177,7 +2198,7 @@ class Engine:
             self.tv.ll_on = bool(planner.get_setting(c, "live_layer", True))
             cid = planner.clock_for(c, time.time()); cname = c.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() if cid else None
             return {"show": SHOW["title"], "clock": cname[0] if cname else None, "now": n, "elapsed": round(el, 1), "upcoming": upcoming, "history": hist, "auto": self.auto,
-                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "streams": [{"id": x["id"], "name": x["name"], "yt": is_youtube(x["url"])} for x in streams_load()], "stream_note": STREAM_NOTE if time.time() - STREAM_NOTE["t"] < 120 else None, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
+                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "streams": [{"id": x["id"], "name": x["name"], "yt": is_youtube(x["url"])} for x in streams_load(True)], "web": {"on": hypeweb.ST["on"], "starting": hypeweb.ST["starting"]}, "stream_note": STREAM_NOTE if time.time() - STREAM_NOTE["t"] < 120 else None, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
                     "tv_sound": "clip" if self.tv.split else "radio", "live_layer": bool(planner.get_setting(c, "live_layer", True)),
                     "time": time.strftime("%H:%M:%S"), "server_time": time.time(), "slideshows": slideshow.STATE["list"]}
 
@@ -3530,9 +3551,11 @@ class Media:
                 if eng.now: eng.tv.set_scene(eng.now.get("scene") or "Hype Screen")
 
 STREAMS = "/var/lib/hype/streams.json"; STREAM_NOTE = {"t": 0, "text": ""}
-def streams_load():
-    try: return json.load(open(STREAMS))
-    except Exception: return []
+WEB_STREAM = {"id": "web", "name": "🌐 Browser", "url": "rtsp://127.0.0.1:8554/web"}
+def streams_load(saved_only=False):
+    try: L = json.load(open(STREAMS))
+    except Exception: L = []
+    return L if saved_only else L + [WEB_STREAM]       # the browser plays on air like a LIVE pad
 def is_youtube(u): return bool(re.search(r"^https?://(www\.|m\.)?(youtube\.com|youtu\.be)/", u or ""))
 def stream_resolve(u):
     """The playable link: HLS / RTMP / SRT as given; a YouTube live -> its HLS link via yt-dlp (expires after hours: asked again on reconnect)."""
@@ -4632,6 +4655,7 @@ if __name__ == "__main__":
     threading.Thread(target=media_in_loop, daemon=True).start()
     threading.Thread(target=hl_sync_loop, daemon=True).start()
     threading.Thread(target=slideshow_loop, daemon=True).start()
+    threading.Thread(target=hypeweb.watch, args=(lambda: bool(E.media.cur and E.media.cur.get("file") == "live:web"),), daemon=True).start()
     # (charts go to the website only when you press Publish in the chart – no automatic sending any more)
     threading.Thread(target=watch_show, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()
