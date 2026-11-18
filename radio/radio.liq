@@ -227,13 +227,6 @@ studio = process(studio)   # the same sound + loudness as the music (was ~5 dB q
 # on air: the studio while LIVE is on and the studio is connected, else the automation (fades 0.6 s)
 s = switch(track_sensitive=false, transitions=[fun (a, b) -> add(normalize=false, [fade.in(duration=0.6, b), fade.out(duration=0.6, a)]), fun (a, b) -> add(normalize=false, [fade.in(duration=0.6, b), fade.out(duration=0.6, a)])],
            [({live_on()}, studio), ({true}, prog)])
-# --- a live stream from the 🔴 LIVE pads with its own sound ("Music off"): ffmpeg feeds it in here; it replaces the
-#     automation, which waits meanwhile (not pulled). No stream sound (ended / dropped) -> the music again by itself (fades 0.6 s)
-ext_on = interactive.bool("ext_on", false)
-ext = input.harbor("ext", port=8006, password=live.harbor_pw, buffer=2., max=8.)
-ext = process(ext)
-s = switch(track_sensitive=false, transitions=[fun (a, b) -> add(normalize=false, [fade.in(duration=0.6, b), fade.out(duration=0.6, a)]), fun (a, b) -> add(normalize=false, [fade.in(duration=0.6, b), fade.out(duration=0.6, a)])],
-           [({ext_on()}, ext), ({true}, s)])
 s = mksafe(s)
 # level meter for the panel (what goes on air): peak per channel over the last 80 ms, read with "radio.level"
 lu = lufs(window=3., s)
