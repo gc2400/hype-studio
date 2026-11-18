@@ -1,18 +1,18 @@
 {
- "time": "2026-11-18T01:11:02",
+ "time": "2026-11-18T12:21:29",
  "result": "ok",
- "commit": "29b60fdfd96cff76aae761de88e67c0c970966cf",
- "subject": "Library rename: text in the box can be selected with the mouse (the row no longer drags while renaming); Rename with the same name refreshes the shown artist / title",
+ "commit": "724de9347f813c38e696e73c414550003b3ef77f",
+ "subject": "Charts: Now sends publish:'now' (+ now:true, show_at 0), At the show sends publish:'show'; the automatic resend keeps the last choice for that week; engine time zone fixed to Europe/Amsterdam; Website card shows live now / the show time in Amsterdam time",
  "log": [
-  "01:10:17 update f241a01c \u2192 29b60fdf \u00b7 2 file(s): engine/engine.py, web/panel/library.html",
-  "01:10:17 restart hype-engine",
-  "01:11:02 installed OK \u00b7 restarted: hype-engine"
+  "12:20:44 update 29b60fdf \u2192 724de934 \u00b7 2 file(s): engine/engine.py, web/panel/plan.html",
+  "12:20:44 restart hype-engine",
+  "12:21:29 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Drake \u2013 2 Hard 4 The Radio",
-  "listeners": 2,
+  "song": "D OPSS \u2013 IEDEREEN MOET ERUIT",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
