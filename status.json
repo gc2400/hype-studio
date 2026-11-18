@@ -1,18 +1,18 @@
 {
- "time": "2026-11-18T12:31:28",
+ "time": "2026-11-18T13:55:58",
  "result": "ok",
- "commit": "7e93c10eb8fb7c3e14c879d87c59113e136ce697",
- "subject": "Charts: log the exact JSON of every send (without the song list); Website card shows what the website really has (live / waiting until / not yet) from /top10/weeks",
+ "commit": "b841d1d22a22348ee1c29035df8fe5c6d869bb10",
+ "subject": "Media group: new scene V M PIP (music video big, media small, CAM 1 V PIP frame)",
  "log": [
-  "12:30:43 update 724de934 \u2192 7e93c10e \u00b7 2 file(s): engine/engine.py, web/panel/plan.html",
-  "12:30:43 restart hype-engine",
-  "12:31:28 installed OK \u00b7 restarted: hype-engine"
+  "13:55:13 update 7e93c10e \u2192 b841d1d2 \u00b7 1 file(s): engine/engine.py",
+  "13:55:13 restart hype-engine",
+  "13:55:58 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "FOLA \u2013 you",
-  "listeners": 2,
+  "song": "FARLY X ANGO \u2013 PEIKI SIMPEL",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
