@@ -683,19 +683,22 @@ class TV:
       While LIVE: only your studio mix, straight from the studio stream (same path as the cameras = in sync), never a clip's sound."""
       with self.olock:
         live = bool(getattr(self, "live", False))
+        ext = bool(getattr(self, "ext", False)) and not live    # a live stream with its own sound (Music off): its sound straight from OBS = in sync with its picture
         # PIP too: the sponsor frame goes around the video, so the clip's sound plays on (no switch to the mp3 and back)
-        split = bool(self.clip_sound and (scene_has_video(self.scene) or self.scene in ("PIP", "Up next"))) and not live
-        if (split, live) == (self.split, getattr(self, "_live_r", None)) and not force: return
+        split = bool(self.clip_sound and (scene_has_video(self.scene) or self.scene in ("PIP", "Up next"))) and not live and not ext
+        if (split, live, ext) == (self.split, getattr(self, "_live_r", None), getattr(self, "_ext_r", None)) and not force: return
         try:
             cl = self.client()
-            cl.set_input_volume("Radio audio", vol_db=-100.0 if (split or live) else 0.0)
-            cl.set_input_mute("FX audio", not split)
+            cl.set_input_volume("Radio audio", vol_db=-100.0 if (split or live or ext) else 0.0)
+            cl.set_input_mute("FX audio", not (split or ext))
+            try: cl.set_input_mute("Media video", not ext)       # (a media FILE's sound always comes through the radio)
+            except Exception: pass
             try: cl.set_input_mute("Studio audio", not live)
             except Exception as e: log.warning("Studio audio: %s", e)
             if not split:
                 for n in ("Clip A", "Clip B"): cl.set_input_mute(n, True)
             elif self.cur in ("Clip A", "Clip B"): cl.set_input_mute(self.cur, False)   # back to the video: its sound again (it was muted while away)
-            self.split = split; self._live_r = live
+            self.split = split; self._live_r = live; self._ext_r = ext
         except Exception as e: log.warning("TV audio: %s", e); self.cl = None
     def preload(self, clip_file, cue_start, kf):
         """The next song's clip waits in the free player, paused at the keyframe where it will start (≥ 0.3 s after its
@@ -1704,6 +1707,25 @@ class Engine:
         if not planner.get_setting(c, "live_layer", True):
             planner.set_setting(c, "live_layer", True); self.tv.live_layer(True); log.info("Live Layer back on")
     def cmd(self, action, d):
+        if action == "stream_play":      # 🔴 LIVE pad on air: a YouTube link is asked for first (seconds) – not while holding the engine's lock
+            st_ = next((x for x in streams_load() if x["id"] == d.get("id")), None)
+            if not st_: return {"ok": False, "error": "that live pad is gone"}
+            try: url_ = stream_resolve(st_["url"])
+            except Exception as e: return {"ok": False, "error": str(e)[:160]}
+            with LOCK:
+                try: return {"ok": True, "media": self.media.play_stream(self, d, url_)}
+                except ValueError as e: return {"ok": False, "error": str(e)}
+        if action == "stream_test":      # 👁 does the link play right now? (ffprobe, nothing on air)
+            st_ = next((x for x in streams_load() if x["id"] == d.get("id")), None)
+            if not st_: return {"ok": False, "error": "that live pad is gone"}
+            try: u_ = stream_resolve(st_["url"])
+            except Exception as e: return {"ok": False, "error": str(e)[:160]}
+            r_ = subprocess.run(["ffprobe", "-v", "error", "-rw_timeout", "8000000", "-show_entries", "stream=codec_type,width,height", "-of", "json", u_], capture_output=True, text=True, timeout=25)
+            try: ss_ = json.loads(r_.stdout or "{}").get("streams", [])
+            except ValueError: ss_ = []
+            if not ss_: return {"ok": False, "error": "No signal on that link right now" + (": " + r_.stderr.strip().splitlines()[-1][:100] if r_.stderr.strip() else "")}
+            v_ = next((x for x in ss_ if x.get("codec_type") == "video"), {})
+            return {"ok": True, "video": "%sx%s" % (v_.get("width"), v_.get("height")) if v_ else None, "audio": any(x.get("codec_type") == "audio" for x in ss_)}
         with LOCK:
             c = dbc()
             if action == "next":
@@ -1823,6 +1845,14 @@ class Engine:
                 slideshow.STATE["force"] = True; log.info("slideshow deleted: %s", "/".join(f)); return {"ok": True}
             elif action == "fetch_url":      # a picture / video / sound dragged from a website onto the pads: the server fetches it
                 return fetch_url(c, d)
+            elif action == "stream_save":        # 🔴 LIVE pad: {id?, name, url}
+                u_ = str(d.get("url") or "").strip(); n_ = re.sub(r"\s+", " ", str(d.get("name") or "")).strip()[:40] or "Live stream"
+                if not re.match(r"^(https?|rtmps?|srt|rtsp)://[^\s]+$", u_): return {"ok": False, "error": "Not a stream link (https://….m3u8, rtmp://…, srt://… or a YouTube live)"}
+                L_ = streams_load(); sid = d.get("id") or uuid.uuid4().hex[:8]
+                L_ = [x for x in L_ if x["id"] != sid] + [{"id": sid, "name": n_, "url": u_}]
+                jdump(L_, STREAMS); os.chmod(STREAMS, 0o600); return {"ok": True, "streams": L_}
+            elif action == "stream_delete":
+                L_ = [x for x in streams_load() if x["id"] != d.get("id")]; jdump(L_, STREAMS); return {"ok": True, "streams": L_}
             elif action == "media_stop":
                 self.media.stop(self, keep_scene=bool(d.get("keep_scene"))); return {"ok": True}
             elif action == "media_delete":     # Pads → MEDIA → ✎ EDIT → ×: the file goes to branding/media/.deleted (can be put back by hand)
@@ -2142,7 +2172,7 @@ class Engine:
             self.tv.ll_on = bool(planner.get_setting(c, "live_layer", True))
             cid = planner.clock_for(c, time.time()); cname = c.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() if cid else None
             return {"show": SHOW["title"], "clock": cname[0] if cname else None, "now": n, "elapsed": round(el, 1), "upcoming": upcoming, "history": hist, "auto": self.auto,
-                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
+                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "streams": [{"id": x["id"], "name": x["name"], "yt": is_youtube(x["url"])} for x in streams_load()], "stream_note": STREAM_NOTE if time.time() - STREAM_NOTE["t"] < 120 else None, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
                     "tv_sound": "clip" if self.tv.split else "radio", "live_layer": bool(planner.get_setting(c, "live_layer", True)),
                     "time": time.strftime("%H:%M:%S"), "server_time": time.time(), "slideshows": slideshow.STATE["list"]}
 
@@ -3378,8 +3408,92 @@ class Media:
             threading.Thread(target=run, daemon=True).start()
         log.info("media on: %s (%s, sound %s%s) in %s", f, info["kind"], sound, ", loop" if loop else "", sc)
         return self.cur
+    # ---------- live streams (🔴 LIVE pads): HLS / RTMP / YouTube live in the Media window ----------
+    def play_stream(self, eng, d, url):
+        st = next((x for x in streams_load() if x["id"] == d.get("id")), None)
+        if not st: raise ValueError("that live pad is gone")
+        sound = "off" if d.get("sound") == "off" else "mute"      # live: Mute (picture only, the music goes on) or Music off (its sound on radio + TV)
+        if sound == "off":
+            if getattr(eng.live, "live", False): raise ValueError("you are LIVE from the studio – a stream can only play muted now")
+            try: ok_ = "true" in eng.liq.cmd("var.get ext_on") or "false" in eng.liq.cmd("var.get ext_on")
+            except Exception: ok_ = False
+            if not ok_: raise ValueError("'Music off' for live streams needs tonight's radio update – use Mute for now")
+        was_auto = bool(eng.tv.auto)
+        self.stop(eng, keep_scene=True)
+        tv = eng.tv; token = uuid.uuid4().hex; self.token = token
+        with tv.olock:
+            cl = tv.client()
+            vid = cl.get_scene_item_id("Media window", "Media video").scene_item_id; pic = cl.get_scene_item_id("Media window", "Media picture").scene_item_id
+            cl.set_input_settings("Media video", {"is_local_file": False, "input": url, "input_format": "", "looping": False, "restart_on_activate": False,
+                                                  "close_when_inactive": False, "clear_on_media_end": False, "hw_decode": True,
+                                                  "reconnect_delay_sec": 2, "buffering_mb": 4}, True)
+            cl.set_input_mute("Media video", True)
+            cl.trigger_media_input_action("Media video", "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
+            cl.set_scene_item_enabled("Media window", vid, True); cl.set_scene_item_enabled("Media window", pic, False)
+        manual = d.get("scene") == "manual"
+        sc = (tv.scene or "") if manual else d.get("scene") or (tv.scene if tv.scene in MEDIA_SCENES else "MEDIA FULL")
+        if not manual and sc in MEDIA_SCENES:
+            with LOCK: tv.auto = False; tv.set_scene(sc)
+        self.cur = {"file": "live:" + st["id"], "kind": "live", "name": st["name"], "sound": sound, "loop": False, "started": time.time(), "duration": None,
+                    "scene": "manual" if manual else sc, "manual": manual, "was_auto": was_auto and not manual}
+        if sound == "off":
+            self.feed = StreamFeed(url); self.feed.start()
+            eng.liq.cmd("var.set ext_on = true")
+            tv.ext = True; tv.route_audio(force=True)
+        threading.Thread(target=self.watch_stream, args=(eng, token, st), daemon=True).start()
+        log.info("live stream on: %s (%s, sound %s) in %s", st["name"], st["url"][:80], sound, sc)
+        return self.cur
+    STREAM_GIVE_UP = 15     # s without picture -> back to the normal programme (AUTO SCENES) or only a warning (manual)
+    def watch_stream(self, eng, token, st):
+        """The stream must keep playing: OBS's media state every 2 s. Bad -> restart it (YouTube: a fresh link); still bad after
+        STREAM_GIVE_UP s -> with AUTO SCENES the normal programme comes back; on manual you stay in control (only a warning).
+        The radio never goes silent: Liquidsoap plays the music again by itself as soon as the stream's sound stops."""
+        bad_t = None; tries = 0
+        time.sleep(6)
+        while self.token == token:
+            try:
+                with eng.tv.olock: state = eng.tv.client().get_media_input_status("Media video").media_state
+            except Exception: state = "?"
+            ok = state in ("OBS_MEDIA_STATE_PLAYING", "OBS_MEDIA_STATE_OPENING", "OBS_MEDIA_STATE_BUFFERING")
+            fed = not getattr(self, "feed", None) or self.feed.alive()
+            if ok and fed:
+                if bad_t: log.info("live stream %s: back", st["name"]); self.cur = dict(self.cur or {}, error=None)
+                bad_t = None; tries = 0
+            else:
+                now = time.time()
+                if bad_t is None: bad_t = now; log.warning("live stream %s: no signal (%s%s) – reconnecting", st["name"], state, "" if fed else ", sound feed down")
+                if self.cur: self.cur = dict(self.cur, error="no signal – reconnecting")
+                if now - bad_t >= self.STREAM_GIVE_UP:
+                    if self.cur and self.cur.get("was_auto"):
+                        log.warning("live stream %s: no signal for %d s – back to the normal programme", st["name"], self.STREAM_GIVE_UP)
+                        self.stop(eng); STREAM_NOTE.update(t=time.time(), text="Live stream %s stopped: no signal – back to the normal programme" % st["name"]); return
+                    if self.cur and self.cur.get("error") != "no signal – you are on manual, stop it when you want":
+                        log.warning("live stream %s: no signal – manual scenes, so it stays until you stop it", st["name"])
+                        self.cur = dict(self.cur, error="no signal – you are on manual, stop it when you want")
+                elif now - bad_t >= 3 + tries * 5 and tries < 3:
+                    tries += 1
+                    try:
+                        url = stream_resolve(st["url"])
+                        with eng.tv.olock:
+                            cl = eng.tv.client(); cl.set_input_settings("Media video", {"input": url}, True)
+                            cl.trigger_media_input_action("Media video", "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
+                        if getattr(self, "feed", None): self.feed.url = url
+                    except Exception as e: log.warning("live stream reconnect: %s", e)
+            time.sleep(2)
     def stop(self, eng, keep_scene=False):
         if self.cur and self.cur.get("manual"): keep_scene = True     # Manual: the scene stays where you put it
+        was_live = bool(self.cur and self.cur.get("kind") == "live"); live_off = was_live and self.cur.get("sound") == "off"
+        if was_live:
+            f_ = getattr(self, "feed", None); self.feed = None
+            if f_: f_.stop()
+            if live_off:
+                try: eng.liq.cmd("var.set ext_on = false"); eng.liq.cmd("radio.skip")     # the automation goes on with the NEXT song (no half song)
+                except Exception as e: log.warning("live stream stop: %s", e)
+            eng.tv.ext = False; eng.tv.route_audio(force=True)
+            try:
+                with eng.tv.olock: eng.tv.client().set_input_settings("Media video", {"is_local_file": True}, True)
+            except Exception: pass
+            log.info("live stream off")
         had_sound = bool(self.cur and self.cur.get("kind") == "video" and self.cur.get("sound") != "mute")
         self.token = None; self.cur = None
         if had_sound:
@@ -3397,6 +3511,38 @@ class Media:
             with LOCK:
                 eng.tv.auto = True; eng.tv.scene = None
                 if eng.now: eng.tv.set_scene(eng.now.get("scene") or "Hype Screen")
+
+STREAMS = "/var/lib/hype/streams.json"; STREAM_NOTE = {"t": 0, "text": ""}
+def streams_load():
+    try: return json.load(open(STREAMS))
+    except Exception: return []
+def is_youtube(u): return bool(re.search(r"^https?://(www\.|m\.)?(youtube\.com|youtu\.be)/", u or ""))
+def stream_resolve(u):
+    """The playable link: HLS / RTMP / SRT as given; a YouTube live -> its HLS link via yt-dlp (expires after hours: asked again on reconnect)."""
+    if not is_youtube(u): return u
+    r = subprocess.run(["yt-dlp", "-g", "-f", "best[height<=1080][protocol*=m3u8]/best[height<=1080]/best", "--no-warnings", u], capture_output=True, text=True, timeout=60)
+    link = (r.stdout or "").strip().splitlines()
+    if r.returncode != 0 or not link: raise ValueError("YouTube: " + ((r.stderr or "no link").strip().splitlines() or ["no link"])[-1][:140])
+    return link[0]
+class StreamFeed:
+    """The stream's sound into the radio (Liquidsoap harbor "ext" on 8006, like the studio's): ffmpeg, restarted when it stops."""
+    def __init__(self, url): self.url = url; self.p = None; self.on = False; self.t_ok = time.time()
+    def start(self):
+        self.on = True; threading.Thread(target=self.run, daemon=True).start()
+    def run(self):
+        pw = json.load(open("/etc/hype/live.json"))["harbor_pw"]
+        while self.on:
+            net = ["-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "4"] if self.url.startswith("http") else []
+            self.p = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", *net, "-i", self.url, "-vn", "-ac", "2", "-ar", "48000",
+                                       "-c:a", "flac", "-compression_level", "2", "-f", "ogg", "-content_type", "application/ogg",
+                                       "icecast://source:%s@127.0.0.1:8006/ext" % pw], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self.t_ok = time.time(); self.p.wait()
+            if self.on: time.sleep(2)
+    def alive(self): return bool(self.p and self.p.poll() is None) or time.time() - self.t_ok < 5
+    def stop(self):
+        self.on = False
+        try: self.p and self.p.terminate()
+        except Exception: pass
 
 _ST = {"t": 0, "d": None, "pub": None, "pub_t": 0}
 # test tools, scripts and bots are no listeners / viewers (13 Nov: a stream test from ~30 cloud addresses with Python-urllib
@@ -3977,8 +4123,25 @@ def fetch_url(c, d):
             ip = ipaddress.ip_address(ai[4][0])
             if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast: return {"ok": False, "error": "That address is not allowed"}
     except socket.gaierror: return {"ok": False, "error": "That website can't be found"}
+    if target == "media" and is_youtube(url):        # a YouTube video -> downloaded once (≤ 1080p) -> a normal media pad (only your own / with permission)
+        def yt():
+            import listener_media as LM
+            tmpd = "/tmp/yt_" + uuid.uuid4().hex; os.makedirs(tmpd)
+            try:
+                r_ = subprocess.run(["yt-dlp", "--no-playlist", "--no-warnings", "-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080][ext=mp4]/b[height<=1080]",
+                                     "--merge-output-format", "mp4", "--max-filesize", "400M", "-o", os.path.join(tmpd, "%(title).60B.%(ext)s"), url], capture_output=True, text=True, timeout=1800)
+                got = [f_ for f_ in os.listdir(tmpd) if f_.endswith(".mp4")]
+                if r_.returncode != 0 or not got: raise RuntimeError(((r_.stderr or "no file").strip().splitlines() or ["no file"])[-1][:160])
+                base_ = re.sub(r"[^\w .()&'-]", "", os.path.splitext(got[0])[0], flags=re.U).strip()[:60] or "YouTube video"
+                LM.make_video(os.path.join(tmpd, got[0]), os.path.join(MEDIA_DIR, f"YouTube - {base_}.mp4"), "", "", "", "", max_s=3600)
+                log.info("YouTube video %s -> media pad YouTube - %s.mp4", url[:80], base_)
+            except Exception as e:
+                log.warning("YouTube video %s: %s", url[:80], e); STREAM_NOTE.update(t=time.time(), text="YouTube video not added: %s" % str(e)[:140])
+            finally: shutil.rmtree(tmpd, ignore_errors=True)
+        threading.Thread(target=yt, daemon=True).start()
+        return {"ok": True, "kind": "video", "later": True, "file": "YouTube video"}
     if re.search(r"(youtube\.com|youtu\.be|instagram\.com|tiktok\.com|facebook\.com|fb\.watch)", u.hostname or ""):
-        return {"ok": False, "error": "YouTube / Instagram / TikTok / Facebook pages can't be dropped – only direct picture / video / sound files"}
+        return {"ok": False, "error": "Instagram / TikTok / Facebook pages can't be dropped – only direct picture / video / sound files (YouTube videos: on the MEDIA pads)"}
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (HypeStudio)"})
     try: r = urllib.request.urlopen(req, timeout=60)
     except urllib.error.HTTPError as e: return {"ok": False, "error": "The website refused it (%s). Open the picture / video on its own and drag that, or save it and drop the file" % e.code}

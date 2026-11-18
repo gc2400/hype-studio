@@ -940,7 +940,11 @@ function renderMediaPads() {
   $$('#mSound [data-ms]').forEach(b => b.classList.toggle('on', b.dataset.ms === MSOUND));
   const cur = (S && S.media) || null;
   const own = MEDIA.files.filter(m => !m.listener), pg = padPage(own.length); let J = -1;
-  $('#pads').innerHTML = MEDIA.files.map((m, i) => m.listener ? '' : (++J, !PEDIT && (J < pg[0] || J >= pg[1])) ? '' : `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.listener ? '#062A1E' : m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.listener ? '#3DDC97' : m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}" ${m.listener && m.listener.caption ? `title="${esc(m.listener.caption)}"` : ''}>${m.listener ? '📱 ' + esc(m.listener.name + (m.listener.city ? ' · ' + m.listener.city : '')) : esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.listener ? 'listener ' + (m.kind === 'video' ? 'video · ' + fmt(m.duration) : 'photo') + (Date.now() / 1000 - (m.listener.added || 0) < 86400 ? ' · NEW' : '') : m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('') + '<button class="padadd" id="mDrop" title="Drop pictures or videos here (from your computer or a website), or click to choose them">drop here</button>';
+  const LV = (S && S.streams) || [];      // 🔴 LIVE pads: HLS / RTMP / YouTube live links (always first, not paged)
+  const livePads = LV.map((x, i) => { const on = cur && cur.file === 'live:' + x.id;
+    return `<button class="btn pad lpad ${on ? 'looping' : ''}" style="background:#3A0A14;border-color:#FF4D6A" data-lv="${i}" title="${on ? 'Click: stop the stream' : 'Click: on air (Mute = picture only · Music off = its sound on radio + TV, the music waits)'}">🔴 ${esc(x.name)}<small>${on ? (cur.error ? '⚠ ' + esc(cur.error) : 'LIVE · <span data-livet="' + cur.started + '"></span>') : 'live stream' + (x.yt ? ' · YouTube' : '')}</small><span class="lpv" data-lvtest="${i}" title="Test the link (not on air)">👁</span><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmlv="${i}" title="Delete this live pad">×</span>` : ''}</button>`; }).join('')
+    + (PEDIT ? '<button class="padadd" id="lvAdd" title="A live stream link: https://….m3u8, rtmp://…, srt://… or a YouTube live">+ LIVE</button>' : '');
+  $('#pads').innerHTML = livePads + MEDIA.files.map((m, i) => m.listener ? '' : (++J, !PEDIT && (J < pg[0] || J >= pg[1])) ? '' : `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.listener ? '#062A1E' : m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.listener ? '#3DDC97' : m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}" ${m.listener && m.listener.caption ? `title="${esc(m.listener.caption)}"` : ''}>${m.listener ? '📱 ' + esc(m.listener.name + (m.listener.city ? ' · ' + m.listener.city : '')) : esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.listener ? 'listener ' + (m.kind === 'video' ? 'video · ' + fmt(m.duration) : 'photo') + (Date.now() / 1000 - (m.listener.added || 0) < 86400 ? ' · NEW' : '') : m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${PEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('') + '<button class="padadd" id="mDrop" title="Drop pictures or videos here (from your computer or a website), or click to choose them">drop here</button>';
   $('#pads').classList.toggle('edit', PEDIT);
   const md = $('#mDrop'); if (md) { md.onclick = () => $('#mFile').click();
     md.ondragover = e => { e.preventDefault(); md.classList.add('over'); }; md.ondragleave = () => md.classList.remove('over');
@@ -950,6 +954,18 @@ function renderMediaPads() {
       md.textContent = 'fetching…';
       cmd('fetch_url', {url, target: 'media'}).then(r => { if (!r || r.ok === false) { renderPads(); return toast((r && r.error) || 'Could not fetch it', 1); }
         toast(r.later ? 'Video fetched – it shows as a pad in a minute or two (being made 16:9)' : 'Added to media: ' + r.file); setTimeout(loadMedia, r.later ? 60000 : 2500); setTimeout(loadMedia, 25000); }); }; }
+  const la = $('#lvAdd'); if (la) la.onclick = () => { const url = prompt('Live stream link (https://….m3u8, rtmp://…, srt://… or a YouTube live link)\nOnly your own streams or streams you have permission for.'); if (!url) return;
+    const name = prompt('Name on the pad', 'Live stream'); if (name === null) return;
+    cmd('stream_save', {url: url.trim(), name}).then(r => { if (!r || r.ok === false) return toast((r && r.error) || 'Not saved', 1); toast('Live pad added – 👁 tests the link'); }); };
+  $$('#pads [data-lv]').forEach(b => b.onclick = e => { const x = LV[+b.dataset.lv], cur_ = S && S.media;
+    if (e.target.dataset.rmlv !== undefined) { if (confirm('Delete the live pad "' + x.name + '"?')) cmd('stream_delete', {id: x.id}).then(() => toast('Live pad deleted')); return; }
+    if (e.target.dataset.lvtest !== undefined) { toast('Testing ' + x.name + '…'); cmd('stream_test', {id: x.id}).then(r => toast(r && r.ok !== false ? '✓ ' + x.name + ' plays' + (r.video ? ' · ' + r.video : ' · no picture') + (r.audio ? ' · with sound' : ' · no sound') : ((r && r.error) || 'No signal'), !(r && r.ok !== false))); return; }
+    if (PEDIT) return;
+    if (cur_ && cur_.file === 'live:' + x.id) return cmd('media_stop', {}).then(() => toast('Stream off'));
+    const snd = MSOUND === 'off' ? 'off' : 'mute';
+    if (MSOUND === 'duck') toast('Duck is not for live streams – it plays muted (choose Music off for its sound)');
+    b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit'); toast('Starting ' + x.name + '…');
+    cmd('stream_play', {id: x.id, scene: MSCENE, sound: snd}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('🔴 ' + x.name + (MSCENE === 'manual' ? ' loaded – pick an M scene yourself' : ' on ' + MSCENE) + (snd === 'off' ? ' · its sound on radio + TV, the music waits' : ' · muted, the music goes on'))); });
   $$('#pads [data-mf]').forEach(b => b.onclick = e => { const m = MEDIA.files[+b.dataset.mf], cur_ = S && S.media;
     if (PEDIT) { if (e.target.dataset.rmmedia !== undefined && confirm('Delete "' + m.file + '" from branding/media?')) cmd('media_delete', {file: m.file}).then(r => { if (r && r.ok === false) return toast(r.error, 1); toast(m.file + ' deleted'); loadMedia(); }); return; }
     if (cur_ && cur_.file === m.file) return cmd('media_stop', {}).then(() => toast('Media off – back to the automatic scene'));
@@ -999,7 +1015,9 @@ setInterval(() => { if (!document.hidden && !PEDIT) loadListeners(); }, 20000); 
 $('#mScene').onchange = () => { MSCENE = $('#mScene').value; try { localStorage.setItem('hypeMScene', MSCENE); } catch (e) {} };
 $$('#mSound [data-ms]').forEach(b => b.onclick = () => { MSOUND = b.dataset.ms; try { localStorage.setItem('hypeMSound', MSOUND); } catch (e) {} renderMediaPads(); });
 setInterval(() => { if (bank === -1 && !document.hidden && !MUP) { loadMedia(); } }, 20000);
-setInterval(() => { if (bank < 0) { const k = JSON.stringify((S && S.media) || null); if (k !== renderMediaPads._k) { renderMediaPads._k = k; renderPads(); } } }, 1000);
+setInterval(() => { $$('[data-livet]').forEach(e => { const s_ = Math.max(0, Date.now() / 1000 - +e.dataset.livet); e.textContent = Math.floor(s_ / 3600) + ':' + String(Math.floor(s_ % 3600 / 60)).padStart(2, '0') + ':' + String(Math.floor(s_ % 60)).padStart(2, '0'); });
+  if (S && S.stream_note && S.stream_note.t !== window._snT) { window._snT = S.stream_note.t; toast(S.stream_note.text, 1); } }, 1000);
+setInterval(() => { if (bank < 0) { const k = JSON.stringify([(S && S.media) || null, (S && S.streams) || null]); if (k !== renderMediaPads._k) { renderMediaPads._k = k; renderPads(); } } }, 1000);
 function padTick() {   // the playing bar on each pad
   const now = Date.now();
   if (bank === -2) $$('#pads [data-li]').forEach(b => { const x = LSN.items[+b.dataset.li]; if (!x) return; const end = PLAYING[x.id], len = (x.duration || 5) * 1000, on = end && end > now;
