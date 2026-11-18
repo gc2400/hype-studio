@@ -1,17 +1,17 @@
 {
- "time": "2026-11-18T23:00:32",
- "result": "waiting",
- "commit": "c5a5f1c3d895b4b23240e61eb8dbd43d69727908",
- "subject": "[night] Panel: the Library card's and Up next's hover buttons in the Library page style (34 px, dark, thin line, colour on hover)",
+ "time": "2026-11-19T00:00:53",
+ "result": "conflict",
+ "commit": "6ffd8f49eb74fc0269968aaa22ed5c7c6299f1d4",
+ "subject": "Install the waiting updates at 00:00 (Gianno)",
  "log": [
-  "23:00:32 update 78a35ba8 \u2192 c5a5f1c3 \u00b7 8 file(s): engine/engine.py, engine/guard.py, engine/indexer.py, engine/planner.py, radio/radio.liq, system/nginx-hype.conf, web/panel/index.html, web/panel/settings.html",
-  "23:00:32 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "00:00:53 update 78a35ba8 \u2192 6ffd8f49 \u00b7 8 file(s): engine/engine.py, engine/guard.py, engine/indexer.py, engine/planner.py, radio/radio.liq, system/nginx-hype.conf, web/panel/index.html, web/panel/settings.html",
+  "00:00:53 CONFLICT: /etc/nginx/sites-enabled/hype was changed on the server \u2013 run deploy/export.py + push first"
  ],
  "guard": {
-  "song": "HYPE RADIO \u2013 TOH",
+  "song": "Fireboy DML \u2013 ONE MAN REGIMENT",
   "listeners": 1,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
