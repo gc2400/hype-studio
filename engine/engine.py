@@ -5,6 +5,7 @@ switches the TV in OBS on every song start, and serves the control panel API."""
 import shutil, os, re, json, time, random, sqlite3, socket, threading, logging, uuid, base64, hashlib, subprocess, array, urllib.request, unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
+os.environ["TZ"] = "Europe/Amsterdam"; time.tzset()   # all show times are Amsterdam time, whatever the server's zone
 import obsws_python as obs
 import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live, tickers, audstats, slideshow
 
@@ -4053,6 +4054,7 @@ def chart_data(pid, now=False):
         if it: items.append({"pos": n, "artist": it[0] or "", "title": it[1] or ""})
     items.sort(key=lambda x: x["pos"]); show_at = 0 if now else chart_show_at(r[1])
     return {"chart": {"id": pid, "name": r[1], "size": len(items)}, "week": planner.chart_week(show_at or None), "show_at": show_at,
+            "publish": "now" if now else "show", "now": bool(now),     # Hype Live 2.49.4: publish "now" = live at once, whatever show_at says
             "playlist": r[1], "items": items, "sent_at": int(time.time())}
 def web_charts():
     return dbc().execute("SELECT id, name FROM playlists WHERE COALESCE(chart,0)=1 AND COALESCE(chart_web,1)=1").fetchall()
@@ -4066,16 +4068,21 @@ def chart_state(pid):
     try: last = json.load(open(TOP10_SENT)).get(str(pid)) or {}
     except Exception: last = {}
     d = chart_data(pid); sig = json.dumps(d["items"], sort_keys=True) if d else None
-    return {"t": last.get("t", 0), "week": last.get("week", ""), "now": bool(last.get("now")), "changed": bool(sig and sig != last.get("sig"))}
-def chart_send(pid, force=False, now=False):
+    return {"t": last.get("t", 0), "week": last.get("week", ""), "now": bool(last.get("now")), "changed": bool(sig and sig != last.get("sig")),
+            "show_at": last.get("show_at") or 0, "next_show": chart_show_at(d["chart"]["name"]) if d else 0}
+def chart_send(pid, force=False, now=None):
     """One chart to Hype Live: the Hype Top 10 to ?hype_studio_top10 (as since 2.37), other charts to ?hype_studio_chart.
-    Only when Gianno presses Publish (now = live on the website at once; else from the start of its show)."""
-    d = chart_data(pid, now)
-    if not d or not d["items"]: return None, "no songs"
-    sig = json.dumps(d["items"], sort_keys=True)          # the list only: "changed" = the songs or their order changed
+    Publish: now = live on the website at once; else from the start of its show. now=None (the automatic resend after a
+    list change) keeps the last choice for the same week (18 Nov: a resend after "Now" sent the show time again)."""
     try: last = json.load(open(TOP10_SENT))
     except Exception: last = {}
     if "sig" in last: last = {}                        # old format (one chart)
+    if now is None:
+        prev = last.get(str(pid)) or {}
+        now = bool(prev.get("now")) and prev.get("week") == planner.chart_week()
+    d = chart_data(pid, now)
+    if not d or not d["items"]: return None, "no songs"
+    sig = json.dumps(d["items"], sort_keys=True)          # the list only: "changed" = the songs or their order changed
     if not force and last.get(str(pid), {}).get("sig") == sig: return d["week"], "unchanged"
     a = hl_call("hype_studio_top10" if is_top10(d["chart"]["name"]) else "hype_studio_chart", data=json.dumps(d).encode(), timeout=30).strip()
     if a.startswith("OK"): last[str(pid)] = {"sig": sig, "t": time.time(), "week": d["week"], "now": bool(now), "show_at": d["show_at"]}; jdump(last, TOP10_SENT)
