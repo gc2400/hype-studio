@@ -1,18 +1,18 @@
 {
- "time": "2026-11-18T12:21:29",
+ "time": "2026-11-18T12:31:28",
  "result": "ok",
- "commit": "724de9347f813c38e696e73c414550003b3ef77f",
- "subject": "Charts: Now sends publish:'now' (+ now:true, show_at 0), At the show sends publish:'show'; the automatic resend keeps the last choice for that week; engine time zone fixed to Europe/Amsterdam; Website card shows live now / the show time in Amsterdam time",
+ "commit": "7e93c10eb8fb7c3e14c879d87c59113e136ce697",
+ "subject": "Charts: log the exact JSON of every send (without the song list); Website card shows what the website really has (live / waiting until / not yet) from /top10/weeks",
  "log": [
-  "12:20:44 update 29b60fdf \u2192 724de934 \u00b7 2 file(s): engine/engine.py, web/panel/plan.html",
-  "12:20:44 restart hype-engine",
-  "12:21:29 installed OK \u00b7 restarted: hype-engine"
+  "12:30:43 update 724de934 \u2192 7e93c10e \u00b7 2 file(s): engine/engine.py, web/panel/plan.html",
+  "12:30:43 restart hype-engine",
+  "12:31:28 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "D OPSS \u2013 IEDEREEN MOET ERUIT",
-  "listeners": 3,
+  "song": "FOLA \u2013 you",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },

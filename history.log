@@ -371,3 +371,4 @@
 2026-11-18T00:55:57 ok f241a01c Renamed outside Studio (FTP): the library's artist / title follow the new file name; Rename with the same name refreshes them too
 2026-11-18T01:11:02 ok 29b60fdf Library rename: text in the box can be selected with the mouse (the row no longer drags while renaming); Rename with the same name refreshes the shown artist / title
 2026-11-18T12:21:29 ok 724de934 Charts: Now sends publish:'now' (+ now:true, show_at 0), At the show sends publish:'show'; the automatic resend keeps the last choice for that week; engine time zone fixed to Europe/Amsterdam; Website card shows live now / the show time in Amsterdam time
+2026-11-18T12:31:28 ok 7e93c10e Charts: log the exact JSON of every send (without the song list); Website card shows what the website really has (live / waiting until / not yet) from /top10/weeks
