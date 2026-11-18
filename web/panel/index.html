@@ -72,9 +72,9 @@ body.dj #res [data-act=next],body.dj #res [data-act=end],body.dj #res [data-pact
 .pad:hover{transform:translateY(-2px);filter:brightness(1.18);box-shadow:0 8px 18px rgba(0,0,0,.45)}
 .pad:hover::after{content:'▶';position:absolute;right:8px;top:6px;font-size:12px;opacity:.85}
 .pads.edit .pad:hover::after{content:''}
-.auxbtn{display:inline-flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden;min-height:34px;background:var(--card2)}
+.auxbtn{display:inline-flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;min-height:34px;background:var(--deep)}
 .auxbtn .lbl{display:flex;align-items:center;padding:0 9px;font-size:11px;font-weight:800}
-.auxbtn button{display:none;border:0;background:var(--card2);color:var(--txt);font-weight:900;font-size:13px;min-width:30px;cursor:pointer}
+.auxbtn button{display:none;border:0;background:var(--deep);color:var(--soft);font-weight:900;font-size:13px;min-width:30px;cursor:pointer}
 .auxbtn button+button{border-left:1px solid var(--line2)}
 .auxbtn:hover .lbl,.auxbtn:focus-within .lbl{display:none}.auxbtn:hover button,.auxbtn:focus-within button{display:block}
 .auxbtn button:hover{background:var(--b);color:var(--bg)}
@@ -130,7 +130,9 @@ body.dj .auxbtn,body.dj.is-auto .auxbtn{display:inline-flex}body.dj .auxbtn butt
 #padBanks [data-bank="-1"]:hover{background:#3a3200}#padBanks [data-bank="-1"].on{background:#FFE000;color:#061423}
 #padBanks [data-bank="-2"]{background:#062A1E;border-color:#3DDC97;color:#3DDC97}
 #padBanks [data-bank="-2"]:hover{background:#0A3A2A}#padBanks [data-bank="-2"].on{background:#3DDC97;color:#061423}#padBanks [data-bank="-2"].on b{background:#061423!important;color:#3DDC97!important}
-.ri .acts button{min-height:34px;min-width:38px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center}
+/* the same hover buttons as the Library page: small square, dark, thin line, coloured line on hover */
+.ri .acts > button{width:34px;height:34px;min-height:0;min-width:0;padding:0;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--soft);box-shadow:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.ri .acts > button svg{width:17px;height:17px}.ri .acts > button:hover{color:var(--b);border-color:var(--b);background:var(--deep)}.ri .acts > button[data-act="end"]:hover{color:var(--y);border-color:var(--y)}
 .ri .acts svg{width:18px;height:18px}
 dialog#cueDlg{box-sizing:border-box;background:var(--card);color:var(--txt);border:1px solid var(--line2);border-radius:16px;padding:14px 16px;width:min(900px,calc(100vw - 16px));max-width:calc(100vw - 16px);max-height:94vh;overflow-x:hidden;overflow-y:auto}
 #cueDlg *{box-sizing:border-box;min-width:0}   /* nothing in the song settings may be wider than the phone */
@@ -192,9 +194,9 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .ulist .lacts{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:none;gap:4px;padding-left:26px;background:linear-gradient(90deg,transparent,var(--card2) 22px)}
 .ulist .li:hover .lacts{display:flex}.ulist .li:hover .du{visibility:hidden}
 @media (hover:none){.ulist .li:hover .lacts{display:none}.ulist .li:hover .du{visibility:visible}.ulist .li.sel .lacts{display:flex}.ulist .li.sel .du{visibility:hidden}}
-.ulist .lacts button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
-.ulist .lacts button:hover:not(:disabled){border-color:var(--b)}.ulist .lacts button:disabled{opacity:.35;cursor:default}
-.ulist .lacts .rm{background:var(--rdark);border-color:var(--r);color:#FF8A97}.ulist .lacts .rm:hover{background:var(--r);color:#1A0207}
+.ulist .lacts button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--soft);font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.ulist .lacts button:hover:not(:disabled){color:var(--b);border-color:var(--b)}.ulist .lacts button:disabled{opacity:.35;cursor:default}
+.ulist .lacts .rm:hover:not(:disabled){color:#FF8A97;border-color:#FF8A97}     /* (like the Library page's delete: red only on hover) */
 .li .x{opacity:0;border:0;background:none;color:var(--mut);cursor:pointer;font-size:16px;width:24px;height:24px;border-radius:6px}
 .li:hover .x{opacity:1}.li .x:hover{color:var(--r);background:var(--deep)}
 .li.jg b{color:#B9A2FF}
