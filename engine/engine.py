@@ -3287,7 +3287,7 @@ def ensure_adbox():
         except Exception as e: log.warning("ad box source: %s", e); E.tv.cl = None
 
 MEDIA_DIR = "/srv/hype/branding/media"
-MEDIA_SCENES = ["MEDIA FULL", "CAM 1 M", "CAM 1 2 M", "CAM 1 2 3 M", "CAM 1 M G", "CAM 1 2 3 M G", "M 1", "M 1 2", "M 1 2 3", "M 1 2 3 4", "CAM 1 M PIP", "M 1 LIVE MIX"]   # M = the media window in place of the video
+MEDIA_SCENES = ["MEDIA FULL", "CAM 1 M", "CAM 1 2 M", "CAM 1 2 3 M", "CAM 1 M G", "CAM 1 2 3 M G", "M 1", "M 1 2", "M 1 2 3", "M 1 2 3 4", "CAM 1 M PIP", "M 1 LIVE MIX", "V M PIP"]   # M = the media window in place of the video; V M PIP = the music video big + media small
 MEDIA_CACHE = "/var/lib/hype/media_cache.json"
 _MC = {}
 def media_files():
