@@ -20,7 +20,7 @@ Every 60 s a heartbeat goes to Hype Live (when a key is set): https://www.hypera
 Pause (deploys): touch /run/hype/guard_pause  (ignored when older than 15 min).
 Status for the panel: /var/lib/hype/guard.json · settings: /var/lib/hype/guard_conf.json
 """
-import json, os, socket, subprocess, time, urllib.request, logging, collections
+import json, os, re, socket, subprocess, time, urllib.request, logging, collections
 
 STATUS = "/var/lib/hype/guard.json"
 CONF = "/var/lib/hype/guard_conf.json"
@@ -229,16 +229,39 @@ class Guard:
         t = self.bad("tv_frozen", bool(obs_on) and st.get("tv_frozen", False))
         if t > 0 and not live: self.restart("obs", "hype-obs", "TV picture frozen for 2 min"); self.since["tv_frozen"] = time.time(); self._tvp = []; self._tv_frozen = False
         # --- TV sound (every 30 s): the TV must sound like the radio – not while LIVE (then it is your studio mix)
-        if time.time() - getattr(self, "_tvs_t", 0) >= 30:
+        if time.time() - getattr(self, "_tvs_t", 0) >= 10:      # (was 30 s: a paired video without sound is now caught within ~10-20 s)
             self._tvs_t = time.time(); self._tvs = tv_sound_db()
         st["tv_db"] = getattr(self, "_tvs", None)
         tv_mute = st["tv_db"] is not None and st["tv_db"] < -70 and not silent and level is not None and not live and bool(obs_on)
         t = self.bad("tv_silent", tv_mute)
+        if t >= 8 and not getattr(self, "_tvs_fb", False):
+            # first: a paired video's own sound failed (18 Nov 21:59, Frsh – Je Bent Leuk: OBS kept restarting it) -> the TV takes
+            # the radio's sound for this song. Only when that doesn't help: restart OBS after 60 s, as before.
+            self._tvs_fb = True
+            try:
+                r_ = json.loads(urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:8090/cmd/tv_sound_radio", data=b"{}", headers={"Content-Type": "application/json"}), timeout=5).read())
+                if r_.get("acted"): self.event("repair", "TV had no sound (the paired video's own sound) → TV takes the radio's sound for this song")
+            except Exception as e: log.warning("tv sound fallback: %s", e)
+        if not tv_mute: self._tvs_fb = False
         if t > 60:
             sinks, caps = pulse_clients()
             if 0 <= sinks < 2: self.restart("radio", "hype-radio", "TV has no sound: the radio no longer sends to the audio bus")
             else: self.restart("obs", "hype-obs", "TV has no sound" + (" (OBS not connected to the audio bus)" if caps == 0 else ""))
             self.since["tv_silent"] = time.time()
+        # --- OBS's audio buffering (from its log): above 0.3 s the TV's sound runs that much behind the picture, for every song,
+        #     until OBS restarts (16 + 18 Nov: 960 ms). Alarm; it is reset in the night window (04:00-05:00) by an OBS restart.
+        if time.time() - getattr(self, "_abuf_t", 0) >= 30:
+            self._abuf_t = time.time()
+            try:
+                since_ = int(float(subprocess.run(["systemctl", "show", "-p", "ActiveEnterTimestampMonotonic", "--value", "hype-obs"], capture_output=True, text=True, timeout=5).stdout.strip() or 0))
+                if since_ != getattr(self, "_abuf_obs", None): self._abuf_obs = since_; self._abuf = 0      # OBS (re)started: buffer back to 0
+                out_ = subprocess.run(["journalctl", "-u", "hype-obs", "--since", "-40s", "--no-pager", "-o", "cat"], capture_output=True, text=True, timeout=10).stdout
+                for m_ in re.finditer(r"total audio buffering is now (\d+) milliseconds", out_): self._abuf = max(getattr(self, "_abuf", 0), int(m_.group(1)))
+            except Exception: pass
+        st["obs_abuf_ms"] = getattr(self, "_abuf", 0)
+        t = self.bad("av_buffer", bool(obs_on) and st["obs_abuf_ms"] > 300)
+        if t > 0 and not live and 4 <= time.localtime().tm_hour < 5:
+            self.restart("obs", "hype-obs", "OBS audio buffering %d ms (TV sound behind the picture) – reset in the night window" % st["obs_abuf_ms"]); self.since["av_buffer"] = time.time()
         # --- daily sync check (hype-synccheck, every night): TV picture vs sound on a few music videos – alarm only
         try:
             sc = json.load(open("/var/lib/hype/synccheck.json"))
@@ -352,7 +375,7 @@ class Guard:
             self.hb = {"ok": False, "t": time.time(), "answer": str(e)[:80]}
 
 PIDS = {"silence": "Silence on air", "liq_down": "Radio engine not answering", "engine_down": "Playout engine not answering",
-        "obs_down": "OBS not answering", "obs_off": "OBS not streaming", "hls_late": "TV stream stalled", "mount": "Radio stream (MP3) missing", "radio_hls": "Radio HLS stream stalled", "tv_silent": "TV has no sound", "tv_black": "TV picture black", "tv_frozen": "TV picture frozen", "av_sync": "TV picture out of sync with the sound (nightly check)"}
+        "obs_down": "OBS not answering", "obs_off": "OBS not streaming", "hls_late": "TV stream stalled", "mount": "Radio stream (MP3) missing", "radio_hls": "Radio HLS stream stalled", "tv_silent": "TV has no sound", "av_buffer": "TV sound behind the picture (OBS audio buffering)", "tv_black": "TV picture black", "tv_frozen": "TV picture frozen", "av_sync": "TV picture out of sync with the sound (nightly check)"}
 MIN_SHOW = {"av_sync": 0, "silence": 15, "mount": 30, "tv_silent": 45, "tv_black": 60}
 
 if __name__ == "__main__":

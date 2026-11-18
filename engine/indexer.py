@@ -307,13 +307,31 @@ TV_V = 3   # v2 = re-encoded with a keyframe every 0.5 s, so a clip can start (i
            #      on its START cue too (the original files have a keyframe only every ~5 s: paired videos started up to 5 s late)
 LONG = 12 * 60     # longer than this = a mixtape / long video
 TV_FAIL = {}       # path -> time of the last failed TV copy (try again after 6 h, never block the other files)
-def tv_encode(src, tmp, dur=0):
+def tv_encode(src, tmp, dur=0, audio=True):
     if dur and dur > LONG:     # mixtape: picture copied as it is (starts at its beginning, so the keyframe steps don't matter)
         return run(["nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-map", "0:v:0", "-an", "-sn", "-dn",
                     "-c:v", "copy", "-f", "matroska", tmp], 1800)
-    return run(["nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-map", "0:v:0", "-map", "0:a:0?", "-c:a", "copy", "-sn", "-dn",
+    return run(["nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-map", "0:v:0", *(["-map", "0:a:0?", "-c:a", "copy"] if audio else ["-an"]), "-sn", "-dn",
                 "-vf", "scale='min(1920,iw)':-2:flags=bicubic", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
                 "-force_key_frames", "expr:gte(t,n_forced*0.5)", "-sc_threshold", "0", "-threads", "4", "-f", "matroska", tmp], max(1800, int((dur or 0) * 3)))
+
+def strip_tv_sound(c, n=25):
+    """TV copies of videos that are NOT paired: picture only (sound removed, stream copy, seconds each). OBS decodes a muted clip's
+    sound too, and a clip starting a bit late made OBS's audio buffering jump to 960 ms -> the TV's sound ~1 s behind the picture
+    for every song until OBS restarted (16 + 18 Nov: BOTZ, X (EQUIS)). The paired ones keep their sound (it plays on TV)."""
+    paired = {r[0] for r in c.execute("SELECT clip_path FROM items WHERE mode='pair' AND clip_path IS NOT NULL")}
+    try: soon = json.load(open("/var/lib/hype/upcoming.json"))
+    except Exception: soon = []
+    rank = {p_: i for i, p_ in enumerate(soon)}
+    rows = [r for r in c.execute("SELECT path, tv_path FROM items WHERE has_video=1 AND tv_v=3 AND tv_path<>''") if r[0] not in paired and os.path.exists(r[1])]
+    for path, tv in sorted(rows, key=lambda r: rank.get(r[0], 9999))[:n]:
+        tmp = tv + ".strip.mkv"
+        r = run(["nice", "-n", "19", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", tv, "-map", "0:v:0", "-c", "copy", "-an", "-f", "matroska", tmp], 300)
+        if r.returncode == 0 and os.path.exists(tmp) and os.path.getsize(tmp) > 10000:
+            os.replace(tmp, tv); c.execute("UPDATE items SET tv_v=2 WHERE path=?", (path,)); c.commit()      # (same picture + keyframes: kf stays)
+        else:
+            try: os.remove(tmp)
+            except OSError: pass
 
 def make_tv_copies(c, upgrades=3):
     """TV copy of every video with short keyframe steps (+ its own sound, for when it is paired). New videos first,
@@ -336,7 +354,7 @@ def make_tv_copies(c, upgrades=3):
         if time.time() - TV_FAIL.get(path, 0) < 6 * 3600: continue
         out = os.path.join(TVDIR, hashlib.sha1(path.encode()).hexdigest()[:16] + ".mkv"); tmp = out + ".part.mkv"
         dur = (c.execute("SELECT duration FROM items WHERE path=?", (path,)).fetchone() or [0])[0] or 0
-        try: r = tv_encode(os.path.join(ROOT, path), tmp, dur)
+        try: r = tv_encode(os.path.join(ROOT, path), tmp, dur, audio=path in paired)     # own sound ONLY for paired videos (see strip_tv_sound)
         except subprocess.TimeoutExpired:
             print("tv copy too slow, later again:", path, flush=True); TV_FAIL[path] = time.time()
             try: os.remove(tmp)
@@ -344,7 +362,7 @@ def make_tv_copies(c, upgrades=3):
             continue
         if r.returncode != 0: TV_FAIL[path] = time.time()
         if r.returncode == 0 and os.path.exists(tmp) and os.path.getsize(tmp) > 10000:
-            os.replace(tmp, out); c.execute("UPDATE items SET tv_path=?, tv_v=?, kf=NULL WHERE path=?", (out, TV_V, path)); c.commit()
+            os.replace(tmp, out); c.execute("UPDATE items SET tv_path=?, tv_v=?, kf=NULL WHERE path=?", (out, TV_V if path in paired else 2, path)); c.commit()
         else:
             print("tv copy failed:", path, (r.stderr or "")[-200:], flush=True)
             try: os.remove(tmp)
@@ -448,6 +466,8 @@ def scan(full=False):
     suggest_pairs(c); c.commit()
     report(c)
     make_tv_copies(c)
+    try: strip_tv_sound(c)
+    except Exception as e: print("strip tv sound:", e, flush=True)
     make_keyframes(c)
     close_inbox(c)
     try: make_lmaps(c)

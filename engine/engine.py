@@ -1846,6 +1846,10 @@ class Engine:
                 slideshow.STATE["force"] = True; log.info("slideshow deleted: %s", "/".join(f)); return {"ok": True}
             elif action == "fetch_url":      # a picture / video / sound dragged from a website onto the pads: the server fetches it
                 return fetch_url(c, d)
+            elif action == "tv_sound_radio":     # the guard: TV silent while a paired video plays its own sound -> the radio's sound for this song
+                if not self.tv.split: return {"ok": True, "acted": False}
+                self.tv.clip_sound = False; self.tv.route_audio(force=True)
+                log.warning("TV had no sound with the paired video's own sound – the TV takes the radio's sound for this song"); return {"ok": True, "acted": True}
             elif action == "stream_save":        # 🔴 LIVE pad: {id?, name, url}
                 u_ = str(d.get("url") or "").strip(); n_ = re.sub(r"\s+", " ", str(d.get("name") or "")).strip()[:40] or "Live stream"
                 if not re.match(r"^(https?|rtmps?|srt|rtsp)://[^\s]+$", u_): return {"ok": False, "error": "Not a stream link (https://….m3u8, rtmp://…, srt://… or a YouTube live)"}
