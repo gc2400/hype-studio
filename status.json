@@ -1,17 +1,22 @@
 {
- "time": "2026-11-19T00:00:53",
- "result": "conflict",
+ "time": "2026-11-19T00:09:59",
+ "result": "ok",
  "commit": "6ffd8f49eb74fc0269968aaa22ed5c7c6299f1d4",
  "subject": "Install the waiting updates at 00:00 (Gianno)",
  "log": [
-  "00:00:53 update 78a35ba8 \u2192 6ffd8f49 \u00b7 8 file(s): engine/engine.py, engine/guard.py, engine/indexer.py, engine/planner.py, radio/radio.liq, system/nginx-hype.conf, web/panel/index.html, web/panel/settings.html",
-  "00:00:53 CONFLICT: /etc/nginx/sites-enabled/hype was changed on the server \u2013 run deploy/export.py + push first"
+  "00:08:27 update 78a35ba8 \u2192 6ffd8f49 \u00b7 8 file(s): engine/engine.py, engine/guard.py, engine/indexer.py, engine/planner.py, radio/radio.liq, system/nginx-hype.conf, web/panel/index.html, web/panel/settings.html",
+  "00:09:13 lab: PASS (6/6 good readings)",
+  "00:09:13 restart hype-guard",
+  "00:09:13 restart hype-indexer",
+  "00:09:13 restart hype-engine",
+  "00:09:13 restart hype-radio",
+  "00:09:59 installed OK \u00b7 restarted: hype-engine, hype-guard, hype-indexer, hype-radio, nginx-reload"
  ],
  "guard": {
-  "song": "Fireboy DML \u2013 ONE MAN REGIMENT",
+  "song": "Rich Kalashh \u2013 Taurus",
   "listeners": 1,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
