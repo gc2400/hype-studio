@@ -1,17 +1,17 @@
 {
- "time": "2026-11-18T14:07:50",
+ "time": "2026-11-18T14:22:11",
  "result": "waiting",
- "commit": "361e83755b7c3cdf127ea1fe720f88dc1031b9c3",
- "subject": "[night] radio: harbor 'ext' (8006) for the \ud83d\udd34 LIVE pads' sound (Music off): replaces the automation, which waits; no stream sound -> the music again by itself",
+ "commit": "22ecfc4c4593f286b91c423c10946c99de0c0a13",
+ "subject": "[night] Tidy new file names (Settings, on): 'Artist x Artist x Featured - Title', without (Official Video) / (Video Oficial) / (Lyrics) / (Radio Edit) / (prod. \u2026) / '| \u2026'; logged in /var/lib/hype/tidied.jsonl",
  "log": [
-  "14:07:50 update 78a35ba8 \u2192 361e8375 \u00b7 1 file(s): radio/radio.liq",
-  "14:07:50 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "14:22:11 update 78a35ba8 \u2192 22ecfc4c \u00b7 4 file(s): engine/engine.py, engine/indexer.py, radio/radio.liq, web/panel/settings.html",
+  "14:22:11 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Yung Bredda \u2013 The Greatest Bend Over",
-  "listeners": 2,
+  "song": "Wisin x Kapo \u2013 Luna",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
