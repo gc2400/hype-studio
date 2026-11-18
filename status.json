@@ -1,22 +1,19 @@
 {
- "time": "2026-11-19T00:09:59",
+ "time": "2026-11-19T00:46:32",
  "result": "ok",
- "commit": "6ffd8f49eb74fc0269968aaa22ed5c7c6299f1d4",
- "subject": "Install the waiting updates at 00:00 (Gianno)",
+ "commit": "16899f1a184c97ca9a0f53cae992f2c3def854f0",
+ "subject": "\ud83c\udf10 Browser in MEDIA: a real Chromium (user hypeweb, own sound server) on a virtual screen, controlled from the panel (address bar, back/forward/reload, click, scroll, type), captured with the Intel GPU into MediaMTX 'web'; on air through the LIVE-pad path (Mute / Music off); stops by itself after 30 min without use",
  "log": [
-  "00:08:27 update 78a35ba8 \u2192 6ffd8f49 \u00b7 8 file(s): engine/engine.py, engine/guard.py, engine/indexer.py, engine/planner.py, radio/radio.liq, system/nginx-hype.conf, web/panel/index.html, web/panel/settings.html",
-  "00:09:13 lab: PASS (6/6 good readings)",
-  "00:09:13 restart hype-guard",
-  "00:09:13 restart hype-indexer",
-  "00:09:13 restart hype-engine",
-  "00:09:13 restart hype-radio",
-  "00:09:59 installed OK \u00b7 restarted: hype-engine, hype-guard, hype-indexer, hype-radio, nginx-reload"
+  "00:45:47 update 6ffd8f49 \u2192 16899f1a \u00b7 4 file(s): engine/engine.py, engine/hype_auth.py, engine/hypeweb.py, web/panel/index.html",
+  "00:45:47 restart hype-auth",
+  "00:45:47 restart hype-engine",
+  "00:46:32 installed OK \u00b7 restarted: hype-engine, hype-auth"
  ],
  "guard": {
-  "song": "Rich Kalashh \u2013 Taurus",
+  "song": "Rich Kalashh \u2013 Frontpage",
   "listeners": 1,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },

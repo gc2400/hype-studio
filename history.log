@@ -385,3 +385,4 @@
 2026-11-18T23:00:32 waiting c5a5f1c3 [night] Panel: the Library card's and Up next's hover buttons in the Library page style (34 px, dark, thin line, colour on hover)
 2026-11-19T00:00:53 conflict 6ffd8f49 Install the waiting updates at 00:00 (Gianno)
 2026-11-19T00:09:59 ok 6ffd8f49 Install the waiting updates at 00:00 (Gianno)
+2026-11-19T00:46:32 ok 16899f1a 🌐 Browser in MEDIA: a real Chromium (user hypeweb, own sound server) on a virtual screen, controlled from the panel (address bar, back/forward/reload, click, scroll, type), captured with the Intel GPU into MediaMTX 'web'; on air through the LIVE-pad path (Mute / Music off); stops by itself after 30 min without use
