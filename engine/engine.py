@@ -3273,6 +3273,7 @@ class H(BaseHTTPRequestHandler):
         self.send(404, {"error": "not found"})
     def log_message(self, *a): pass
 
+RESYNC_N = {}     # song start -> how often its clip was put back in step (max 2 per song)
 def resync_tv():
     """After an OBS or engine restart: show the clip of the song on air again, at the right spot."""
     n = E.now
@@ -3293,9 +3294,19 @@ def resync_tv():
             # a clip is on screen – but is it this song's clip? After an OBS restart OBS comes back with the clip it had
             # saved (16 Nov: the previous song's video ran under the next song). Only then show the right one.
             with E.tv.olock: shown = E.tv.client().get_input_settings(on[0]).input_settings.get("local_file")
-            if not shown or os.path.realpath(shown) == os.path.realpath(f): return
-            if el < 8: return      # the song just started: its clip is still being put on (17 Nov: 13 needless restarts of a clip at 0 s)
-            log.info("TV resync: %s showed another clip (%s) – putting the right one on", on[0], os.path.basename(shown))
+            if not shown: return
+            if os.path.realpath(shown) == os.path.realpath(f):
+                # the right clip – but still in step with the radio? (16 + 18 Nov: BOTZ / X (EQUIS) drifted, right after a video jingle)
+                if n["mode"] == "jingle-video" or el < 10 or (n.get("cue_mix") or n.get("cue_end") or n.get("duration") or 999) - start < 15 or RESYNC_N.get(n.get("started"), 0) >= 2: return
+                with E.tv.olock: cur_ = E.tv.client().get_media_input_status(on[0]).media_cursor
+                if cur_ is None: return
+                off_ = cur_ / 1000.0 - start
+                if abs(off_) < 0.6: return
+                RESYNC_N[n.get("started")] = RESYNC_N.get(n.get("started"), 0) + 1
+                log.info("TV resync: %s was %.1f s %s the radio – put back in step", n["title"], abs(off_), "ahead of" if off_ > 0 else "behind")
+            else:
+                if el < 8: return      # the song just started: its clip is still being put on (17 Nov: 13 needless restarts of a clip at 0 s)
+                log.info("TV resync: %s showed another clip (%s) – putting the right one on", on[0], os.path.basename(shown))
         keep = None if E.tv.auto else E.tv.scene      # a scheduled / manual scene (e.g. PIP shoutout) stays – and still goes back to AUTO after its time
         E.tv.scene = None
         E.tv.show(n["mode"], f, start, snd, gain, None if snd else keyframes(c, n["path"]))
