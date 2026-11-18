@@ -380,3 +380,4 @@
 2026-11-18T14:22:11 waiting 22ecfc4c [night] Tidy new file names (Settings, on): 'Artist x Artist x Featured - Title', without (Official Video) / (Video Oficial) / (Lyrics) / (Radio Edit) / (prod. …) / '| …'; logged in /var/lib/hype/tidied.jsonl
 2026-11-18T14:36:31 waiting edb9161b [night] New songs are spread: at most one never-played song per 12 min (~1 in 4), in every folder – no more all new songs after each other
 2026-11-18T17:42:34 waiting a17a736c [night] nginx: the login check allows the 8 MB library upload pieces (uploads / Replace failed with 413)
+2026-11-18T21:47:54 waiting 9ba08ad0 [night] TV: every 20 s the music video is checked against the radio; more than 0.6 s off -> put back in step (max 2x per song, not in the first 10 s or the last 15 s)

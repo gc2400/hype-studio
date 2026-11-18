@@ -1,17 +1,17 @@
 {
- "time": "2026-11-18T17:42:34",
+ "time": "2026-11-18T21:47:54",
  "result": "waiting",
- "commit": "a17a736c5f70c787fd31a47daadd37c518d9a696",
- "subject": "[night] nginx: the login check allows the 8 MB library upload pieces (uploads / Replace failed with 413)",
+ "commit": "9ba08ad0db2119732d3d15430f82b4f53a6abbbf",
+ "subject": "[night] TV: every 20 s the music video is checked against the radio; more than 0.6 s off -> put back in step (max 2x per song, not in the first 10 s or the last 15 s)",
  "log": [
-  "17:42:34 update 78a35ba8 \u2192 a17a736c \u00b7 6 file(s): engine/engine.py, engine/indexer.py, engine/planner.py, radio/radio.liq, system/nginx-hype.conf, web/panel/settings.html",
-  "17:42:34 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "21:47:54 update 78a35ba8 \u2192 9ba08ad0 \u00b7 6 file(s): engine/engine.py, engine/indexer.py, engine/planner.py, radio/radio.liq, system/nginx-hype.conf, web/panel/settings.html",
+  "21:47:54 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Bryan Mg \u2013 Kom Maar",
-  "listeners": 4,
+  "song": "Kybba x J Balvin x Rytikal \u2013 I Love It",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
