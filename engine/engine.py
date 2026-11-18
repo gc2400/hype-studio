@@ -4063,13 +4063,22 @@ def top10_data():
     for pid, name in web_charts():
         if is_top10(name): return chart_data(pid)
     return None
+WEB_WEEKS = {"t": 0, "d": None}
+def web_weeks():
+    """What the website really shows: /wp-json/hype/v1/top10/weeks (current = live week, waiting = {week, show_at}). Cached 60 s."""
+    if time.time() - WEB_WEEKS["t"] > 60:
+        WEB_WEEKS["t"] = time.time()
+        try: WEB_WEEKS["d"] = json.loads(urllib.request.urlopen(urllib.request.Request("https://www.hyperadio.nl/wp-json/hype/v1/top10/weeks?nc=%d" % time.time(), headers={"User-Agent": "HypeStudio/1"}), timeout=8).read(200_000))
+        except Exception: WEB_WEEKS["d"] = None
+    return WEB_WEEKS["d"]
 def chart_state(pid):
     """Website state of a chart: when it was last published, which week, and whether the list changed since."""
     try: last = json.load(open(TOP10_SENT)).get(str(pid)) or {}
     except Exception: last = {}
     d = chart_data(pid); sig = json.dumps(d["items"], sort_keys=True) if d else None
     return {"t": last.get("t", 0), "week": last.get("week", ""), "now": bool(last.get("now")), "changed": bool(sig and sig != last.get("sig")),
-            "show_at": last.get("show_at") or 0, "next_show": chart_show_at(d["chart"]["name"]) if d else 0}
+            "show_at": last.get("show_at") or 0, "next_show": chart_show_at(d["chart"]["name"]) if d else 0,
+            **(lambda w: {"site_current": w.get("current"), "site_waiting": w.get("waiting")} if (w and d and is_top10(d["chart"]["name"])) else {})(web_weeks())}
 def chart_send(pid, force=False, now=None):
     """One chart to Hype Live: the Hype Top 10 to ?hype_studio_top10 (as since 2.37), other charts to ?hype_studio_chart.
     Publish: now = live on the website at once; else from the start of its show. now=None (the automatic resend after a
@@ -4086,7 +4095,9 @@ def chart_send(pid, force=False, now=None):
     if not force and last.get(str(pid), {}).get("sig") == sig: return d["week"], "unchanged"
     a = hl_call("hype_studio_top10" if is_top10(d["chart"]["name"]) else "hype_studio_chart", data=json.dumps(d).encode(), timeout=30).strip()
     if a.startswith("OK"): last[str(pid)] = {"sig": sig, "t": time.time(), "week": d["week"], "now": bool(now), "show_at": d["show_at"]}; jdump(last, TOP10_SENT)
-    log.info("chart %s %s -> Hype Live: %s", d["chart"]["name"], d["week"], a[:40]); return d["week"], a
+    log.info("chart %s %s -> Hype Live: %s · sent %s", d["chart"]["name"], d["week"], a[:40],
+             json.dumps({k: v for k, v in d.items() if k != "items"} | {"items": "%d songs, #1 %s" % (len(d["items"]), (d["items"][0]["title"] if d["items"] else ""))}, ensure_ascii=False))
+    return d["week"], a
 def top10_send(force=False):
     for pid, name in web_charts():
         if is_top10(name): return chart_send(pid, force)

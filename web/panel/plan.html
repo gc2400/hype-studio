@@ -542,7 +542,7 @@ function webUI() {      // website state of this chart: last publish + "changed 
   const when = t => new Date(t * 1000).toLocaleString([], {weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
   if (!w || !w.t) { el.innerHTML = 'Not on the website yet' + (w && w.show_at ? ` · show ${when(w.show_at)}` : ''); return; }
   const ams = t => new Date(t * 1000).toLocaleString('en-GB', {timeZone: 'Europe/Amsterdam', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
-  el.innerHTML = `Week ${esc(w.week.split('-W')[1] || w.week)} · ${when(w.t)} · ${w.now ? 'live now' : w.show_at ? 'live at the show ' + ams(w.show_at) : ''}<br>` +
+  el.innerHTML = `Week ${esc(w.week.split('-W')[1] || w.week)} · ${when(w.t)} · ${w.site_current !== undefined ? (w.site_current === w.week ? '<span style="color:var(--g)">live on the website</span>' : w.site_waiting && w.site_waiting.week === w.week ? '<b style="color:#FFB547">website: waiting until ' + ams(w.site_waiting.show_at) + '</b>' : '<b style="color:#FFB547">not on the website yet</b>') : w.now ? 'sent: live now' : w.show_at ? 'sent: live at the show ' + ams(w.show_at) : ''}<br>` +
     (w.changed ? '<b style="color:#FFB547">Changed – not published yet</b>' : '<span style="color:var(--g)">Up to date</span>');
 }
 function publishChart(now) {
