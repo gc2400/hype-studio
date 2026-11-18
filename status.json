@@ -1,17 +1,17 @@
 {
- "time": "2026-11-18T21:47:54",
+ "time": "2026-11-18T22:05:18",
  "result": "waiting",
- "commit": "9ba08ad0db2119732d3d15430f82b4f53a6abbbf",
- "subject": "[night] TV: every 20 s the music video is checked against the radio; more than 0.6 s off -> put back in step (max 2x per song, not in the first 10 s or the last 15 s)",
+ "commit": "a8678a339dbdef184cd3b5cb6acb608cea542b97",
+ "subject": "[night] TV sound: picture-only TV copies for unpaired videos (their muted sound made OBS's audio buffering jump to 960 ms = TV sound ~1 s behind the picture); guard: a silent paired video -> radio sound within ~10-20 s (OBS restart only after 60 s), OBS audio buffering > 0.3 s -> alarm + reset in the night window",
  "log": [
-  "21:47:54 update 78a35ba8 \u2192 9ba08ad0 \u00b7 6 file(s): engine/engine.py, engine/indexer.py, engine/planner.py, radio/radio.liq, system/nginx-hype.conf, web/panel/settings.html",
-  "21:47:54 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "22:05:18 update 78a35ba8 \u2192 a8678a33 \u00b7 7 file(s): engine/engine.py, engine/guard.py, engine/indexer.py, engine/planner.py, radio/radio.liq, system/nginx-hype.conf, web/panel/settings.html",
+  "22:05:18 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Kybba x J Balvin x Rytikal \u2013 I Love It",
-  "listeners": 3,
+  "song": "RVFV x Yapi \u2013 Loco LocoOoo",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
