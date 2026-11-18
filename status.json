@@ -1,18 +1,18 @@
 {
- "time": "2026-11-18T13:55:58",
+ "time": "2026-11-18T13:59:49",
  "result": "ok",
- "commit": "b841d1d22a22348ee1c29035df8fe5c6d869bb10",
- "subject": "Media group: new scene V M PIP (music video big, media small, CAM 1 V PIP frame)",
+ "commit": "4e30533e580a5a711b4f668c3ee853843d6b785d",
+ "subject": "\ud83d\udd34 LIVE pads in MEDIA: HLS / RTMP / SRT / YouTube-live streams in the Media window (Mute or Music off), test \ud83d\udc41, reconnect + back to the programme after 15 s on AUTO SCENES (manual: only a warning); YouTube videos dropped on MEDIA become media pads (yt-dlp)",
  "log": [
-  "13:55:13 update 7e93c10e \u2192 b841d1d2 \u00b7 1 file(s): engine/engine.py",
-  "13:55:13 restart hype-engine",
-  "13:55:58 installed OK \u00b7 restarted: hype-engine"
+  "13:59:04 update b841d1d2 \u2192 4e30533e \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "13:59:04 restart hype-engine",
+  "13:59:49 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "FARLY X ANGO \u2013 PEIKI SIMPEL",
-  "listeners": 3,
+  "song": "Jonna Fraser \u2013 Bday Baddie",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
