@@ -388,13 +388,14 @@ function renderList() {
     const path = row.dataset.p, fn = path.split('/').pop(), ext = fn.includes('.') ? fn.slice(fn.lastIndexOf('.')) : '';
     const q = document.createElement('div'); q.className = 'delq';
     q.innerHTML = `<input aria-label="New file name" spellcheck="false"><span class="muted" style="font-weight:600">${esc(ext)}</span><button class="btn sm yellow" data-yes>Rename</button><button class="btn sm" data-no>Cancel</button>`;
-    row.appendChild(q); const inp = q.querySelector('input'); inp.value = fn.slice(0, fn.length - ext.length); inp.focus(); inp.select();
+    row.appendChild(q); row.draggable = false;   // so you can select text in the box (a draggable row took the mouse)
+    const inp = q.querySelector('input'); inp.value = fn.slice(0, fn.length - ext.length); inp.focus(); inp.select();
     q.onclick = ev => ev.stopPropagation();
-    const close = () => q.remove();
-    const go = () => { const name = inp.value.trim(); if (!name || name + ext === fn) return close();
+    const close = () => { q.remove(); row.draggable = true; };
+    const go = () => { const name = inp.value.trim(); if (!name) return close();   // the same name still refreshes the shown artist / title
       api('cmd/rename_item', {path, name}).then(r => { if (!r || r.ok === false) { toast((r && r.error) || 'Not renamed'); return; }
         const it = LIB.items.find(x => x.path === path);
-        if (it) Object.assign(it, {path: r.path, artist: r.artist, title: r.title});
+        if (it) Object.assign(it, {path: r.path}, r.title !== undefined ? {artist: r.artist, title: r.title} : {});
         LIB.items.forEach(x => { if (x.clip_path === path) x.clip_path = r.path; });
         if (SEL && SEL.path === path) SEL.path = r.path;
         renderList(); toast('Renamed'); }); };

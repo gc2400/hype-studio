@@ -2015,7 +2015,8 @@ class Engine:
             fa, ft = _ix.split_name(fn); row = c.execute("SELECT section FROM items WHERE path=?", (rel,)).fetchone()
             if fa or row[0] != "music":
                 c.execute("UPDATE items SET artist=?, title=? WHERE path=?", (fa or "", _ix.clean_title(ft or name), rel)); c.commit()
-            return {"ok": True, "path": rel}
+            r_ = c.execute("SELECT artist, title FROM items WHERE path=?", (rel,)).fetchone()
+            return {"ok": True, "path": rel, "artist": r_[0], "title": r_[1]}
         if os.path.exists(os.path.join(ROOT, new)) and new.lower() != rel.lower(): return {"ok": False, "error": "a file with that name is already there"}
         os.rename(src, os.path.join(ROOT, new))
         old_fn = os.path.basename(rel)
