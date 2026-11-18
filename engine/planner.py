@@ -61,10 +61,21 @@ def fit_score(length, fit):
     """Best: the song ends right at the hour or a few seconds after (the top-of-the-hour sweeper follows)."""
     return abs(length - fit) + (0 if length >= fit else 45)      # ending before :00 is avoided (the TOH never starts early)
 
+NEW_GAP = 720          # new songs (never played yet) are spread: at most one per 12 min (~1 in 4 songs), in every folder (Gianno, 18 Nov)
+NEW_PICKS = {}         # never-played song -> the planned start it was given
 def take_smart(c, songs, ok, fit):
-    """Smart pick: the song that rested longest (artist/title separation via ok), not the same song as yesterday around this time."""
+    """Smart pick: the song that rested longest (artist/title separation via ok), not the same song as yesterday around this time.
+    A song that never played counts as 'rested longest', so new songs came all after each other: now at most one per NEW_GAP."""
     H = history(c); at = CTX.get("at") or time.time(); y0 = at - 86400
     cand = [p_ for p_ in songs if ok(p_)] or songs[:]
+    for p_ in [p_ for p_, t_ in NEW_PICKS.items() if H["last"].get(p_) or t_ < time.time() - 7200]: NEW_PICKS.pop(p_, None)
+    if any(5 < abs(t_ - at) < NEW_GAP for t_ in NEW_PICKS.values()):      # (the same slot planned again = not "another" new song)
+        old = [p_ for p_ in cand if H["last"].get(p_)]
+        if old: cand = old                       # a new song played / is planned close by: a familiar one now
+    pick = _take_smart(c, cand, H, at, y0, fit)
+    if pick and not H["last"].get(pick): NEW_PICKS[pick] = at
+    return pick
+def _take_smart(c, cand, H, at, y0, fit):
     fresh = [p_ for p_ in cand if not any(abs(t_ - y0) < 1800 for t_ in H["recent"].get(p_, []))]
     cand = sorted(fresh or cand, key=lambda p_: H["last"].get(p_, 0))
     if fit:
