@@ -135,7 +135,7 @@ function screen() {
     nowPlaying(d.scene === 'Music video' ? d.np : null, Date.now() / 1000 - off);
     voiceBox(d.voice, Date.now() / 1000 - off);
     chartSq(d.chart);
-    upNext(d.scene === 'Up next' ? d.upnext : null);
+    upNext(d.scene === 'Up next' ? d.upnext : null, Date.now() / 1000 - off);
   }).catch(() => {}).finally(() => setTimeout(screen, 500));
 }
 // ticker: smooth scroll at a steady speed; a new ticker (or new headlines) slides in; it gives way to the Now Playing box
@@ -205,8 +205,11 @@ function nowPlaying(np, now) {
 // the text follows the animation's own clock (not the server's), so it always lands exactly in the box: in at 1.25 s, out at 16.75 s
 (function npText() { const v = $('#npv'), box = $('#np'); if (NP.on) { const t = v.currentTime || 0; box.classList.toggle('txon', t > 1.25 && t < 16.75); } requestAnimationFrame(npText); })();
 // Up next PIP: the 3 cards (the frame PNG with labels and badges is an image in the OBS scene "Up next")
-function upNext(u) {
-  const on = !!(u && u.items && u.items.length);
+let UN_T = null;
+function upNext(u, now) {
+  const on = !!(u && u.items && u.items.length) && !(u.until && now >= u.until - 0.45);   // gone just before the scene switches back (no text over the music video)
+  clearTimeout(UN_T);
+  if (on && u.until) UN_T = setTimeout(() => $('#un').classList.remove('on'), Math.max(0, (u.until - 0.45 - now) * 1000));
   if (on) for (let i = 0; i < 3; i++) { const it = u.items[i] || {title: '', artist: ''}, c = $('#uc' + i);
     const t = c.querySelector('.ut'), a = c.querySelector('.ua');
     if (t.textContent !== it.title) t.textContent = it.title; if (a.textContent !== it.artist) a.textContent = it.artist;

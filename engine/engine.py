@@ -467,7 +467,7 @@ class Screen:
         voice = dict(VOICE_ON) if VOICE_ON and VOICE_ON.get("end", 0) > now else None
         upn = None
         if scene == "Up next":
-            try: upn = E.upnext_data()
+            try: upn = E.upnext_data(); upn = dict(upn, until=getattr(E, "hold_until", 0)) if isinstance(upn, dict) else upn
             except Exception as e: log.warning("up next data: %s", e)
         ch = self.chart if self.chart and self.chart["end"] > now else None
         return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and E.now and E.now.get("path") and E.now.get("section") != "music"),
@@ -1273,6 +1273,7 @@ class Engine:
         with LOCK:
             if not self.tv.auto: log.info("scheduled scene %s skipped: scenes are on manual", name); return   # never over a scene you chose (live show)
             self.tv.auto = False; self.tv.set_scene(name)
+        self.hold_until = (time.time() + hold) if hold and hold > 0 else 0     # the graphics page hides the Up next text just BEFORE the scene goes back
         if hold and hold > 0:
             def back(n=name):
                 with LOCK:
