@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T15:35:56",
+ "time": "2026-11-19T15:49:16",
  "result": "ok",
- "commit": "d0319acf89b30e7d923b90f46574b1cccb8f38de",
- "subject": "Panel: LIVE playlist as tall as ON AIR, LIVE scenes column wider; DJ: video + scenes under deck A, pads + media under deck B, the fader without extra text; no message when switching modes; the LOG keeps only warnings of the page (and the guard's repairs / problems)",
+ "commit": "e4c25d68864a8ea4312f69017d6f57419ee58c43",
+ "subject": "Header in the concept's order: logo \u00b7 pages \u2026 \u00b7 radio/TV/log dots, clock, hour plan \u00b7 AUTO/MANUAL + modes \u00b7 GO LIVE + REC (pages into \u2630 when the line is full; phones as before); Scenes: one \u2699 (+ Group, Edit group / Arrange scenes / Edit slideshows) instead of + GROUP and \u270e, no \u25b8/\u25be on the tabs; Reports: Rights report as its own tab next to Station report",
  "log": [
-  "15:35:56 update 8b971d6c \u2192 d0319acf \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
-  "15:35:56 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:49:16 update d0319acf \u2192 e4c25d68 \u00b7 3 file(s): web/panel/header.js, web/panel/history.html, web/panel/index.html",
+  "15:49:16 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Kamo Mphela x Khalil Harrison x Tyler ICU x Baby S.O.N \u2013 Dalie",
+  "song": "Bad Bunny \u2013 Titi Me Pregunto",
   "listeners": 5,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
