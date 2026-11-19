@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T16:47:36",
+ "time": "2026-11-19T16:56:52",
  "result": "waiting",
- "commit": "91cbd7e3962e4d7a29664956a1226f64af36640e",
- "subject": "[night] Radio: a level per channel (music incl. decks, pads, studio) for the panel's mixer meters",
+ "commit": "21e57a869149eb623c331258e769291f26306d5e",
+ "subject": "Scenes: CAM | 1 | 2 | 3 | 4 as one joined button (like + TEXT \u2699); mixer rows full width, value at the right. (radio.liq channel meters held back to keep the radio running \u2013 comes again as [night])",
  "log": [
-  "16:47:36 update 486ff534 \u2192 91cbd7e3 \u00b7 1 file(s): radio/radio.liq",
-  "16:47:36 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "16:56:52 update 486ff534 \u2192 21e57a86 \u00b7 1 file(s): web/panel/index.html",
+  "16:56:52 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Young Jonn x Asake x Focalistic \u2013 2 Factor",
-  "listeners": 5,
+  "song": "Feid X Maisak \u2013 SE ME OLVIDA",
+  "listeners": 6,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
