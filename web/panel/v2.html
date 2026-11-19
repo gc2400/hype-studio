@@ -335,7 +335,23 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #airbar .v2e{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--deep)}
 #airbar .v2e .meter{width:170px;margin:0}
 #v2Fad{display:flex;gap:12px;justify-content:center}
-@media (max-width:1300px){#airbar #cPlayer{grid-template-columns:64px minmax(260px,1fr) auto}#airbar .v2d{grid-column:2/4}#airbar .v2e{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center}}
+@media (max-width:1300px){#airbar{position:static}#airbar #cPlayer{grid-template-columns:64px minmax(260px,1fr) auto}#airbar .v2a .art{width:60px!important;height:60px!important}#airbar .v2d{grid-column:2/4}#airbar .v2e{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px}#airbar .v2e .meter{flex:1;min-width:180px;width:auto}}
+/* phones: the bar is not sticky (it would cover the screen), everything stacked, big touch buttons */
+@media (max-width:760px){
+  #airbar{position:static}
+  #airbar #cPlayer{display:flex!important;flex-direction:column;align-items:stretch;gap:10px;padding:12px!important}
+  #airbar .v2a{display:none}
+  #airbar .v2b .t{white-space:normal;font-size:18px!important}
+  #airbar .v2b>.row:first-child{flex-wrap:wrap!important}
+  #airbar .v2c{flex-direction:row;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;min-width:0}
+  #airbar .v2c .lab{display:none}#airbar .v2c #tRem{font-size:30px!important}
+  #airbar #v2Next{max-width:100%;text-align:left;white-space:normal;flex-basis:100%}
+  #airbar .v2d .tp{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}#airbar .v2d .tp .btn{width:100%;min-width:0;padding:0}
+  #airbar .v2e{flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px}
+  #airbar .v2e .meter{flex:1;min-width:150px;width:auto}
+  #v2Info{gap:6px 14px}
+  .v2tag{flex-basis:100%;text-align:center}
+}
 /* the concept's calmer cards */
 .card{border-radius:14px}
 .lab{letter-spacing:.09em}
@@ -352,7 +368,6 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #v2Fad .v{font:700 10px 'JetBrains Mono',monospace;color:var(--soft)}
 #v2Info{grid-column:1/-1;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);padding:0 4px}
 #v2Info b{color:var(--txt)}
-@media (max-width:1250px){#airbar #cPlayer{grid-template-columns:1fr 1fr;grid-template-areas:"chips chips" "np tp" "wave wave" "meter fad"}}
 #v2Msgs{position:fixed;right:16px;top:150px;z-index:90;width:min(440px,94vw);max-height:70vh;overflow:auto;background:var(--card);border:1px solid var(--line2);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:10px;display:flex;flex-direction:column;gap:6px}
 #v2Msgs .m{display:flex;gap:9px;align-items:flex-start;padding:8px 10px;border-radius:10px;background:var(--deep);border:1px solid var(--line);font-size:13px}
 #v2Msgs .m i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
