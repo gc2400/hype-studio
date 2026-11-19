@@ -225,6 +225,25 @@ def why_broken(path, size):
     except Exception: pass
     return "broken file (cannot be read) – upload it again or export it again"
 
+def truncated(path, size):
+    """An MP4 / M4A / MOV whose data part goes past the end of the file: the upload stopped halfway, but the index is at the
+    front, so it still LOOKS fine (19 Nov: such a song ended at once on air – 11 s silence). None = complete."""
+    if not path.lower().endswith((".mp4", ".m4a", ".m4v", ".mov")): return None
+    try:
+        import struct
+        with open(path, "rb") as f:
+            pos, n = 0, 0
+            while pos + 8 <= size and n < 50:
+                f.seek(pos); hd = f.read(16); n += 1
+                sz = struct.unpack(">I", hd[:4])[0]
+                if sz == 1: sz = struct.unpack(">Q", hd[8:16])[0]
+                if sz == 0: break                      # "to the end of the file"
+                if sz < 8: break
+                if pos + sz > size: return "upload not complete (%d of %d MB) – upload it again" % (size // 1000000, (pos + sz) // 1000000)
+                pos += sz
+    except Exception: pass
+    return None
+
 def index_file(c, path, st):
     rel = os.path.relpath(path, ROOT)
     parts = rel.split(os.sep)
@@ -264,7 +283,9 @@ def index_file(c, path, st):
         else:
             row["artist"] = (tags.get("artist") or tags.get("album_artist") or "").strip()
             row["title"] = clean_title((tags.get("title") or ft or "").strip())
-        if not row["has_audio"] and not folder.upper().startswith("SHOW-INTROS"):   # show intros are picture-only on purpose
+        tr = truncated(path, st.st_size)
+        if tr: row["problem"] = tr
+        elif not row["has_audio"] and not folder.upper().startswith("SHOW-INTROS"):   # show intros are picture-only on purpose
             row["problem"] = "no sound in this file"
         elif (row["duration"] or 0) < 1:
             row["problem"] = "too short / empty"
