@@ -45,6 +45,8 @@ html{scrollbar-gutter:stable}
 #hhead .hpop .ok{color:#3DDC97}#hhead .hpop .bad{color:#FF4D5E}#hhead .hpop .big{font:800 20px ui-monospace,Menlo,Consolas,monospace;color:#FFE000}
 #hhead .hpop .note{color:#7F96AB;font-size:11px;margin-top:8px}
 #hhead #stRadio,#hhead #stTv{display:inline-block;width:11px;height:11px;padding:0;border-radius:50%;font-size:0;background:#55697D;border:0;margin:0}
+#hhead #stRadio[data-n],#hhead #stTv[data-n],#hhead #stLog[data-n]{width:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font:800 11px/18px Inter,system-ui,sans-serif;color:#061423;text-align:center;box-sizing:border-box}
+#hhead #stRadio.bad[data-n],#hhead #stTv.bad[data-n],#hhead #stLog.bad[data-n]{color:#fff}
 #hhead #stLog{display:inline-block;width:11px;height:11px;padding:0;border-radius:50%;font-size:0;border:0;margin:0;background:#3DDC97}
 #hhead #stLog.warn{background:#FFB547;box-shadow:0 0 6px rgba(255,181,71,.6)}#hhead #stLog.bad{background:#FF4D5E;box-shadow:0 0 6px rgba(255,77,94,.6)}
 #hhead #hLogPop{width:400px;max-height:70vh;overflow:auto}
@@ -52,7 +54,9 @@ html{scrollbar-gutter:stable}
 #hhead #hLogPop .m i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
 #hhead #hLogPop .m small{display:block;color:#7F96AB;font-size:11px;margin-top:1px}
 #hhead #stRadio.ok,#hhead #stTv.ok{background:#3DDC97;box-shadow:0 0 6px rgba(61,220,151,.5)}#hhead #stRadio.bad,#hhead #stTv.bad{background:#FF4D5E}
-#hhead #stClock{display:none}
+#hhead #stClock{order:5;display:inline-flex;align-items:center;gap:5px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:700 12px Inter,system-ui,sans-serif;color:#C9D7E3;background:#0F2B44;border:1px solid #23496B;border-radius:999px;padding:4px 10px;text-decoration:none}
+#hhead #stClock:hover{border-color:#05A9C6;color:#fff}
+#hhead .hst #clock{order:4}#hhead .hst .hlive,#hhead .hst .hrec{order:6}#hhead .hst>.hdots{order:1}
 #hhead #clock{font:800 20px Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.2px;color:#FFE000;margin-left:4px}
 #hhead .sp{flex:1}
 #hhead .hnav{display:flex;align-items:center;gap:2px;padding:3px;border-radius:12px;background:rgba(10,24,40,.9);border:1px solid #1E3A56;flex:none}
@@ -88,7 +92,7 @@ html{scrollbar-gutter:stable}
   h.innerHTML = `<div class="hb"><img src="/panel/logo.png" alt="Hype radio tv"><div class="show" id="show">Hype Studio</div></div>
     <div class="hctl"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button>
       <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
-    <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span></button><button class="hdots" id="hLogB" aria-haspopup="dialog" aria-expanded="false" title="Log: what Studio did – repairs, problems, messages"><span class="chip" id="stLog">● LOG</span></button><span class="chip" id="stClock">–</span><span id="clock">--:--:--</span>
+    <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span></button><button class="hdots" id="hLogB" aria-haspopup="dialog" aria-expanded="false" title="Log: what Studio did – repairs, problems, messages"><span class="chip" id="stLog">● LOG</span></button><a class="chip" id="stClock" href="/panel/plan.html" title="The hour plan that plays now – click: Planning">–</a><span id="clock">--:--:--</span>
       <button class="hlive" id="hLive" title="GO LIVE: your studio mix goes on air (click twice)"><b>GO LIVE</b><span class="t" id="hLiveT"></span></button>
       <button class="hrec" id="hRec" title="Record the TV output (Library → Recordings)"><i></i><b>REC</b><span id="hRecT"></span></button>
       <div class="hpop" id="hPop" role="dialog" aria-label="Streams" hidden></div><div class="hpop" id="hLogPop" role="dialog" aria-label="Log" hidden></div></div>
@@ -109,7 +113,7 @@ html{scrollbar-gutter:stable}
   document.addEventListener('click', e => { if (h.classList.contains('compact') && h.classList.contains('open') && !h.contains(e.target)) { h.classList.remove('open'); h.querySelector('#hMenu').setAttribute('aria-expanded', false); } });
   // radio / tv dots: the meaning on hover (the classes are set by On Air or by this script)
   new MutationObserver(() => { const r = h.querySelector('#stRadio'), t = h.querySelector('#stTv');
-    r.title = 'Radio: ' + (r.classList.contains('bad') ? 'problem / stopped' : 'on air'); t.title = 'TV: ' + (t.classList.contains('bad') ? 'problem' : 'on air'); })
+    r.title = 'Radio: ' + (r.classList.contains('bad') ? 'problem / stopped' : 'on air') + (r.dataset.n ? ' · ' + r.textContent + ' listening now' : ''); t.title = 'TV: ' + (t.classList.contains('bad') ? 'problem' : 'on air') + (t.dataset.n ? ' · ' + t.textContent + ' watching now' : ''); })
     .observe(h.querySelector('.hst'), {attributes: true, subtree: true, attributeFilter: ['class']});
   // ---- status window on the dots ----
   const pop = h.querySelector('#hPop'), dots = h.querySelector('#hDots');
@@ -169,6 +173,7 @@ html{scrollbar-gutter:stable}
   function logDot() {
     const nw = LOG.filter(m => m.t > logSeen && m.src === 'guard'), now = LOG.some(m => m.now);
     const d = h.querySelector('#stLog'); d.className = 'chip ' + (now || nw.some(m => m.lvl === 'bad' || m.lvl === 'alarm') ? 'bad' : nw.some(m => m.lvl === 'repair' || m.lvl === 'warn') ? 'warn' : '');
+    if (nw.length) { d.dataset.n = 1; d.textContent = nw.length > 99 ? '99+' : nw.length; } else { delete d.dataset.n; d.textContent = '● LOG'; }
     lb_.title = 'Log' + (now ? ' – a problem right now' : nw.length ? ' – ' + nw.length + ' new' : ' – all quiet');
   }
   function logRender() {
@@ -194,6 +199,13 @@ html{scrollbar-gutter:stable}
   document.addEventListener('click', e => { if (!lp.hidden && !lp.contains(e.target)) logOpen(false); });
   addEventListener('keydown', e => { if (e.key === 'Escape' && !lp.hidden) { logOpen(false); lb_.focus(); } });
   logLoad(); setInterval(logLoad, 30000);
+  // radio listeners and TV viewers right now, in the radio and TV dots
+  function audLoad() { fetch('/api/audience').then(r => r.json()).then(d => {
+    const put = (id, n, what) => { const el = h.querySelector(id); if (n == null) return; el.dataset.n = 1; el.textContent = n; el.dataset.what = what; };
+    put('#stRadio', d.radio && d.radio.current, 'listeners'); put('#stTv', d.tv && d.tv.current, 'viewers');
+    h.querySelector('#stRadio').title = 'Radio: ' + (d.radio ? d.radio.current + ' listening now' : '–'); h.querySelector('#stTv').title = 'TV: ' + (d.tv ? d.tv.current + ' watching now' : '–');
+  }).catch(() => {}); }
+  audLoad(); setInterval(audLoad, 15000);
   // ---- REC: start at once, stop with a second click (so it never stops by accident) ----
   const rb = h.querySelector('#hRec'); let REC = null, recAsk = 0;
   const fmtT = s => { s = Math.max(0, Math.floor(s)); const hh = Math.floor(s / 3600), mm = Math.floor(s % 3600 / 60), ss = s % 60; return (hh ? hh + ':' + String(mm).padStart(2, '0') : mm) + ':' + String(ss).padStart(2, '0'); };
@@ -244,6 +256,7 @@ html{scrollbar-gutter:stable}
     if (!S) return;
     q('#' + A).classList.toggle('on', !!S.auto); q('#' + M).classList.toggle('on', !S.auto);
     q('#stRadio').className = 'chip ' + (S.stopped ? 'bad' : 'ok'); q('#stTv').className = 'chip ' + (S.scene ? 'ok' : 'bad');
+    q('#stClock').textContent = '◷ ' + (S.clock || 'no hour plan');
     const m = S.dj && S.dj.on ? 'dj' : MODE;
     h.querySelectorAll('.modes [data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
   }
