@@ -304,6 +304,9 @@ def annotate(it, pad=False, nxt=None):
             if w and L is not None and sum(w) / len(w) >= L - 12:
                 cross = max(0.3, min(MIX_MAX, MIX_OUT, ce - cm)); fade = cross
     vm = vt_mix_at(it["path"]) if not pad and it["path"].startswith("jingles/VOICETRACK/") else None
+    vp = vt_pre(nxt["path"]) if not pad and nxt and str(nxt.get("path") or "").startswith("jingles/VOICETRACK/") else None
+    if vp:      # the next item is a voice link that starts over the END of this song: earlier, and this song stays low under it
+        end_ = max(ce, dur or ce); cm = max(cs + 1.0, min(cm, end_) - vp); cross = max(0.3, min(60.0, end_ - cm)); fade = cross
     if vm:      # a voice link that talks over the next song's intro: the song starts at the moment you started it while recording
         end_ = max(ce, dur or ce); cm = max(cs + 0.3, min(vm, end_ - 0.3)); cross = max(0.3, min(60.0, end_ - cm)); fade = 0.0
     ce = cm + cross
@@ -314,7 +317,7 @@ def annotate(it, pad=False, nxt=None):
     # one telnet line: no control characters (a newline would split the command), no " or \ inside a quoted value
     if BAD_NAME.search(it["path"]): raise ValueError("file name with control characters: %r" % it["path"])
     q = lambda v: BAD_NAME.sub(" ", str(v)).replace("\\", "/").replace('"', "'")
-    meta = (f'liq_cue_in="{cs:.2f}",liq_cue_out="{ce:.2f}",liq_cross_duration="{cross:.2f}",liq_amplify="{gain:.2f} dB",hype_fade="{fade:.2f}",' + ('hype_duck="0.35",' if vm else '') +
+    meta = (f'liq_cue_in="{cs:.2f}",liq_cue_out="{ce:.2f}",liq_cross_duration="{cross:.2f}",liq_amplify="{gain:.2f} dB",hype_fade="{fade:.2f}",' + ('hype_duck="0.35",' if vm else '') + ('hype_tail="0.35",' if vp else '') +
             f'artist="{q(it["artist"])}",title="{q(it["title"])}",hype_path="{q(it["path"])}",hype_id="{it["id"]}"')
     return f"annotate:{meta}:{os.path.join(ROOT, it['path'])}"
 
@@ -523,7 +526,11 @@ def cover_worker():
             d = json.loads(hl_call("hype_studio_cover", "&" + urllib.parse.urlencode({"artist": artist, "title": title}), timeout=15))
             if d.get("pending"): COVER_MISS[k] = time.time() - 86400 + 60      # Hype Live is still searching: again in 1 min
             elif d.get("url"):
-                img = urllib.request.urlopen(urllib.request.Request(d["url"], headers={"User-Agent": "HypeStudio/1"}), timeout=10).read(5_000_000)
+                rs = urllib.request.urlopen(urllib.request.Request(d["url"], headers={"User-Agent": "HypeStudio/1"}), timeout=20)
+                img = rs.read(5_000_000); want_ = int(rs.headers.get("Content-Length") or 0)
+                # 19 Nov: some covers arrived cut off (half a picture in the player) – only a complete picture is kept
+                if not img or (want_ and len(img) < want_) or (img[:3] == b"\xff\xd8\xff" and not img.rstrip(b"\x00\r\n ").endswith(b"\xff\xd9")):
+                    raise ValueError("cover download incomplete (%d of %s bytes)" % (len(img), want_ or "?"))
                 with open(f + ".tmp", "wb") as fh: fh.write(img)
                 os.replace(f + ".tmp", f); COVER_MISS.pop(k, None)
             else:                                                              # none found, or 🚫 Wrong cover: no cover (Hype artwork)
@@ -2613,16 +2620,28 @@ def up_chunk(qs, rfile, n):
 # ---------- voice tracking: your own links between the songs of a playlist or of a locked hour ----------
 VT_DIR = os.path.join(ROOT, "jingles", "VOICETRACK"); VT_IN = os.path.join(UP_DIR, "vt")
 VT_MIX = {}          # voice link -> the second the next song starts under it (None = after the link, as a jingle)
+VT_PRE = {}          # voice link -> how many seconds before the song before ends it starts (over the outro, the song low under it)
 def vt_db(c):
     c.execute("CREATE TABLE IF NOT EXISTS vt(path TEXT PRIMARY KEY, pid INT, tv TEXT DEFAULT '', name TEXT DEFAULT '', video INT DEFAULT 0, created REAL)")
-    if "mix_at" not in [r[1] for r in c.execute("PRAGMA table_info(vt)")]: c.execute("ALTER TABLE vt ADD COLUMN mix_at REAL")
+    cols = [r[1] for r in c.execute("PRAGMA table_info(vt)")]
+    for col, typ in (("mix_at", "REAL"), ("pre", "REAL"), ("bed", "TEXT")):
+        if col not in cols: c.execute("ALTER TABLE vt ADD COLUMN %s %s" % (col, typ))
     c.execute("CREATE TABLE IF NOT EXISTS vt_hours(pid INT PRIMARY KEY, date TEXT, hour INT, clock_id INT)")
     return c
-def vt_mix_at(path):
-    if "_loaded" not in VT_MIX:
-        try: VT_MIX.update({p_: m for p_, m in vt_db(dbc()).execute("SELECT path, mix_at FROM vt WHERE mix_at > 0")}); VT_MIX["_loaded"] = 1
-        except Exception as e: log.warning("vt mix: %s", e); return None
-    return VT_MIX.get(path)
+def vt_load():
+    if "_loaded" in VT_MIX: return True
+    try:
+        for p_, m, pr in vt_db(dbc()).execute("SELECT path, mix_at, pre FROM vt"):
+            if m and m > 0: VT_MIX[p_] = m
+            if pr and pr > 0: VT_PRE[p_] = pr
+        VT_MIX["_loaded"] = 1; return True
+    except Exception as e: log.warning("vt load: %s", e); return False
+def vt_mix_at(path): return VT_MIX.get(path) if vt_load() else None
+def vt_pre(path): return VT_PRE.get(path) if vt_load() else None
+def vt_beds(c):
+    """Music beds for voice links: the jingles in a folder with BED in its name (e.g. jingles/BEDS)."""
+    return [{"path": p_, "title": t or os.path.basename(p_), "duration": d_} for p_, t, d_ in c.execute(
+        "SELECT path, title, duration FROM items WHERE section='jingles' AND problem IS NULL AND UPPER(folder) LIKE '%BED%' ORDER BY title COLLATE NOCASE")]
 def vt_list(c, pid):
     vt_db(c)
     r = c.execute("SELECT name, strict, shuffle FROM playlists WHERE id=?", (pid,)).fetchone()
@@ -2633,16 +2652,18 @@ def vt_list(c, pid):
     out = []
     for i, p_ in enumerate(paths):
         row = c.execute("SELECT artist, title, section, duration, cue_start, cue_mix, cue_end, has_video, problem, cue_intro FROM items WHERE path=?", (p_,)).fetchone()
-        v = c.execute("SELECT tv, name, video, mix_at FROM vt WHERE path=?", (p_,)).fetchone()
+        v = c.execute("SELECT tv, name, video, mix_at, pre, bed FROM vt WHERE path=?", (p_,)).fetchone()
         it = {"i": i, "path": p_, "missing": not row}
         if row: it.update(artist=row[0], title=row[1], section=row[2], duration=row[3], cue_start=row[4] or 0, cue_mix=row[5], cue_end=row[6], video=bool(row[7]), problem=row[8], cue_intro=row[9])
         if v and v[3]: it["cue_mix"] = v[3]; it["over_intro"] = True
+        if v and v[4]: it["pre"] = v[4]
+        if v and v[5]: it["bed"] = os.path.splitext(os.path.basename(v[5]))[0]
         if v or p_.startswith("jingles/VOICETRACK/"): it["vt"] = {"tv": (v or ("",))[0], "name": (v or ("", ""))[1], "video": bool((v or (0, 0, 0))[2])}
         out.append(it)
     h = c.execute("SELECT date, hour, clock_id FROM vt_hours WHERE pid=?", (pid,)).fetchone()
     return {"ok": True, "id": pid, "name": r[0], "fixed": fixed, "strict": bool(r[1]), "shuffle": bool(r[2]), "items": out,
             "hour": {"date": h[0], "hour": h[1], "start": time.mktime(time.strptime(h[0] + " %02d" % h[1], "%Y-%m-%d %H"))} if h else None,
-            "waiting": [os.path.basename(x) for x in os.listdir(VT_IN)] if os.path.isdir(VT_IN) else []}
+            "beds": vt_beds(c)}
 def vt_write(c, pid, paths):
     """The playlist becomes exactly this list (plays as listed, once, no shuffle)."""
     c.execute("DELETE FROM playlist_sources WHERE playlist_id=?", (pid,))
@@ -2659,12 +2680,22 @@ def vt_save(d):
     c = vt_db(dbc()); r = c.execute("SELECT name FROM playlists WHERE id=?", (pid,)).fetchone()
     if not r: return {"ok": False, "error": "playlist not found"}
     video = bool(d.get("video")); ts = float(d.get("trim_start") or 0); te = float(d.get("trim_end") or 0)
+    pre = max(0.0, min(30.0, float(d.get("pre") or 0)))
+    bed = str(d.get("bed") or ""); bed_db = max(-30.0, min(-3.0, float(d.get("bed_db") or -14)))
+    if bed and not (bed.startswith("jingles/") and c.execute("SELECT 1 FROM items WHERE path=? AND section='jingles'", (bed,)).fetchone()): bed = ""
     safe = re.sub(r"[^A-Za-z0-9 _-]+", "", r[0]).strip()[:40] or "list"
     folder = os.path.join(VT_DIR, safe); os.makedirs(folder, exist_ok=True)
     base = "VT %s %s" % (safe, time.strftime("%m%d-%H%M%S")); dst = os.path.join(folder, base + (".mp4" if video else ".m4a"))
     cut = (["-ss", "%.2f" % ts] if ts > 0 else []) + (["-to", "%.2f" % te] if te > ts else [])
-    a = ["-af", "highpass=f=70,afade=t=in:d=0.03", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
-    cmd = ["nice", "-n", "10", "ffmpeg", "-y", "-loglevel", "error", "-i", src] + cut + ((["-vf", "scale=-2:720,fps=30", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p", "-g", "15"] if video else ["-vn"]) + a + ["-movflags", "+faststart", dst + ".tmp" + (".mp4" if video else ".m4a")])
+    a = ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
+    if bed:     # your voice on a music bed (looped under it, 2.5 s more at the end, then it fades out)
+        fc = ("[0:a]highpass=f=70,afade=t=in:d=0.03,apad=pad_dur=2.5[v];[1:a]volume=%.1fdB[b];[v][b]amix=inputs=2:duration=first:normalize=0[m0];"
+              "[m0]areverse,afade=t=in:d=2.5,areverse[m]" % bed_db)
+        ins = ["-i", src, "-stream_loop", "-1", "-i", os.path.join(ROOT, bed)]
+        a = ["-filter_complex", fc, "-map", "[m]"] + (["-map", "0:v"] if video else []) + a
+    else:
+        ins = ["-i", src]; a = ["-af", "highpass=f=70,afade=t=in:d=0.03"] + a
+    cmd = ["nice", "-n", "10", "ffmpeg", "-y", "-loglevel", "error"] + ins + cut + ((["-vf", "scale=-2:720,fps=30", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p", "-g", "15"] if video else ["-vn"]) + a + ["-movflags", "+faststart", dst + ".tmp" + (".mp4" if video else ".m4a")])
     p_ = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
     tmp = dst + ".tmp" + (".mp4" if video else ".m4a")
     if p_.returncode or not os.path.isfile(tmp): log.warning("vt convert: %s", p_.stderr[-300:]); return {"ok": False, "error": "could not convert the take"}
@@ -2677,8 +2708,9 @@ def vt_save(d):
     with LOCK:
         paths = vt_paths(c, pid); paths.insert(max(0, min(len(paths), after + 1)), rel); vt_write(c, pid, paths)
         ma = float(d.get("mix_at") or 0) - (ts if ts > 0 else 0); ma = ma if ma > 0.5 else None
-        c.execute("INSERT OR REPLACE INTO vt(path, pid, tv, name, video, created, mix_at) VALUES(?,?,?,?,?,?,?)", (rel, pid, str(d.get("tv") or "")[:80], str(d.get("name") or "")[:80], int(video), time.time(), ma)); c.commit()
+        c.execute("INSERT OR REPLACE INTO vt(path, pid, tv, name, video, created, mix_at, pre, bed) VALUES(?,?,?,?,?,?,?,?,?)", (rel, pid, str(d.get("tv") or "")[:80], str(d.get("name") or "")[:80], int(video), time.time(), ma, pre or None, bed or None)); c.commit()
         if ma: VT_MIX[rel] = ma
+        if pre: VT_PRE[rel] = pre
     log.info("voice link saved: %s (after item %d of playlist %d)", rel, after, pid)
     return {"ok": True, "path": rel}
 def vt_cmd(a, d):
@@ -2706,6 +2738,12 @@ def vt_cmd(a, d):
             paths = vt_paths(c, pid); i = int(d.get("i", -1)); j = i + (1 if d.get("dir") == "down" else -1)
             if not (0 <= i < len(paths) and 0 <= j < len(paths)): return {"ok": False}
             paths[i], paths[j] = paths[j], paths[i]; vt_write(c, pid, paths); return {"ok": True}
+        if a == "pre":           # how far over the end of the song before a link starts (0 = at its mix point)
+            pr = max(0.0, min(30.0, float(d.get("pre") or 0))); p_ = str(d.get("path"))
+            c.execute("UPDATE vt SET pre=? WHERE path=?", (pr or None, p_)); c.commit()
+            if pr: VT_PRE[p_] = pr
+            else: VT_PRE.pop(p_, None)
+            return {"ok": True}
         if a == "tv":            # what the TV shows during a voice-only link: '' = automatic, 'scene:<name>', 'name' (lower third)
             c.execute("UPDATE vt SET tv=?, name=? WHERE path=?", (str(d.get("tv") or "")[:80], str(d.get("name") or "")[:80], str(d.get("path")))); c.commit(); return {"ok": True}
         if a == "lock":          # a clock hour on a date, built now and kept: a playlist + a clock for that one hour
