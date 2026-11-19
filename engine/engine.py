@@ -317,6 +317,10 @@ def annotate(it, pad=False, nxt=None):
 
 BAD_NAME = re.compile(r"[\x00-\x1f\x7f]")
 DECKS_FILE = "/var/lib/hype/decks.json"
+# Preloading the next clip (paused on its keyframe) is OFF since 19 Nov 13:05: with the picture-only TV copies (no sound
+# track, since 19 Nov 00:09) OBS 32 keeps playing a "paused" clip (it says PAUSED but runs on, measured: +0.5 s after 0.5 s,
+# ENDED after 12 s) -> wrong / black starts. Without it every clip starts the normal way (as before 5 Nov).
+PRELOAD = False
 def annotate_deck(it):
     """A song for a LIVE deck: START → END, no automatic mix (you mix on the Mixcast), the same loudness as on air."""
     cs = it.get("cue_start") or 0.0; dur = it.get("duration") or it.get("cue_end") or 0; ce = it.get("cue_end") or dur
@@ -1436,7 +1440,7 @@ class Engine:
         except Exception as e:      # not reachable (restarting …): nothing was sent, it stays first in Up next
             log.warning("queue %s – %s failed (%s): stays first in Up next", it.get("artist"), it.get("title"), e); return
         self.plan.pop(0); self.liq_next = it; it["pushed"] = time.time(); warm(c, it)
-        if it.get("mode") in ("clip", "jingle-video"):
+        if it.get("mode") in ("clip", "jingle-video") and PRELOAD:
             try:
                 cf, kf_ = tv_file(c, it["path"]), keyframes(c, it["path"])
                 threading.Thread(target=self.tv.preload, args=(cf, it.get("cue_start") or 0, kf_), daemon=True).start()
