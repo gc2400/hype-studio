@@ -1,15 +1,15 @@
 {
- "time": "2026-11-19T16:23:10",
+ "time": "2026-11-19T16:29:21",
  "result": "ok",
- "commit": "907f7d9c7387844434af2c6e292ddc37e0a8c610",
- "subject": "Header clock keeps running between pages: server-time offset remembered, time shown from the first frame",
+ "commit": "9754386a9c623a6b60bb79684f312a611add1381",
+ "subject": "Mixer: every volume in one bigger window (music, studio, pads, media, guests with mute), guest volume removed from the guest cards; v2 page removed",
  "log": [
-  "16:23:10 update 31ee2239 \u2192 907f7d9c \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
-  "16:23:10 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:29:20 update 907f7d9c \u2192 9754386a \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
+  "16:29:21 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
-  "listeners": 7,
+  "song": "Chimbala x Rochy RD \u2013 Careta (Remix)",
+  "listeners": 6,
   "obs": true,
   "seg_age": 1.3,
   "problems": [],

@@ -419,3 +419,4 @@
 2026-11-19T16:09:47 ok 74ef1b52 Header: page links on the right, Hype Studio · dots · clock · switches · GO LIVE / REC on the left; the three dots (radio · TV · log) in one button with one window (tabs Streams / Log – it opens on Log when something new happened); phones fit on one line; Playlist: MAIN (was Up next)
 2026-11-19T16:21:05 ok 31ee2239 Header: dots one size and spacing, AUTO/MANUAL and mode switches outlined like the library tabs with yellow active, page links in the header font, current page yellow
 2026-11-19T16:23:10 ok 907f7d9c Header clock keeps running between pages: server-time offset remembered, time shown from the first frame
+2026-11-19T16:29:21 ok 9754386a Mixer: every volume in one bigger window (music, studio, pads, media, guests with mute), guest volume removed from the guest cards; v2 page removed
