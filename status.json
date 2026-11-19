@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T14:51:43",
+ "time": "2026-11-19T15:08:08",
  "result": "ok",
- "commit": "5d89ec0e35c09f9f23097e557c69dc1bf95f966c",
- "subject": "Panel v2: Mixer button in the on-air bar opens a small mixer (Music, Studio, Pads, TV media \u2013 the pad and media VOL moved there); calmer player row; Up next without the count line, row buttons on the card colour; pad \u2699 settings open right under the Pads title; TV media: scene picker + Edit behind \u2699; Graphics back in Scenes; library buttons on hover again",
+ "commit": "480080542e78c7e2ec0f23502466a969f5991e76",
+ "subject": "Panel: Playlist card with tabs (Up next \u00b7 AUX 1 \u00b7 AUX 2 \u00b7 Fixed times \u2013 today and tomorrow), no count line; Mixer icon next to Next opens a small mixer (Music, Studio, Pads, TV media \u2013 the pad and media VOL moved there); Pads and TV Media: \u2699 settings under the title (Duck/Video/Loop/Edit \u00b7 Sound/Plays on/Edit) and a red stop button next to it; plain button names",
  "log": [
-  "14:51:43 update f55fba59 \u2192 5d89ec0e \u00b7 1 file(s): web/panel/v2.html",
-  "14:51:43 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:08:08 update 5d89ec0e \u2192 48008054 \u00b7 1 file(s): web/panel/index.html",
+  "15:08:08 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Devi Dev x Ir Sais x Rich Kalashh \u2013 Probresa",
-  "listeners": 4,
+  "song": "Ryan Castro x Blaiz Fayah x Tribal Kush \u2013 BOMBASTIK",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
