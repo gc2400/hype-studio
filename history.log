@@ -420,3 +420,4 @@
 2026-11-19T16:21:05 ok 31ee2239 Header: dots one size and spacing, AUTO/MANUAL and mode switches outlined like the library tabs with yellow active, page links in the header font, current page yellow
 2026-11-19T16:23:10 ok 907f7d9c Header clock keeps running between pages: server-time offset remembered, time shown from the first frame
 2026-11-19T16:29:21 ok 9754386a Mixer: every volume in one bigger window (music, studio, pads, media, guests with mute), guest volume removed from the guest cards; v2 page removed
+2026-11-19T16:42:24 ok fb0a47a8 Mixer opens inside the player in place of the L/R meter, each channel with its own level; camera scenes split into CAM 1-4; playlist tab FIXED; header keeps its state between pages (no flicker)
