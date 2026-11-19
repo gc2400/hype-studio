@@ -202,12 +202,12 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .li.jg b{color:#B9A2FF}
 /* preview, scenes, pads */
 /* the 4 camera slots under the preview: open / hide (remembered) */
-.slots{margin:8px 0 2px}.slots summary{cursor:pointer;display:flex;align-items:center;gap:8px;list-style:none;padding:4px 2px;user-select:none}
+.slots{margin:0 0 2px}.slots summary{cursor:pointer;display:flex;align-items:center;gap:8px;list-style:none;padding:4px 2px;user-select:none}
 .slots summary::-webkit-details-marker{display:none}.slots>summary{display:none}.slots:not([open]){margin:0}
 .slots summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(-45deg);transition:transform .15s;margin:0 3px}
 .slots[open] summary::before{transform:rotate(45deg)}
 .slots summary .muted{font-size:11px}
-.slotg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:6px}
+.slotg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:0}
 .slot{position:relative;aspect-ratio:16/9;border-radius:9px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
 .slot video{width:100%;height:100%;object-fit:cover;display:block}
 .slotc .sl{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:10.5px;font-weight:700;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}

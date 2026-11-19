@@ -193,7 +193,8 @@ html{scrollbar-gutter:stable}
   function popOpen(o, t) { box.hidden = !o; dots.setAttribute('aria-expanded', o); clearInterval(popT); if (o) boxTab(t || TAB); }
   h.querySelectorAll('[data-ht]').forEach(b => b.onclick = e => { e.stopPropagation(); boxTab(b.dataset.ht); });
   // a click on the dots: the log when something new happened there, else the streams
-  dots.onclick = e => { e.stopPropagation(); if (!box.hidden) return popOpen(false); popOpen(true, h.querySelector('#stLog').dataset.n || h.querySelector('#stLog').classList.contains('bad') ? 'l' : 's'); };
+  dots.onclick = e => { e.stopPropagation(); const t = e.target.closest('#stLog') ? 'l' : e.target.closest('#stRadio,#stTv') ? 's' : (h.querySelector('#stLog').dataset.n ? 'l' : 's');   // the 3rd dot opens the Log
+    if (!box.hidden && TAB === t) return popOpen(false); popOpen(true, t); };
   document.addEventListener('click', e => { if (!box.hidden && !box.contains(e.target)) popOpen(false); });
   addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) { popOpen(false); dots.focus(); } });
   // ---- LOG: what Studio did (the guard's repairs + problems) and this page's messages – the dot is orange / red when
