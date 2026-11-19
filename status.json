@@ -1,17 +1,18 @@
 {
- "time": "2026-11-19T17:02:04",
+ "time": "2026-11-19T17:11:02",
  "result": "ok",
- "commit": "836cda299028ba200bd53f48e77278d7030c639a",
- "subject": "Panel: install the CAM button and mixer layout now (radio channel meters held back until the night)",
+ "commit": "ac8935815010026d01e54a0359e591dd42fec13b",
+ "subject": "Voice tracking: record your links between the songs of a playlist or of a locked hour (Voice page); links play on air at the song's mix point, TV shows your video or a chosen scene / your name",
  "log": [
-  "17:02:04 update 486ff534 \u2192 836cda29 \u00b7 1 file(s): web/panel/index.html",
-  "17:02:04 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "17:10:17 update 836cda29 \u2192 ac893581 \u00b7 4 file(s): engine/engine.py, engine/planner.py, web/panel/header.js, web/panel/voice.html",
+  "17:10:17 restart hype-engine",
+  "17:11:02 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Rich2Gether x BKO x Johnny x Jhorrmountain x Brasco \u2013 Wat Regel Je",
+  "song": "CLUB HYPE \u2013 MOJO.DJ GIVE ME SOME MO VOL. 6",
   "listeners": 6,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },

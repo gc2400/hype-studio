@@ -426,3 +426,4 @@
 2026-11-19T16:56:52 waiting 21e57a86 Scenes: CAM | 1 | 2 | 3 | 4 as one joined button (like + TEXT ⚙); mixer rows full width, value at the right. (radio.liq channel meters held back to keep the radio running – comes again as [night])
 2026-11-19T17:01:00 waiting a74fd017 [night] Radio: a level per channel (music incl. decks, pads, studio) for the panel's mixer meters
 2026-11-19T17:02:04 ok 836cda29 Panel: install the CAM button and mixer layout now (radio channel meters held back until the night)
+2026-11-19T17:11:02 ok ac893581 Voice tracking: record your links between the songs of a playlist or of a locked hour (Voice page); links play on air at the song's mix point, TV shows your video or a chosen scene / your name
