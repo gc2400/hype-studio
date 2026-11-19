@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hype Studio · Voice tracking</title>
+<link rel="icon" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--soft:#D3DEE8;--mut:#A9BCCD;--y:#FFE000;--b:#05A9C6;--g:#3DDC97;--r:#FF4D5E;--p:#B9A2FF}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
+button,input,select{font-family:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.wrap{padding:10px 14px;display:flex;flex-direction:column;gap:12px;max-width:1300px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.lab{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.between{justify-content:space-between}
+.btn{cursor:pointer;border-radius:10px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);font-weight:800;font-size:12px;min-height:34px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--b)}.btn.on{background:var(--b);color:var(--bg);border-color:var(--b)}.btn.y{background:var(--y);border-color:var(--y);color:#061423}.btn.red{background:var(--r);border-color:var(--r);color:#fff}
+.btn.sm{min-height:28px;padding:0 9px;font-size:11.5px}.btn:disabled{opacity:.4;cursor:default}
+select,input[type=date],input[type=text]{background:var(--deep);border:1px solid var(--line2);border-radius:10px;color:var(--txt);min-height:34px;padding:0 10px;font-size:13px;color-scheme:dark;max-width:100%}
+.muted{color:var(--mut);font-size:12px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.hours{display:flex;gap:6px;flex-wrap:wrap}
+.hchip{cursor:pointer;border:1px solid var(--line2);background:var(--deep);color:var(--soft);border-radius:10px;padding:6px 10px;font-size:12px;font-weight:700}
+.hchip b{color:var(--txt)}.hchip.on{border-color:var(--y);color:var(--txt)}.hchip.past{opacity:.5}
+/* the list */
+.list{display:flex;flex-direction:column}
+.it{display:grid;grid-template-columns:62px 22px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px}
+.it:hover{background:var(--deep)}
+.it .t{font:700 12px 'JetBrains Mono',monospace;color:var(--mut)}
+.it .ic{color:var(--mut);text-align:center}
+.it .tx{min-width:0}.it .tx b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.it .tx span{font-size:11.5px;color:var(--mut)}
+.it .ln{font:700 12px 'JetBrains Mono',monospace;color:var(--mut)}
+.it .acts{display:flex;gap:4px;opacity:0}.it:hover .acts,.it.vt .acts{opacity:1}
+.it.j .tx b{color:var(--p)}.it.miss .tx b{color:var(--r)}
+.it.vt{background:#14102A;border:1px solid #3A2E66;margin:2px 0}.it.vt .ic,.it.vt .tx b{color:var(--y)}
+.it.vt .tv{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:5px}.it.vt .tv select,.it.vt .tv input{min-height:28px;font-size:12px;padding:0 8px}
+.gap{display:flex;align-items:center;gap:8px;height:16px;margin:0 10px;position:relative}
+.gap::before{content:"";position:absolute;left:72px;right:0;top:50%;border-top:1px dashed transparent}
+.gap .add{opacity:0;margin-left:72px;height:22px;min-height:22px;font-size:11px;padding:0 9px;border-radius:999px;border:1px solid var(--line2);background:var(--card2);color:var(--y);font-weight:800;cursor:pointer;z-index:1}
+.gap:hover .add,.gap .add:focus-visible{opacity:1}.gap:hover::before{border-top-color:var(--line2)}
+.gap.open{height:auto;margin:6px 0}
+/* the recorder (opens in the gap) */
+.rec{flex:1;background:var(--deep);border:1px solid var(--y);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.rec .big{font:800 28px 'JetBrains Mono',monospace}
+.rec .st{font-weight:800;font-size:13px}.rec .st.live{color:var(--r)}
+.meter{height:8px;border-radius:5px;background:var(--card2);overflow:hidden}.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2FBF7A,#3DDC97 70%,#FFE000 85%,#FF4D5E);transition:width .06s linear}
+video.cam{width:100%;border-radius:10px;background:#000;aspect-ratio:16/9;object-fit:cover}
+.sum{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--soft)}.sum b{font-family:'JetBrains Mono',monospace;color:var(--txt)}.sum .warn{color:#FFB54D}
+.note{background:#2B2500;border:1px solid #5A4D00;color:#FFE95C;border-radius:10px;padding:9px 12px;font-size:12.5px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line2);border-radius:12px;padding:10px 16px;font-weight:700;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}.toast.show{opacity:1}.toast.bad{border-color:var(--r)}
+@media (max-width:640px){.it{grid-template-columns:48px minmax(0,1fr) auto}.it .ic,.it .ln{display:none}.it .acts{opacity:1}.gap .add{opacity:1;margin-left:48px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="hhead"></header><script src="/panel/header.js?v=1795103900"></script>
+  <div class="grid">
+    <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+      <section class="card">
+        <div class="row between"><span class="lab">Voice tracking</span><span class="muted">Record your links between the songs – they play on air as if you are live.</span></div>
+        <div class="row">
+          <span class="muted" style="width:72px">Playlist</span>
+          <select id="pl" style="flex:1;min-width:200px"><option value="">Choose a playlist …</option></select>
+        </div>
+        <div class="row">
+          <span class="muted" style="width:72px">Hour plan</span>
+          <input type="date" id="hDate"><select id="hHour"></select>
+          <button class="btn y" id="bLock" title="Build that hour from its hour plan now and keep it exactly like that, so you can talk about the songs">Lock this hour</button>
+        </div>
+        <div class="hours" id="hours"></div>
+      </section>
+      <section class="card" id="cList" hidden>
+        <div class="row between"><div class="row" style="gap:10px"><span class="lab" id="lName">–</span><span class="muted" id="lInfo"></span></div>
+          <div class="row" style="gap:6px"><button class="btn sm" id="bUnlock" hidden title="The hour goes back to its normal hour plan; this list and its voice links are deleted">Unlock hour</button></div></div>
+        <div class="note" id="fixNote" hidden>This playlist picks its songs itself (folders or shuffle). To record links, it becomes this exact list and plays it as listed. <button class="btn sm y" id="bFix" style="margin-left:6px">Make it this list</button></div>
+        <div class="list" id="list"></div>
+        <div class="sum" id="sum"></div>
+      </section>
+    </div>
+    <section class="card" style="position:sticky;top:10px">
+      <span class="lab">Microphone and camera</span>
+      <label class="muted">Microphone (your Mixcast)</label><select id="mic"></select>
+      <div class="meter"><i id="micLvl"></i></div>
+      <label class="muted">Camera</label><select id="cam"><option value="">No camera – voice only</option></select>
+      <video class="cam" id="camV" muted playsinline autoplay hidden></video>
+      <label class="muted">Hear the song before for</label>
+      <select id="pre"><option value="5">5 seconds</option><option value="8" selected>8 seconds</option><option value="12">12 seconds</option><option value="20">20 seconds</option></select>
+      <span class="muted">Your link starts on air where the song before mixes out (its MIX point); the end of that song fades out under your voice. Use headphones. Press the + between two songs to record.</span>
+      <button class="btn" id="bMic">Turn on microphone</button>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<audio id="aPrev" preload="auto"></audio><audio id="aTake"></audio>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const authed = r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); } return r; };
+const get = p => fetch('../api/' + p, {cache: 'no-store'}).then(authed).then(r => r.json());
+const post = (p, d) => fetch('../api/' + p, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d || {})}).then(authed).then(r => r.json());
+const toast = (t, bad) => { const e = $('#toast'); e.textContent = t; e.className = 'toast show' + (bad ? ' bad' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => e.className = 'toast', bad ? 5000 : 2600); };
+const fmt = s => { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const media = p => '../media/' + p.split('/').map(encodeURIComponent).join('/');
+const len = x => Math.max(1, ((x.cue_mix || x.cue_end || x.duration || 0) - (x.cue_start || 0)));
+const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} };
+const TVS = [['', 'TV: automatic'], ['name', 'TV: my name on screen'], ['scene:Hype Screen', 'TV: Hype Screen'], ['scene:Branding', 'TV: Branding'], ['scene:CAM 1', 'TV: CAM 1'], ['scene:CAM 2', 'TV: CAM 2'], ['scene:CAM 1 2', 'TV: CAM 1 2']];
+let PID = +(new URLSearchParams(location.search).get('pid') || ls('hypeVtPid') || 0), L = null, OPEN = -2, REC = null;
+
+// ---------- choose: a playlist or a locked hour ----------
+for (let h = 0; h < 24; h++) $('#hHour').insertAdjacentHTML('beforeend', `<option value="${h}">${String(h).padStart(2, '0')}:00</option>`);
+(() => { const t = new Date(Date.now() + 86400000); $('#hDate').value = t.toISOString().slice(0, 10); $('#hHour').value = 20; $('#hDate').min = new Date().toISOString().slice(0, 10); })();
+function loadPick() {
+  get('playlists').then(P => { const s = $('#pl'); s.innerHTML = '<option value="">Choose a playlist …</option>' + P.filter(p => !/^VT /.test(p.name)).map(p => `<option value="${p.id}">${esc(p.name)} (${p.count})</option>`).join(''); if (PID) s.value = PID; });
+  get('vt/hours').then(d => { $('#hours').innerHTML = (d.hours || []).map(h => { const t = new Date(h.start * 1000);
+    return `<button class="hchip ${h.pid === PID ? 'on' : ''} ${h.past ? 'past' : ''}" data-pid="${h.pid}"><b>${t.toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'})} ${String(h.hour).padStart(2, '0')}:00</b> · ${h.links} link${h.links === 1 ? '' : 's'}${h.past ? ' · played' : ''}</button>`; }).join('');
+    $$('#hours [data-pid]').forEach(b => b.onclick = () => open(+b.dataset.pid)); });
+}
+$('#pl').onchange = () => $('#pl').value && open(+$('#pl').value);
+$('#bLock').onclick = () => { const b = $('#bLock'); b.disabled = true; b.textContent = 'Building the hour …';
+  post('vt/lock', {date: $('#hDate').value, hour: +$('#hHour').value}).then(r => { b.disabled = false; b.textContent = 'Lock this hour';
+    if (!r.ok) return toast(r.error || 'Not locked', 1); toast(r.already ? 'That hour was locked already – opened' : 'Hour locked – it plays exactly like this'); open(r.pid); }); };
+$('#bUnlock').onclick = () => { if (!confirm('Unlock this hour? It goes back to its normal hour plan and the voice links of this hour are deleted.')) return;
+  post('vt/unlock', {pid: PID}).then(r => { if (!r.ok) return toast(r.error, 1); toast('Hour unlocked'); PID = 0; ls('hypeVtPid', 0); $('#cList').hidden = true; loadPick(); }); };
+$('#bFix').onclick = () => post('vt/fix', {pid: PID}).then(() => open(PID));
+function open(pid) { PID = pid; ls('hypeVtPid', pid); OPEN = -2; stopRec(); history.replaceState(null, '', '?pid=' + pid); reload(); loadPick(); }
+function reload() { return get('vt/list?pid=' + PID).then(d => { if (!d.ok) { $('#cList').hidden = true; return; } L = d; render(); }); }
+
+// ---------- the list ----------
+function render() {
+  $('#cList').hidden = false; $('#lName').textContent = L.name;
+  $('#bUnlock').hidden = !L.hour; $('#fixNote').hidden = L.fixed;
+  let t = L.hour ? L.hour.start : 0; const rows = []; let links = 0, tl = 0;
+  L.items.forEach((x, i) => {
+    if (i === 0) rows.push(gap(-1));
+    const at = L.hour ? new Date(t * 1000).toTimeString().slice(0, 8) : fmt(t);
+    if (x.vt) { links++; tl += len(x);
+      rows.push(`<div class="it vt" data-i="${i}"><span class="t">${at}</span><span class="ic">●</span><div class="tx"><b>Voice link${x.vt.video ? ' · video' : ''}</b>
+        ${x.vt.video ? '<span>Your video plays on TV</span>' : `<div class="tv"><select data-tv>${TVS.map(([v, l]) => `<option value="${v}" ${(x.vt.tv || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select><input type="text" data-tvn placeholder="Name on screen" value="${esc(x.vt.name || '')}" ${x.vt.tv === 'name' ? '' : 'hidden'}></div>`}</div>
+        <span class="ln">${x.duration ? fmt(len(x)) : '…'}</span><span class="acts"><button class="btn sm" data-play title="Listen: the end of the song before, then your link">▶</button><button class="btn sm" data-mv="up" title="One place up">↑</button><button class="btn sm" data-mv="down" title="One place down">↓</button><button class="btn sm" data-rm title="Delete this link">✕</button></span></div>`);
+    } else rows.push(`<div class="it ${x.section && x.section !== 'music' ? 'j' : ''} ${x.missing || x.problem ? 'miss' : ''}" data-i="${i}"><span class="t">${at}</span><span class="ic">${x.section === 'music' ? '♪' : '◆'}</span><div class="tx"><b>${x.missing ? 'Not in the library: ' + esc(x.path) : (x.artist ? esc(x.artist) + ' – ' : '') + esc(x.title || x.path.split('/').pop())}</b><span>${esc((x.path.split('/').slice(1, -1).join(' / ')) || '')}</span></div>
+      <span class="ln">${fmt(len(x))}</span><span class="acts"><button class="btn sm" data-rm title="Take it out of this list">✕</button></span></div>`);
+    rows.push(gap(i));
+    t += x.missing ? 0 : len(x);
+  });
+  $('#list').innerHTML = rows.join('') || '<span class="muted">This playlist is empty.</span>';
+  const total = L.hour ? t - L.hour.start : t, over = L.hour ? total - 3600 : 0;
+  $('#lInfo').textContent = L.hour ? 'Locked hour – plays exactly like this' : (L.fixed ? 'Plays as listed' : '');
+  $('#sum').innerHTML = `<span>Songs and jingles <b>${L.items.length - links}</b></span><span>Voice links <b>${links}</b> · <b>${fmt(tl)}</b></span><span>Total <b>${fmt(total)}</b></span>` +
+    (L.hour ? (over > 20 ? `<span class="warn">Runs ${fmt(over)} over the hour: the last item${over > 200 ? 's' : ''} will not play – take a song out (✕)</span>` : over < -120 ? `<span class="warn">${fmt(-over)} short: the normal hour plan fills the rest</span>` : '<span style="color:var(--g)">Fits the hour</span>') : '');
+  bind();
+}
+const gap = i => `<div class="gap ${OPEN === i ? 'open' : ''}" data-gap="${i}">${OPEN === i ? '<div class="rec" id="rec"></div>' : `<button class="add" data-add="${i}" title="Record a voice link here">+ Record link</button>`}</div>`;
+function bind() {
+  $$('#list [data-add]').forEach(b => b.onclick = () => { if (!L.fixed) return toast('Make it a fixed list first (the yellow box)', 1); OPEN = +b.dataset.add; render(); recUI(); });
+  $$('#list .it').forEach(el => { const i = +el.dataset.i, x = L.items[i];
+    const rm = el.querySelector('[data-rm]'); if (rm) rm.onclick = () => { if (x.vt && !confirm('Delete this voice link?')) return; if (!L.fixed) return toast('Make it a fixed list first', 1);
+      post('vt/remove', {pid: PID, i, path: x.path}).then(r => r.ok ? reload() : toast(r.error || 'Not removed', 1)); };
+    el.querySelectorAll('[data-mv]').forEach(b => b.onclick = () => post('vt/move', {pid: PID, i, dir: b.dataset.mv}).then(reload));
+    const pl = el.querySelector('[data-play]'); if (pl) pl.onclick = () => listen(i - 1, media(x.path), x.cue_start || 0);
+    const tv = el.querySelector('[data-tv]'), tn = el.querySelector('[data-tvn]');
+    if (tv) { const save = () => post('vt/tv', {path: x.path, tv: tv.value, name: tn.value}).then(() => { x.vt.tv = tv.value; x.vt.name = tn.value; });
+      tv.onchange = () => { tn.hidden = tv.value !== 'name'; if (tv.value === 'name' && !tn.value) { tn.value = ls('hypeVtName') || ''; tn.focus(); } save(); };
+      tn.onchange = () => { ls('hypeVtName', tn.value); save(); }; }
+  });
+}
+
+// ---------- microphone / camera ----------
+let STREAM = null, ACTX = null, AN = null;
+async function devices() {
+  const ds = await navigator.mediaDevices.enumerateDevices();
+  const mics = ds.filter(d => d.kind === 'audioinput'), cams = ds.filter(d => d.kind === 'videoinput');
+  const want = ls('hypeVtMic'), wantC = ls('hypeVtCam') || '';
+  $('#mic').innerHTML = mics.map(d => `<option value="${d.deviceId}">${esc(d.label || 'Microphone')}</option>`).join('') || '<option value="">No microphone found</option>';
+  const mx = mics.find(d => d.deviceId === want) || mics.find(d => /mixcast/i.test(d.label)); if (mx) $('#mic').value = mx.deviceId;
+  $('#cam').innerHTML = '<option value="">No camera – voice only</option>' + cams.map(d => `<option value="${d.deviceId}">${esc(d.label || 'Camera')}</option>`).join('');
+  if (cams.some(d => d.deviceId === wantC)) $('#cam').value = wantC;
+}
+async function micOn() {
+  if (STREAM) STREAM.getTracks().forEach(t => t.stop());
+  const cam = $('#cam').value;
+  try {
+    STREAM = await navigator.mediaDevices.getUserMedia({audio: {deviceId: $('#mic').value ? {exact: $('#mic').value} : undefined, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2, sampleRate: 48000},
+      video: cam ? {deviceId: {exact: cam}, width: {ideal: 1280}, height: {ideal: 720}, frameRate: {ideal: 30}} : false});
+  } catch (e) { toast('No access to the microphone' + (cam ? ' / camera' : '') + ': ' + e.message, 1); return false; }
+  await devices();
+  $('#camV').hidden = !cam; if (cam) $('#camV').srcObject = STREAM;
+  ACTX = ACTX || new AudioContext(); AN = ACTX.createAnalyser(); AN.fftSize = 1024; ACTX.createMediaStreamSource(STREAM).connect(AN);
+  $('#bMic').textContent = 'Microphone on'; $('#bMic').classList.add('on'); return true;
+}
+(function lvl() { if (AN) { const a = new Float32Array(AN.fftSize); AN.getFloatTimeDomainData(a); let p = 0; for (const v of a) p = Math.max(p, Math.abs(v));
+  const db = 20 * Math.log10(Math.max(p, 1e-5)); $('#micLvl').style.width = Math.max(0, Math.min(100, (db + 50) * 2)) + '%'; } requestAnimationFrame(lvl); })();
+$('#bMic').onclick = () => micOn();
+$('#mic').onchange = () => { ls('hypeVtMic', $('#mic').value); if (STREAM) micOn(); };
+$('#cam').onchange = () => { ls('hypeVtCam', $('#cam').value); if (STREAM) micOn(); };
+$('#pre').value = ls('hypeVtPre') || '8'; $('#pre').onchange = () => ls('hypeVtPre', $('#pre').value);
+navigator.mediaDevices && navigator.mediaDevices.enumerateDevices && devices();
+
+// ---------- recording in a gap ----------
+function stopRec() { if (REC && REC.mr && REC.mr.state === 'recording') REC.mr.stop(); if (REC && REC.raf) cancelAnimationFrame(REC.raf); $('#aPrev').pause(); $('#aTake').pause(); }
+function prevOf(i) { for (let k = i; k >= 0; k--) { const x = L.items[k]; if (x && !x.missing) return x; } return null; }
+function recUI(state = 'ready') {
+  const box = $('#rec'); if (!box) return; const prev = prevOf(OPEN), video = !!$('#cam').value;
+  const head = `<div class="row between"><span class="st ${state === 'rec' ? 'live' : ''}" id="recSt"></span><span class="big" id="recT">0:00</span></div>`;
+  if (state === 'ready') box.innerHTML = head + `<span class="muted">${prev ? 'You hear the last ' + $('#pre').value + ' s of <b>' + esc((prev.artist ? prev.artist + ' – ' : '') + (prev.title || '')) + '</b>; recording starts where it mixes out.' : 'The first link – recording starts at once.'} ${video ? 'With video from your camera.' : 'Voice only.'}</span>
+    <div class="row"><button class="btn red" id="rGo">● Record</button><button class="btn" id="rX">Cancel</button></div>`;
+  else if (state === 'rec') box.innerHTML = head + `<div class="meter"><i id="recLvl"></i></div><div class="row"><button class="btn red" id="rStop">■ Stop</button></div>`;
+  else box.innerHTML = head + `<audio id="tk" controls style="width:100%"></audio>
+    <div class="row"><button class="btn" id="rHear" title="The end of the song before, then your take">▶ Listen with the song</button><span style="flex:1"></span><button class="btn" id="rAgain">Record again</button><button class="btn" id="rX">Cancel</button><button class="btn y" id="rSave">Save link</button></div>`;
+  $('#recSt').textContent = state === 'ready' ? 'Ready' : state === 'rec' ? '● RECORDING' : 'Your take';
+  const q = s => box.querySelector(s);
+  if (q('#rX')) q('#rX').onclick = () => { stopRec(); REC = null; OPEN = -2; render(); };
+  if (q('#rGo')) q('#rGo').onclick = go;
+  if (q('#rStop')) q('#rStop').onclick = () => REC.mr.stop();
+  if (state === 'done') { q('#tk').src = REC.url; $('#recT').textContent = fmt(REC.secs);
+    q('#rHear').onclick = () => listen(OPEN, REC.url, 0); q('#rAgain').onclick = () => { REC = null; recUI('ready'); }; q('#rSave').onclick = save; }
+}
+async function go() {
+  if (!STREAM && !(await micOn())) return;
+  const prev = prevOf(OPEN), pre = +$('#pre').value, video = !!$('#cam').value && STREAM.getVideoTracks().length > 0;
+  const mime = video ? ['video/webm;codecs=vp8,opus', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m)) : ['audio/webm;codecs=opus', 'audio/webm'].find(m => MediaRecorder.isTypeSupported(m));
+  const st = video ? STREAM : new MediaStream(STREAM.getAudioTracks());
+  REC = {chunks: [], video, mime}; const mr = REC.mr = new MediaRecorder(st, {mimeType: mime, audioBitsPerSecond: 192000, videoBitsPerSecond: 4000000});
+  mr.ondataavailable = e => e.data.size && REC.chunks.push(e.data);
+  mr.onstop = () => { $('#aPrev').pause(); REC.blob = new Blob(REC.chunks, {type: mime}); REC.url = URL.createObjectURL(REC.blob); REC.secs = (Date.now() - REC.t0) / 1000; recUI('done'); };
+  const startRec = () => { if (mr.state !== 'inactive') return; mr.start(500); REC.t0 = Date.now(); recUI('rec');
+    const tick = () => { if (!REC || mr.state !== 'recording') return; $('#recT').textContent = fmt((Date.now() - REC.t0) / 1000); const l = $('#micLvl'); const r = $('#recLvl'); if (r && l) r.style.width = l.style.width; REC.raf = requestAnimationFrame(tick); }; tick(); };
+  if (!prev) return startRec();
+  // the song before: from (MIX − pre) to its MIX point, then recording starts; the song fades out under you (like on air)
+  const a = $('#aPrev'), mixAt = prev.cue_mix || prev.cue_end || prev.duration || 0, from = Math.max(prev.cue_start || 0, mixAt - pre);
+  a.src = media(prev.path); a.volume = 1; a.currentTime = from;
+  $('#recSt').textContent = 'The song before …'; $('#rGo').disabled = true;
+  try { await a.play(); } catch (e) { return startRec(); }
+  const w = () => { if (!REC) return; const left = mixAt - a.currentTime; $('#recT').textContent = '-' + Math.max(0, left).toFixed(1);
+    if (left <= 0.03 || a.ended) { startRec(); fadeOut(a, 2); } else REC.raf = requestAnimationFrame(w); }; w();
+}
+function fadeOut(a, s) { const v0 = a.volume, t0 = performance.now(); const f = () => { const k = (performance.now() - t0) / (s * 1000); if (k >= 1) { a.pause(); a.volume = 1; return; } a.volume = v0 * (1 - k); requestAnimationFrame(f); }; f(); }
+function listen(i, url, start) {          // the end of the song before item i+1, then the link (as on air)
+  stopRec(); const prev = prevOf(i), a = $('#aPrev'), tk = $('#aTake'); tk.src = url;
+  const play = () => { tk.currentTime = start || 0; tk.play(); };
+  if (!prev) return play();
+  const mixAt = prev.cue_mix || prev.cue_end || prev.duration || 0; a.src = media(prev.path); a.volume = 1; a.currentTime = Math.max(prev.cue_start || 0, mixAt - +$('#pre').value);
+  a.play().then(() => { const w = () => { if (a.paused) return; if (mixAt - a.currentTime <= 0.03) { play(); fadeOut(a, 2); } else requestAnimationFrame(w); }; w(); }).catch(play);
+}
+async function save() {
+  const b = $('#rSave'); b.disabled = true; b.textContent = 'Saving …';
+  const ext = REC.mime.startsWith('video') ? 'webm' : 'webm', name = 'vt_' + PID + '_' + Date.now().toString(36) + '.' + ext, blob = REC.blob;
+  const id = [...new Uint8Array(await crypto.subtle.digest('SHA-1', new TextEncoder().encode(name + blob.size)))].map(x => x.toString(16).padStart(2, '0')).join('');
+  let off = 0; const CH = 8 * 1024 * 1024;
+  try {
+    while (off < blob.size) {
+      const part = blob.slice(off, off + CH);
+      const r = await fetch(`../api/upload/chunk?id=${id}&name=${name}&folder=_vt&total=${blob.size}&off=${off}`, {method: 'POST', body: part}).then(authed).then(r => r.json());
+      if (!r.ok) throw new Error(r.error || 'upload failed');
+      off = r.done ? blob.size : r.have;
+    }
+    const tvSel = ls('hypeVtTv') || '';
+    const r = await post('vt/save', {pid: PID, after: OPEN, take: name, video: REC.video, tv: REC.video ? '' : tvSel, name: tvSel === 'name' ? (ls('hypeVtName') || '') : ''});
+    if (!r.ok) throw new Error(r.error || 'not saved');
+    toast('Voice link saved'); REC = null; OPEN = -2; reload();
+  } catch (e) { toast(e.message, 1); b.disabled = false; b.textContent = 'Save link'; }
+}
+// a new link gets the TV choice you used last
+document.addEventListener('change', e => { if (e.target.matches('[data-tv]')) ls('hypeVtTv', e.target.value); });
+loadPick(); if (PID) reload();
+</script>
+</body>
+</html>

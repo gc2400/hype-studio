@@ -21,6 +21,7 @@ web/panel/cue.js|/var/www/studio/panel/cue.js|644|-
 web/obs/feed.html|/var/www/obs/feed.html|644|-
 web/panel/library.html|/var/www/studio/panel/library.html|644|-
 web/panel/plan.html|/var/www/studio/panel/plan.html|644|-
+web/panel/voice.html|/var/www/studio/panel/voice.html|644|-
 web/panel/settings.html|/var/www/studio/panel/settings.html|644|-
 web/panel/history.html|/var/www/studio/panel/history.html|644|-
 web/panel/studio.html|/var/www/studio/panel/studio.html|644|-

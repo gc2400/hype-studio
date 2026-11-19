@@ -1803,6 +1803,7 @@ class Engine:
             if it["section"] == "music": self.intro_sweeper(c, it)
             elif (path or "").startswith("jingles/VOICE/"):      # a listener voice from an hour-plan slot: counted + the voice box on TV
                 voice_played(path); voice_box(path, 0.3, max(2.0, (it.get("cue_end") or it.get("duration") or 8) - (it.get("cue_start") or 0)))
+            elif (path or "").startswith("jingles/VOICETRACK/"): vt_on_air(c, path, it)      # your own voice link (voice tracking)
             if JINGLE_HIDE: threading.Thread(target=self.tv.jingle_graphics, args=(it["section"] != "music" and scene == "Music video" and not self.live.live,), daemon=True).start()
             try: self.screen.on_song(c, it)
             except Exception as e: log.warning("screen: %s", e)
@@ -2520,6 +2521,11 @@ def up_check(qs):
     uid = qs.get("id", [""])[0]
     if not re.fullmatch(r"[a-f0-9]{16,64}", uid): raise ValueError("bad upload id")
     folder = os.path.normpath(qs.get("folder", [""])[0]).strip("/"); parts = folder.split("/")
+    if folder == "_vt":           # a voice-tracking take (webm from the browser): staged outside the library until vt_save converts it
+        name = os.path.basename(qs.get("name", [""])[0]).strip(); total = int(qs.get("total", ["0"])[0] or 0)
+        if not re.fullmatch(r"vt_[0-9a-z_]{1,60}\.(webm|ogg|m4a|mp4)", name): raise ValueError("bad take name")
+        if total <= 0 or total > 600 * 1024 ** 2: raise ValueError("take too big")
+        os.makedirs(VT_IN, exist_ok=True); return uid, VT_IN, name, total
     media = folder == "branding/media" or (len(parts) == 4 and parts[:2] == ["branding", "slideshow"] and parts[2] in ("photos", "videos"))   # media pads / a slideshow
     if (parts[0] not in UP_SECTIONS and not media) or ".." in parts or folder.startswith("."): raise ValueError("choose a library folder")
     d = os.path.join(ROOT, folder)
@@ -2600,6 +2606,148 @@ def up_chunk(qs, rfile, n):
     except Exception as e: log.warning("upload done note: %s", e)
     log.info("uploaded from the Library page: %s (%.1f MB)", rel, total / 1048576)
     return {"ok": True, "have": have, "done": True, "path": rel}
+
+# ---------- voice tracking: your own links between the songs of a playlist or of a locked hour ----------
+VT_DIR = os.path.join(ROOT, "jingles", "VOICETRACK"); VT_IN = os.path.join(UP_DIR, "vt")
+def vt_db(c):
+    c.execute("CREATE TABLE IF NOT EXISTS vt(path TEXT PRIMARY KEY, pid INT, tv TEXT DEFAULT '', name TEXT DEFAULT '', video INT DEFAULT 0, created REAL)")
+    c.execute("CREATE TABLE IF NOT EXISTS vt_hours(pid INT PRIMARY KEY, date TEXT, hour INT, clock_id INT)")
+    return c
+def vt_list(c, pid):
+    vt_db(c)
+    r = c.execute("SELECT name, strict, shuffle FROM playlists WHERE id=?", (pid,)).fetchone()
+    if not r: return {"ok": False, "error": "playlist not found"}
+    src = c.execute("SELECT kind, ref FROM playlist_sources WHERE playlist_id=? ORDER BY pos", (pid,)).fetchall()
+    fixed = all(k == "song" for k, _ in src)
+    paths = [ref for _, ref in src] if fixed else planner.playlist_songs(c, pid)
+    out = []
+    for i, p_ in enumerate(paths):
+        row = c.execute("SELECT artist, title, section, duration, cue_start, cue_mix, cue_end, has_video, problem FROM items WHERE path=?", (p_,)).fetchone()
+        v = c.execute("SELECT tv, name, video FROM vt WHERE path=?", (p_,)).fetchone()
+        it = {"i": i, "path": p_, "missing": not row}
+        if row: it.update(artist=row[0], title=row[1], section=row[2], duration=row[3], cue_start=row[4] or 0, cue_mix=row[5], cue_end=row[6], video=bool(row[7]), problem=row[8])
+        if v or p_.startswith("jingles/VOICETRACK/"): it["vt"] = {"tv": (v or ("",))[0], "name": (v or ("", ""))[1], "video": bool((v or (0, 0, 0))[2])}
+        out.append(it)
+    h = c.execute("SELECT date, hour, clock_id FROM vt_hours WHERE pid=?", (pid,)).fetchone()
+    return {"ok": True, "id": pid, "name": r[0], "fixed": fixed, "strict": bool(r[1]), "shuffle": bool(r[2]), "items": out,
+            "hour": {"date": h[0], "hour": h[1], "start": time.mktime(time.strptime(h[0] + " %02d" % h[1], "%Y-%m-%d %H"))} if h else None,
+            "waiting": [os.path.basename(x) for x in os.listdir(VT_IN)] if os.path.isdir(VT_IN) else []}
+def vt_write(c, pid, paths):
+    """The playlist becomes exactly this list (plays as listed, once, no shuffle)."""
+    c.execute("DELETE FROM playlist_sources WHERE playlist_id=?", (pid,))
+    for i, p_ in enumerate(paths): c.execute("INSERT INTO playlist_sources(playlist_id, pos, kind, ref, amount) VALUES(?,?,?,?,1)", (pid, i, "song", p_))
+    c.execute("UPDATE playlists SET strict=1, shuffle=0, rotate=0, updated=? WHERE id=?", (time.time(), pid)); c.commit()
+def vt_paths(c, pid):
+    src = c.execute("SELECT kind, ref FROM playlist_sources WHERE playlist_id=? ORDER BY pos", (pid,)).fetchall()
+    return [r for k, r in src] if all(k == "song" for k, _ in src) else planner.playlist_songs(c, pid)
+def vt_save(d):
+    """A recorded take → a proper file in jingles/VOICETRACK/<playlist> (AAC, or H.264 + AAC with video), put in the list after song n."""
+    pid = int(d["pid"]); after = int(d.get("after", -1)); take = os.path.basename(str(d.get("take") or ""))
+    src = os.path.join(VT_IN, take)
+    if not re.fullmatch(r"vt_[0-9a-z_]{1,60}\.(webm|ogg|m4a|mp4)", take) or not os.path.isfile(src): return {"ok": False, "error": "the take was not uploaded"}
+    c = vt_db(dbc()); r = c.execute("SELECT name FROM playlists WHERE id=?", (pid,)).fetchone()
+    if not r: return {"ok": False, "error": "playlist not found"}
+    video = bool(d.get("video")); ts = float(d.get("trim_start") or 0); te = float(d.get("trim_end") or 0)
+    safe = re.sub(r"[^A-Za-z0-9 _-]+", "", r[0]).strip()[:40] or "list"
+    folder = os.path.join(VT_DIR, safe); os.makedirs(folder, exist_ok=True)
+    base = "VT %s %s" % (safe, time.strftime("%m%d-%H%M%S")); dst = os.path.join(folder, base + (".mp4" if video else ".m4a"))
+    cut = (["-ss", "%.2f" % ts] if ts > 0 else []) + (["-to", "%.2f" % te] if te > ts else [])
+    a = ["-af", "highpass=f=70,afade=t=in:d=0.03", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
+    cmd = ["nice", "-n", "10", "ffmpeg", "-y", "-loglevel", "error", "-i", src] + cut + ((["-vf", "scale=-2:720,fps=30", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p", "-g", "15"] if video else ["-vn"]) + a + ["-movflags", "+faststart", dst + ".tmp" + (".mp4" if video else ".m4a")])
+    p_ = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+    tmp = dst + ".tmp" + (".mp4" if video else ".m4a")
+    if p_.returncode or not os.path.isfile(tmp): log.warning("vt convert: %s", p_.stderr[-300:]); return {"ok": False, "error": "could not convert the take"}
+    os.replace(tmp, dst); os.remove(src)
+    try:
+        import pwd, grp; uid_, gid_ = pwd.getpwnam("upload").pw_uid, grp.getgrnam("hype").gr_gid
+        for x in (VT_DIR, folder, dst): os.chown(x, uid_, gid_)
+    except Exception: pass
+    os.chmod(dst, 0o664); rel = os.path.relpath(dst, ROOT)
+    with LOCK:
+        paths = vt_paths(c, pid); paths.insert(max(0, min(len(paths), after + 1)), rel); vt_write(c, pid, paths)
+        c.execute("INSERT OR REPLACE INTO vt VALUES(?,?,?,?,?,?)", (rel, pid, str(d.get("tv") or "")[:80], str(d.get("name") or "")[:80], int(video), time.time())); c.commit()
+    log.info("voice link saved: %s (after item %d of playlist %d)", rel, after, pid)
+    return {"ok": True, "path": rel}
+def vt_cmd(a, d):
+    c = vt_db(dbc())
+    if a == "save": return vt_save(d)
+    pid = int(d.get("pid") or 0); PV = None
+    if a == "lock":              # the hour's songs, worked out before taking the engine's lock (the preview runs on a copy)
+        try:
+            at_ = time.mktime(time.strptime(str(d.get("date")) + " %02d" % int(d.get("hour", -1)), "%Y-%m-%d %H"))
+            bc = planner.clock_for(c, at_); PV = (bc, planner.preview_hour(c, at=at_, clock=bc))
+        except (ValueError, OverflowError): return {"ok": False, "error": "choose a date and an hour"}
+    with LOCK:
+        if a == "fix":           # a playlist with folders / shuffle → this exact list (the order you see)
+            vt_write(c, pid, vt_paths(c, pid)); return {"ok": True}
+        if a == "remove":        # a song or a voice link out of the list (a link's file goes too)
+            paths = vt_paths(c, pid); p_ = str(d.get("path")); i = int(d.get("i", -1))
+            if not (0 <= i < len(paths)) or paths[i] != p_: return {"ok": False, "error": "the list changed – reload"}
+            paths.pop(i); vt_write(c, pid, paths)
+            if p_.startswith("jingles/VOICETRACK/") and p_ not in paths:
+                c.execute("DELETE FROM vt WHERE path=?", (p_,)); c.commit()
+                try: os.remove(lib_file(p_))
+                except (OSError, ValueError): pass
+            return {"ok": True}
+        if a == "move":          # a voice link one place up / down
+            paths = vt_paths(c, pid); i = int(d.get("i", -1)); j = i + (1 if d.get("dir") == "down" else -1)
+            if not (0 <= i < len(paths) and 0 <= j < len(paths)): return {"ok": False}
+            paths[i], paths[j] = paths[j], paths[i]; vt_write(c, pid, paths); return {"ok": True}
+        if a == "tv":            # what the TV shows during a voice-only link: '' = automatic, 'scene:<name>', 'name' (lower third)
+            c.execute("UPDATE vt SET tv=?, name=? WHERE path=?", (str(d.get("tv") or "")[:80], str(d.get("name") or "")[:80], str(d.get("path")))); c.commit(); return {"ok": True}
+        if a == "lock":          # a clock hour on a date, built now and kept: a playlist + a clock for that one hour
+            dt = str(d.get("date") or ""); hr = int(d.get("hour", -1))
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", dt) or not 0 <= hr <= 23: return {"ok": False, "error": "choose a date and an hour"}
+            at = time.mktime(time.strptime(dt + " %02d" % hr, "%Y-%m-%d %H"))
+            if at < time.time(): return {"ok": False, "error": "that hour has started already"}
+            if at > time.time() + 8 * 86400: return {"ok": False, "error": "at most 8 days ahead"}
+            name = "VT " + time.strftime("%a %d %b %H:00", time.localtime(at))
+            old = c.execute("SELECT id FROM playlists WHERE name=?", (name,)).fetchone()
+            if old: return {"ok": True, "pid": old[0], "already": True}
+            base_cid, pv = PV
+            paths = [x["path"] for x in pv.get("items", []) if not x.get("fixed")]
+            if not paths: return {"ok": False, "error": "the clock gives nothing for that hour"}
+            pid = c.execute("INSERT INTO playlists(name, loop, shuffle, rotate, strict, updated) VALUES(?,0,0,0,1,?)", (name, time.time())).lastrowid
+            vt_write(c, pid, paths)
+            slots = [{"kind": "playlist", "ref": str(pid), "amount": 0, "start": "continue"}]
+            slots += [dict(kind=k, ref=r, amount=a_, start=st) for k, r, a_, st in (planner.slots(c, base_cid) if base_cid else [])]   # after your list: the normal clock
+            cid = planner.api_save_clock(c, {"name": name, "color": "#FF4D5E", "resume": False, "slots": slots})
+            planner.api_set_schedule_date(c, {"cells": [{"date": dt, "hour": hr, "clock_id": cid}]})
+            c.execute("INSERT OR REPLACE INTO vt_hours VALUES(?,?,?,?)", (pid, dt, hr, cid)); c.commit()
+            E.replan(); return {"ok": True, "pid": pid}
+        if a == "unlock":        # the hour goes back to its normal clock; the list and its voice links are deleted
+            h = c.execute("SELECT date, hour, clock_id FROM vt_hours WHERE pid=?", (pid,)).fetchone()
+            if not h: return {"ok": False, "error": "not a locked hour"}
+            planner.api_set_schedule_date(c, {"cells": [{"date": h[0], "hour": h[1], "clock_id": None}]})
+            c.execute("DELETE FROM clocks WHERE id=?", (h[2],)); c.execute("DELETE FROM clock_slots WHERE clock_id=?", (h[2],))
+            for (p_,) in c.execute("SELECT path FROM vt WHERE pid=?", (pid,)).fetchall():
+                try: os.remove(lib_file(p_))
+                except (OSError, ValueError): pass
+            c.execute("DELETE FROM vt WHERE pid=?", (pid,)); c.execute("DELETE FROM vt_hours WHERE pid=?", (pid,))
+            c.execute("DELETE FROM playlists WHERE id=?", (pid,)); c.execute("DELETE FROM playlist_sources WHERE playlist_id=?", (pid,)); c.execute("DELETE FROM playlist_state WHERE playlist_id=?", (pid,)); c.commit()
+            E.replan(); return {"ok": True}
+    return {"ok": False, "error": "unknown"}
+def vt_hours_list():
+    c = vt_db(dbc()); now = time.time(); out = []
+    for pid, dt, hr, cid in c.execute("SELECT pid, date, hour, clock_id FROM vt_hours ORDER BY date, hour").fetchall():
+        at = time.mktime(time.strptime(dt + " %02d" % hr, "%Y-%m-%d %H"))
+        if at + 3600 < now - 86400: continue
+        n = c.execute("SELECT COUNT(*) FROM vt WHERE pid=?", (pid,)).fetchone()[0]
+        out.append({"pid": pid, "date": dt, "hour": hr, "start": at, "links": n, "past": at + 3600 < now})
+    return out
+def vt_on_air(c, path, it):
+    """A voice link starts: what the TV shows (a scene, or your name as a lower third) when you chose that for it."""
+    try: r = vt_db(c).execute("SELECT tv, name, video FROM vt WHERE path=?", (path,)).fetchone()
+    except Exception: return
+    if not r or r[2]: return
+    tv, name = r[0] or "", r[1] or ""
+    if tv.startswith("scene:"):
+        try: E.tv.set_scene(tv[6:])
+        except Exception as e: log.warning("voice link scene: %s", e)
+    elif tv == "name" and name.strip():
+        lower_cmd({"action": "show", "name": name.strip(), "role": ""})
+        dur = max(3.0, (it.get("cue_end") or it.get("duration") or 8) - (it.get("cue_start") or 0) - 0.5)
+        threading.Timer(dur, lambda: E.now.get("path") == path and lower_cmd({"action": "hide"})).start()
 
 def lib_file(path):
     """A file in the library (under ROOT) - never an absolute path or ../ outside it."""
@@ -3238,6 +3386,8 @@ class H(BaseHTTPRequestHandler):
             if p == "/weekreport": return self.send(200, week_report(qs))
             if p == "/recap": return self.send(200, recap_data(int((qs.get("w") or ["1"])[0])))
             if p == "/top10": return self.send(200, top10_data() or {})
+            if p == "/vt/list": return self.send(200, vt_list(dbc(), int((qs.get("pid") or ["0"])[0])))
+            if p == "/vt/hours": return self.send(200, {"hours": vt_hours_list()})
             if p == "/hl_needs":     # the "Needs you" count for the header badge (from the last sync answer)
                 try: s_ = json.load(open(HL_SYNC)); return self.send(200, {"needs": s_.get("needs") or {}, "t": s_.get("_t", 0)})
                 except Exception: return self.send(200, {"needs": {}, "t": 0})
@@ -3404,6 +3554,10 @@ class H(BaseHTTPRequestHandler):
         p = urlparse(self.path).path.replace("/api", "", 1)
         if p == "/track":
             self.send(200, {"ok": True}); threading.Thread(target=E.on_track, args=(d,), daemon=True).start(); return
+        if p.startswith("/vt/"):
+            try: return self.send(200, vt_cmd(p[4:], d))
+            except (ValueError, KeyError) as e: return self.send(400, {"ok": False, "error": str(e)})
+            except Exception as e: log.warning("vt %s: %s", p, e); return self.send(500, {"ok": False, "error": str(e)})
         if p == "/deck_track":
             self.send(200, {"ok": True}); threading.Thread(target=E.on_deck, args=(d,), daemon=True).start(); return
         if p.startswith("/plan/"):

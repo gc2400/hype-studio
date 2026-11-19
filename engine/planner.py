@@ -727,14 +727,15 @@ def slot_label(c, sl, row):
     if kind == "song": return "One song"
     if kind in ("jingle", "showjingle"): return (str(ref).split("/")[-1] if ref else "Jingles") + (" (show)" if kind == "showjingle" else "")
     return kind
-def preview_hour(c, day=None, hour=None, clock=None):
-    """What an hour will sound like + warnings. Runs on an in-memory copy, so nothing on air changes."""
-    try: return _preview_hour(c, day, hour, clock)
+def preview_hour(c, day=None, hour=None, clock=None, at=None):
+    """What an hour will sound like + warnings. Runs on an in-memory copy, so nothing on air changes. at = an exact hour (voice tracking)."""
+    try: return _preview_hour(c, day, hour, clock, at)
     finally: CTX["preview"] = False
-def _preview_hour(c, day=None, hour=None, clock=None):
+def _preview_hour(c, day=None, hour=None, clock=None, at=None):
     mem = sqlite3.connect(":memory:"); c.backup(mem)
     now = time.time(); start = (int(now) // 3600 + 1) * 3600
-    if day is not None and hour is not None:
+    if at: start = int(at)
+    elif day is not None and hour is not None:
         t = (int(now) // 3600) * 3600
         for _ in range(24 * 8):
             lt = time.localtime(t)
@@ -782,7 +783,7 @@ def _preview_hour(c, day=None, hour=None, clock=None):
         row = mem.execute("SELECT artist, title, folder, section, COALESCE(cue_mix, cue_end, duration, 180) - COALESCE(cue_start, 0), has_video, mode FROM items WHERE path=?", (p_,)).fetchone()
         if not row: break
         ln = max(3.0, row[4] or 180); recent.append(p_); arts.extend(akey(row[0]))
-        items.append(dict(t=t, artist=row[0], title=row[1], folder=row[2], section=row[3], length=round(ln), mode=row[6], cat=slot_label(mem, None if fixed_ else r.last_slot, row)))
+        items.append(dict(t=t, path=p_, fixed=fixed_, artist=row[0], title=row[1], folder=row[2], section=row[3], length=round(ln), mode=row[6], cat=slot_label(mem, None if fixed_ else r.last_slot, row)))
         t += ln
     songs = sum(1 for x in items if x["section"] == "music"); jingles = len(items) - songs
     over = round(t - (start + 3600))
