@@ -1,18 +1,18 @@
 {
- "time": "2026-11-19T13:03:35",
+ "time": "2026-11-19T13:11:33",
  "result": "ok",
- "commit": "b6b300c3bdf18ef4438c3cc407003d9ba4386370",
- "subject": "TV: preloading the next clip OFF \u2013 OBS keeps playing a 'paused' picture-only clip (measured all afternoon 19 Nov), which gave wrong / black starts (TOH 13:01, sweepers); every clip starts the normal way again",
+ "commit": "5752f4cb99a6175b350c8d3abaeb296a07c57105",
+ "subject": "TV preload back on, the right way: seek first, then pause, then check the clip really stands still (3 tries, else the normal start). Measured on air: pause-then-seek let OBS run a picture-only clip on in 3 of 5 tries (the cause of today's wrong / black starts since the TV copies lost their sound track), seek-then-pause held 7 of 7",
  "log": [
-  "13:02:50 update d5f8aa54 \u2192 b6b300c3 \u00b7 1 file(s): engine/engine.py",
-  "13:02:50 restart hype-engine",
-  "13:03:35 installed OK \u00b7 restarted: hype-engine"
+  "13:10:48 update b6b300c3 \u2192 5752f4cb \u00b7 1 file(s): engine/engine.py",
+  "13:10:48 restart hype-engine",
+  "13:11:33 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "MOLIY x Tyla \u2013 Body Go",
+  "song": "Rema \u2013 Bounce",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
