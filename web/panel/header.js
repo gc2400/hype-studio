@@ -4,7 +4,7 @@
   const P = [['/panel/', 'Panel', 'onair'], ['/panel/library.html', 'Library', 'library'], ['/panel/plan.html', 'Planning', 'plan'],
              ['/panel/history.html', 'Reports', 'history'], ['/panel/studio.html', 'Broadcast', 'studio'], ['/panel/hypelive.html', 'Hype Live', 'hypelive'], ['/panel/settings.html', 'Settings', 'settings'], ['/', 'Status', 'status']];
   const f = location.pathname.split('/').pop().replace('.html', '') || 'index';
-  const cur = !location.pathname.startsWith('/panel') ? 'status' : f === 'index' ? 'onair' : f === 'help' ? 'settings' : f, home = cur === 'onair';
+  const cur = !location.pathname.startsWith('/panel') ? 'status' : (f === 'index' || f === 'v2') ? 'onair' : f === 'help' ? 'settings' : f, home = cur === 'onair';
   const A = home ? 'bAuto' : 'hAuto', M = home ? 'bManual' : 'hManual';     // On Air binds its own buttons
   const st = document.createElement('style');
   st.textContent = `
