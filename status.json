@@ -1,18 +1,17 @@
 {
- "time": "2026-11-19T18:02:52",
- "result": "ok",
- "commit": "1073e934da923c769e60455f8c53c51ab8ed1aff",
- "subject": "Voice: a link can start N s over the end of the song before (the song stays low under you) and can have a music bed (from a jingles folder with BED in its name); covers: only complete pictures are kept",
+ "time": "2026-11-19T18:04:57",
+ "result": "waiting",
+ "commit": "6d701e412950fbe4c164b95cf6a77b13494b43cf",
+ "subject": "[night] Radio: mixer channel meters; voice tracking: the song before stays low under a link that starts over its end, the next song stays low under a link that talks over its intro",
  "log": [
-  "18:02:07 update b81649ca \u2192 1073e934 \u00b7 2 file(s): engine/engine.py, web/panel/voice.html",
-  "18:02:07 restart hype-engine",
-  "18:02:52 installed OK \u00b7 restarted: hype-engine"
+  "18:04:57 update 1073e934 \u2192 6d701e41 \u00b7 1 file(s): radio/radio.liq",
+  "18:04:57 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
   "song": "Fireboy DML x Masicka \u2013 CLAAT!",
   "listeners": 5,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
