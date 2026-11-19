@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T14:26:04",
+ "time": "2026-11-19T14:29:11",
  "result": "ok",
- "commit": "3a12b48498cbf946cd4b989cd567a17b51c27de0",
- "subject": "Panel v2 closer to the concept: the on-air bar as one calm row (cover \u00b7 title + waveform \u00b7 time left + next \u00b7 buttons \u00b7 faders with meters), info line + Messages under it; the left column's tabs and list are one card; library rows show their buttons all the time; scene group tabs above the scenes; plain button names",
+ "commit": "f55fba5920708bf12f5acd81332aa0aa05f6547e",
+ "subject": "Panel v2 responsive: laptop / tablet / phone layouts checked with screenshots \u2013 the on-air bar stacks (no sticky bar below 1300 px, it would cover the screen), big touch buttons on phones, an old leftover layout rule removed",
  "log": [
-  "14:26:04 update 52f80d1f \u2192 3a12b484 \u00b7 1 file(s): web/panel/v2.html",
-  "14:26:04 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:29:11 update 3a12b484 \u2192 f55fba59 \u00b7 1 file(s): web/panel/v2.html",
+  "14:29:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Ozuna x Kapo \u2013 Mas Que Tu",
-  "listeners": 4,
+  "song": "AK Chaba \u2013 Afspraak",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
