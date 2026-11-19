@@ -108,10 +108,52 @@ s = smooth_add(duration=0.4, p={duck()}, normal=s, special=over)   # (no longer 
 # --- pads: jingles / FX played over the music without ducking ---
 padq = request.queue(id="pads")
 pads = amplify(vol_pads, drop_metadata(amplify(override="liq_amplify", 1., padq)))
-s = add(normalize=false, [s, pads])
+music = s
+
+# --- the two DJ decks for LIVE (Broadcast page → "Split"): two players of their own, each plays one song to its END, no
+#     automatic mixing (you mix on the Mixcast). The engine starts / fades / stops them. Not LIVE they are never used.
+#     Split: deck 1 (AUX 1) on the return stream (Mixcast USB), deck 2 (AUX 2) on "return2" (laptop jack → Mixcast aux line);
+#     pads + media follow the deck chosen there. Single studio mix: everything on "return", as before.
+split_on = interactive.bool("split_on", false)
+pads_to2 = interactive.bool("pads_to2", false)
+deck_v1 = interactive.float("deck_v1", min=0., max=1., description="deck 1 level (the engine fades it)", 1.)
+deck_v2 = interactive.float("deck_v2", min=0., max=1., description="deck 2 level (the engine fades it)", 1.)
+def deck_notify(n, m) =
+  if m["hype_path"] != "" then
+    data = json.stringify({hype_path = m["hype_path"], hype_id = m["hype_id"], deck = n})
+    thread.run(fun () -> ignore(http.post(data=data, headers=[("Content-Type","application/json")], "http://127.0.0.1:8090/deck_track")))
+  end
+end
+d1q = request.queue(id="d1")
+d1 = cue_cut(id="dcue1", cue_in_metadata="liq_cue_in", cue_out_metadata="liq_cue_out", on_cue_in=fun () -> (), on_cue_out=fun () -> (), d1q)
+d1 = source.on_metadata(d1, fun (m) -> deck_notify("1", m))
+d1 = amplify(override=null(), deck_v1, amplify(override="liq_amplify", 1., d1))
+d2q = request.queue(id="d2")
+d2 = cue_cut(id="dcue2", cue_in_metadata="liq_cue_in", cue_out_metadata="liq_cue_out", on_cue_in=fun () -> (), on_cue_out=fun () -> (), d2q)
+d2 = source.on_metadata(d2, fun (m) -> deck_notify("2", m))
+d2 = amplify(override=null(), deck_v2, amplify(override="liq_amplify", 1., d2))
+def deck_stop(v) =
+  if v == "2" then
+    d2q.set_queue([])
+    d2q.skip()
+  else
+    d1q.set_queue([])
+    d1q.skip()
+  end
+  "OK"
+end
+server.register(namespace="deck", "stop", deck_stop)
+on1 = fun () -> if split_on() and pads_to2() then 0. else 1. end
+on2 = fun () -> if split_on() then 1. else 0. end
+# on air (automation): the decks are in it too – while LIVE they only reach the air through your Mixcast, but when the
+# studio signal drops, the listeners still hear the deck that plays
+s = add(normalize=false, [s, pads, d1, d2])
 # the automation UNPROCESSED for the studio's Mixcast (levelled per song + AGC, only a peak safety): during LIVE the Mixcast
 # mix comes back and is processed once on the way to air - so the music is never compressed twice
-ret = mksafe(ladspa.fastlookaheadlimiter(input_gain=0., limit=-1., release_time=0.08, s))
+ret = mksafe(ladspa.fastlookaheadlimiter(input_gain=0., limit=-1., release_time=0.08,
+        add(normalize=false, [music, amplify(override=null(), on1, pads), d1, amplify(override=null(), {1. - on2()}, d2)])))
+ret2 = mksafe(ladspa.fastlookaheadlimiter(input_gain=0., limit=-1., release_time=0.08,
+        add(normalize=false, [amplify(override=null(), on2, d2), amplify(override=null(), {1. - on1()}, pads)])))
 
 # --- broadcast processing: warm bass, light compression, loud but clean limiter ---
 # Sound presets on ONE chain (switching chains is not possible here): snd_punch 0 = classic (the sliders), 1 = "Hype Punch":
@@ -289,3 +331,6 @@ output.pulseaudio(device="hype_fx", clock_safe=false, fx)
 # made the studio's player speed up / slow down and hiccup.)
 output.url(url="rtsp://127.0.0.1:8554/return",
   %ffmpeg(format="rtsp", rtsp_transport="tcp", %audio(codec="libopus", b="256k", samplerate=48000, channels=2, application="audio", frame_duration=20)), ret)
+# deck 2 for the laptop's second output (Split, LIVE) – silent otherwise
+output.url(url="rtsp://127.0.0.1:8554/return2",
+  %ffmpeg(format="rtsp", rtsp_transport="tcp", %audio(codec="libopus", b="256k", samplerate=48000, channels=2, application="audio", frame_duration=20)), ret2)

@@ -219,6 +219,7 @@ dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
 </dialog>
 <div class="toast" id="toast" role="status"></div>
 <script src="cuewave.js"></script>
+<script src="cue.js"></script>
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const api = (p, body) => fetch('../api/' + p, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); } return r.json(); });

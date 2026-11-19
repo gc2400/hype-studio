@@ -173,6 +173,7 @@ html{scrollbar-gutter:stable}
     d.textContent = t; d.hidden = false; clearTimeout(hTip.t); hTip.t = setTimeout(() => { d.hidden = true; }, 3500); };
   function livePaint() {
     const on = !!(LVH && LVH.live), ask = liveAsk && Date.now() < liveAsk; if (!ask) liveAsk = 0;
+    window.HYPE_LIVE = on; document.body.classList.toggle('onlive', on);      // (cue.js: CUE buttons + previews on the cue output)
     lb.classList.toggle('on', on); lb.classList.toggle('ask', !!ask); lb.classList.toggle('off', !on && !(LVH && LVH.studio_online));
     lb.querySelector('b').textContent = ask ? (on ? 'END LIVE?' : 'GO LIVE?') : (on ? 'LIVE' : 'GO LIVE');
     h.querySelector('#hLiveT').textContent = on && LVH.live_since && !ask ? fmtT(Date.now() / 1000 - LVH.live_since) : '';

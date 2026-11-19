@@ -316,6 +316,16 @@ def annotate(it, pad=False, nxt=None):
     return f"annotate:{meta}:{os.path.join(ROOT, it['path'])}"
 
 BAD_NAME = re.compile(r"[\x00-\x1f\x7f]")
+DECKS_FILE = "/var/lib/hype/decks.json"
+def annotate_deck(it):
+    """A song for a LIVE deck: START → END, no automatic mix (you mix on the Mixcast), the same loudness as on air."""
+    cs = it.get("cue_start") or 0.0; dur = it.get("duration") or it.get("cue_end") or 0; ce = it.get("cue_end") or dur
+    gain = 0.0 if it.get("lufs") is None else max(-12.0, min(12.0, TARGET_LUFS - it["lufs"]))
+    if it.get("section") in ("jingles", "ads"): gain += JINGLE_DB
+    q = lambda v: BAD_NAME.sub(" ", str(v or "")).replace("\\", "/").replace('"', "'")
+    meta = (f'liq_cue_in="{cs:.2f}",' + (f'liq_cue_out="{ce:.2f}",' if ce > cs else "") + f'liq_amplify="{gain:.2f} dB",'
+            f'artist="{q(it.get("artist"))}",title="{q(it.get("title"))}",hype_path="{q(it["path"])}",hype_id="{it["id"]}"')
+    return f"annotate:{meta}:{os.path.join(ROOT, it['path'])}"
 def plain_len(it):
     """Length from the cue points only (no loudness maps) - for quick estimates over many songs."""
     return max(1.0, (it.get("cue_mix") or it.get("cue_end") or it.get("duration") or 180) - (it.get("cue_start") or 0))
@@ -986,6 +996,13 @@ class Engine:
         self.live = live.Live(self.liq, self.tv, lambda: SHOW.get("title") or "show")
         self.tv.live = self.live.live; self.tv.route_audio(force=True)
         self.live.song_scene = lambda: (self.now or {}).get("scene") or "Hype Screen"     # the automatic scene for what plays now (studio drop-out)
+        self.decks = {"1": None, "2": None}; self.tv_deck = None; self._air_lost = None
+        try: self.overlap = bool(json.load(open(DECKS_FILE)).get("overlap"))
+        except Exception: self.overlap = False
+        for k_ in ("1", "2"):
+            try: self.liq.cmd(f"deck.stop {k_}"); self.liq.cmd(f"var.set deck_v{k_} = 1.0")    # (after an engine restart: no forgotten deck)
+            except Exception: pass
+        threading.Thread(target=self.deck_watch, daemon=True).start()
         load_rotation()
         global MIX_OUT
         try: MIX_OUT = float(self.liq.cmd("var.get mix_out").split()[-1])
@@ -1354,6 +1371,7 @@ class Engine:
         force, for PLAY NOW / MIX / skip). Liquidsoap prepares a queued song at once and it can't be pulled back after
         that, so until then Up next stays fully yours: change, move, remove, nothing plays twice."""
         if self.liq_next or self.stop_at_end or self.stopped: return
+        if not force and self.decks_hold(): return          # LIVE · Split: the decks play, the automation waits
         if not force and self.now.get("path") and self.plan:
             left = (self.now.get("started") or 0) + self.length(self.now) - time.time()
             if left > PUSH_LEAD: return                    # the tick (every second) queues it in time
@@ -1452,6 +1470,118 @@ class Engine:
             cand = [row_item(r, "clock") for r in rows if r[0] not in paths and not (set(artist_key(r[1])) & arts)]
             if cand: return min(cand, key=lambda i: planner.fit_score(plain_len(i), gap))   # cue length: no loudness maps for every song (runs under LOCK, just before :00)
         return None
+    # ---------- the two DJ decks for LIVE (Broadcast page → Split) ----------
+    # AUX 1 = deck 1 (laptop output 1 → Mixcast USB), AUX 2 = deck 2 (output 2 → Mixcast aux line). Each deck plays one song
+    # to its END when you press play, then stops (the next song of that AUX waits on top). The automation waits meanwhile.
+    # OVERLAP off: starting a deck fades the other one out. OVERLAP on: both play; the TV follows the deck you started last
+    # (when that one ends, the TV goes to the one still playing). Pads + media go to the deck chosen on the Broadcast page.
+    def deck_mode(self):
+        if not self.live.split(): return False
+        return not (self._air_lost and time.time() - self._air_lost > 15)     # the studio signal gone 15 s: the automation again
+    def decks_hold(self):
+        if not hasattr(self, "decks"): return False      # (still starting)
+        return self.deck_mode() or any(self.decks.values())
+    def deck_play(self, c, k, iid=None):
+        L = self.aux.get(k) or []
+        it = next((x for x in L if x.get("id") == iid), None) if iid else (L[0] if L else None)
+        if not it: return {"ok": False, "error": "AUX %s is empty – drag songs into it" % k}
+        path = os.path.join(ROOT, it.get("path") or "")
+        if BAD_NAME.search(it.get("path") or "") or not os.path.isfile(path): return {"ok": False, "error": "file not found: " + (it.get("path") or "")}
+        self.aux[k] = [x for x in L if x is not it]; self.aux_save_file()
+        it = dict(it, id=uuid.uuid4().hex[:10], src="deck", deck=k)
+        self.automation_off()
+        o = "2" if k == "1" else "1"
+        if not self.overlap and self.decks.get(o): self.deck_fade_stop(o, 1.5)
+        if self.decks.get(k): self.liq.cmd(f"deck.stop {k}")       # this deck was playing: the new song replaces it
+        self.liq.cmd(f"var.set deck_v{k} = 1.0")
+        self.liq.cmd(f"d{k}.push " + annotate_deck(it))
+        cs = it.get("cue_start") or 0; ce = it.get("cue_end") or it.get("duration") or 0
+        self.decks[k] = {"it": it, "pushed": time.time(), "t0": None, "len": max(0.5, ce - cs)}
+        log.info("deck %s: %s – %s", k, it.get("artist"), it.get("title"))
+        return {"ok": True}
+    def automation_off(self):
+        """The first deck you start takes over from the automation: the song on the automation fades out (1.2 s)."""
+        n = self.now or {}
+        self.take_back_next()
+        if n.get("src") in ("deck", "deck_gone") or not n.get("path") or time.time() > (n.get("started") or 0) + self.length(n) + 3: return
+        self.now = dict(n, src="deck_gone")
+        def go():
+            try:
+                for i in range(1, 13): self.liq.cmd(f"var.set duck_lvl = {1 - i / 12:.3f}"); time.sleep(0.1)
+                self.liq.cmd("radio.clear"); self.liq.cmd("radio.skip"); time.sleep(0.3)
+            finally:
+                try: self.liq.cmd("var.set duck_lvl = 1.0")
+                except Exception: pass
+        threading.Thread(target=go, daemon=True).start()
+    def deck_fade_stop(self, k, secs=1.0):
+        D = self.decks.get(k)
+        if not D: return
+        self.decks[k] = None; self.deck_gone(k)
+        def go():
+            n = max(1, int(secs / 0.1))
+            for i in range(1, n + 1):
+                if self.decks.get(k): return          # started again meanwhile: leave it
+                try: self.liq.cmd(f"var.set deck_v{k} = {1 - i / n:.3f}")
+                except Exception: pass
+                time.sleep(0.1)
+            if self.decks.get(k): return
+            try: self.liq.cmd(f"deck.stop {k}"); time.sleep(0.2); self.liq.cmd(f"var.set deck_v{k} = 1.0")
+            except Exception: pass
+        threading.Thread(target=go, daemon=True).start()
+    def deck_gone(self, k):
+        """Deck k ended / stopped: the TV goes to the other deck when it still plays."""
+        if self.tv_deck != k: return
+        o = "2" if k == "1" else "1"
+        if self.decks.get(o) and self.decks[o].get("t0"): self.tv_deck = o; self.deck_show(o, fresh=False)
+        else:
+            self.tv_deck = None
+            try: self.tv.show("audio", None, 0)
+            except Exception as e: log.warning("deck TV: %s", e)
+    def deck_show(self, k, fresh):
+        D = self.decks[k]; it = D["it"]; c = dbc(); path = it["path"]; mode = it.get("mode")
+        clip_file = None; start_at = 0; sound = False; gain = 0.0; kf = None
+        if mode in ("jingle-video", "clip"): clip_file, start_at, kf = tv_file(c, path), it.get("cue_start") or 0, keyframes(c, path)
+        elif mode == "pair" and it.get("clip_path"): clip_file, start_at, sound, gain = pair_clip(c, it["clip_path"])
+        if not fresh: start_at += time.time() - D["t0"]; kf = None      # the other deck, half-way: its video at the same spot
+        scene = self.tv.show(mode, clip_file, start_at, sound, gain, kf)
+        self.now = dict(it, started=D["t0"], scene=scene)
+        return c, scene
+    def on_deck(self, d):
+        t0 = time.time(); k = str(d.get("deck") or "")
+        with LOCK:
+            D = self.decks.get(k)
+            if not D or D["it"]["id"] != d.get("hype_id") or D.get("t0"): return
+            D["t0"] = t0; self.tv_deck = k
+            try:
+                c, scene = self.deck_show(k, fresh=True); it = D["it"]
+                c.execute("INSERT INTO asrun(started,path,artist,title,folder,mode,clip,scene,kind) VALUES(?,?,?,?,?,?,?,?,?)",
+                          (t0, it["path"], it.get("artist"), it.get("title"), it.get("folder"), it.get("mode"), it.get("clip_path"), scene, it.get("section"))); c.commit()
+                log.info("DECK %s ON AIR %s – %s scene=%s", k, it.get("artist"), it.get("title"), scene)
+                try: self.screen.on_song(c, it)
+                except Exception as e: log.warning("screen: %s", e)
+                hl_send_np(c, it); relay_title(it)
+            except Exception as e: log.warning("deck %s start: %s", k, e)
+    def deck_watch(self):
+        while True:
+            time.sleep(0.5)
+            try:
+                with LOCK:
+                    now = time.time()
+                    if self.live.split() and getattr(self.live, "air", "studio") != "studio": self._air_lost = self._air_lost or now
+                    else: self._air_lost = None
+                    for k, D in list(self.decks.items()):
+                        if not D: continue
+                        if D.get("t0") and now > D["t0"] + D["len"] + 0.3:
+                            self.decks[k] = None; self.deck_gone(k)
+                        elif not D.get("t0") and now - D["pushed"] > 12:
+                            log.warning("deck %s: %s never started", k, D["it"].get("title")); self.decks[k] = None
+            except Exception as e: log.warning("decks: %s", e)
+    def decks_state(self):
+        out = {}
+        for k, D in self.decks.items():
+            if D: out[k] = dict({x: D["it"].get(x) for x in ("id", "path", "artist", "title", "folder", "duration", "cue_start", "cue_end", "mode")}, started=D.get("t0"), air=round(D["len"], 1))
+        return {"on": self.deck_mode(), "overlap": self.overlap, "tv": self.tv_deck, "playing": out,
+                "pads_to": self.live.st.get("pads_to", "1")}
     def take_back_next(self):
         """Pull the already-queued song back out of Liquidsoap (it goes back to the top of the plan)."""
         if self.liq_next:
@@ -1535,6 +1665,7 @@ class Engine:
             c = dbc()
             try: self.check_events(c)
             except Exception as ex: log.warning("events: %s", ex)
+            if self.decks_hold(): self.save_plan(); return      # LIVE · Split: your decks play – the automation waits
             try: self.refill(c)
             except Exception as ex: log.warning("refill: %s", ex)      # whatever goes wrong in planning, the queue below still runs
             if self.stop_at_end and self.liq_next: self.take_back_next()
@@ -1776,6 +1907,15 @@ class Engine:
             return {"ok": True, "video": "%sx%s" % (v_.get("width"), v_.get("height")) if v_ else None, "audio": any(x.get("codec_type") == "audio" for x in ss_)}
         with LOCK:
             c = dbc()
+            if action == "overlap":
+                self.overlap = bool(d.get("on")); jdump({"overlap": self.overlap}, DECKS_FILE); return {"ok": True, "overlap": self.overlap}
+            if action == "deck_stop":
+                k_ = str(d.get("deck", "1"))
+                if self.decks.get(k_): self.deck_fade_stop(k_, 0.8)
+                return {"ok": True}
+            if action == "deck_play" or (self.deck_mode() and (action == "dj_play" or (action == "aux_fire" and d.get("how") == "now"))):
+                if not self.deck_mode(): return {"ok": False, "error": "the decks play only while LIVE with Split on (Broadcast page)"}
+                return self.deck_play(c, str(d.get("deck") or d.get("aux") or "1"), d.get("id"))
             if action == "next":
                 if getattr(self, "loop", False):   # NEXT ends a loop
                     self.loop = False
@@ -2243,7 +2383,7 @@ class Engine:
             self.tv.ll_on = bool(planner.get_setting(c, "live_layer", True))
             cid = planner.clock_for(c, time.time()); cname = c.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() if cid else None
             return {"show": SHOW["title"], "clock": cname[0] if cname else None, "now": n, "elapsed": round(el, 1), "upcoming": upcoming, "history": hist, "auto": self.auto,
-                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "streams": [{"id": x["id"], "name": x["name"], "yt": is_youtube(x["url"])} for x in streams_load(True)], "web": {"on": hypeweb.ST["on"], "starting": hypeweb.ST["starting"]}, "media_vol": MEDIA_VOL["v"], "stream_note": STREAM_NOTE if time.time() - STREAM_NOTE["t"] < 120 else None, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
+                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "streams": [{"id": x["id"], "name": x["name"], "yt": is_youtube(x["url"])} for x in streams_load(True)], "web": {"on": hypeweb.ST["on"], "starting": hypeweb.ST["starting"]}, "media_vol": MEDIA_VOL["v"], "decks": self.decks_state(), "stream_note": STREAM_NOTE if time.time() - STREAM_NOTE["t"] < 120 else None, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
                     "tv_sound": "clip" if self.tv.split else "radio", "live_layer": bool(planner.get_setting(c, "live_layer", True)),
                     "time": time.strftime("%H:%M:%S"), "server_time": time.time(), "slideshows": slideshow.STATE["list"]}
 
@@ -3229,6 +3369,8 @@ class H(BaseHTTPRequestHandler):
         p = urlparse(self.path).path.replace("/api", "", 1)
         if p == "/track":
             self.send(200, {"ok": True}); threading.Thread(target=E.on_track, args=(d,), daemon=True).start(); return
+        if p == "/deck_track":
+            self.send(200, {"ok": True}); threading.Thread(target=E.on_deck, args=(d,), daemon=True).start(); return
         if p.startswith("/plan/"):
             a = p[6:]; c = dbc()
             try:

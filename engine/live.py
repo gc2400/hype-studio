@@ -86,6 +86,8 @@ class Live:
         self.rec = None; self.rest = {}; self.live_since = None
         self.rec_restore()
         self.live = self.liq_live()
+        self.on_audio = None          # the engine: called when the music routing (Split / single) or LIVE changes
+        self.apply_audio()
         if self.live:       # the engine restarted during LIVE: restreams ran inside it, start them again
             self.live_since = time.time()
             for k, d in self.dests().items():
@@ -166,6 +168,17 @@ class Live:
                 src = self.st["cams"].get(cam); on = bool(src and paths.get(src, {}).get("ready"))
                 if self._bk_on.get((scene, iid)) != on:
                     cl.set_scene_item_enabled(scene, iid, on); self._bk_on[(scene, iid)] = on
+    def split(self):
+        """Split (Broadcast page): AUX 1 and AUX 2 are two decks on two outputs of the laptop – only while LIVE."""
+        return bool(self.live and self.st.get("audio_split"))
+    def apply_audio(self):
+        try:
+            self.liq.cmd(f"var.set split_on = {'true' if self.split() else 'false'}")
+            self.liq.cmd(f"var.set pads_to2 = {'true' if self.st.get('pads_to') == '2' else 'false'}")
+        except Exception as e: log.warning("audio routing: %s", e)
+        if self.on_audio:
+            try: self.on_audio()
+            except Exception as e: log.warning("audio routing (engine): %s", e)
     def set_live(self, on):
         self.liq.cmd(f"var.set live_on = {'true' if on else 'false'}"); self.live = on
         self.live_since = time.time() if on else None; self.drops = 0
@@ -175,6 +188,7 @@ class Live:
         for k, d in self.dests().items():
             if d.get("with_live"): self.restream(k, on)
         log.info("LIVE %s", "ON" if on else "OFF")
+        self.apply_audio()
         try:      # for the weekly recap (live hours + which shows were live)
             with open("/var/lib/hype/live_log.jsonl", "a") as f_: f_.write(json.dumps({"t": time.time(), "on": bool(on), "show": self.show_title()}) + "\n")
         except Exception as e: log.warning("live log: %s", e)
@@ -391,7 +405,7 @@ class Live:
         return {
             "live": self.live, "live_since": self.live_since, "studio_online": on("studio"), "return_online": on("return"),
             "sources": {s: {"online": on(s), "name": (g.get(s) or {}).get("name") if s.startswith("guest") else {"cam1": "Studio cam 1", "cam2": "Studio cam 2", "cam3": "Studio cam 3", "screen": "Screen share"}[s]} for s in SOURCES},
-            "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "guest_adj": self.st.get("guest_adj", 0), "guest_sync": {s: self.guest_sync_ms(s) for s in self.gmeas}, "guest_net": {s: {k: v for k, v in d.items() if k != "t"} for s, d in self.gnet.items()}, "air": self.air, "drops": self.drops, "auto_record": self.st.get("auto_record", True), "rec_what": self.st.get("rec_what", "both"),
+            "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "guest_adj": self.st.get("guest_adj", 0), "guest_sync": {s: self.guest_sync_ms(s) for s in self.gmeas}, "guest_net": {s: {k: v for k, v in d.items() if k != "t"} for s, d in self.gnet.items()}, "air": self.air, "drops": self.drops, "audio_split": bool(self.st.get("audio_split")), "pads_to": self.st.get("pads_to", "1"), "return2_online": on("return2"), "auto_record": self.st.get("auto_record", True), "rec_what": self.st.get("rec_what", "both"),
             "guests": {s: {"name": i["name"], "token": i["token"], "exp": i["exp"], "online": on(s), "vol": i.get("vol", 1.0), "muted": bool(i.get("muted")), "mode": i.get("mode", "video")} for s, i in g.items()},
             "rec": {"since": self.rec["start"], "file": self.rec["file"], "ok": self.rec_alive()} if self.rec else None,
             "restream": {k: {"name": d["name"], "on": k in self.rest and not self.rest[k].stop_, "ok": k in self.rest and self.rest[k].healthy(),
@@ -401,6 +415,11 @@ class Live:
     def settings(self, d):
         if "auto_record" in d: self.st["auto_record"] = bool(d["auto_record"])
         if d.get("rec_what") in ("both", "video", "audio"): self.st["rec_what"] = d["rec_what"]
+        if "audio_split" in d or "pads_to" in d:
+            if "audio_split" in d: self.st["audio_split"] = bool(d["audio_split"])
+            if d.get("pads_to") in ("1", "2"): self.st["pads_to"] = d["pads_to"]
+            save(STATE, self.st); self.apply_audio()
+            log.info("music routing: %s, pads + media with AUX %s", "SPLIT" if self.st.get("audio_split") else "single studio mix", self.st.get("pads_to", "1"))
         if "lip_sync" in d or "guest_adj" in d:
             if "lip_sync" in d: self.st["lip_sync"] = max(-500, min(1500, int(d["lip_sync"])))
             if "guest_adj" in d: self.st["guest_adj"] = max(-200, min(200, int(d["guest_adj"])))
