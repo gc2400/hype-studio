@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T14:14:48",
+ "time": "2026-11-19T14:26:04",
  "result": "ok",
- "commit": "52f80d1fc143057e97b7c2d36961938656d6604f",
- "subject": "Panel v2 steps 2+3: left column tabs (Up next \u00b7 Deck A \u00b7 Deck B \u00b7 Played; AUX is called Deck A/B everywhere in v2), a Graphics on screen card (lower third, + Graphic, what is on), pad settings behind \u2699 (Duck/Video/Loop/Edit; Stop pads stays), one button style (plain names, on = filled), Messages in the on-air bar (every panel message + the guard's repairs and problems)",
+ "commit": "3a12b48498cbf946cd4b989cd567a17b51c27de0",
+ "subject": "Panel v2 closer to the concept: the on-air bar as one calm row (cover \u00b7 title + waveform \u00b7 time left + next \u00b7 buttons \u00b7 faders with meters), info line + Messages under it; the left column's tabs and list are one card; library rows show their buttons all the time; scene group tabs above the scenes; plain button names",
  "log": [
-  "14:14:48 update 0d2fb687 \u2192 52f80d1f \u00b7 1 file(s): web/panel/v2.html",
-  "14:14:48 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:26:04 update 52f80d1f \u2192 3a12b484 \u00b7 1 file(s): web/panel/v2.html",
+  "14:26:04 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "CKay \u2013 BADAMINTON",
-  "listeners": 6,
+  "song": "Ozuna x Kapo \u2013 Mas Que Tu",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
