@@ -1,18 +1,17 @@
 {
- "time": "2026-11-19T16:42:24",
+ "time": "2026-11-19T16:44:29",
  "result": "ok",
- "commit": "fb0a47a83c99abdae721c08dbbee43b46dcf7d67",
- "subject": "Mixer opens inside the player in place of the L/R meter, each channel with its own level; camera scenes split into CAM 1-4; playlist tab FIXED; header keeps its state between pages (no flicker)",
+ "commit": "486ff53433b1855f0796c9ecbb87fc0eb789840b",
+ "subject": "Header: the LOG dot opens the window on Log; less space between the preview and the camera slots",
  "log": [
-  "16:41:39 update 9754386a \u2192 fb0a47a8 \u00b7 3 file(s): engine/engine.py, web/panel/header.js, web/panel/index.html",
-  "16:41:39 restart hype-engine",
-  "16:42:24 installed OK \u00b7 restarted: hype-engine"
+  "16:44:29 update fb0a47a8 \u2192 486ff534 \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
+  "16:44:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Ayra Starr \u2013 Tornado",
+  "song": "Youngbull x Shairo \u2013 Sak Abouw",
   "listeners": 5,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 2.0,
   "problems": [],
   "ok": true
  },
