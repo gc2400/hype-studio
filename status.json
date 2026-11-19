@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T14:12:42",
+ "time": "2026-11-19T14:14:48",
  "result": "ok",
- "commit": "0d2fb687be2491d03aa65b546d60254be2fc4d36",
- "subject": "Panel v2: the header treats v2.html like the On Air panel (its AUTO / MANUAL buttons) \u2013 without it v2 stopped at start-up",
+ "commit": "52f80d1fc143057e97b7c2d36961938656d6604f",
+ "subject": "Panel v2 steps 2+3: left column tabs (Up next \u00b7 Deck A \u00b7 Deck B \u00b7 Played; AUX is called Deck A/B everywhere in v2), a Graphics on screen card (lower third, + Graphic, what is on), pad settings behind \u2699 (Duck/Video/Loop/Edit; Stop pads stays), one button style (plain names, on = filled), Messages in the on-air bar (every panel message + the guard's repairs and problems)",
  "log": [
-  "14:12:42 update d2a556b8 \u2192 0d2fb687 \u00b7 1 file(s): web/panel/header.js",
-  "14:12:42 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:14:48 update 0d2fb687 \u2192 52f80d1f \u00b7 1 file(s): web/panel/v2.html",
+  "14:14:48 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "B'JAY X RULY \u2013 COCO",
-  "listeners": 4,
+  "song": "CKay \u2013 BADAMINTON",
+  "listeners": 6,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
