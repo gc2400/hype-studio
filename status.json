@@ -1,15 +1,16 @@
 {
- "time": "2026-11-19T17:46:42",
- "result": "waiting",
- "commit": "385f066daef3964f2a2b80c9beaaaeef5318f051",
- "subject": "[night] Radio: a level per channel for the mixer meters; a voice link over the next song's intro keeps the song low under the voice",
+ "time": "2026-11-19T18:02:52",
+ "result": "ok",
+ "commit": "1073e934da923c769e60455f8c53c51ab8ed1aff",
+ "subject": "Voice: a link can start N s over the end of the song before (the song stays low under you) and can have a music bed (from a jingles folder with BED in its name); covers: only complete pictures are kept",
  "log": [
-  "17:46:42 update b81649ca \u2192 385f066d \u00b7 1 file(s): radio/radio.liq",
-  "17:46:42 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "18:02:07 update b81649ca \u2192 1073e934 \u00b7 2 file(s): engine/engine.py, web/panel/voice.html",
+  "18:02:07 restart hype-engine",
+  "18:02:52 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Dei V x Rauw Alejandro \u2013 All Night",
-  "listeners": 6,
+  "song": "Fireboy DML x Masicka \u2013 CLAAT!",
+  "listeners": 5,
   "obs": true,
   "seg_age": 0.9,
   "problems": [],
