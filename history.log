@@ -395,3 +395,4 @@
 2026-11-19T11:51:41 waiting f0e58ca6 [night] TV: a preloaded clip is put back on its start spot before PLAY if it moved, and checked after 0.5 + 1.5 s (state and position) – no more 2 s of a wrong or black picture
 2026-11-19T12:00:56 waiting 291ef7a5 [night] TV preload: wait until OBS really opened the clip before PAUSE (was a fixed 0.25 s – a too-early PAUSE was ignored and the clip ran on hidden), check it is paused on its spot (once more if not); measuring every preload / start in /var/lib/hype/preload_diag.jsonl
 2026-11-19T12:17:22 waiting b01a57c8 [night] LIVE: Split music routing + two real decks + OVERLAP, and CUE
+2026-11-19T12:23:32 waiting ac9fe189 [night] Hour plans: Preview hour as a list or as a clock (an example hour on a 60-minute ring, coloured per hour-plan row) with how many of each row and how long; the list shows the row too
