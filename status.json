@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T15:26:39",
+ "time": "2026-11-19T15:31:48",
  "result": "ok",
- "commit": "38406deb8b9e09305abc0d362b214644934c1ecf",
- "subject": "Header: a LOG dot next to the radio / TV dots \u2013 opens like them: the Studio guard's repairs and problems plus this page's messages, newest first; the dot turns orange (repair) or red (problem) when something new happened since you last looked",
+ "commit": "8b971d6c5396234b6faf9bb1e100712b31f8f838",
+ "subject": "Header: radio listeners and TV viewers as numbers in their dots, the LOG dot shows how many new items; the hour plan that plays now next to the clock (click: Planning), on every page",
  "log": [
-  "15:26:39 update cb255489 \u2192 38406deb \u00b7 1 file(s): web/panel/header.js",
-  "15:26:39 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:31:48 update 38406deb \u2192 8b971d6c \u00b7 1 file(s): web/panel/header.js",
+  "15:31:48 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Dave x Tems \u2013 Raindance",
+  "song": "Daddy Yankee x Danny Ocean \u2013 ALFOMBRA VOLADORA",
   "listeners": 6,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
