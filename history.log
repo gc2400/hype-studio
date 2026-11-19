@@ -399,3 +399,4 @@
 2026-11-19T12:31:48 waiting 3fa4f960 [night] Library: an MP4/M4A/MOV whose upload stopped halfway (index at the front, so it looked fine) is marked as a problem and never played – 19 Nov 08:39 such a song ended at once on air (11 s silence)
 2026-11-19T12:48:42 ok 8f8bdd1b Install the waiting updates now (Gianno, 12:46): decks/Split/CUE, preload fix, clock view, broken-upload check
 2026-11-19T12:58:42 ok d5f8aa54 TV: a preloaded clip is only used when it still waits paused on its spot – else the normal start (no black / wrong picture, 19 Nov 12:53 Hip Hop sweeper had ENDED while waiting); its real waiting spot is used for the timing; every moment a waiting clip moves is logged (preload_diag.jsonl) to find who starts it
+2026-11-19T13:03:35 ok b6b300c3 TV: preloading the next clip OFF – OBS keeps playing a 'paused' picture-only clip (measured all afternoon 19 Nov), which gave wrong / black starts (TOH 13:01, sweepers); every clip starts the normal way again

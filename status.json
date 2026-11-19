@@ -1,18 +1,18 @@
 {
- "time": "2026-11-19T12:58:42",
+ "time": "2026-11-19T13:03:35",
  "result": "ok",
- "commit": "d5f8aa54cfcd06aee44eb582623b4cfaff1b68cc",
- "subject": "TV: a preloaded clip is only used when it still waits paused on its spot \u2013 else the normal start (no black / wrong picture, 19 Nov 12:53 Hip Hop sweeper had ENDED while waiting); its real waiting spot is used for the timing; every moment a waiting clip moves is logged (preload_diag.jsonl) to find who starts it",
+ "commit": "b6b300c3bdf18ef4438c3cc407003d9ba4386370",
+ "subject": "TV: preloading the next clip OFF \u2013 OBS keeps playing a 'paused' picture-only clip (measured all afternoon 19 Nov), which gave wrong / black starts (TOH 13:01, sweepers); every clip starts the normal way again",
  "log": [
-  "12:57:57 update 8f8bdd1b \u2192 d5f8aa54 \u00b7 1 file(s): engine/engine.py",
-  "12:57:57 restart hype-engine",
-  "12:58:42 installed OK \u00b7 restarted: hype-engine"
+  "13:02:50 update d5f8aa54 \u2192 b6b300c3 \u00b7 1 file(s): engine/engine.py",
+  "13:02:50 restart hype-engine",
+  "13:03:35 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Gunna \u2013 pop it",
+  "song": "MOLIY x Tyla \u2013 Body Go",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
