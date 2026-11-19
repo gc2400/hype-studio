@@ -1,18 +1,17 @@
 {
- "time": "2026-11-19T13:36:52",
+ "time": "2026-11-19T14:07:33",
  "result": "ok",
- "commit": "a02d8bbb79c7d48f52445c3000f155446d835a28",
- "subject": "Reports: Rights report \u2013 every song on air between two dates (no jingles / ads) as a playlist CSV for BumaStemra / Sena, plus a check of the webradio artist rule (max 4 by one artist in 3 hours, max 3 in a row)",
+ "commit": "d2a556b846c1991b7266858ce3bfc2dcd3196caf",
+ "subject": "Panel v2 (test, next to the current panel): /panel/v2.html \u2013 the player as an on-air bar on top (waveform, buttons, meters, Music/Pads/Studio faders, show, hour plan, listeners), the same three columns in every mode (Up next / AUX / decks \u00b7 scenes, guests, pads \u00b7 library, TV media)",
  "log": [
-  "13:36:07 update 5752f4cb \u2192 a02d8bbb \u00b7 2 file(s): engine/engine.py, web/panel/history.html",
-  "13:36:07 restart hype-engine",
-  "13:36:52 installed OK \u00b7 restarted: hype-engine"
+  "14:07:33 update a02d8bbb \u2192 d2a556b8 \u00b7 1 file(s): web/panel/v2.html",
+  "14:07:33 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "DJ DYLVN x Zefanio x Latifah \u2013 SO FINE",
-  "listeners": 3,
+  "song": "KM X IDALY \u2013 BEND OVA",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
