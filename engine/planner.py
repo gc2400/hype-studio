@@ -335,6 +335,7 @@ class ClockRunner:
                 if st[1] <= 0 or kind in ("song", "file", "jingle", "id", "showjingle", "voice"): st[0] += 1; st[1] = 0
                 self.snap = (cid, st[0], st[1], st[2]) if resume else None
                 self.pos = (list(key), cid, st[0], st[1], st[2])
+                self.last_slot = (kind, ref)          # (the hour preview's clock view: which row of the hour plan gave it)
                 c.commit(); return path
             st[0] += 1; st[1] = 0                                # slot empty / playlist finished: next slot
         return None
@@ -712,6 +713,20 @@ def due_events(c, now, window_end):
 
 
 # ---------------- hour preview (a dry run on a copy of the library) ----------------
+def slot_label(c, sl, row):
+    """The name of the hour-plan row an item came from (the clock view's colours + counts)."""
+    if not sl: return "Fixed time"
+    kind, ref = sl
+    if kind == "playlist":
+        n_ = c.execute("SELECT name FROM playlists WHERE id=?", (int(ref),)).fetchone() if str(ref).isdigit() else None
+        return n_[0] if n_ else "Playlist"
+    if kind == "folder": return str(ref).split("/")[-1] or "Folder"
+    if kind == "adbreak": return "Ad break"
+    if kind == "id": return "Station ID"
+    if kind == "voice": return "Listener voice"
+    if kind == "song": return "One song"
+    if kind in ("jingle", "showjingle"): return (str(ref).split("/")[-1] if ref else "Jingles") + (" (show)" if kind == "showjingle" else "")
+    return kind
 def preview_hour(c, day=None, hour=None, clock=None):
     """What an hour will sound like + warnings. Runs on an in-memory copy, so nothing on air changes."""
     try: return _preview_hour(c, day, hour, clock)
@@ -760,12 +775,14 @@ def _preview_hour(c, day=None, hour=None, clock=None):
                 queue += [take_from_playlist(mem, pid, "start" if i == 0 else "continue", lambda x: True) for i in range(n_)]
             queue = [x for x in queue if x]
         HELD[0] = held_songs(mem, t)
+        r.last_slot = None
+        fixed_ = bool(queue)
         p_ = queue.pop(0) if queue else r.next(mem, t, ok, pj)
         if not p_: warn.append("Nothing to play from %s on – the clock's slots are empty." % time.strftime("%H:%M", time.localtime(t))); break
         row = mem.execute("SELECT artist, title, folder, section, COALESCE(cue_mix, cue_end, duration, 180) - COALESCE(cue_start, 0), has_video, mode FROM items WHERE path=?", (p_,)).fetchone()
         if not row: break
         ln = max(3.0, row[4] or 180); recent.append(p_); arts.extend(akey(row[0]))
-        items.append(dict(t=t, artist=row[0], title=row[1], folder=row[2], section=row[3], length=round(ln), mode=row[6]))
+        items.append(dict(t=t, artist=row[0], title=row[1], folder=row[2], section=row[3], length=round(ln), mode=row[6], cat=slot_label(mem, None if fixed_ else r.last_slot, row)))
         t += ln
     songs = sum(1 for x in items if x["section"] == "music"); jingles = len(items) - songs
     over = round(t - (start + 3600))

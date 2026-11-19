@@ -1139,10 +1139,44 @@ $('#shSlots').ondrop = e => { if (typeof SHDRAG !== 'string') return; e.preventD
 $('#shSave').onclick = () => { if (!SHC) return; SHC.name = $('#shName').value.trim(); SHC.resume = $('#shResume').checked;
   if (SHC.slots.some(s => ['playlist', 'folder', 'song', 'file'].includes(s.kind) && !s.ref)) return toast('Choose what to play in every row', 1);
   post('plan/save_clock', SHC).then(r => { toast('Hour plan saved – Up next is updated'); SHSEL = SHSEL && SHSEL.show ? {show: SHSEL.show, clock: r.id} : {clock: r.id}; return shLoad(); }).catch(e => toast(e.message, 1)); };
-$('#shPrev').onclick = () => { if (!SHC || !SHC.id) return toast('Save first', 1); const box = $('#shPv'); box.hidden = false; box.innerHTML = '<li class="muted">Loading…</li>';
-  get('preview_hour?clock=' + SHC.id).then(p => { if (p.off) { box.innerHTML = '<li class="muted">Hour preview is off (Settings).</li>'; return; } const len = s_ => Math.floor(s_ / 60) + ':' + String(Math.round(s_ % 60)).padStart(2, '0'), filled = Math.min(3600, 3600 + p.over);
-    box.innerHTML = `<li><b style="color:${filled >= 3540 ? 'var(--g)' : 'var(--o)'}">Hour filled ${len(filled)} of 60:00</b><span class="muted" style="margin-left:auto">${p.songs} songs · ${p.jingles} jingles</span></li>` +
-      p.items.map(i => `<li><span class="t">${new Date(i.t * 1000).toTimeString().slice(0, 5)}</span><span class="k" style="${i.section === 'music' ? '' : 'background:#1E1438;color:#B9A2FF'}">${i.section === 'music' ? 'SONG' : 'JINGLE'}</span><span class="w">${esc(i.artist ? i.artist + ' – ' : '')}${esc(i.title)}</span><span class="l">${len(i.length)}</span></li>`).join('') + p.warnings.map(w => `<li style="color:var(--o)">⚠ ${esc(w)}</li>`).join(''); }).catch(() => box.innerHTML = '<li class="muted">Preview failed.</li>'); };
+// Preview hour: an example hour of this plan (the server fills it like on air) – as a list or as a clock, with how much of each row
+let SHPV = null, SHPVM = 'list';
+try { SHPVM = localStorage.getItem('hypeShPvMode') || 'list'; } catch (e) {}
+const PVCOL = ['#05A9C6', '#3DD68C', '#FFC94D', '#FF8A3D', '#FF5C7A', '#FF4FD8', '#B07CFF', '#7C8CFF', '#2ED3B7', '#A3E635', '#F472B6', '#60A5FA'];
+const pvLen = s_ => Math.floor(s_ / 60) + ':' + String(Math.round(s_ % 60)).padStart(2, '0');
+function shPvLoad() { if (!SHC || !SHC.id) return toast('Save first', 1); const box = $('#shPv'); box.hidden = false; box.innerHTML = '<li class="muted">Loading…</li>';
+  get('preview_hour?clock=' + SHC.id).then(p => { SHPV = p; shPvRender(); }).catch(() => box.innerHTML = '<li class="muted">Preview failed.</li>'); }
+function shPvRender() {
+  const p = SHPV, box = $('#shPv'); if (!p) return;
+  if (p.off) { box.innerHTML = '<li class="muted">Hour preview is off (Settings).</li>'; return; }
+  const filled = Math.min(3600, 3600 + p.over), col = {}, cats = [];
+  p.items.forEach(i => { const k = i.cat || (i.section === 'music' ? 'Songs' : 'Jingles'); i._c = k;
+    if (!col[k]) { col[k] = PVCOL[cats.length % PVCOL.length]; cats.push({k, n: 0, sec: 0}); }
+    const c = cats.find(x => x.k === k); c.n++; c.sec += Math.min(i.length, Math.max(0, p.start + 3600 - i.t)); });
+  const head = `<li style="flex-wrap:wrap"><b style="color:${filled >= 3540 ? 'var(--g)' : 'var(--o)'}">Hour filled ${pvLen(filled)} of 60:00</b><span class="muted">${p.songs} songs · ${p.jingles} jingles · an example hour</span>
+    <span class="row" style="gap:6px;margin-left:auto"><button class="btn sm ${SHPVM === 'list' ? 'on' : ''}" data-pvm="list">List</button><button class="btn sm ${SHPVM === 'clock' ? 'on' : ''}" data-pvm="clock">Clock</button><button class="btn sm" id="shPvAgain" title="Fill the hour again (another example)">↻</button></span></li>`;
+  const warn = p.warnings.map(w => `<li style="color:var(--o)">⚠ ${esc(w)}</li>`).join('');
+  const dot = k => `<span style="width:10px;height:10px;border-radius:50%;flex:none;background:${col[k]}"></span>`;
+  let body;
+  if (SHPVM === 'clock') {
+    const W = 320, C = W / 2, R1 = 92, R2 = 142, pt = (a, r) => [C + r * Math.sin(a), C - r * Math.cos(a)].map(v => v.toFixed(1)).join(' ');
+    const arc = (a0, a1) => { const big = a1 - a0 > Math.PI ? 1 : 0; return `M${pt(a0, R2)} A${R2} ${R2} 0 ${big} 1 ${pt(a1, R2)} L${pt(a1, R1)} A${R1} ${R1} 0 ${big} 0 ${pt(a0, R1)}Z`; };
+    const segs = p.items.map(i => { const a0 = (i.t - p.start) / 3600 * 2 * Math.PI, a1 = Math.min(2 * Math.PI - 0.0001, (i.t - p.start + i.length) / 3600 * 2 * Math.PI); if (a0 >= 2 * Math.PI) return '';
+      return `<path d="${arc(a0, Math.max(a1, a0 + 0.03))}" fill="${col[i._c]}" stroke="#061423" stroke-width="1" data-cat="${esc(i._c)}"><title>${new Date(i.t * 1000).toTimeString().slice(3, 8)} · ${esc(i._c)} · ${esc(i.artist ? i.artist + ' – ' : '')}${esc(i.title)} (${pvLen(i.length)})</title></path>`; }).join('');
+    const ticks = Array.from({length: 12}, (_, m) => { const a = m * Math.PI / 6; return `<line x1="${pt(a, R2 + 3).split(' ')[0]}" y1="${pt(a, R2 + 3).split(' ')[1]}" x2="${pt(a, R2 + 8).split(' ')[0]}" y2="${pt(a, R2 + 8).split(' ')[1]}" stroke="#7A8FA3" stroke-width="1.5"/><text x="${pt(a, R2 + 18).split(' ')[0]}" y="${pt(a, R2 + 18).split(' ')[1]}" fill="#7A8FA3" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle">${String(m * 5).padStart(2, '0')}</text>`; }).join('');
+    const svg = `<svg viewBox="-24 -24 ${W + 48} ${W + 48}" style="width:min(360px,100%);flex:none" role="img" aria-label="The hour as a clock">${ticks}${segs}
+      <text x="${C}" y="${C - 10}" fill="#F2F6FA" font-size="30" font-weight="900" text-anchor="middle">${pvLen(filled)}</text>
+      <text x="${C}" y="${C + 16}" fill="#7A8FA3" font-size="12" text-anchor="middle">${p.items.length} items</text>
+      ${p.over > 0 ? `<text x="${C}" y="${C + 34}" fill="var(--o)" font-size="12" font-weight="700" text-anchor="middle">+${pvLen(p.over)} over</text>` : ''}</svg>`;
+    const list = cats.map(c => `<div class="row" data-pvc="${esc(c.k)}" style="gap:8px;flex-wrap:nowrap;padding:6px 8px;border:1px solid var(--line);border-radius:10px;cursor:default">${dot(c.k)}<b style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px">${esc(c.k)}</b><span class="mono" style="font-size:12px;color:var(--mut)">${pvLen(c.sec)}</span><b class="mono" style="width:26px;text-align:right">${c.n}×</b></div>`).join('');
+    body = `<li style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;border:0">${svg}<div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:5px"><span class="lab">In this hour</span>${list}</div></li>`;
+  } else body = p.items.map(i => `<li><span class="t">${new Date(i.t * 1000).toTimeString().slice(0, 5)}</span>${dot(i._c)}<span class="k" style="${i.section === 'music' ? '' : 'background:#1E1438;color:#B9A2FF'}">${i.section === 'music' ? 'SONG' : 'JINGLE'}</span><span class="w">${esc(i.artist ? i.artist + ' – ' : '')}${esc(i.title)}</span><span class="muted" style="font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i._c)}</span><span class="l">${pvLen(i.length)}</span></li>`).join('');
+  box.innerHTML = head + body + warn;
+  $$('#shPv [data-pvm]').forEach(b => b.onclick = () => { SHPVM = b.dataset.pvm; try { localStorage.setItem('hypeShPvMode', SHPVM); } catch (e) {} shPvRender(); });
+  $('#shPvAgain').onclick = shPvLoad;
+  $$('#shPv [data-pvc]').forEach(r => { r.onmouseenter = () => $$('#shPv path[data-cat]').forEach(x => x.style.opacity = x.dataset.cat === r.dataset.pvc ? 1 : .2); r.onmouseleave = () => $$('#shPv path[data-cat]').forEach(x => x.style.opacity = 1); });
+}
+$('#shPrev').onclick = shPvLoad;
 $('#shCopy').onclick = () => { if (!SHC) return; const n = prompt('Name for the copy:', SHC.name + ' copy'); if (!n) return; const c = {...JSON.parse(JSON.stringify(SHC)), id: null, name: n};
   post('plan/save_clock', c).then(r => { toast('Copy made'); SHSEL = {clock: r.id}; shLoad(); }).catch(e => toast(e.message, 1)); };
 $('#shDel').onclick = () => { if (!SHC || !SHC.id) return; const use = []; SHW.week.days.forEach((d, di) => d.hours.forEach(x => { if (x.grid === SHC.id) use.push(DAYS[di] + ' ' + hh(x.h)); }));
