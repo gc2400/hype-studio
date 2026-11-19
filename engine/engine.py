@@ -1566,6 +1566,7 @@ class Engine:
         self.push_next(dbc(), force=True)
     # ---------- song start (called by Liquidsoap) ----------
     def on_track(self, meta):
+        t0 = time.time()      # the moment the radio started this song (the rest of this function can take ~1 s: OBS, database)
         path = meta.get("hype_path") or ""
         if not path: return
         rv = getattr(self, "revoked", set())
@@ -1604,8 +1605,10 @@ class Engine:
                 if cd and cd[0] and it["duration"] and cd[0] < it["duration"] - 1:
                     threading.Timer(max(1.0, cd[0] - 0.3), lambda p=path: self.now.get("path") == p and self.tv.show("audio", None, 0)).start()
             c.execute("INSERT INTO asrun(started,path,artist,title,folder,mode,clip,scene,kind) VALUES(?,?,?,?,?,?,?,?,?)",
-                      (time.time(), path, it["artist"], it["title"], it["folder"], mode, it["clip_path"], scene, it["section"])); c.commit()
-            self.now = dict(it, started=time.time(), scene=scene)
+                      (t0, path, it["artist"], it["title"], it["folder"], mode, it["clip_path"], scene, it["section"])); c.commit()
+            # started = when the radio started it, not when this function got here (19 Nov: after a short video jingle the next
+            # song's clip had no preload, show() took 1.1 s, and the 20-s check then "corrected" a clip that was right by 1.2 s)
+            self.now = dict(it, started=t0, scene=scene)
             if it["section"] == "music":   # loudness map for the AGC intro lift
                 try:
                     lm = c.execute("SELECT lmap FROM items WHERE path=?", (path,)).fetchone()
