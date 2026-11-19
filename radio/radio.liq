@@ -82,7 +82,17 @@ def mix(a, b) =
     if t0() < 0. then t0 := t end
     if f <= 0. then comp else comp * max(0., 1. - (t - t0()) / f) end
   end
-  add(normalize=false, [fade.in(duration=fin, b.source), amplify(override=null(), g, sa)])
+  # a voice link that talks over the next song's intro (voice tracking, hype_duck): the song stays low under the voice and
+  # comes up to full in the last 1.2 s of the overlap (the voice ends at the end of the overlap)
+  dk = float_of_string(default=1., a.metadata["hype_duck"])
+  t1 = ref(-1.)
+  def gb() =
+    t = time()
+    if t1() < 0. then t1 := t end
+    k = (t - t1()) - (d - 1.2)
+    if dk >= 1. or k >= 1.2 then 1. elsif k <= 0. then dk else dk + (1. - dk) * k / 1.2 end
+  end
+  add(normalize=false, [amplify(override=null(), gb, fade.in(duration=fin, b.source)), amplify(override=null(), g, sa)])
 end
 s = metadata.deduplicate(cross(duration=3., override_duration="liq_cross_duration", mix, s))   # cross() so OUR mix is used
 agc_g = interactive.float("agc_g", min=0.3, max=3., description="AGC gain on the music (set by the engine 5x/s)", 1.)
@@ -108,6 +118,11 @@ s = smooth_add(duration=0.4, p={duck()}, normal=s, special=over)   # (no longer 
 # --- pads: jingles / FX played over the music without ducking ---
 padq = request.queue(id="pads")
 pads = amplify(vol_pads, drop_metadata(amplify(override="liq_amplify", 1., padq)))
+# per-channel levels for the panel's mixer (peak over the last 100 ms, after each fader)
+pads_pk = peak(duration=0.1, pads)
+pads = pads_pk
+mus_pk = peak(duration=0.1, s)
+s = mus_pk
 music = s
 
 # --- the two DJ decks for LIVE (Broadcast page → "Split"): two players of their own, each plays one song to its END, no
@@ -128,10 +143,14 @@ d1q = request.queue(id="d1")
 d1 = cue_cut(id="dcue1", cue_in_metadata="liq_cue_in", cue_out_metadata="liq_cue_out", on_cue_in=fun () -> (), on_cue_out=fun () -> (), d1q)
 d1 = source.on_metadata(d1, fun (m) -> deck_notify("1", m))
 d1 = amplify(override=null(), deck_v1, amplify(override="liq_amplify", 1., d1))
+d1_pk = peak(duration=0.1, d1)
+d1 = d1_pk
 d2q = request.queue(id="d2")
 d2 = cue_cut(id="dcue2", cue_in_metadata="liq_cue_in", cue_out_metadata="liq_cue_out", on_cue_in=fun () -> (), on_cue_out=fun () -> (), d2q)
 d2 = source.on_metadata(d2, fun (m) -> deck_notify("2", m))
 d2 = amplify(override=null(), deck_v2, amplify(override="liq_amplify", 1., d2))
+d2_pk = peak(duration=0.1, d2)
+d2 = d2_pk
 def deck_stop(v) =
   if v == "2" then
     d2q.set_queue([])
@@ -265,6 +284,8 @@ prog = mksafe(process(meter=true, s))
 live_on = interactive.bool("live_on", false)
 studio = input.harbor("studio", port=8005, password=live.harbor_pw, buffer=1.5, max=6.)
 studio = amplify(vol_studio, studio)
+stu_pk = peak(duration=0.1, studio)
+studio = stu_pk
 studio = process(studio)   # the same sound + loudness as the music (was ~5 dB quieter)
 # on air: the studio while LIVE is on and the studio is connected, else the automation (fades 0.6 s)
 s = switch(track_sensitive=false, transitions=[fun (a, b) -> add(normalize=false, [fade.in(duration=0.6, b), fade.out(duration=0.6, a)]), fun (a, b) -> add(normalize=false, [fade.in(duration=0.6, b), fade.out(duration=0.6, a)])],
@@ -298,7 +319,8 @@ def meter_level(_) =
   mmode = snd_punch() > 0.25
   comp = if quiet then 0. elsif mmode then mc elsif snd_comp() < 0.5 then 0. else max(0., 0. - fcg()) end
   lim = if quiet then 0. elsif mmode then ml else max(0., 0. - flg()) end
-  "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a}"
+  mus = max(mus_pk.peak(), max(d1_pk.peak(), d2_pk.peak()))
+  "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a} #{mus} #{pads_pk.peak()} #{stu_pk.peak()}"
 end
 server.register(namespace="radio", "level", meter_level)
 # what is really on air (for the Broadcast page): your studio mix or the automation
