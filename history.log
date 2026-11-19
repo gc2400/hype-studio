@@ -422,3 +422,4 @@
 2026-11-19T16:29:21 ok 9754386a Mixer: every volume in one bigger window (music, studio, pads, media, guests with mute), guest volume removed from the guest cards; v2 page removed
 2026-11-19T16:42:24 ok fb0a47a8 Mixer opens inside the player in place of the L/R meter, each channel with its own level; camera scenes split into CAM 1-4; playlist tab FIXED; header keeps its state between pages (no flicker)
 2026-11-19T16:44:29 ok 486ff534 Header: the LOG dot opens the window on Log; less space between the preview and the camera slots
+2026-11-19T16:47:36 waiting 91cbd7e3 [night] Radio: a level per channel (music incl. decks, pads, studio) for the panel's mixer meters

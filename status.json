@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T16:44:29",
- "result": "ok",
- "commit": "486ff53433b1855f0796c9ecbb87fc0eb789840b",
- "subject": "Header: the LOG dot opens the window on Log; less space between the preview and the camera slots",
+ "time": "2026-11-19T16:47:36",
+ "result": "waiting",
+ "commit": "91cbd7e3962e4d7a29664956a1226f64af36640e",
+ "subject": "[night] Radio: a level per channel (music incl. decks, pads, studio) for the panel's mixer meters",
  "log": [
-  "16:44:29 update fb0a47a8 \u2192 486ff534 \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
-  "16:44:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:47:36 update 486ff534 \u2192 91cbd7e3 \u00b7 1 file(s): radio/radio.liq",
+  "16:47:36 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Youngbull x Shairo \u2013 Sak Abouw",
+  "song": "Young Jonn x Asake x Focalistic \u2013 2 Factor",
   "listeners": 5,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
