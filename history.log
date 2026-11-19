@@ -429,3 +429,4 @@
 2026-11-19T17:11:02 ok ac893581 Voice tracking: record your links between the songs of a playlist or of a locked hour (Voice page); links play on air at the song's mix point, TV shows your video or a chosen scene / your name
 2026-11-19T17:17:13 waiting b2635579 [night] Radio: a level per channel (music incl. decks, pads, studio) for the panel's mixer meters
 2026-11-19T17:44:37 ok b81649ca Voice: talk over the next song's intro (Start next song while recording, the song starts there on air); Song tab in playlists can open folders; joined buttons get a full border on hover
+2026-11-19T17:46:42 waiting 385f066d [night] Radio: a level per channel for the mixer meters; a voice link over the next song's intro keeps the song low under the voice
