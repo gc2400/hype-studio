@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T15:58:30",
+ "time": "2026-11-19T16:09:47",
  "result": "ok",
- "commit": "93d9dacaface1ec60e6b510f1f22071fc0a94e8b",
- "subject": "Panel: CAMERA SLOTS is a button next to Lower third; the player's red chip shows the hour plan with a clock icon (instead of the show name); header: calmer page links, AUTO/MANUAL as a switch like ON AIR/DJ/LIVE, the hour plan out of the header; phone: the player buttons fit on one line",
+ "commit": "74ef1b52fc21fdb28c60f3ee8b837a131bb716ff",
+ "subject": "Header: page links on the right, Hype Studio \u00b7 dots \u00b7 clock \u00b7 switches \u00b7 GO LIVE / REC on the left; the three dots (radio \u00b7 TV \u00b7 log) in one button with one window (tabs Streams / Log \u2013 it opens on Log when something new happened); phones fit on one line; Playlist: MAIN (was Up next)",
  "log": [
-  "15:58:30 update e4c25d68 \u2192 93d9daca \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
-  "15:58:30 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:09:47 update 93d9daca \u2192 74ef1b52 \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
+  "16:09:47 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Ozuna x Jory Boy x \u00d1engo Flow \u2013 Vulnerable",
-  "listeners": 6,
+  "song": "TXC x Davido x Tony Duardo x LeeMckrazy x DJ Biza \u2013 Yebo",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
