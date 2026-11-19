@@ -313,6 +313,8 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 @media (hover:none) and (max-width:640px){.keys{display:none}}
 @media (max-width:640px){#cGuests>.row.between,#cGuests>.row.between>.row,.gcard .row{flex-wrap:wrap!important}.gcard{grid-template-columns:1fr}.gcard video{width:100%}.cdf{flex-wrap:wrap}.cdf .ovb .sel{max-width:100%}}
 .scene.llbtn{border-style:dashed}.scene.llbtn.llon{border-style:solid;border-color:var(--g)}.scene.llbtn.llon small{color:var(--g)}
+.wwrap{position:relative}.wwrap .wlock{position:absolute;right:4px;top:4px;width:26px;height:26px;border-radius:8px;border:1px solid var(--line2);background:rgba(7,26,43,.85);color:var(--soft);cursor:pointer;opacity:0;transition:opacity .15s;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.wwrap:hover .wlock,.wwrap.open .wlock{opacity:1}.wwrap.open #wave{cursor:crosshair;outline:1px solid var(--y);outline-offset:2px;border-radius:6px}.wwrap.open .wlock{border-color:var(--y);color:var(--y)}
 </style>
 </head>
 <body>
@@ -335,7 +337,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
             <span class="mono" id="tMix" style="font-size:11px;color:var(--b)"></span>
           </div>
         </div>
-        <canvas class="wave" id="wave" width="800" height="96" style="height:46px" aria-label="Waveform of the song on air"></canvas>
+        <div class="wwrap" id="waveWrap"><canvas class="wave" id="wave" width="800" height="96" style="height:46px" aria-label="Waveform of the song on air"></canvas><button class="wlock" id="waveLock" title="Locked – click to unlock, then click in the waveform to jump (locks again by itself)" aria-label="Unlock jumping in the song"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg></button></div>
         <div class="tp">
           <button class="btn ib" id="bPlay" aria-label="Play" title="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg></button>
           <button class="btn ib" id="bSae" aria-label="Stop at end of this song" title="Stop at end"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h3v14H5zM11 5l9 7-9 7z" fill="currentColor"/></svg><small>END</small></button>
@@ -552,6 +554,19 @@ function tick() {
   $('#clock').textContent = new Date(Date.now() - skew * 1000).toTimeString().slice(0, 8);
   if (MODE === 'dj') { deckTime('1'); deckTime('2'); xNow(); }
 }
+// jumping in the song on air: locked by default; unlock → one click in the waveform jumps there (radio + video), then locked again
+let WAVE_OPEN = false, WAVE_T = null;
+const WLL = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>', WLU = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+function waveLock(open) { WAVE_OPEN = open; clearTimeout(WAVE_T); $('#waveWrap').classList.toggle('open', open); $('#waveLock').innerHTML = open ? WLU : WLL;
+  $('#waveLock').title = open ? 'Unlocked – click in the waveform to jump (locks again in 10 s)' : 'Locked – click to unlock, then click in the waveform to jump (locks again by itself)';
+  if (open) WAVE_T = setTimeout(() => waveLock(false), 10000); }
+$('#waveLock').onclick = e => { e.stopPropagation(); waveLock(!WAVE_OPEN); };
+$('#wave').addEventListener('click', e => {
+  if (!WAVE_OPEN || !S || !S.now || !S.now.duration) return;
+  const r = $('#wave').getBoundingClientRect(), pos = (e.clientX - r.left) / r.width * S.now.duration;
+  waveLock(false);
+  cmd('seek', {pos}).then(d => d && d.ok === false ? toast(d.error, 1) : d && d.moved !== undefined && toast('Jumped to ' + fmt(pos)));
+});
 function drawWave(pos, cs, cm, ce) {
   const c = $('#wave'), x = c.getContext('2d'), W = c.width, H = c.height; x.clearRect(0, 0, W, H);
   const p = wavePeaks || [], n = p.length || 1, bw = W / n;

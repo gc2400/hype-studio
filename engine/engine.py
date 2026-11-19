@@ -1872,6 +1872,21 @@ class Engine:
                 slideshow.STATE["force"] = True; log.info("slideshow deleted: %s", "/".join(f)); return {"ok": True}
             elif action == "fetch_url":      # a picture / video / sound dragged from a website onto the pads: the server fetches it
                 return fetch_url(c, d)
+            elif action == "seek":        # the on-air waveform (unlocked): jump to pos (seconds in the file); the video follows
+                n = self.now
+                if self.live.live: return {"ok": False, "error": "not while you are LIVE"}
+                if not n or n.get("section") != "music": return {"ok": False, "error": "only in a song"}
+                el = time.time() - n["started"] + (n.get("cue_start") or 0)
+                end = n.get("cue_mix") or n.get("cue_end") or n.get("duration") or 0
+                pos = max((n.get("cue_start") or 0) + 1, min(float(d.get("pos", el)), end - 8))
+                if end - el < 10: return {"ok": False, "error": "too close to the mix – not now"}
+                if abs(pos - el) < 0.5: return {"ok": True}
+                try: moved = float(self.liq.cmd("radio.seek %.2f" % (pos - el)).split()[0])
+                except Exception as e: return {"ok": False, "error": "the radio can't jump yet (update tonight) – %s" % str(e)[:60]}
+                self.now["started"] = n["started"] - moved; RESYNC_N.pop(n.get("started"), None)
+                log.info("jumped %+.1f s in %s (to %.0f s)", moved, n.get("title"), el + moved)
+                threading.Thread(target=resync_tv, kwargs={"force": True}, daemon=True).start()
+                return {"ok": True, "moved": moved}
             elif action == "media_vol":
                 MEDIA_VOL["v"] = max(0.0, min(1.6, float(d.get("value", 1)))); planner.set_setting(dbc(), "media_vol", MEDIA_VOL["v"])
                 return {"ok": True, "media_vol": MEDIA_VOL["v"]}
@@ -3308,8 +3323,8 @@ class H(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
 RESYNC_N = {}     # song start -> how often its clip was put back in step (max 2 per song)
-def resync_tv():
-    """After an OBS or engine restart: show the clip of the song on air again, at the right spot."""
+def resync_tv(force=False):
+    """After an OBS or engine restart: show the clip of the song on air again, at the right spot. force: right now (after a jump)."""
     n = E.now
     if not n or n.get("mode") not in ("clip", "pair", "jingle-video"): 
         if n and E.tv.auto: E.tv.scene = None; E.tv.set_scene(n.get("scene") or "Hype Screen")
@@ -3324,7 +3339,7 @@ def resync_tv():
             f, start, snd, gain = tv_file(c, n["path"]), (n.get("cue_start") or 0) + el, False, 0.0
         if not f: return
         on = [i["sourceName"] for i in items if i["sceneItemEnabled"] and i["sourceName"] in ("Clip A", "Clip B")]
-        if on and (E.tv.scene == "Music video" or not E.tv.auto):
+        if on and not force and (E.tv.scene == "Music video" or not E.tv.auto):
             # a clip is on screen – but is it this song's clip? After an OBS restart OBS comes back with the clip it had
             # saved (16 Nov: the previous song's video ran under the next song). Only then show the right one.
             with E.tv.olock: shown = E.tv.client().get_input_settings(on[0]).input_settings.get("local_file")

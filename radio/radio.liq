@@ -269,6 +269,8 @@ interactive.persistent("/var/lib/hype/sound.json")
 
 # --- panel commands (telnet) ---
 server.register(namespace="radio", "skip", fun (_) -> begin q.skip() "OK" end)
+# jump in the song on air (the panel's waveform, unlocked): v = seconds forward (negative = back); answers how far it really went
+server.register(namespace="radio", "seek", fun (v) -> string(q.seek(float_of_string(v))))
 server.register(namespace="radio", "cut", fun (_) -> begin cut_next := true q.skip() "OK" end)
 server.register(namespace="radio", "clear", fun (_) -> begin q.set_queue([]) "OK" end)
 server.register(namespace="pads", "stop", fun (_) -> begin padq.set_queue([]) padq.skip() overq.set_queue([]) overq.skip() "OK" end)
