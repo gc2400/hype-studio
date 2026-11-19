@@ -3292,6 +3292,8 @@ class H(BaseHTTPRequestHandler):
             if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))
             if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"] + AGC["lift"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01})
+            if p in ("/rights.csv", "/rights_check"):
+                return self.send(200, *rights_report(qs, p.endswith(".csv")))
             if p == "/history.csv":
                 h = history(qs, limit=5000); import csv, io; b = io.StringIO(); w = csv.writer(b, delimiter=";")
                 w.writerow(["date", "time", "artist", "title", "folder", "type", "length", "tv", "file", "over the intro", "radio start", "radio end", "tv start", "tv end"])
@@ -4064,6 +4066,42 @@ def nowplaying_api():
             "hype": {"source": "hype-studio"}}
 
 GUARD_CONF = "/var/lib/hype/guard_conf.json"
+def rights_report(qs, as_csv):
+    """Reports → Rights: every song that went on air between two dates (music only, no jingles / ads) as a playlist for the
+    music rights organisations (BumaStemra / Sena), and a check of the usual webradio rule: max 4 songs by the same artist
+    within 3 hours, max 3 of them in a row."""
+    def day(k, d):
+        try: return time.mktime(time.strptime(qs.get(k, [d])[0], "%Y-%m-%d"))
+        except Exception: return None
+    t1 = day("from", time.strftime("%Y-%m-01")); t2 = day("to", time.strftime("%Y-%m-%d"))
+    t1 = t1 or time.time() - 30 * 86400; t2 = (t2 or time.time()) + 86400
+    c = dbc()
+    rows = c.execute("""SELECT a.started, a.artist, a.title, a.path, a.kind, i.duration, i.cue_start, i.cue_end FROM asrun a LEFT JOIN items i ON i.path=a.path
+                        WHERE a.started>=? AND a.started<? ORDER BY a.started""", (t1, t2 + 600)).fetchall()
+    out = []
+    for n, r in enumerate(rows):
+        if r[0] >= t2 or (r[4] or "music") != "music": continue
+        nxt = rows[n + 1][0] if n + 1 < len(rows) else None
+        full = max(0.0, (r[7] or r[5] or 0) - (r[6] or 0))
+        heard = min(full, nxt - r[0]) if nxt and full else (full or (nxt - r[0] if nxt else 0))
+        out.append({"t": r[0], "artist": r[1] or "", "title": r[2] or "", "secs": int(round(heard)), "file": os.path.basename(r[3] or "")})
+    if as_csv:
+        import csv, io; b = io.StringIO(); w = csv.writer(b, delimiter=";")
+        w.writerow(["Datum", "Starttijd", "Speelduur (sec)", "Artiest", "Titel", "Zender", "Bestand"])
+        for o in out: w.writerow([time.strftime("%d-%m-%Y", time.localtime(o["t"])), time.strftime("%H:%M:%S", time.localtime(o["t"])), o["secs"], o["artist"], o["title"], "Hype Radio TV", o["file"]])
+        return (("\ufeff" + b.getvalue()).encode("utf-8"), "text/csv; charset=utf-8")
+    probs = []
+    for i, o in enumerate(out):
+        keys = set(artist_key(o["artist"]))
+        if not keys: continue
+        win = [x for x in out[max(0, i - 60):i + 1] if o["t"] - x["t"] < 3 * 3600 and keys & set(artist_key(x["artist"]))]
+        if len(win) == 5: probs.append({"t": o["t"], "what": "5th song in 3 hours with %s" % o["artist"], "song": o["title"]})
+        run = 1
+        for x in reversed(out[max(0, i - 4):i]):
+            if keys & set(artist_key(x["artist"])): run += 1
+            else: break
+        if run == 4: probs.append({"t": o["t"], "what": "4 songs in a row with %s" % o["artist"], "song": o["title"]})
+    return ({"songs": len(out), "hours": round(sum(o["secs"] for o in out) / 3600, 1), "problems": probs[:200], "n_problems": len(probs)},)
 def hl_send_np(c, it):
     """Song info + sponsor proof of play to Hype Live (?hype_np=KEY, JSON). Only when switched on (Settings → 🛡 Alarm & Hype Live),
     because until go-live the public radio is still CLOSE."""

@@ -127,6 +127,13 @@ th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-
       <div><h3>Stability <small>– silence, repairs, alarms</small></h3><div id="wEv"></div></div>
     </div>
   </section>
+  <section class="card" id="rightsCard">
+    <div class="row"><b>Rights report</b><span class="muted" style="font-size:12px">every song on air (no jingles / ads) for BumaStemra / Sena</span>
+      <input type="date" id="rFrom" aria-label="From"><span class="muted">to</span><input type="date" id="rTo" aria-label="To">
+      <a class="btn" id="rCsv" title="Date, start time, seconds played, artist, title – as a spreadsheet">⬇ CSV</a></div>
+    <div class="muted" id="rSum" style="font-size:13px"></div>
+    <div id="rProb" style="font-size:13px"></div>
+  </section>
   <section class="card" id="dayCard">
     <div class="row">
       <button class="btn" id="prev" aria-label="Previous day">◀</button><input type="date" id="day" aria-label="Day"><button class="btn" id="next" aria-label="Next day">▶</button><button class="btn" id="today">Today</button>
@@ -365,6 +372,18 @@ $('#vDay').onclick = () => view('d'); $('#vWeek').onclick = () => view('w'); $('
 $$('#wTabs [data-p]').forEach(b => b.onclick = () => { $$('#wTabs [data-p]').forEach(x => x.classList.toggle('on', x === b)); $$('.wpane').forEach(x => x.hidden = x.dataset.p !== b.dataset.p); });
 try { const v = localStorage.getItem('hypeHistView'); if (v === 'w' || v === 'a' || v === 's') view(v); } catch (e) {}
 load(); setInterval(() => { if ($('#day').value === iso(new Date()) && !document.hidden) load(); }, 30000);
+// ---------- rights report: the songs played + the webradio artist rule (max 4 by one artist in 3 hours, max 3 in a row) ----------
+(() => { const d0 = new Date(), ym = d0.toISOString().slice(0, 8);
+  const prevM = new Date(d0.getFullYear(), d0.getMonth() - 1, 1), lastPrev = new Date(d0.getFullYear(), d0.getMonth(), 0);
+  const iso = x => new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  document.getElementById('rFrom').value = iso(prevM); document.getElementById('rTo').value = iso(lastPrev);
+  const go = () => { const q = 'from=' + document.getElementById('rFrom').value + '&to=' + document.getElementById('rTo').value;
+    document.getElementById('rCsv').href = '../api/rights.csv?' + q; document.getElementById('rCsv').download = 'Hype_Radio_TV_playlist_' + document.getElementById('rFrom').value + '_' + document.getElementById('rTo').value + '.csv';
+    document.getElementById('rSum').textContent = 'Checking…';
+    fetch('../api/rights_check?' + q).then(r => r.json()).then(d => {
+      document.getElementById('rSum').textContent = d.songs + ' songs · ' + d.hours + ' hours of music · ' + (d.n_problems ? d.n_problems + ' time(s) the artist rule was broken:' : 'artist rule kept (max 4 by one artist in 3 hours, max 3 in a row) ✓');
+      document.getElementById('rProb').innerHTML = (d.problems || []).slice(0, 30).map(p => '<div style="color:#FFB54D">' + new Date(p.t * 1000).toLocaleString('nl-NL', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) + ' · ' + String(p.what).replace(/[&<>]/g, '') + ' (' + String(p.song).replace(/[&<>]/g, '') + ')</div>').join('') + (d.n_problems > 30 ? '<div class="muted">… and ' + (d.n_problems - 30) + ' more</div>' : ''); }).catch(() => { document.getElementById('rSum').textContent = 'Check failed'; }); };
+  document.getElementById('rFrom').onchange = go; document.getElementById('rTo').onchange = go; go(); })();
 </script>
 </body>
 </html>
