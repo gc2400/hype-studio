@@ -368,7 +368,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
       </div>
       <div class="card" id="cTabs" style="padding:14px 14px 8px;gap:10px;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap">
         <span class="lab">Playlist</span>
-        <div class="row" style="gap:5px;flex-wrap:wrap;justify-content:flex-end" role="tablist" aria-label="Playlist"><button class="btn sm" data-pltab="next" role="tab">Up next</button><button class="btn sm" data-pltab="1" role="tab">AUX 1</button><button class="btn sm" data-pltab="2" role="tab">AUX 2</button><button class="btn sm" data-pltab="fixed" role="tab">Fixed times</button></div>
+        <div class="row" style="gap:5px;flex-wrap:wrap;justify-content:flex-end" role="tablist" aria-label="Playlist"><button class="btn sm" data-pltab="next" role="tab">MAIN</button><button class="btn sm" data-pltab="1" role="tab">AUX 1</button><button class="btn sm" data-pltab="2" role="tab">AUX 2</button><button class="btn sm" data-pltab="fixed" role="tab">Fixed times</button></div>
       </div>
       <div class="card" style="padding:8px" id="cFixed" hidden><div class="log ulist" id="fixedList"></div></div>
       <div class="card" style="padding:8px" id="cLog">
@@ -407,8 +407,8 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <div class="slotg" id="slotsGrid"></div></details>
         <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="lab">Scenes</span>
           <div class="row" style="gap:5px;flex-wrap:wrap">
-            <button class="btn sm" id="bSlots" aria-expanded="false" title="Camera slots: which camera / guest is in CAM 1–4">CAMERA SLOTS</button>
-            <span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third">LOWER THIRD</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
+            <button class="btn sm" id="bSlots" aria-expanded="false" title="Camera slots: which camera / guest is in CAM 1–4">SLOTS</button>
+            <span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third (a name / text on screen)">+ TEXT</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
             <button class="btn sm" id="bEl" title="Put a graphic on screen">+ GRAPHIC</button>
             <button class="btn sm" id="bAutoScene" title="AUTO: the TV follows the music (scene per song)">AUTO</button></div></div>
         <div class="subbox" id="ltBox" hidden>
@@ -861,7 +861,7 @@ let LT = null;
 function ltLoad() { api('lower').then(L => { LT = L; ltRender(); }).catch(() => {}); }
 function ltRender() {
   if (!LT) return;
-  $('#bLT').classList.toggle('redon', !!LT.visible); $('#bLT').textContent = LT.visible ? '● LOWER THIRD' : 'LOWER THIRD';
+  $('#bLT').classList.toggle('redon', !!LT.visible); $('#bLT').textContent = LT.visible ? '● TEXT' : '+ TEXT';
   if (!LT.visible && !$('#ltName').value && LT.name && document.activeElement.tagName !== 'INPUT') { $('#ltName').value = LT.name; $('#ltRole').value = LT.role || ''; }
   $('#ltRecent').innerHTML = (LT.recent || []).slice(0, 8).map((r, i) => `<span class="ltr"><button class="btn sm" data-lr="${i}" title="${esc(r.role)}">${esc(r.name)}</button><button class="ltx" data-lx="${i}" title="Remove ${esc(r.name)} from the saved names" aria-label="Remove ${esc(r.name)}">×</button></span>`).join('');
   $$('#ltRecent [data-lx]').forEach(b => b.onclick = e => { e.stopPropagation(); const r = LT.recent[+b.dataset.lx]; api('cmd/lower', {action: 'forget', forget: r.name}).then(d => { if (d && d.lower) { LT = d.lower; } else LT.recent = LT.recent.filter(x => x.name !== r.name); ltRender(); }).catch(() => {}); });
@@ -1587,7 +1587,7 @@ function renderSlotsPv() {
   if (!LV || !LV.cams) return;
   const K = ['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'], src = c => LV.cams[c], info = c => (LV.sources || {})[src(c)] || {};
   const onl = K.filter(c => info(c).online).length;
-  $('#slotsSum').textContent = onl + ' of 4 online'; $('#bSlots').title = 'Camera slots – ' + onl + ' of 4 online';
+  $('#slotsSum').textContent = onl + ' of 4 online'; $('#bSlots').title = 'Slots – ' + onl + ' of 4 online';
   if (!slotsBox.open || document.hidden) { if (Object.keys(SLV).length) slotsClose(); return; }
   const scene = (S && S.scene) || '';
   const sig = K.map(c => src(c) + ':' + (info(c).online ? 1 : 0)).join('|');

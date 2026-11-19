@@ -20,7 +20,7 @@ html{scrollbar-gutter:stable}
 #hhead .btn.on{background:#05A9C6;border-color:#05A9C6;color:#061423}#hhead .btn.on:hover{background:#18BEDA}
 #hhead .modes{display:inline-flex;gap:3px;background:#071A2B;border-radius:10px;padding:3px;margin:0}
 #hhead .modes .btn{border:0;background:transparent;color:#A9BCCD;min-height:28px;white-space:nowrap}
-#hhead .modes .btn:hover{background:#143049;color:#fff}#hhead .modes .btn.on:hover{background:#FFE95C;color:#061423}#hhead .modes .btn.on{background:#FFE000;color:#061423}
+#hhead .modes .btn:hover{background:#143049;color:#fff}#hhead .modes .btn.on:hover{background:#2BC1DA;color:#061423}#hhead .modes .btn.on{background:#05A9C6;color:#061423}
 #hhead .modes .btn[data-mode=live].on{background:#FF4D5E;color:#fff}
 #hhead .hst{display:flex;align-items:center;gap:8px;flex:none;position:relative}
 #hhead .hdots{display:inline-flex;align-items:center;gap:7px;border:1px solid transparent;background:transparent;border-radius:999px;padding:7px 8px;cursor:pointer}
@@ -47,9 +47,12 @@ html{scrollbar-gutter:stable}
 #hhead #stRadio,#hhead #stTv{display:inline-block;width:11px;height:11px;padding:0;border-radius:50%;font-size:0;background:#55697D;border:0;margin:0}
 #hhead #stRadio[data-n],#hhead #stTv[data-n],#hhead #stLog[data-n]{width:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font:800 11px/18px Inter,system-ui,sans-serif;color:#061423;text-align:center;box-sizing:border-box}
 #hhead #stRadio.bad[data-n],#hhead #stTv.bad[data-n],#hhead #stLog.bad[data-n]{color:#fff}
-#hhead #stLog{display:inline-block;width:11px;height:11px;padding:0;border-radius:50%;font-size:0;border:0;margin:0;background:#3DDC97}
+#hhead #stLog{display:inline-block;width:11px;height:11px;padding:0;border-radius:50%;font-size:0;border:0;margin:0;background:#3DDC97;box-shadow:0 0 6px rgba(61,220,151,.5)}
 #hhead #stLog.warn{background:#FFB547;box-shadow:0 0 6px rgba(255,181,71,.6)}#hhead #stLog.bad{background:#FF4D5E;box-shadow:0 0 6px rgba(255,77,94,.6)}
-#hhead #hLogPop{width:400px;max-height:70vh;overflow:auto}
+#hhead #hBox{width:400px;max-height:72vh;overflow:auto}
+#hhead .htabs{display:flex;gap:3px;background:#071A2B;border-radius:10px;padding:3px;margin-bottom:10px}
+#hhead .htabs button{flex:1;border:0;background:transparent;color:#A9BCCD;border-radius:8px;min-height:28px;font:700 12px Inter,system-ui,sans-serif;cursor:pointer}
+#hhead .htabs button.on{background:#05A9C6;color:#061423}#hhead .htabs button:hover:not(.on){background:#143049;color:#fff}
 #hhead #hLogPop .m{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #17344F}#hhead #hLogPop .m:last-child{border-bottom:0}
 #hhead #hLogPop .m i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
 #hhead #hLogPop .m small{display:block;color:#7F96AB;font-size:11px;margin-top:1px}
@@ -59,7 +62,7 @@ html{scrollbar-gutter:stable}
 #hhead .hst #clock{order:4}#hhead .hst>.hdots{order:1}
 #hhead #clock{font:800 20px Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.2px;color:#FFE000;margin-left:4px}
 #hhead .sp{flex:1}
-#hhead .hb{order:1}#hhead .hnav{order:2}#hhead .sp{order:3}#hhead .hst{order:4}#hhead .hctl{order:5}#hhead .hact{order:6;display:flex;align-items:center;gap:8px;flex:none}#hhead .menu{order:7}
+#hhead .hb{order:1}#hhead .hst{order:2}#hhead .hctl{order:3}#hhead .hact{order:4;display:flex;align-items:center;gap:8px;flex:none}#hhead .sp{order:5}#hhead .hnav{order:6}#hhead .menu{order:7}
 #hhead .hnav{display:flex;align-items:center;gap:2px;padding:0;border-radius:12px;background:transparent;border:1px solid transparent;flex:none}
 #hhead .hnav a{font:500 14px/1 Inter,system-ui,sans-serif;color:#C9D7E3;text-decoration:none;padding:9px 11px;border-radius:9px;white-space:nowrap}
 #hhead .hnav a:hover{background:#0F2B44;color:#fff}#hhead .hnav a.cur{background:#0F2B44;color:#05A9C6;font-weight:700}
@@ -81,6 +84,18 @@ html{scrollbar-gutter:stable}
   #hhead .hrec{padding:0 9px}
   #hhead .hpop{position:fixed;top:64px;left:12px;right:12px;width:auto}
 }
+@media (max-width:600px){
+  #hhead{gap:6px;padding:6px 8px}
+  #hhead .hb img{width:30px;height:30px}
+  #hhead .hst{gap:2px}#hhead .hdots{padding:5px 4px;gap:4px}
+  #hhead #clock{font-size:15px;margin-left:2px}
+  #hhead .hact{gap:4px}#hhead .hlive{height:30px;padding:0 7px;font-size:10px;letter-spacing:.02em}#hhead .hrec{height:30px;padding:0 7px;font-size:10px}
+  #hhead .hlive .t,#hhead .hrec #hRecT{font-size:10px}
+  #hhead .menu{width:36px;height:32px;font-size:17px}
+  #hhead .sp{display:none}#hhead .menu{margin-left:auto}
+  #hhead .hctl{gap:5px}#hhead .modes{height:34px}#hhead .modes .btn{font-size:10.5px}
+  #hhead .hpop{position:fixed;top:64px;left:12px;right:12px;width:auto}
+}
 #hhead .hnav .sep{width:1px;height:20px;background:#1E3A56;margin:0 3px}
 /* wider than a phone, but the page links don't fit on the line any more: the ☰ menu, like on a phone (a drop-down on the right) */
 #hhead.compact .menu{display:block}
@@ -93,8 +108,8 @@ html{scrollbar-gutter:stable}
   h.innerHTML = `<div class="hb"><img src="/panel/logo.png" alt="Hype radio tv"><div class="show" id="show">Hype Studio</div></div>
     <div class="hctl"><span class="modes" role="group" aria-label="Programming"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button></span>
       <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
-    <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span></button><button class="hdots" id="hLogB" aria-haspopup="dialog" aria-expanded="false" title="Log: what Studio did – repairs, problems, messages"><span class="chip" id="stLog">● LOG</span></button><a class="chip" id="stClock" href="/panel/plan.html" title="The hour plan that plays now – click: Planning">–</a><span id="clock">--:--:--</span>
-      <div class="hpop" id="hPop" role="dialog" aria-label="Streams" hidden></div><div class="hpop" id="hLogPop" role="dialog" aria-label="Log" hidden></div></div>
+    <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span><span class="chip" id="stLog">● LOG</span></button><a class="chip" id="stClock" href="/panel/plan.html" title="The hour plan that plays now – click: Planning">–</a><span id="clock">--:--:--</span>
+      <div class="hpop" id="hBox" role="dialog" aria-label="Status and log" hidden><div class="htabs" role="tablist"><button data-ht="s" role="tab">Streams</button><button data-ht="l" role="tab">Log</button></div><div id="hPop"></div><div id="hLogPop" hidden></div></div></div>
     <div class="hact">
       <button class="hlive" id="hLive" title="GO LIVE: your studio mix goes on air (click twice)"><b>GO LIVE</b><span class="t" id="hLiveT"></span></button>
       <button class="hrec" id="hRec" title="Record the TV output (Library → Recordings)"><i></i><b>REC</b><span id="hRecT"></span></button>
@@ -163,13 +178,19 @@ html{scrollbar-gutter:stable}
     setTimeout(go, 1500); setInterval(() => { if (!document.hidden) go(); }, 30000);
   })();
   function popLoad() { fetch('/api/streams').then(r => r.json()).then(popRender).catch(() => { pop.innerHTML = '<div class="r"><span>Status</span><b class="bad">● no answer</b></div>'; }); }
-  function popOpen(o) { pop.hidden = !o; dots.setAttribute('aria-expanded', o); clearInterval(popT); if (o) { popLoad(); popT = setInterval(popLoad, 5000); } }
-  dots.onclick = e => { e.stopPropagation(); if (!lp.hidden) logOpen(false); popOpen(pop.hidden); };
-  document.addEventListener('click', e => { if (!pop.hidden && !pop.contains(e.target)) popOpen(false); });
-  addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { popOpen(false); dots.focus(); } });
+  const box = h.querySelector('#hBox'); let TAB = 's';
+  function boxTab(t) { TAB = t; h.querySelectorAll('[data-ht]').forEach(b => { b.classList.toggle('on', b.dataset.ht === t); b.setAttribute('aria-selected', b.dataset.ht === t); });
+    pop.hidden = t !== 's'; lp.hidden = t !== 'l'; clearInterval(popT);
+    if (t === 's') { popLoad(); popT = setInterval(popLoad, 5000); } else logSeenNow(); }
+  function popOpen(o, t) { box.hidden = !o; dots.setAttribute('aria-expanded', o); clearInterval(popT); if (o) boxTab(t || TAB); }
+  h.querySelectorAll('[data-ht]').forEach(b => b.onclick = e => { e.stopPropagation(); boxTab(b.dataset.ht); });
+  // a click on the dots: the log when something new happened there, else the streams
+  dots.onclick = e => { e.stopPropagation(); if (!box.hidden) return popOpen(false); popOpen(true, h.querySelector('#stLog').dataset.n || h.querySelector('#stLog').classList.contains('bad') ? 'l' : 's'); };
+  document.addEventListener('click', e => { if (!box.hidden && !box.contains(e.target)) popOpen(false); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) { popOpen(false); dots.focus(); } });
   // ---- LOG: what Studio did (the guard's repairs + problems) and this page's messages – the dot is orange / red when
   //      something new happened since you last looked ----
-  const lb_ = h.querySelector('#hLogB'), lp = h.querySelector('#hLogPop'), LOG = []; let logSeen = 0;
+  const lp = h.querySelector('#hLogPop'), LOG = []; let logSeen = 0;
   try { logSeen = +localStorage.getItem('hypeLogSeen') || 0; } catch (e) {}
   const LC = {bad: '#FF4D5E', alarm: '#FF4D5E', warn: '#FFB547', repair: '#FFB547', ok: '#3DDC97', info: '#05A9C6'};
   const lesc = t => String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -177,11 +198,11 @@ html{scrollbar-gutter:stable}
     const nw = LOG.filter(m => m.t > logSeen && m.src === 'guard'), now = LOG.some(m => m.now);
     const d = h.querySelector('#stLog'); d.className = 'chip ' + (now || nw.some(m => m.lvl === 'bad' || m.lvl === 'alarm') ? 'bad' : nw.some(m => m.lvl === 'repair' || m.lvl === 'warn') ? 'warn' : '');
     if (nw.length) { d.dataset.n = 1; d.textContent = nw.length > 99 ? '99+' : nw.length; } else { delete d.dataset.n; d.textContent = '● LOG'; }
-    lb_.title = 'Log' + (now ? ' – a problem right now' : nw.length ? ' – ' + nw.length + ' new' : ' – all quiet');
+    d.title = 'Log' + (now ? ' – a problem right now' : nw.length ? ' – ' + nw.length + ' new' : ' – all quiet');
   }
   function logRender() {
     if (lp.hidden) return;
-    lp.innerHTML = '<h4>Log</h4>' + (LOG.map(m => `<div class="m"><i style="background:${LC[m.lvl] || '#05A9C6'}"></i><div>${lesc(m.text)}<small>${new Date(m.t * 1000).toLocaleString('nl-NL', {weekday: 'short', hour: '2-digit', minute: '2-digit'})} · ${m.src === 'guard' ? 'Studio guard' : 'this page'}${m.now ? ' · going on now' : ''}</small></div></div>`).join('') || '<div class="note">Nothing yet.</div>') +
+    lp.innerHTML = (LOG.map(m => `<div class="m"><i style="background:${LC[m.lvl] || '#05A9C6'}"></i><div>${lesc(m.text)}<small>${new Date(m.t * 1000).toLocaleString('nl-NL', {weekday: 'short', hour: '2-digit', minute: '2-digit'})} · ${m.src === 'guard' ? 'Studio guard' : 'this page'}${m.now ? ' · going on now' : ''}</small></div></div>`).join('') || '<div class="note">Nothing yet.</div>') +
       '<div class="note">Repairs and problems from the Studio guard, plus warnings on this page.</div>';
   }
   function logLoad() {
@@ -197,10 +218,7 @@ html{scrollbar-gutter:stable}
     window.toast = function (t, err) { const r = t0.apply(this, arguments); if (!err) return r; LOG.unshift({t: Date.now() / 1000, text: String(t), lvl: err ? 'warn' : 'info', src: 'page'}); if (LOG.length > 120) LOG.length = 120; logRender(); return r; };
     window.toast._log = true; };
   setTimeout(wrapToast, 500); setTimeout(wrapToast, 3000);
-  function logOpen(o) { lp.hidden = !o; lb_.setAttribute('aria-expanded', o); if (o) { popOpen(false); logSeen = Date.now() / 1000; try { localStorage.setItem('hypeLogSeen', logSeen); } catch (e) {} logRender(); logDot(); logLoad(); } }
-  lb_.onclick = e => { e.stopPropagation(); logOpen(lp.hidden); };
-  document.addEventListener('click', e => { if (!lp.hidden && !lp.contains(e.target)) logOpen(false); });
-  addEventListener('keydown', e => { if (e.key === 'Escape' && !lp.hidden) { logOpen(false); lb_.focus(); } });
+  function logSeenNow() { logSeen = Date.now() / 1000; try { localStorage.setItem('hypeLogSeen', logSeen); } catch (e) {} logRender(); logDot(); logLoad(); }
   logLoad(); setInterval(logLoad, 30000);
   // radio listeners and TV viewers right now, in the radio and TV dots
   function audLoad() { fetch('/api/audience').then(r => r.json()).then(d => {
