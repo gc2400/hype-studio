@@ -228,7 +228,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #pvVol{width:90px;accent-color:var(--y)}.pvst{font-size:11px;font-weight:700;color:#A9BCCD;white-space:nowrap}
 .pv.stopped video{filter:grayscale(1) brightness(.35)}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.scene{min-height:54px;text-align:left;padding:6px 10px}
+.scene{min-height:44px;text-align:left;padding:4px 10px}
 .scene small{display:block;font-size:10px;font-weight:600;opacity:.8}
 .scene.live{box-shadow:0 0 0 2px var(--y);border-color:var(--y)}
 .padpg{display:flex;align-items:center;justify-content:center;gap:10px;font-size:12px;font-weight:700;color:var(--mut)}.padpg .btn{min-width:38px}
@@ -283,7 +283,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .subbox{background:var(--deep);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
 .subbox input,.subbox select{background:var(--card2);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:34px;padding:0 8px;font:inherit;font-size:13px}
 .elchip{display:inline-flex;align-items:center;gap:6px}
-.camgrid .scene{min-height:40px;font-size:12px;padding:4px 8px}
+.camgrid .scene{min-height:34px;font-size:12px;padding:3px 8px}
 .camgrid.mx .scene{font-size:12px}
 .camgrid.cedit .camc{position:relative;min-height:40px;border-radius:10px;cursor:grab}.camgrid.cedit .camc .scene{width:100%;height:100%;display:flex;align-items:center;pointer-events:none}
 .camgrid.cedit .camc.empty{border:1px dashed var(--line2);cursor:pointer}.camgrid.cedit .camc.over{box-shadow:0 0 0 2px var(--y)}.camgrid.cedit .camc.pick .scene{border-color:var(--y);color:var(--y)}.camgrid.cedit .camc.drag{opacity:.4}
@@ -317,13 +317,14 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .wwrap:hover .wlock,.wwrap.open .wlock{opacity:1}.wwrap.open #wave{cursor:crosshair;outline:1px solid var(--y);outline-offset:2px;border-radius:6px}.wwrap.open .wlock{border-color:var(--y);color:var(--y)}
 /* playlist tabs + list = one card */
 #cTabs{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent}
-#cTabs~#cFixed,#cTabs~#cLog,#cTabs~#auxCard{margin-top:-14px;border-top-left-radius:0;border-top-right-radius:0;border-top-color:transparent}
+#cTabs~#cFixed,#cTabs~#cLog,#cTabs~#auxCard{margin-top:-14px;padding-top:2px!important;padding-left:6px!important;padding-right:6px!important;border-top-left-radius:0;border-top-right-radius:0;border-top-color:transparent}
 #auxCard [data-auxtab]{display:none}
 .btn.ic{width:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
 #mixWin{position:fixed;z-index:90;width:min(380px,94vw);background:var(--card);border:1px solid var(--line2);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:14px;display:flex;flex-direction:column;gap:12px}
-#mixWin .gvol{display:grid!important;grid-template-columns:110px 1fr 62px;align-items:center;gap:10px}
+#mixWin .gvol{display:grid!important;grid-template-columns:120px minmax(0,1fr) 72px;align-items:center;gap:12px!important;margin:0}
 #mixWin .gvol .lab{color:var(--soft)!important;text-align:left;width:auto}
-#mixWin .gvol .mono{text-align:right}
+#mixWin .gvol>span:last-child{width:auto!important;justify-self:end;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px}
+#mixWin .gvol input{width:100%;margin:0}
 @media (max-width:760px){#mixWin{left:8px!important;right:8px!important;width:auto;top:70px!important}#mixWin .gvol{grid-template-columns:80px 1fr 56px}}
 </style>
 </head>
@@ -354,7 +355,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <button class="btn ib red" id="bStop" aria-label="Stop now" title="Stop"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button>
           <button class="btn ib loop" id="bLoop" aria-label="Loop this song" title="Loop: the song on air plays again and again"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="btn ib" id="bNext" aria-label="Next song" title="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
-          <button class="btn ib" id="bMixer" aria-label="Mixer" aria-haspopup="dialog" aria-expanded="false" title="Mixer: music, studio, pads, TV media"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><rect x="3.5" y="13" width="5" height="3" rx="1" fill="currentColor"/><rect x="9.5" y="7" width="5" height="3" rx="1" fill="currentColor"/><rect x="15.5" y="11" width="5" height="3" rx="1" fill="currentColor"/></svg></button>
+          <button class="btn ib" id="bMixer" aria-label="Mixer" aria-haspopup="dialog" aria-expanded="false" title="Mixer: music, studio, pads, media"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><rect x="3.5" y="13" width="5" height="3" rx="1" fill="currentColor"/><rect x="9.5" y="7" width="5" height="3" rx="1" fill="currentColor"/><rect x="15.5" y="11" width="5" height="3" rx="1" fill="currentColor"/></svg></button>
           <span class="mono muted" id="tEl" style="margin-left:auto;font-size:12px">0:00</span>
         </div>
         <div class="meter" aria-label="On-air level (left and right)" role="img">
@@ -363,7 +364,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <span class="mono mdb" id="mDb">–∞</span>
         </div>
       </div>
-      <div class="card" id="cTabs" style="padding:10px 12px 6px;gap:8px">
+      <div class="card" id="cTabs" style="padding:14px 14px 8px;gap:10px">
         <span class="lab">Playlist</span>
         <div class="row" style="gap:5px;flex-wrap:wrap" role="tablist" aria-label="Playlist"><button class="btn sm" data-pltab="next" role="tab">Up next</button><button class="btn sm" data-pltab="1" role="tab">AUX 1</button><button class="btn sm" data-pltab="2" role="tab">AUX 2</button><button class="btn sm" data-pltab="fixed" role="tab">Fixed times</button></div>
       </div>
@@ -405,7 +406,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="lab">Scenes</span>
           <div class="row" style="gap:5px;flex-wrap:wrap">
             <span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third">LOWER THIRD</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
-            <button class="btn sm" id="bEl" title="Put a graphic on screen">+ ELEMENT</button>
+            <button class="btn sm" id="bEl" title="Put a graphic on screen">+ GRAPHIC</button>
             <button class="btn sm" id="bAutoScene">AUTO SCENES</button></div></div>
         <div class="subbox" id="ltBox" hidden>
           <div class="lt-form">
@@ -434,7 +435,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
       </div>
       <div id="volHold" hidden><label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label><label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="mediaVol" aria-label="TV Media volume"><span class="mono" id="mediaVolV" style="width:62px">0 dB</span></label></div>
       <div class="card" id="cTvm">
-        <div class="row between"><span class="lab">TV Media</span><span class="row" style="gap:6px"><span class="muted" id="tvSum" style="font-size:11px"></span><button class="btn sm ic" id="tvGear" aria-expanded="false" aria-label="Media settings" title="Sound, scene, edit">⚙</button><button class="btn sm red ic" id="bMediaStop" aria-label="Stop media" title="Media off – back to the automatic scene"><svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button></span></div>
+        <div class="row between"><span class="lab">Media</span><span class="row" style="gap:6px"><span class="muted" id="tvSum" style="font-size:11px"></span><button class="btn sm ic" id="tvGear" aria-expanded="false" aria-label="Media settings" title="Sound, scene, edit">⚙</button><button class="btn sm red ic" id="bMediaStop" aria-label="Stop media" title="Media off – back to the automatic scene"><svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button></span></div>
         <div class="subbox" id="tvOpts" hidden>
           <div class="row" style="gap:6px;flex-wrap:wrap"><span class="muted" style="font-size:12px;width:62px">Sound</span><span class="row" style="gap:6px" id="mSound"><button class="btn sm" data-ms="mute" title="The video plays without sound">MUTE</button><button class="btn sm" data-ms="duck" title="The video's sound plays, the music goes down">DUCK</button><button class="btn sm" data-ms="off" title="The video's sound plays, the music is off (live streams / the browser: the music waits)">MUSIC OFF</button></span></div>
           <div class="row" style="gap:6px;flex-wrap:wrap"><span class="muted" style="font-size:12px;width:62px">Plays on</span><select id="mScene" aria-label="Media scene" title="The scene a media item / stream / the browser goes on air in" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;max-width:190px"></select><span style="flex:1"></span><button class="btn sm" id="tvEdit" title="Add live links, delete media, pin / hide listener items">Edit media</button></div>
@@ -972,7 +973,7 @@ function padDrop(d, pos) {
 // ---------- TV Media card: Media · Listeners · Live (moved out of the pads, 19 Nov) ----------
 function renderTv() {
   const nl = LSN.items.filter(x => !x.played).length, nlive = ((S && S.streams) || []).length;
-  $('#tvTabs').innerHTML = [[-1, 'Media', 'Your own pictures and videos from branding/media'], [-2, 'Listeners' + (nl ? ` <b style="background:#FFE000;color:#061423;border-radius:8px;padding:0 5px;font-size:10px">${nl}</b>` : ''), 'Voices, photos and videos from listeners (Hype Live), newest first'],
+  $('#tvTabs').innerHTML = [[-1, 'Library', 'Your own pictures and videos from branding/media'], [-2, 'Listeners' + (nl ? ` <b style="background:#FFE000;color:#061423;border-radius:8px;padding:0 5px;font-size:10px">${nl}</b>` : ''), 'Voices, photos and videos from listeners (Hype Live), newest first'],
     [-3, 'Live', 'Your live stream links (HLS / RTMP / SRT)'], [-4, 'Browser', 'Browse any page and put it on air']].map(([k, t, ti]) => `<button class="btn sm ${tvb === k ? 'on' : ''}" data-tvb="${k}" title="${ti}">${t}</button>`).join('');
   $$('#tvTabs [data-tvb]').forEach(b => b.onclick = () => { tvb = +b.dataset.tvb; if (tvb === -1) loadMedia(); if (tvb === -2) loadListeners(); renderTv(); });
   $('#mediaDone').hidden = !TEDIT; $('#tvEdit').classList.toggle('on', TEDIT);
@@ -1425,7 +1426,7 @@ function fixedLoad() {
   const w = document.createElement('div'); w.id = 'mixWin'; w.hidden = true; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', 'Mixer');
   w.innerHTML = '<div class="row between"><b>Mixer</b><button class="btn sm" id="mixX">Close</button></div>' + [['vol_music', 'Music'], ['vol_studio', 'Studio (LIVE)']].map(([n, l]) => `<label class="gvol"><span class="lab">${l}</span><input type="range" min="0" max="1.6" step="0.01" value="1" data-fad="${n}" aria-label="${l} fader"><span class="mono" data-fv="${n}">0 dB</span></label>`).join('') + '<div id="mixMore" style="display:flex;flex-direction:column;gap:12px"></div><span class="muted" style="font-size:11px">Double-click a fader = 0 dB.</span>';
   document.body.appendChild(w);
-  for (const [id, l] of [['padVol', 'Pads'], ['mediaVol', 'TV media']]) { const lb = document.getElementById(id).closest('label'); lb.querySelector('.lab').textContent = l; w.querySelector('#mixMore').appendChild(lb); }
+  for (const [id, l] of [['padVol', 'Pads'], ['mediaVol', 'Media']]) { const lb = document.getElementById(id).closest('label'); lb.querySelector('.lab').textContent = l; w.querySelector('#mixMore').appendChild(lb); }
   const busy = {}, tm = {};
   w.querySelectorAll('[data-fad]').forEach(r => { const n = r.dataset.fad, out = w.querySelector(`[data-fv="${n}"]`);
     r.oninput = () => { busy[n] = Date.now(); out.textContent = dbTxt(+r.value); clearTimeout(tm[n]); tm[n] = setTimeout(() => api('cmd/fader', {name: n, value: +r.value}), 120); };
