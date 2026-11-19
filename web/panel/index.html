@@ -23,7 +23,7 @@ header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:s
 .c1{flex:1 1 380px}.c2{flex:1 1 420px}.c3{flex:1 1 420px}.cA,.cB{flex:1 1 380px}
 #bottom{display:flex;flex-direction:column;gap:14px}
 body.dj #cLib .res{max-height:calc(100vh - 390px);min-height:320px}
-body.live #col3{flex:1 1 380px}body.live #col1,body.live #col2{flex:1 1 420px}   /* LIVE: the player column as narrow as on ON AIR, scenes + guests wider */
+body.live #col1{flex:1 1 380px}body.live #col2{flex:1.25 1 460px}body.live #col3{flex:1 1 400px}   /* LIVE: the player column as narrow as on ON AIR, scenes + guests wider */
 body.live #log,body.live #aux{max-height:300px;overflow:auto}body.live #cLib .res{max-height:420px}
 body.dj #deckA{order:1;flex:1 1 360px}body.dj #col2{order:2;flex:1.1 1 380px}body.dj #deckB{order:3;flex:1 1 360px}body.dj .cols{flex-wrap:nowrap}
 .deck .np .art{cursor:pointer;transition:transform .12s,box-shadow .12s}.deck .np .art:hover{transform:scale(1.06);box-shadow:0 0 0 3px currentColor}
@@ -228,7 +228,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #pvVol{width:90px;accent-color:var(--y)}.pvst{font-size:11px;font-weight:700;color:#A9BCCD;white-space:nowrap}
 .pv.stopped video{filter:grayscale(1) brightness(.35)}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.scene{min-height:44px;text-align:left;padding:4px 10px}
+.scene{min-height:48px;text-align:left;padding:5px 10px}
 .scene small{display:block;font-size:10px;font-weight:600;opacity:.8}
 .scene.live{box-shadow:0 0 0 2px var(--y);border-color:var(--y)}
 .padpg{display:flex;align-items:center;justify-content:center;gap:10px;font-size:12px;font-weight:700;color:var(--mut)}.padpg .btn{min-width:38px}
@@ -283,7 +283,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .subbox{background:var(--deep);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
 .subbox input,.subbox select{background:var(--card2);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:34px;padding:0 8px;font:inherit;font-size:13px}
 .elchip{display:inline-flex;align-items:center;gap:6px}
-.camgrid .scene{min-height:34px;font-size:12px;padding:3px 8px}
+.camgrid .scene{min-height:38px;font-size:12px;padding:3px 8px}
 .camgrid.mx .scene{font-size:12px}
 .camgrid.cedit .camc{position:relative;min-height:40px;border-radius:10px;cursor:grab}.camgrid.cedit .camc .scene{width:100%;height:100%;display:flex;align-items:center;pointer-events:none}
 .camgrid.cedit .camc.empty{border:1px dashed var(--line2);cursor:pointer}.camgrid.cedit .camc.over{box-shadow:0 0 0 2px var(--y)}.camgrid.cedit .camc.pick .scene{border-color:var(--y);color:var(--y)}.camgrid.cedit .camc.drag{opacity:.4}
@@ -364,11 +364,11 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <span class="mono mdb" id="mDb">–∞</span>
         </div>
       </div>
-      <div class="card" id="cTabs" style="padding:14px 14px 8px;gap:10px">
+      <div class="card" id="cTabs" style="padding:14px 14px 8px;gap:10px;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap">
         <span class="lab">Playlist</span>
-        <div class="row" style="gap:5px;flex-wrap:wrap" role="tablist" aria-label="Playlist"><button class="btn sm" data-pltab="next" role="tab">Up next</button><button class="btn sm" data-pltab="1" role="tab">AUX 1</button><button class="btn sm" data-pltab="2" role="tab">AUX 2</button><button class="btn sm" data-pltab="fixed" role="tab">Fixed times</button></div>
+        <div class="row" style="gap:5px;flex-wrap:wrap;justify-content:flex-end" role="tablist" aria-label="Playlist"><button class="btn sm" data-pltab="next" role="tab">Up next</button><button class="btn sm" data-pltab="1" role="tab">AUX 1</button><button class="btn sm" data-pltab="2" role="tab">AUX 2</button><button class="btn sm" data-pltab="fixed" role="tab">Fixed times</button></div>
       </div>
-      <div class="card" style="padding:8px" id="cFixed" hidden><div class="log ulist" id="fixedList"></div><span class="muted" style="font-size:11px;padding:0 6px 4px">Fixed times from Planning → Fixed times (today and tomorrow).</span></div>
+      <div class="card" style="padding:8px" id="cFixed" hidden><div class="log ulist" id="fixedList"></div></div>
       <div class="card" style="padding:8px" id="cLog">
         <span class="lab" id="logInfo" hidden></span>
         <div class="log ulist" id="log"></div>
@@ -407,7 +407,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <div class="row" style="gap:5px;flex-wrap:wrap">
             <span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third">LOWER THIRD</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
             <button class="btn sm" id="bEl" title="Put a graphic on screen">+ GRAPHIC</button>
-            <button class="btn sm" id="bAutoScene">AUTO SCENES</button></div></div>
+            <button class="btn sm" id="bAutoScene" title="AUTO: the TV follows the music (scene per song)">AUTO</button></div></div>
         <div class="subbox" id="ltBox" hidden>
           <div class="lt-form">
             <input id="ltName" type="text" placeholder="Line 1 – name, e.g. DJ Kim" maxlength="80" aria-label="Lower third line 1">
@@ -417,9 +417,8 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <div class="row"><button class="btn sm yellow" id="ltShow">SHOW</button><button class="btn sm" id="ltHide">HIDE</button><div class="lt-recent" id="ltRecent" style="flex:1"></div></div>
         </div>
         <div class="subbox" id="elBox" hidden>
-          <div class="row between"><span class="lab">Elements · click to put on / take off screen</span><select id="elWhere" aria-label="Where" style="min-height:30px"><option value="all">all scenes</option><option value="nocam">not in camera scenes</option><option value="video">only with video</option></select></div>
+          <div class="row between"><span class="lab">Graphics</span><select id="elWhere" aria-label="Where" style="min-height:30px"><option value="all">all scenes</option><option value="nocam">not in camera scenes</option><option value="video">only with video</option></select></div>
           <div class="row" id="elList" style="flex-wrap:wrap;gap:5px"></div>
-          <span class="muted" style="font-size:11px">Graphics from branding/screen (1920×1080 PNG or transparent WebM).</span>
         </div>
         <div class="row" id="elOn" style="flex-wrap:wrap;gap:5px"></div>
         <div class="grid4" id="scenes"></div>
@@ -1350,8 +1349,8 @@ $('#ovSel').onchange = () => { const v = $('#ovSel').value; cmd('set_overlay', v
 let MODE = 'onair'; try { MODE = localStorage.getItem('hypeMode') || 'onair'; } catch (e) {}
 const LAYOUT = {
   onair: {col1: ['cPlayer', 'cTabs', 'cFixed', 'cLog', 'auxCard'], col2: ['cScenes', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
-  dj:    {deckA: ['dkA', 'cPads'], col2: ['cLib', 'cXfade'], deckB: ['dkB', 'cScenes', 'cTvm'], col1: [], col3: [], bottom: []},
-  live:  {col1: ['cScenes', 'cTvm'], col2: ['cGuests', 'cPads'], col3: ['cPlayer', 'cTabs', 'cFixed', 'cLog', 'auxCard', 'cLib'], deckA: [], deckB: [], bottom: []}};
+  dj:    {deckA: ['dkA', 'cPads'], col2: ['cXfade', 'cLib'], deckB: ['dkB', 'cScenes', 'cTvm'], col1: [], col3: [], bottom: []},
+  live:  {col1: ['cPlayer', 'cTabs', 'cFixed', 'cLog', 'auxCard'], col2: ['cScenes', 'cGuests'], col3: ['cPads', 'cTvm', 'cLib'], deckA: [], deckB: [], bottom: []}};
 const HIDE = {onair: ['cXfade', 'cGuests', 'dkA', 'dkB', 'liveCard'], dj: ['cGuests', 'cLog', 'auxCard', 'cPlayer', 'liveCard', 'cTabs', 'cFixed'], live: ['cXfade', 'dkA', 'dkB', 'liveCard']};
 const DECKS = {};
 function deckEl(k) {
@@ -1403,23 +1402,26 @@ function plApply(manual) {
   if (t === 'fixed') fixedLoad();
 }
 $$('[data-pltab]').forEach(b => b.onclick = () => { PLTAB = b.dataset.pltab; plApply(!S.auto && !(S.dj && S.dj.on)); });
-let FIXT = 0;
-function fixedLoad() {
-  if (Date.now() - FIXT < 60000 && $('#fixedList').dataset.ok) return; FIXT = Date.now();
-  api('events').then(E => {
-    const now = new Date(), out = [];
-    for (let d = 0; d < 2; d++) {
-      const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d), wd = (day.getDay() + 6) % 7;     // 0 = Monday
-      E.filter(e => e.enabled && String(e.days || '').includes(String(wd))).forEach(e => {
-        const [h, m] = String(e.at).split(':'), hrs = h === '*' ? [...Array(24).keys()] : [+h];
-        hrs.forEach(hh => { const t = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hh, +m); if (t > now) out.push({t, e}); });
-      });
-    }
-    out.sort((a, b) => a.t - b.t);
-    const kind = {jingle: 'jingle', song: 'song', playlist: 'playlist', folder: 'folder', adbreak: 'ad break'};
-    $('#fixedList').innerHTML = out.slice(0, 24).map(x => `<div class="li"><span class="tm mono">${x.t.toTimeString().slice(0, 5)}</span><span class="ic">◷</span><div class="tx"><b>${esc(x.e.name || x.e.ref || 'Fixed time')}</b><span>${x.t.getDate() !== now.getDate() ? 'tomorrow · ' : ''}${esc(kind[x.e.kind] || x.e.kind || '')}${x.e.hard ? ' · exact (cuts in)' : ' · after the song'}</span></div></div>`).join('') || '<span class="muted" style="padding:8px">No fixed times today.</span>';
-    $('#fixedList').dataset.ok = 1;
-  }).catch(() => {});
+let FIXT = 0, FIXE = null;
+function fixedLoad() {      // the fixed times like Up next: the last 2 that played (dim, ✓), then the coming ones – as many rows as Up next
+  if (FIXE && Date.now() - FIXT < 60000) return fixedRender();
+  api('events').then(E => { FIXE = Array.isArray(E) ? E : []; FIXT = Date.now(); fixedRender(); }).catch(() => {});
+}
+function fixedRender() {
+  const now = new Date(), all = [];
+  for (let d = -1; d < 2; d++) {
+    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d), wd = (day.getDay() + 6) % 7;     // 0 = Monday
+    FIXE.filter(e => e.enabled && String(e.days || '').includes(String(wd))).forEach(e => {
+      const [h, m] = String(e.at).split(':'), hrs = h === '*' ? [...Array(24).keys()] : [+h];
+      hrs.forEach(hh => all.push({t: new Date(day.getFullYear(), day.getMonth(), day.getDate(), hh, +m), e}));
+    });
+  }
+  all.sort((a, b) => a.t - b.t);
+  const past = all.filter(x => x.t <= now).slice(-2), next = all.filter(x => x.t > now).slice(0, Math.max(6, ((S && S.upcoming) || []).length + 1));
+  const kind = {jingle: 'jingle', song: 'song', playlist: 'playlist', folder: 'folder', adbreak: 'ad break'};
+  const row = (x, done) => `<div class="li${done ? ' played' : ''}"><span class="tm mono">${x.t.toTimeString().slice(0, 5)}</span><span class="ic">${done ? '✓' : '◷'}</span><div class="tx"><b>${esc(x.e.name || x.e.ref || 'Fixed time')}</b><span>${x.t.getDate() !== now.getDate() ? (x.t > now ? 'tomorrow · ' : 'yesterday · ') : ''}${esc(kind[x.e.kind] || x.e.kind || '')}${x.e.hard ? ' · exact (cuts in)' : ' · after the song'}</span></div></div>`;
+  const h = past.map(x => row(x, true)).join('') + next.map(x => row(x, false)).join('') || '<span class="muted" style="padding:8px">No fixed times.</span>';
+  if ($('#fixedList').dataset.h !== h) { $('#fixedList').dataset.h = h; $('#fixedList').innerHTML = h; }
 }
 // ---------- Mixer (the icon next to Next): music, studio, pads, TV media ----------
 (() => {
