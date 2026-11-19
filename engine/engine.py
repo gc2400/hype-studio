@@ -714,10 +714,20 @@ class TV:
                 cl.set_input_settings(nxt, {"local_file": clip_file, "looping": False, "restart_on_activate": False,
                                             "close_when_inactive": False, "hw_decode": True}, True)
                 cl.set_input_mute(nxt, True)
-                cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART"); time.sleep(0.25)
+                t_r = time.time(); cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
+                # wait until OBS really opened it (was a fixed 0.25 s: when opening took longer, PAUSE came too early and was
+                # ignored – the clip then ran on hidden, 10-14 s ahead at its start, or did not play: 19 Nov, 5x in one hour)
+                self._wait_open(cl, nxt); t_open = time.time() - t_r
                 cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PAUSE")
                 cl.set_media_input_cursor(nxt, int(k * 1000))
+                time.sleep(0.15); st = cl.get_media_input_status(nxt)
+                if st.media_state != "OBS_MEDIA_STATE_PAUSED" or abs((st.media_cursor or 0) / 1000 - k) > 0.3:     # not paused on its spot: once more
+                    cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PAUSE"); cl.set_media_input_cursor(nxt, int(k * 1000))
+                    time.sleep(0.15); st2 = cl.get_media_input_status(nxt)
+                else: st2 = st
                 self.pre = {"file": clip_file, "name": nxt, "k": k, "t": time.time()}
+                pre_diag({"ev": "preload", "file": os.path.basename(clip_file), "open_s": round(t_open, 2), "state": st.media_state, "cur": st.media_cursor, "k": k,
+                          "retry": st2 is not st, "state2": st2.media_state, "cur2": st2.media_cursor})
             except Exception as e: log.warning("preload: %s", e); self.cl = None; self.pre = None
     def _wait_open(self, cl, name):
         """Wait until OBS really restarted the new file (its status first still shows the old file)."""
@@ -754,7 +764,7 @@ class TV:
             if mode in ("clip", "pair", "jingle-video") and clip_file:
                 nxt = "Clip A" if self.cur == "Clip B" else "Clip B"; old = self.cur
                 # preloaded (preload(): this clip waits paused at its keyframe in this player): only PLAY at the moment
-                pre = getattr(self, "pre", None); self.pre = None
+                pre = getattr(self, "pre", None); self.pre = None; self.pre_last = pre
                 use_pre = bool(not sound and pre and pre["file"] == clip_file and pre["name"] == nxt)
                 if use_pre:
                     when = (pre["k"] - (cue_start or 0)) + AV_LAG - (time.time() - t0)   # the radio reaches the keyframe in OBS then
@@ -816,6 +826,8 @@ class TV:
                             cl2 = self.client()
                             if sound and not getattr(self, "live", False): cl2.set_input_mute(nxt, False)
                             if play_k is not None:       # preloaded: it waits paused at play_k – start it, no seek
+                                try: st_d = cl2.get_media_input_status(nxt); pre_diag({"ev": "start", "file": os.path.basename((self.pre_last or {}).get("file", "")) if getattr(self, "pre_last", None) else "", "state": st_d.media_state, "cur": st_d.media_cursor, "k": play_k})
+                                except Exception: pass
                                 # 19 Nov: some preloaded clips had NOT stayed paused (10-14 s ahead) or did not start on PLAY (a black
                                 # sweeper): check the waiting spot first, and look again after 0.5 s and 1.5 s
                                 try:
@@ -3584,6 +3596,14 @@ class Media:
                 eng.tv.auto = True; eng.tv.scene = None
                 if eng.now: eng.tv.set_scene(eng.now.get("scene") or "Hype Screen")
 
+def pre_diag(d):
+    """Measuring the preloaded clips (19 Nov): one line per preload / start in /var/lib/hype/preload_diag.jsonl, with OBS's running
+    time and the server load – to find why OBS sometimes didn't keep a clip paused / didn't start it."""
+    try:
+        up = time.time() - float(subprocess.run(["systemctl", "show", "-p", "ActiveEnterTimestampMonotonic", "--value", "hype-obs"], capture_output=True, text=True, timeout=3).stdout.strip() or 0) / 1e6 - (time.time() - time.monotonic())
+        d.update(t=round(time.time(), 2), obs_up_h=round(up / 3600, 1), load=os.getloadavg()[0])
+        with open("/var/lib/hype/preload_diag.jsonl", "a") as f: f.write(json.dumps(d) + "\n")
+    except Exception: pass
 STREAMS = "/var/lib/hype/streams.json"; STREAM_NOTE = {"t": 0, "text": ""}
 MEDIA_VOL = {"v": 1.0}     # TV Media card → VOL (0 – 1.6, like the pads): media videos' sound + a live stream / the browser with Music off
 WEB_STREAM = {"id": "web", "name": "Browser", "url": "rtsp://127.0.0.1:8554/web"}
