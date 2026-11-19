@@ -93,11 +93,41 @@ def watch(is_on_air):
         except Exception as e: log.warning("web browser watch: %s", e)
 
 # ---------------- control (Chrome DevTools protocol) ----------------
+SEEN = set()
+def _pages():
+    return [t for t in json.loads(urllib.request.urlopen(CDP + "/json", timeout=3).read()) if t.get("type") == "page"]
 def _page():
-    tabs = json.loads(urllib.request.urlopen(CDP + "/json", timeout=3).read())
-    pages = [t for t in tabs if t.get("type") == "page"]
+    """The tab you are on. A tab that a website opens (a link "in a new tab") is followed by itself: it is shown + controlled."""
+    pages = _pages()
     if not pages: raise RuntimeError("no page open")
-    return pages[0]
+    ids = {p["id"] for p in pages}
+    new = [p for p in pages if p["id"] not in SEEN]
+    if SEEN and new:
+        ST["cur"] = new[0]["id"]; _activate(new[0]["id"])
+    SEEN.clear(); SEEN.update(ids)
+    cur = next((p for p in pages if p["id"] == ST.get("cur")), None)
+    if not cur: cur = pages[0]; ST["cur"] = cur["id"]
+    return cur
+def _activate(tid):
+    try: urllib.request.urlopen(urllib.request.Request(CDP + "/json/activate/" + tid), timeout=3).read()
+    except Exception as e: log.warning("web tab: %s", e)
+def tabs():
+    try:
+        cur = _page()["id"]
+        return [{"id": p["id"], "title": (p.get("title") or p.get("url") or "")[:60], "url": p.get("url", ""), "on": p["id"] == cur} for p in _pages()]
+    except Exception: return []
+def tab(tid):
+    ST["t_use"] = time.time()
+    if any(p["id"] == tid for p in _pages()): ST["cur"] = tid; _activate(tid)
+def tab_close(tid):
+    ST["t_use"] = time.time(); pages = _pages()
+    if len(pages) <= 1: return nav("https://www.google.com/")       # the last tab stays (a blank start page)
+    urllib.request.urlopen(urllib.request.Request(CDP + "/json/close/" + tid), timeout=3).read()
+    if ST.get("cur") == tid: ST["cur"] = None; time.sleep(0.3); _activate(_page()["id"])
+def tab_new(url="https://www.google.com/"):
+    ST["t_use"] = time.time()
+    r = json.loads(urllib.request.urlopen(urllib.request.Request(CDP + "/json/new?" + urllib.parse.quote(url, safe=":/?=&%"), method="PUT"), timeout=5).read())
+    SEEN.add(r["id"]); ST["cur"] = r["id"]; _activate(r["id"])
 
 def cdp(method, params=None, page=None):
     import websocket
@@ -111,8 +141,8 @@ def cdp(method, params=None, page=None):
     finally: ws.close()
 
 def info():
-    try: p = _page(); return {"on": True, "url": p.get("url", ""), "title": p.get("title", "")}
-    except Exception: return {"on": False, "url": "", "title": ""}
+    try: p = _page(); return {"on": True, "url": p.get("url", ""), "title": p.get("title", ""), "tabs": tabs()}
+    except Exception: return {"on": False, "url": "", "title": "", "tabs": []}
 
 def nav(text):
     ST["t_use"] = time.time()

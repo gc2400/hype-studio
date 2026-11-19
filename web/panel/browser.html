@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Browser – Hype Studio</title>
+<style>
+:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--mut:#A9BCCD;--soft:#C9D7E3;--y:#FFE000;--b:#05A9C6;--g:#3DDC97;--r:#FF4D5E}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 Inter,system-ui,sans-serif}
+#hb{max-width:calc((100vh - 120px) * 16 / 9);margin:0 auto;padding:10px}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:8px 14px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.show{opacity:1}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;max-width:calc((100vh - 120px) * 16 / 9);margin:6px auto 0;padding:0 10px;font-size:12px;color:var(--mut)}
+.row select,.row button{background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:28px;padding:0 8px;font:inherit}
+.row button.on{border-color:var(--y);color:var(--y)}
+</style></head>
+<body>
+<div class="row"><b style="color:var(--txt)">Hype Studio · Browser</b><span>On air in <select id="sc" aria-label="Scene"></select> <span id="snd"><button data-s="mute" title="Only the picture, the music goes on">Mute</button> <button data-s="off" title="Its sound on radio + TV, the music waits">Music off</button></span></span></div>
+<div id="hb"></div>
+<div id="toast" role="status"></div>
+<script src="hype-rtc.js"></script>
+<script src="browser.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const api = (p, body) => fetch('../api/' + p, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); } return r; }).then(r => r.json());
+let S = null;
+const refresh = () => api('state').then(d => { S = d; }).catch(() => {});
+const cmd = (a, d = {}) => api('cmd/' + a, d).then(r => { refresh(); return r; });
+function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('show'), 2400); }
+// the same scene / sound choice as the panel's TV Media card (kept in this browser's storage)
+let SCENE = 'MEDIA FULL', SOUND = 'mute';
+try { SCENE = localStorage.getItem('hypeMScene') || 'MEDIA FULL'; SOUND = localStorage.getItem('hypeMSound') === 'off' ? 'off' : 'mute'; } catch (e) {}
+function soundUi() { document.querySelectorAll('#snd [data-s]').forEach(b => b.classList.toggle('on', b.dataset.s === SOUND)); }
+document.querySelectorAll('#snd [data-s]').forEach(b => b.onclick = () => { SOUND = b.dataset.s; try { localStorage.setItem('hypeMSound', SOUND); } catch (e) {} soundUi(); });
+api('media').then(d => { $('#sc').innerHTML = `<option value="manual">Manual – I pick the scene</option>` + (d.scenes || []).map(n => `<option ${n === SCENE ? 'selected' : ''}>${n}</option>`).join(''); $('#sc').value = SCENE; }).catch(() => {});
+$('#sc').onchange = () => { SCENE = $('#sc').value; try { localStorage.setItem('hypeMScene', SCENE); } catch (e) {} };
+soundUi(); refresh(); setInterval(() => { if (!document.hidden) refresh(); }, 2000);
+const B = HypeBrowser($('#hb'), {api, cmd, toast, getState: () => S, scene: () => SCENE, sound: () => SOUND, popout: false, close: false, onClose: () => {}});
+B.start();
+</script>
+</body></html>

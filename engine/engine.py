@@ -1724,13 +1724,16 @@ class Engine:
                 elif action == "web_wheel": hypeweb.wheel(float(d["x"]), float(d["y"]), float(d.get("dy") or 0))
                 elif action == "web_type": hypeweb.type_text(str(d.get("text") or ""))
                 elif action == "web_key": hypeweb.key(str(d.get("key") or ""))
+                elif action == "web_tab": hypeweb.tab(str(d.get("id") or ""))
+                elif action == "web_tabclose": hypeweb.tab_close(str(d.get("id") or ""))
+                elif action == "web_tabnew": hypeweb.tab_new()
                 elif action != "web_info": return {"ok": False, "error": "unknown"}
                 return {"ok": True, "web": hypeweb.info()}
             except Exception as e: return {"ok": False, "error": str(e)[:160]}
         if action == "stream_play":      # 🔴 LIVE pad on air: a YouTube link is asked for first (seconds) – not while holding the engine's lock
             st_ = next((x for x in streams_load() if x["id"] == d.get("id")), None)
             if not st_: return {"ok": False, "error": "that live pad is gone"}
-            if st_["id"] == "web" and not hypeweb.running(): return {"ok": False, "error": "open the browser first (🌐)"}
+            if st_["id"] == "web" and not hypeweb.running(): return {"ok": False, "error": "open the browser first"}
             try: url_ = stream_resolve(st_["url"])
             except Exception as e: return {"ok": False, "error": str(e)[:160]}
             with LOCK:
@@ -3551,7 +3554,7 @@ class Media:
                 if eng.now: eng.tv.set_scene(eng.now.get("scene") or "Hype Screen")
 
 STREAMS = "/var/lib/hype/streams.json"; STREAM_NOTE = {"t": 0, "text": ""}
-WEB_STREAM = {"id": "web", "name": "🌐 Browser", "url": "rtsp://127.0.0.1:8554/web"}
+WEB_STREAM = {"id": "web", "name": "Browser", "url": "rtsp://127.0.0.1:8554/web"}
 def streams_load(saved_only=False):
     try: L = json.load(open(STREAMS))
     except Exception: L = []

@@ -27,6 +27,8 @@ web/panel/hypelive.html|/var/www/studio/panel/hypelive.html|644|-
 web/panel/help.html|/var/www/studio/panel/help.html|644|-
 web/panel/header.js|/var/www/studio/panel/header.js|644|-
 web/panel/hype-rtc.js|/var/www/studio/panel/hype-rtc.js|644|-
+web/panel/browser.js|/var/www/studio/panel/browser.js|644|-
+web/panel/browser.html|/var/www/studio/panel/browser.html|644|-
 web/panel/logo.png|/var/www/studio/panel/logo.png|644|-
 web/status/index.html|/var/www/studio/index.html|644|-
 web/overlay/index.html|/var/www/overlay/index.html|644|-
