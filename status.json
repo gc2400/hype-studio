@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T15:08:08",
+ "time": "2026-11-19T15:13:17",
  "result": "ok",
- "commit": "480080542e78c7e2ec0f23502466a969f5991e76",
- "subject": "Panel: Playlist card with tabs (Up next \u00b7 AUX 1 \u00b7 AUX 2 \u00b7 Fixed times \u2013 today and tomorrow), no count line; Mixer icon next to Next opens a small mixer (Music, Studio, Pads, TV media \u2013 the pad and media VOL moved there); Pads and TV Media: \u2699 settings under the title (Duck/Video/Loop/Edit \u00b7 Sound/Plays on/Edit) and a red stop button next to it; plain button names",
+ "commit": "f847a45805098577b96d3cad4a087674cb789c46",
+ "subject": "Panel: Media card (was TV Media) with its Library tab (was Media); + GRAPHIC (was + ELEMENT); lower scene buttons; Playlist spacing like the other cards; mixer values in one right-aligned column",
  "log": [
-  "15:08:08 update 5d89ec0e \u2192 48008054 \u00b7 1 file(s): web/panel/index.html",
-  "15:08:08 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:13:17 update 48008054 \u2192 f847a458 \u00b7 1 file(s): web/panel/index.html",
+  "15:13:17 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Ryan Castro x Blaiz Fayah x Tribal Kush \u2013 BOMBASTIK",
-  "listeners": 5,
+  "song": "Gedi1000 x Dongo \u2013 No Ta Nada",
+  "listeners": 6,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
