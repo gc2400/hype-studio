@@ -179,7 +179,7 @@ html{scrollbar-gutter:stable}
   function logRender() {
     if (lp.hidden) return;
     lp.innerHTML = '<h4>Log</h4>' + (LOG.map(m => `<div class="m"><i style="background:${LC[m.lvl] || '#05A9C6'}"></i><div>${lesc(m.text)}<small>${new Date(m.t * 1000).toLocaleString('nl-NL', {weekday: 'short', hour: '2-digit', minute: '2-digit'})} · ${m.src === 'guard' ? 'Studio guard' : 'this page'}${m.now ? ' · going on now' : ''}</small></div></div>`).join('') || '<div class="note">Nothing yet.</div>') +
-      '<div class="note">Repairs and problems from the Studio guard, plus the messages of this page.</div>';
+      '<div class="note">Repairs and problems from the Studio guard, plus warnings on this page.</div>';
   }
   function logLoad() {
     fetch('/api/guard').then(r => r.json()).then(g => {
@@ -191,7 +191,7 @@ html{scrollbar-gutter:stable}
   }
   // this page's own messages (toasts) go into the log too
   const wrapToast = () => { if (typeof window.toast !== 'function' || window.toast._log) return; const t0 = window.toast;
-    window.toast = function (t, err) { const r = t0.apply(this, arguments); LOG.unshift({t: Date.now() / 1000, text: String(t), lvl: err ? 'warn' : 'info', src: 'page'}); if (LOG.length > 120) LOG.length = 120; logRender(); return r; };
+    window.toast = function (t, err) { const r = t0.apply(this, arguments); if (!err) return r; LOG.unshift({t: Date.now() / 1000, text: String(t), lvl: err ? 'warn' : 'info', src: 'page'}); if (LOG.length > 120) LOG.length = 120; logRender(); return r; };
     window.toast._log = true; };
   setTimeout(wrapToast, 500); setTimeout(wrapToast, 3000);
   function logOpen(o) { lp.hidden = !o; lb_.setAttribute('aria-expanded', o); if (o) { popOpen(false); logSeen = Date.now() / 1000; try { localStorage.setItem('hypeLogSeen', logSeen); } catch (e) {} logRender(); logDot(); logLoad(); } }

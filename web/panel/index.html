@@ -23,8 +23,8 @@ header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:s
 .c1{flex:1 1 380px}.c2{flex:1 1 420px}.c3{flex:1 1 420px}.cA,.cB{flex:1 1 380px}
 #bottom{display:flex;flex-direction:column;gap:14px}
 body.dj #cLib .res{max-height:calc(100vh - 390px);min-height:320px}
-body.live #col1{flex:1 1 380px}body.live #col2{flex:1.25 1 460px}body.live #col3{flex:1 1 400px}   /* LIVE: the player column as narrow as on ON AIR, scenes + guests wider */
-body.live #log,body.live #aux{max-height:300px;overflow:auto}body.live #cLib .res{max-height:420px}
+   /* LIVE: the player column as narrow as on ON AIR, scenes + guests wider */
+body.live #cLib .res{max-height:420px}body.live #col2{flex:1.4 1 480px}
 body.dj #deckA{order:1;flex:1 1 360px}body.dj #col2{order:2;flex:1.1 1 380px}body.dj #deckB{order:3;flex:1 1 360px}body.dj .cols{flex-wrap:nowrap}
 .deck .np .art{cursor:pointer;transition:transform .12s,box-shadow .12s}.deck .np .art:hover{transform:scale(1.06);box-shadow:0 0 0 3px currentColor}
 .deck .np .art{width:56px;height:56px;font-size:24px;position:relative}.deck .dlist .li .dact{display:none;gap:3px}.deck .dlist .li:hover .dact{display:flex}
@@ -468,7 +468,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
       </div>
       <div class="card" id="cXfade" hidden>
         <div class="xnow" id="xNow" hidden></div>
-        <div class="row" id="ovRow" hidden style="gap:10px;flex-wrap:nowrap"><button class="btn sm" id="bOverlap" aria-pressed="false" title="OFF: starting a deck fades the other one out. ON: both keep playing – the TV follows the deck you started last">OVERLAP: OFF</button><span class="muted" style="font-size:12px">LIVE · Split: each deck plays one song on its own Mixcast fader, then stops.</span></div>
+        <div class="row" id="ovRow" hidden style="gap:10px;flex-wrap:nowrap"><button class="btn sm" id="bOverlap" aria-pressed="false" title="OFF: starting a deck fades the other one out. ON: both keep playing – the TV follows the deck you started last">OVERLAP: OFF</button></div>
         <div class="xf" id="xfRow">
           <button class="xl" data-xto="1" style="color:var(--b)" title="Mix into deck A" aria-label="Mix into deck A">A</button>
           <div class="xtrack" id="xTrack"><div class="xthumb" id="xThumb" draggable="false"></div></div>
@@ -1349,7 +1349,7 @@ $('#ovSel').onchange = () => { const v = $('#ovSel').value; cmd('set_overlay', v
 let MODE = 'onair'; try { MODE = localStorage.getItem('hypeMode') || 'onair'; } catch (e) {}
 const LAYOUT = {
   onair: {col1: ['cPlayer', 'cTabs', 'cFixed', 'cLog', 'auxCard'], col2: ['cScenes', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
-  dj:    {deckA: ['dkA', 'cPads'], col2: ['cXfade', 'cLib'], deckB: ['dkB', 'cScenes', 'cTvm'], col1: [], col3: [], bottom: []},
+  dj:    {deckA: ['dkA', 'cScenes'], col2: ['cXfade', 'cLib'], deckB: ['dkB', 'cPads', 'cTvm'], col1: [], col3: [], bottom: []},
   live:  {col1: ['cPlayer', 'cTabs', 'cFixed', 'cLog', 'auxCard'], col2: ['cScenes', 'cGuests'], col3: ['cPads', 'cTvm', 'cLib'], deckA: [], deckB: [], bottom: []}};
 const HIDE = {onair: ['cXfade', 'cGuests', 'dkA', 'dkB', 'liveCard'], dj: ['cGuests', 'cLog', 'auxCard', 'cPlayer', 'liveCard', 'cTabs', 'cFixed'], live: ['cXfade', 'dkA', 'dkB', 'liveCard']};
 const DECKS = {};
@@ -1463,8 +1463,8 @@ function applyMode(m) {
 $$('.modes [data-mode]').forEach(b => b.onclick = () => {
   const m = b.dataset.mode; if (m === MODE) return;
   const wasDj = S && S.dj && S.dj.on;
-  if (m === 'dj' && !wasDj) cmd('dj', {on: true}).then(() => toast('DJ MODE: each deck plays its AUX in order · NOW = cut in · MIX = crossfade to the other deck'));
-  if (m !== 'dj' && wasDj) cmd('dj', {on: false}).then(() => toast('MANUAL: your AUX keeps playing – ▶ PLAY or AUTO = back to the programming'));
+  if (m === 'dj' && !wasDj) cmd('dj', {on: true});
+  if (m !== 'dj' && wasDj) cmd('dj', {on: false});
   applyMode(m);
 });
 const DW = {};     // deck waveforms: {path, peaks}
@@ -1487,7 +1487,7 @@ function xNow() {      // DJ page: a song from the programming (AUTO / the clock
   const show = !!n.path && !n.deck; box.hidden = !show; if (!show) return;
   const left = (n.started + (n.air || ((n.cue_mix || n.duration || 0) - (n.cue_start || 0)))) - (Date.now() / 1000 - skew);
   const decks = ((S.aux || {})['1'] || []).length + ((S.aux || {})['2'] || []).length;
-  const html = `<span class="chip" style="background:var(--r);color:#1A0207">ON AIR</span><b>${n.artist ? esc(n.artist) + ' – ' : ''}${esc(n.title)}</b><span class="muted">${S.auto ? 'AUTO · the decks start when you press MIX / NOW' : decks ? 'then the decks' : 'then the hour plan (decks empty)'}</span><span class="mono">-${fmt(left)}</span>`;
+  const html = `<span class="chip" style="background:var(--r);color:#1A0207">ON AIR</span><b>${n.artist ? esc(n.artist) + ' – ' : ''}${esc(n.title)}</b><span class="mono">-${fmt(left)}</span>`;
   if (box.innerHTML !== html) box.innerHTML = html;
 }
 function renderDecks() {
