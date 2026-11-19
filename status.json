@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T12:23:32",
+ "time": "2026-11-19T12:31:48",
  "result": "waiting",
- "commit": "ac9fe189d48f4b6d84d8371f87a13018f21c9465",
- "subject": "[night] Hour plans: Preview hour as a list or as a clock (an example hour on a 60-minute ring, coloured per hour-plan row) with how many of each row and how long; the list shows the row too",
+ "commit": "3fa4f960cb357a3e6179187014fe1093201e0f3a",
+ "subject": "[night] Library: an MP4/M4A/MOV whose upload stopped halfway (index at the front, so it looked fine) is marked as a problem and never played \u2013 19 Nov 08:39 such a song ended at once on air (11 s silence)",
  "log": [
-  "12:23:32 update b05566ec \u2192 ac9fe189 \u00b7 11 file(s): engine/engine.py, engine/hype_auth.py, engine/live.py, engine/planner.py, radio/radio.liq, web/panel/cue.js, web/panel/header.js, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/studio.html",
-  "12:23:32 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "12:31:48 update b05566ec \u2192 3fa4f960 \u00b7 12 file(s): engine/engine.py, engine/hype_auth.py, engine/indexer.py, engine/live.py, engine/planner.py, radio/radio.liq, web/panel/cue.js, web/panel/header.js, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/studio.html",
+  "12:31:48 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Idaly x Adje x Cho \u2013 DOE HET",
+  "song": "Kybba x J Balvin x Rytikal \u2013 I Love It",
   "listeners": 4,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
