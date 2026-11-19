@@ -320,12 +320,21 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #cTabs~#cFixed,#cTabs~#cLog,#cTabs~#auxCard{margin-top:-14px;padding-top:2px!important;padding-left:6px!important;padding-right:6px!important;border-top-left-radius:0;border-top-right-radius:0;border-top-color:transparent}
 #auxCard [data-auxtab]{display:none}
 .btn.ic{width:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
-#mixWin{position:fixed;z-index:90;width:min(380px,94vw);background:var(--card);border:1px solid var(--line2);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:14px;display:flex;flex-direction:column;gap:12px}
-#mixWin .gvol{display:grid!important;grid-template-columns:120px minmax(0,1fr) 72px;align-items:center;gap:12px!important;margin:0}
-#mixWin .gvol .lab{color:var(--soft)!important;text-align:left;width:auto}
-#mixWin .gvol>span:last-child{width:auto!important;justify-self:end;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px}
-#mixWin .gvol input{width:100%;margin:0}
-@media (max-width:760px){#mixWin{left:8px!important;right:8px!important;width:auto;top:70px!important}#mixWin .gvol{grid-template-columns:80px 1fr 56px}}
+#mixBack{position:fixed;inset:0;z-index:89;background:rgba(2,8,15,.55)}
+#mixWin{position:fixed;z-index:90;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,96vw);max-height:92vh;overflow:auto;background:var(--card);border:1px solid var(--line2);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.65);padding:16px 18px 14px;display:flex;flex-direction:column;gap:12px}
+#mixWin .mhead{display:flex;align-items:center;justify-content:space-between;gap:10px}#mixWin .mhead b{font:800 16px Inter,system-ui,sans-serif}
+#mixWin .mgroups{display:flex;gap:14px;flex-wrap:wrap}
+#mixWin .mgrp{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:8px;background:var(--deep);border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px}
+#mixWin .mgrp>h4{margin:0;font:800 11px Inter,system-ui,sans-serif;letter-spacing:.08em;color:var(--mut);text-transform:uppercase}
+#mixWin .strips{display:flex;gap:10px;flex-wrap:wrap}
+#mixWin .gvol{display:flex!important;flex-direction:column;align-items:center;gap:8px!important;width:74px;margin:0;padding:8px 4px 6px;border-radius:10px;background:var(--card);border:1px solid var(--line)}
+#mixWin .gvol>span:not(.lab){order:1;width:auto!important;text-align:center;font:700 12px 'JetBrains Mono',monospace;color:var(--y)}
+#mixWin .gvol input{order:2;writing-mode:vertical-lr;direction:rtl;width:26px!important;height:150px;flex:none;margin:0;accent-color:var(--y);cursor:pointer}
+#mixWin .gvol .lab{order:3;width:100%!important;color:var(--soft)!important;text-align:center;font:700 12px Inter,system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mixWin .gvol .gm{order:4;height:26px;min-height:26px;padding:0 8px;font-size:10.5px}
+#mixWin .gvol.off input{opacity:.35}#mixWin .gvol .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4A6277;margin-right:4px;vertical-align:1px}#mixWin .gvol .dot.ok{background:#3DDC97}
+#mixWin .mnote{font-size:11px;color:var(--mut)}
+@media (max-width:600px){#mixWin{padding:12px}#mixWin .gvol{width:auto;flex:1 1 0;min-width:62px}#mixWin .gvol .lab{font-size:10.5px}#mixWin .gvol input{height:120px}#mixWin .strips{gap:8px}}
 @media (max-width:520px){#cPlayer .tp{gap:5px}#cPlayer .tp .btn.ib{flex:1 1 0;min-width:0;padding:0 2px}#cPlayer .tp #tEl{display:none}}
 .sgopts{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;padding:6px 8px;margin-top:2px;border-radius:10px;background:var(--deep);border:1px solid var(--line)}
 </style>
@@ -357,7 +366,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <button class="btn ib red" id="bStop" aria-label="Stop now" title="Stop"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button>
           <button class="btn ib loop" id="bLoop" aria-label="Loop this song" title="Loop: the song on air plays again and again"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="btn ib" id="bNext" aria-label="Next song" title="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
-          <button class="btn ib" id="bMixer" aria-label="Mixer" aria-haspopup="dialog" aria-expanded="false" title="Mixer: music, studio, pads, media"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><rect x="3.5" y="13" width="5" height="3" rx="1" fill="currentColor"/><rect x="9.5" y="7" width="5" height="3" rx="1" fill="currentColor"/><rect x="15.5" y="11" width="5" height="3" rx="1" fill="currentColor"/></svg></button>
+          <button class="btn ib" id="bMixer" aria-label="Mixer" aria-haspopup="dialog" aria-expanded="false" title="Mixer: every volume – music, studio, pads, media, guests"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><rect x="3.5" y="13" width="5" height="3" rx="1" fill="currentColor"/><rect x="9.5" y="7" width="5" height="3" rx="1" fill="currentColor"/><rect x="15.5" y="11" width="5" height="3" rx="1" fill="currentColor"/></svg></button>
           <span class="mono muted" id="tEl" style="margin-left:auto;font-size:12px">0:00</span>
         </div>
         <div class="meter" aria-label="On-air level (left and right)" role="img">
@@ -1429,23 +1438,39 @@ function fixedRender() {
   const h = past.map(x => row(x, true)).join('') + next.map(x => row(x, false)).join('') || '<span class="muted" style="padding:8px">No fixed times.</span>';
   if ($('#fixedList').dataset.h !== h) { $('#fixedList').dataset.h = h; $('#fixedList').innerHTML = h; }
 }
-// ---------- Mixer (the icon next to Next): music, studio, pads, TV media ----------
+// ---------- Mixer (the icon next to Next): every volume in one place – radio, pads, media, guests ----------
 (() => {
+  const bk = document.createElement('div'); bk.id = 'mixBack'; bk.hidden = true;
   const w = document.createElement('div'); w.id = 'mixWin'; w.hidden = true; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', 'Mixer');
-  w.innerHTML = '<div class="row between"><b>Mixer</b><button class="btn sm" id="mixX">Close</button></div>' + [['vol_music', 'Music'], ['vol_studio', 'Studio (LIVE)']].map(([n, l]) => `<label class="gvol"><span class="lab">${l}</span><input type="range" min="0" max="1.6" step="0.01" value="1" data-fad="${n}" aria-label="${l} fader"><span class="mono" data-fv="${n}">0 dB</span></label>`).join('') + '<div id="mixMore" style="display:flex;flex-direction:column;gap:12px"></div><span class="muted" style="font-size:11px">Double-click a fader = 0 dB.</span>';
-  document.body.appendChild(w);
-  for (const [id, l] of [['padVol', 'Pads'], ['mediaVol', 'Media']]) { const lb = document.getElementById(id).closest('label'); lb.querySelector('.lab').textContent = l; w.querySelector('#mixMore').appendChild(lb); }
+  const strip = (n, l) => `<label class="gvol"><span class="lab">${l}</span><input type="range" min="0" max="1.6" step="0.01" value="1" data-fad="${n}" aria-label="${l} volume"><span class="mono" data-fv="${n}">0 dB</span></label>`;
+  w.innerHTML = '<div class="mhead"><b>Mixer</b><button class="btn sm" id="mixX">Close</button></div><div class="mgroups">'
+    + '<div class="mgrp"><h4>On air</h4><div class="strips" id="mixMain">' + strip('vol_music', 'Music') + strip('vol_studio', 'Studio') + '</div></div>'
+    + '<div class="mgrp"><h4>Guests</h4><div class="strips" id="mixGuests"></div></div></div>'
+    + '<span class="mnote">Double-click a fader = back to normal (0 dB / 100%).</span>';
+  document.body.appendChild(bk); document.body.appendChild(w);
+  for (const [id, l] of [['padVol', 'Pads'], ['mediaVol', 'Media']]) { const lb = document.getElementById(id).closest('label'); lb.removeAttribute('style'); lb.querySelector('.lab').textContent = l; w.querySelector('#mixMain').appendChild(lb); }
   const busy = {}, tm = {};
   w.querySelectorAll('[data-fad]').forEach(r => { const n = r.dataset.fad, out = w.querySelector(`[data-fv="${n}"]`);
     r.oninput = () => { busy[n] = Date.now(); out.textContent = dbTxt(+r.value); clearTimeout(tm[n]); tm[n] = setTimeout(() => api('cmd/fader', {name: n, value: +r.value}), 120); };
     r.ondblclick = () => { r.value = 1; r.oninput(); }; });
+  // guests: one fader + mute each (the same as before in the guest cards)
+  const gBusy = {};
+  window.mixGuests = () => { const box = w.querySelector('#mixGuests'), G = (LV && LV.guests) || {};
+    const sig = JSON.stringify(Object.entries(G).map(([s, g]) => [s, g.name, g.online, !!g.muted]));
+    if (box.dataset.sig !== sig) { box.dataset.sig = sig;
+      box.innerHTML = Object.entries(G).map(([s, g]) => `<label class="gvol${g.muted ? ' off' : ''}" data-mg="${s}"><span class="lab" title="${esc(g.name)}"><i class="dot${g.online ? ' ok' : ''}"></i>${esc(g.name)}</span><input type="range" min="0" max="2" step="0.01" value="${g.vol == null ? 1 : g.vol}" aria-label="Volume of ${esc(g.name)}"><span class="mono">${Math.round(100 * (g.vol == null ? 1 : g.vol))}%</span><button type="button" class="btn sm gm${g.muted ? ' on' : ''}" aria-pressed="${!!g.muted}">${g.muted ? 'MUTED' : 'MUTE'}</button></label>`).join('')
+        || '<span class="mnote" style="padding:6px 2px">No guests. Invite them in LIVE.</span>';
+      box.querySelectorAll('[data-mg]').forEach(el => { const s = el.dataset.mg, r = el.querySelector('input'), out = el.querySelector('.mono'); let t;
+        r.oninput = () => { gBusy[s] = Date.now(); out.textContent = Math.round(r.value * 100) + '%'; clearTimeout(t); t = setTimeout(() => api('live/guest_vol', {slot: s, vol: +r.value}), 120); };
+        r.ondblclick = () => { r.value = 1; r.oninput(); };
+        el.querySelector('.gm').onclick = e => { e.preventDefault(); const g = LV.guests[s]; api('live/guest_mute', {slot: s, on: !g.muted}).then(d => { LV = d; mixGuests(); if (MODE === 'live') { $('#gList').dataset.sig = ''; renderGuests(); } }); }; }); }
+    box.querySelectorAll('[data-mg]').forEach(el => { const s = el.dataset.mg, g = G[s]; if (!g || Date.now() - (gBusy[s] || 0) < 1500) return; const v = g.vol == null ? 1 : g.vol; el.querySelector('input').value = v; el.querySelector('.mono').textContent = Math.round(v * 100) + '%'; }); };
   setInterval(() => { if (!S || w.hidden) return; const F = S.faders || {};
-    w.querySelectorAll('[data-fad]').forEach(r => { const n = r.dataset.fad; if (Date.now() - (busy[n] || 0) < 1500 || F[n] == null) return; r.value = F[n]; w.querySelector(`[data-fv="${n}"]`).textContent = dbTxt(F[n]); }); }, 1000);
-  const close = () => { w.hidden = true; $('#bMixer').classList.remove('on'); $('#bMixer').setAttribute('aria-expanded', false); };
-  $('#bMixer').onclick = () => { if (!w.hidden) return close(); const r = $('#bMixer').getBoundingClientRect();
-    w.style.top = Math.round(Math.min(innerHeight - 330, r.bottom + 8)) + 'px'; w.style.left = Math.round(Math.max(8, Math.min(innerWidth - 390, r.left))) + 'px';
-    w.hidden = false; $('#bMixer').classList.add('on'); $('#bMixer').setAttribute('aria-expanded', true); };
-  w.querySelector('#mixX').onclick = close;
+    w.querySelectorAll('[data-fad]').forEach(r => { const n = r.dataset.fad; if (Date.now() - (busy[n] || 0) < 1500 || F[n] == null) return; r.value = F[n]; w.querySelector(`[data-fv="${n}"]`).textContent = dbTxt(F[n]); });
+    mixGuests(); }, 1000);
+  const close = () => { w.hidden = true; bk.hidden = true; $('#bMixer').classList.remove('on'); $('#bMixer').setAttribute('aria-expanded', false); };
+  $('#bMixer').onclick = () => { if (!w.hidden) return close(); mixGuests(); w.hidden = false; bk.hidden = false; $('#bMixer').classList.add('on'); $('#bMixer').setAttribute('aria-expanded', true); };
+  w.querySelector('#mixX').onclick = close; bk.onclick = close;
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !w.hidden) close(); });
 })();
 // ---------- Pads / TV media: settings behind ⚙, stop next to it ----------
@@ -1561,14 +1586,12 @@ function renderGuests() {
       <div class="row between" style="gap:6px;flex-wrap:nowrap"><div class="row" style="gap:6px;min-width:0;flex-wrap:nowrap"><b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.name)}</b><span class="chip ${g.online ? 'ok' : ''}">${g.online ? 'online' : 'not joined'}</span><span class="chip">${g.mode === 'audio' ? 'audio' : 'video'}</span></div><span class="row" style="gap:5px;flex-wrap:nowrap;flex:none"><a class="btn sm ib3" target="_blank" rel="noopener" title="Send the link by WhatsApp" aria-label="Send the link of ${esc(g.name)} by WhatsApp" style="color:#25D366" href="https://wa.me/?text=${encodeURIComponent('Join Hype Radio TV live: ' + location.origin + '/guest/?t=' + encodeURIComponent(g.token) + ' (use headphones)')}"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.4.8 3.2.6a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg></a><button class="btn sm ib3" data-copy title="Copy the guest link" aria-label="Copy the guest link of ${esc(g.name)}"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></svg></button><button class="btn sm red ib3" data-rmg aria-label="Remove ${esc(g.name)}" title="Remove guest">×</button></span></div>
       <div class="row" style="gap:6px;flex-wrap:nowrap"><span class="lab" style="color:var(--mut)">SLOT</span>${seg(s)}
         <span class="row" style="gap:6px;margin-left:auto;flex-wrap:nowrap"><button class="btn sm" data-lt style="white-space:nowrap" title="Put the guest's name on screen (lower third)">Show name</button></span></div>
-      <div class="row" style="gap:8px;flex-wrap:nowrap"><button class="btn sm ib3 gmute ${g.muted ? 'on' : ''}" data-gmute title="${g.muted ? 'Unmute' : 'Mute'} ${esc(g.name)}" aria-label="${g.muted ? 'Unmute' : 'Mute'} ${esc(g.name)}" aria-pressed="${!!g.muted}">${g.muted ? '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>'}</button><label class="gvol" style="flex:1"><span class="lab" style="width:auto;color:var(--mut)">Vol</span><input type="range" min="0" max="2" step="0.01" value="${g.vol == null ? 1 : g.vol}" data-gvol aria-label="Volume of ${esc(g.name)}"><span class="mono" data-gvl>${Math.round(100 * (g.vol == null ? 1 : g.vol))}%</span></label></div></div></div>`; }).join('')
+      <div class="row" style="gap:8px;flex-wrap:nowrap"><button class="btn sm ib3 gmute ${g.muted ? 'on' : ''}" data-gmute title="${g.muted ? 'Unmute' : 'Mute'} ${esc(g.name)}" aria-label="${g.muted ? 'Unmute' : 'Mute'} ${esc(g.name)}" aria-pressed="${!!g.muted}">${g.muted ? '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>'}</button></div></div></div>`; }).join('')
     || '<span class="muted">No guests yet – type a name and press + Invite.</span>';
   box.querySelectorAll('[data-cam][data-src]').forEach(b => b.onclick = () => api('live/cam', {cam: b.dataset.cam, src: b.dataset.src}).then(d => { LV = d; box.dataset.sig = ''; renderGuests(); toast(b.dataset.cam + ' = ' + (((LV.sources || {})[b.dataset.src] || {}).name || b.dataset.src)); }));
   box.querySelectorAll('[data-g]').forEach(el => { const s = el.dataset.g, g = G[s];
     el.querySelector('[data-gmute]').onclick = () => api('live/guest_mute', {slot: s, on: !g.muted}).then(d => { LV = d; box.dataset.sig = ''; renderGuests(); toast(g.name + (g.muted ? ' unmuted' : ' muted')); });
     el.querySelector('[data-lt]').onclick = () => { $('#ltName').value = g.name; $('#ltRole').value = LT && LT.visible ? $('#ltRole').value : ''; ltSend('show').then(() => toast(g.name + ' on screen')); };
-    const gv = el.querySelector('[data-gvol]'); let gt; gv.oninput = () => { el.querySelector('[data-gvl]').textContent = Math.round(gv.value * 100) + '%'; clearTimeout(gt); gt = setTimeout(() => api('live/guest_vol', {slot: s, vol: +gv.value}), 120); };
-    gv.ondblclick = () => { gv.value = 1; gv.oninput(); };
     el.querySelector('[data-copy]').onclick = () => navigator.clipboard.writeText(location.origin + '/guest/?t=' + encodeURIComponent(g.token)).then(() => toast('Guest link copied'));
     el.querySelector('[data-rmg]').onclick = () => { if (confirm('Remove ' + g.name + '?')) api('live/guest_remove', {slot: s}).then(d => { LV = d; renderGuests(); }); };
     if (g.online && (typeof HypeRTC !== 'undefined')) { if (GV[s]) GV[s].close(); GV[s] = HypeRTC.keep(s, async alive => { const r = await HypeRTC.play(s, {key: LV.studio_key, video: true}); if (!alive()) return r; const v = el.querySelector('video'); if (v) v.srcObject = r.stream; return r; }, () => {}); }

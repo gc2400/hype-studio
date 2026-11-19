@@ -16,7 +16,6 @@ tv/ladder.sh|/etc/hype/ladder.sh|755|hype-ladder
 tv/sway.conf|/etc/hype/sway.conf|644|-
 tv/radio_hls.sh|/etc/hype/radio_hls.sh|755|hype-radio-hls
 web/panel/index.html|/var/www/studio/panel/index.html|644|-
-web/panel/v2.html|/var/www/studio/panel/v2.html|644|-
 web/panel/cuewave.js|/var/www/studio/panel/cuewave.js|644|-
 web/panel/cue.js|/var/www/studio/panel/cue.js|644|-
 web/obs/feed.html|/var/www/obs/feed.html|644|-
