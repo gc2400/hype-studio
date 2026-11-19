@@ -415,7 +415,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         <div class="camgrid" id="camScenes"></div>
       </div>
       <div class="card" id="cTvm">
-        <div class="row between"><span class="lab">TV Media</span><div class="row" style="gap:6px"><select id="mScene" aria-label="Media scene" title="The scene a media item / stream / the browser goes on air in" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;max-width:190px"></select><button class="btn sm" id="tvEdit" title="Add live links, delete media, pin / hide listener items">EDIT</button></div></div>
+        <div class="row between"><span class="lab">TV Media</span><div class="row" style="gap:6px"><select id="mScene" aria-label="Media scene" title="The scene a media item / stream / the browser goes on air in" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;max-width:190px"></select><button class="btn sm" id="tvEdit" title="Add live links, delete media, pin / hide listener items">✎ EDIT</button></div></div>
         <div class="banks" id="tvTabs"></div>
         <div class="grid4 pads" id="tvPads"></div>
         <div class="padpg" id="tvPg" hidden><button class="btn sm" id="tvPrev" aria-label="Previous page">◀</button><span id="tvPgTxt"></span><button class="btn sm" id="tvNext" aria-label="Next page">▶</button></div>
@@ -1308,7 +1308,7 @@ $('#ovSel').onchange = () => { const v = $('#ovSel').value; cmd('set_overlay', v
 // ---------- modes: ON AIR · DJ MODE · LIVE · GUESTS ----------
 let MODE = 'onair'; try { MODE = localStorage.getItem('hypeMode') || 'onair'; } catch (e) {}
 const LAYOUT = {
-  onair: {col1: ['cPlayer', 'cLog', 'auxCard'], col2: ['cScenes', 'cTvm', 'cPads'], col3: ['cLib'], deckA: [], deckB: [], bottom: []},
+  onair: {col1: ['cPlayer', 'cLog', 'auxCard'], col2: ['cScenes', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
   dj:    {deckA: ['dkA', 'cPads'], col2: ['cLib', 'cXfade'], deckB: ['dkB', 'cScenes', 'cTvm'], col1: [], col3: [], bottom: []},
   live:  {col1: ['cScenes', 'cTvm'], col2: ['cGuests', 'cPads'], col3: ['cPlayer', 'cLog', 'auxCard', 'cLib'], deckA: [], deckB: [], bottom: []}};
 const HIDE = {onair: ['cXfade', 'cGuests', 'dkA', 'dkB', 'liveCard'], dj: ['cGuests', 'cLog', 'auxCard', 'cPlayer', 'liveCard'], live: ['cXfade', 'dkA', 'dkB', 'liveCard']};
