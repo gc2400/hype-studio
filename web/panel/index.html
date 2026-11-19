@@ -226,7 +226,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .pvb{width:34px;height:34px;border-radius:9px;border:0;background:transparent;color:#F2F6FA;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
 .pvb:hover{background:rgba(255,255,255,.12)}.pvb svg{width:20px;height:20px}.pvb:focus-visible{outline:2px solid var(--b)}
 #pvVol{width:90px;accent-color:var(--y)}.pvst{font-size:11px;font-weight:700;color:#A9BCCD;white-space:nowrap}
-.pv.stopped video{filter:grayscale(1) brightness(.35)}
+.pv{background:#000 url(preview-off.jpg?v=1) center/cover no-repeat}.pv.stopped video{visibility:hidden}   /* stopped (or no picture yet): the Hype Radio TV artwork */
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .scene{min-height:48px;text-align:left;padding:5px 10px}
 .scene small{display:block;font-size:10px;font-weight:600;opacity:.8}
@@ -405,7 +405,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
     <!-- MIDDLE: preview, scenes, pads -->
     <section class="col c2" id="col2">
       <div class="card" id="cScenes">
-        <div class="pv" id="pvBox"><video id="pvv" muted playsinline autoplay style="width:100%;height:100%;object-fit:cover;display:block;background:#000"></video><img id="pv" alt="Program preview" hidden>
+        <div class="pv" id="pvBox"><video id="pvv" muted playsinline autoplay poster="preview-off.jpg?v=1" style="width:100%;height:100%;object-fit:cover;display:block;background:transparent"></video><img id="pv" alt="Program preview" hidden>
           <span class="chip pvsc" id="pvScene">–</span><span id="pvInfo" hidden></span>
           <div class="pvc" id="pvCtl">
             <button class="pvb" id="pvTog" aria-label="Stop the preview" title="Stop / play the preview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button>
