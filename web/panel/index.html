@@ -203,7 +203,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 /* preview, scenes, pads */
 /* the 4 camera slots under the preview: open / hide (remembered) */
 .slots{margin:8px 0 2px}.slots summary{cursor:pointer;display:flex;align-items:center;gap:8px;list-style:none;padding:4px 2px;user-select:none}
-.slots summary::-webkit-details-marker{display:none}
+.slots summary::-webkit-details-marker{display:none}.slots>summary{display:none}.slots:not([open]){margin:0}
 .slots summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(-45deg);transition:transform .15s;margin:0 3px}
 .slots[open] summary::before{transform:rotate(45deg)}
 .slots summary .muted{font-size:11px}
@@ -326,6 +326,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #mixWin .gvol>span:last-child{width:auto!important;justify-self:end;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px}
 #mixWin .gvol input{width:100%;margin:0}
 @media (max-width:760px){#mixWin{left:8px!important;right:8px!important;width:auto;top:70px!important}#mixWin .gvol{grid-template-columns:80px 1fr 56px}}
+@media (max-width:520px){#cPlayer .tp{gap:5px}#cPlayer .tp .btn.ib{flex:1 1 0;min-width:0;padding:0 2px}#cPlayer .tp #tEl{display:none}}
 .sgopts{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;padding:6px 8px;margin-top:2px;border-radius:10px;background:var(--deep);border:1px solid var(--line)}
 </style>
 </head>
@@ -406,6 +407,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <div class="slotg" id="slotsGrid"></div></details>
         <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="lab">Scenes</span>
           <div class="row" style="gap:5px;flex-wrap:wrap">
+            <button class="btn sm" id="bSlots" aria-expanded="false" title="Camera slots: which camera / guest is in CAM 1–4">CAMERA SLOTS</button>
             <span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third">LOWER THIRD</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
             <button class="btn sm" id="bEl" title="Put a graphic on screen">+ GRAPHIC</button>
             <button class="btn sm" id="bAutoScene" title="AUTO: the TV follows the music (scene per song)">AUTO</button></div></div>
@@ -552,7 +554,7 @@ function render() {
   $('#bSae').classList.toggle('redon', S.stop_at_end); $('#bStop').classList.toggle('redon', S.stopped);
   $('#stRadio').className = 'chip ' + (S.stopped ? 'bad' : 'ok'); $('#stTv').className = 'chip ' + (S.scene ? 'ok' : 'bad');
   $('#stClock').textContent = '◷ ' + (S.clock || 'no hour plan');
-  $('#npOnair').textContent = '● ' + String(S.show || S.clock || 'ON AIR').toUpperCase();
+  { const t_ = String(S.clock || 'no hour plan').toUpperCase(); if ($('#npOnair').dataset.t !== t_) { $('#npOnair').dataset.t = t_; $('#npOnair').innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" style="vertical-align:-1px;margin-right:4px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>' + esc(t_); } $('#npOnair').title = 'Hour plan' + (S.show ? ' · show: ' + S.show : ''); }
   $('#npTitle').textContent = n.title || '–'; $('#npArtist').textContent = n.artist || '';
   $('#npFire').hidden = n.fire == null; if (n.fire != null) $('#npFire').textContent = '🔥 ' + n.fire;
   $('#npFolder').textContent = n.folder || '–'; const [bt, bc] = badge(n.mode); $('#npMode').textContent = bt; $('#npMode').className = 'chip ' + bc;
@@ -1579,12 +1581,13 @@ applyMode(MODE);
 const SLV = {};      // CAM n -> {src, rtc}
 const slotsBox = $('#slotsBox');
 try { slotsBox.open = localStorage.getItem('hypeSlots') === '1'; } catch (e) {}
+$('#bSlots').classList.toggle('on', slotsBox.open);
 function slotsClose() { Object.keys(SLV).forEach(c => { if (SLV[c].rtc) SLV[c].rtc.close(); delete SLV[c]; }); $('#slotsGrid').dataset.sig = ''; }
 function renderSlotsPv() {
   if (!LV || !LV.cams) return;
   const K = ['CAM 1', 'CAM 2', 'CAM 3', 'CAM 4'], src = c => LV.cams[c], info = c => (LV.sources || {})[src(c)] || {};
   const onl = K.filter(c => info(c).online).length;
-  $('#slotsSum').textContent = onl + ' of 4 online';
+  $('#slotsSum').textContent = onl + ' of 4 online'; $('#bSlots').title = 'Camera slots – ' + onl + ' of 4 online';
   if (!slotsBox.open || document.hidden) { if (Object.keys(SLV).length) slotsClose(); return; }
   const scene = (S && S.scene) || '';
   const sig = K.map(c => src(c) + ':' + (info(c).online ? 1 : 0)).join('|');
@@ -1602,7 +1605,8 @@ function renderSlotsPv() {
   }
   K.forEach(c => { const el = g.querySelector(`[data-slot="${c}"]`); if (el) el.classList.toggle('onair', scene.split(' ').includes(c.slice(4)) && /^(CAM|VID|M)\b/.test(scene)); });
 }
-slotsBox.addEventListener('toggle', () => { try { localStorage.setItem('hypeSlots', slotsBox.open ? '1' : '0'); } catch (e) {} if (!slotsBox.open) slotsClose(); renderSlotsPv(); });
+$('#bSlots').onclick = () => { slotsBox.open = !slotsBox.open; };
+slotsBox.addEventListener('toggle', () => { $('#bSlots').classList.toggle('on', slotsBox.open); $('#bSlots').setAttribute('aria-expanded', slotsBox.open); try { localStorage.setItem('hypeSlots', slotsBox.open ? '1' : '0'); } catch (e) {} if (!slotsBox.open) slotsClose(); renderSlotsPv(); });
 setInterval(renderSlotsPv, 1000);
 // ---------- go ----------
 refresh(); setInterval(() => { if (!document.hidden) refresh(); }, 2000); setInterval(tick, 250); lib(); pvLive();
