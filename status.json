@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T15:13:17",
+ "time": "2026-11-19T15:23:33",
  "result": "ok",
- "commit": "f847a45805098577b96d3cad4a087674cb789c46",
- "subject": "Panel: Media card (was TV Media) with its Library tab (was Media); + GRAPHIC (was + ELEMENT); lower scene buttons; Playlist spacing like the other cards; mixer values in one right-aligned column",
+ "commit": "cb255489304b3a7d63ecb6b060df6df908c604c9",
+ "subject": "Panel: Playlist tabs top right on the title row; Fixed times like Up next (the last 2 played, dim with \u2713, then as many coming ones as Up next has); AUTO (was AUTO SCENES); Graphics box: title Graphics, less text; scene buttons a little higher; DJ: crossfader above the library; LIVE: player + playlist left, scenes + cameras & guests middle, pads + media + library right",
  "log": [
-  "15:13:17 update 48008054 \u2192 f847a458 \u00b7 1 file(s): web/panel/index.html",
-  "15:13:17 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:23:32 update f847a458 \u2192 cb255489 \u00b7 1 file(s): web/panel/index.html",
+  "15:23:33 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Gedi1000 x Dongo \u2013 No Ta Nada",
+  "song": "Lutsha x Reevsenn x Bryan Mg \u2013 LIT",
   "listeners": 6,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
