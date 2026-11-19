@@ -1,17 +1,18 @@
 {
- "time": "2026-11-19T01:18:50",
+ "time": "2026-11-19T01:25:45",
  "result": "ok",
- "commit": "37ebe952526f8c76bd15907335b97e00f9639e51",
- "subject": "Panel (On air): TV Media under the Library; its EDIT button like the Pads' (\u270e EDIT)",
+ "commit": "b05566ec6e99f6c4222ff976a617a506e134fd36",
+ "subject": "TV sync: a song's start time = the moment the radio started it (not ~1 s later after OBS + database), so the 20-s video check measures right after short video jingles",
  "log": [
-  "01:18:50 update 0f92ca53 \u2192 37ebe952 \u00b7 1 file(s): web/panel/index.html",
-  "01:18:50 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "01:25:00 update 37ebe952 \u2192 b05566ec \u00b7 1 file(s): engine/engine.py",
+  "01:25:00 restart hype-engine",
+  "01:25:45 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Ir Sais x Ronnie Flex \u2013 Caribbean Girl",
+  "song": "MAUVAIS DJO \u2013 Pil\u00e9",
   "listeners": 1,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },

@@ -390,3 +390,4 @@
 2026-11-19T01:12:37 ok 64d2b0c2 Panel: TV Media card under Scenes (in every mode), scene picker next to EDIT, VOL (media sound) + MUTE / DUCK / MUSIC OFF under the pads like the Pads card, Browser its own tab apart from Live; LIVE card gone (live + REC in the header), restream on/off on the Broadcast page
 2026-11-19T01:14:43 ok 0f92ca53 Panel: shorter text on the Browser pad
 2026-11-19T01:18:50 ok 37ebe952 Panel (On air): TV Media under the Library; its EDIT button like the Pads' (✎ EDIT)
+2026-11-19T01:25:45 ok b05566ec TV sync: a song's start time = the moment the radio started it (not ~1 s later after OBS + database), so the 20-s video check measures right after short video jingles
