@@ -5,6 +5,8 @@
              ['/panel/history.html', 'Reports', 'history'], ['/panel/studio.html', 'Broadcast', 'studio'], ['/panel/hypelive.html', 'Hype Live', 'hypelive'], ['/panel/settings.html', 'Settings', 'settings'], ['/', 'Status', 'status']];
   const f = location.pathname.split('/').pop().replace('.html', '') || 'index';
   const cur = !location.pathname.startsWith('/panel') ? 'status' : (f === 'index' || f === 'v2') ? 'onair' : f === 'help' ? 'settings' : f, home = cur === 'onair';
+  const hSkew = () => { try { return +localStorage.getItem('hypeSkew') || 0; } catch (e) { return 0; } };   // server-time offset kept between pages, so the clock never restarts
+  const hNow = () => new Date(Date.now() - hSkew() * 1000).toTimeString().slice(0, 8);
   const A = home ? 'bAuto' : 'hAuto', M = home ? 'bManual' : 'hManual';     // On Air binds its own buttons
   const st = document.createElement('style');
   st.textContent = `
@@ -108,7 +110,7 @@ html{scrollbar-gutter:stable}
   h.innerHTML = `<div class="hb"><img src="/panel/logo.png" alt="Hype radio tv"><div class="show" id="show">Hype Studio</div></div>
     <div class="hctl"><span class="modes" role="group" aria-label="Programming"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button></span>
       <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
-    <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span><span class="chip" id="stLog">● LOG</span></button><a class="chip" id="stClock" href="/panel/plan.html" title="The hour plan that plays now – click: Planning">–</a><span id="clock">--:--:--</span>
+    <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span><span class="chip" id="stLog">● LOG</span></button><a class="chip" id="stClock" href="/panel/plan.html" title="The hour plan that plays now – click: Planning">–</a><span id="clock">${hNow()}</span>
       <div class="hpop" id="hBox" role="dialog" aria-label="Status and log" hidden><div class="htabs" role="tablist"><button data-ht="s" role="tab">Streams</button><button data-ht="l" role="tab">Log</button></div><div id="hPop"></div><div id="hLogPop" hidden></div></div></div>
     <div class="hact">
       <button class="hlive" id="hLive" title="GO LIVE: your studio mix goes on air (click twice)"><b>GO LIVE</b><span class="t" id="hLiveT"></span></button>
@@ -269,6 +271,7 @@ html{scrollbar-gutter:stable}
   window.hypeRec = (rec, d) => { REC = rec; recPaint(); if (d) { LVH = d; livePaint(); } };
   recLoad(); if (!home && cur !== 'studio') setInterval(recLoad, 5000); setInterval(recPaint, 1000);
   addEventListener('keydown', e => { if (e.altKey && !e.ctrlKey && e.key >= '1' && e.key <= '8') { e.preventDefault(); location.href = P[+e.key - 1][0]; } });
+  setInterval(() => { const c = h.querySelector('#clock'); if (c) c.textContent = hNow(); }, 250);
   if (home) return;                                                    // On Air updates all of this itself
   const q = s => h.querySelector(s); let S = null, skew = 0;
   const api = (p, body) => fetch('/api/' + p, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => r.json());
@@ -281,7 +284,7 @@ html{scrollbar-gutter:stable}
     const m = S.dj && S.dj.on ? 'dj' : MODE;
     h.querySelectorAll('.modes [data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
   }
-  function load() { api('state').then(d => { S = d; skew = Date.now() / 1000 - d.server_time; paint(); }).catch(() => { q('#stRadio').className = 'chip bad'; }); }
+  function load() { api('state').then(d => { S = d; skew = Date.now() / 1000 - d.server_time; try { localStorage.setItem('hypeSkew', skew); } catch (e) {} paint(); }).catch(() => { q('#stRadio').className = 'chip bad'; }); }
   load(); setInterval(load, 4000);
   // a new Hype Studio version was installed: offer a reload (never reloads by itself while you are working)
   let ver = null;
@@ -293,7 +296,6 @@ html{scrollbar-gutter:stable}
       b.onclick = () => location.reload(); document.body.appendChild(b);
     } }).catch(() => {});
   verCheck(); setInterval(verCheck, 60000);
-  setInterval(() => { q('#clock').textContent = new Date(Date.now() - skew * 1000).toTimeString().slice(0, 8); }, 250);
   q('#' + A).onclick = () => api('cmd/auto', {on: true}).then(load);
   q('#' + M).onclick = () => api('cmd/auto', {on: false}).then(load);
   h.querySelectorAll('.modes [data-mode]').forEach(b => b.onclick = () => {

@@ -544,9 +544,9 @@ const badge = m => m === 'pair' ? ['PAIRED', 'b-pair'] : m === 'clip' ? ['CLIP',
 const route = n => n.mode === 'pair' ? 'Radio: audio file  ·  TV: the clip with its own sound' : n.mode === 'clip' ? 'Radio + TV: the clip' : n.mode === 'jingle-video' ? 'Radio + TV: the jingle video' : n.mode === 'jingle' ? 'Radio: jingle  ·  TV: Branding loop' : 'Radio: audio file  ·  TV: Hype Screen';
 function toast(t, err) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('show'), 2200); }
 
-let S = null, skew = 0, waveFor = null, wavePeaks = null;
+let S = null, skew = (() => { try { return +localStorage.getItem('hypeSkew') || 0; } catch (e) { return 0; } })(), waveFor = null, wavePeaks = null;
 // ---------- state ----------
-function refresh() { return api('state').then(d => { S = d; skew = Date.now() / 1000 - d.server_time; render(); }).catch(() => { $('#stRadio').className = 'chip bad'; }); }
+function refresh() { return api('state').then(d => { S = d; skew = Date.now() / 1000 - d.server_time; try { localStorage.setItem('hypeSkew', skew); } catch (e) {} render(); }).catch(() => { $('#stRadio').className = 'chip bad'; }); }
 function render() {
   const n = S.now || {};
   $('#bAuto').classList.toggle('on', S.auto); $('#bManual').classList.toggle('on', !S.auto);
