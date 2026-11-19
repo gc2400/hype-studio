@@ -1,22 +1,18 @@
 {
- "time": "2026-11-19T12:48:42",
+ "time": "2026-11-19T12:58:42",
  "result": "ok",
- "commit": "8f8bdd1be2f8a879712749f767f296316fc6b3c6",
- "subject": "Install the waiting updates now (Gianno, 12:46): decks/Split/CUE, preload fix, clock view, broken-upload check",
+ "commit": "d5f8aa54cfcd06aee44eb582623b4cfaff1b68cc",
+ "subject": "TV: a preloaded clip is only used when it still waits paused on its spot \u2013 else the normal start (no black / wrong picture, 19 Nov 12:53 Hip Hop sweeper had ENDED while waiting); its real waiting spot is used for the timing; every moment a waiting clip moves is logged (preload_diag.jsonl) to find who starts it",
  "log": [
-  "12:47:11 update b05566ec \u2192 8f8bdd1b \u00b7 12 file(s): engine/engine.py, engine/hype_auth.py, engine/indexer.py, engine/live.py, engine/planner.py, radio/radio.liq, web/panel/cue.js, web/panel/header.js, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/studio.html",
-  "12:47:57 lab: PASS (6/6 good readings)",
-  "12:47:57 restart hype-auth",
-  "12:47:57 restart hype-indexer",
-  "12:47:57 restart hype-engine",
-  "12:47:57 restart hype-radio",
-  "12:48:42 installed OK \u00b7 restarted: hype-engine, hype-auth, hype-indexer, hype-radio"
+  "12:57:57 update 8f8bdd1b \u2192 d5f8aa54 \u00b7 1 file(s): engine/engine.py",
+  "12:57:57 restart hype-engine",
+  "12:58:42 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Chip Charlez \u2013 Out Of The Blue",
+  "song": "Gunna \u2013 pop it",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
