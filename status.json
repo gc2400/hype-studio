@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T16:09:47",
+ "time": "2026-11-19T16:21:05",
  "result": "ok",
- "commit": "74ef1b52fc21fdb28c60f3ee8b837a131bb716ff",
- "subject": "Header: page links on the right, Hype Studio \u00b7 dots \u00b7 clock \u00b7 switches \u00b7 GO LIVE / REC on the left; the three dots (radio \u00b7 TV \u00b7 log) in one button with one window (tabs Streams / Log \u2013 it opens on Log when something new happened); phones fit on one line; Playlist: MAIN (was Up next)",
+ "commit": "31ee22391a99acd8ee551b003e4b8805f9423d61",
+ "subject": "Header: dots one size and spacing, AUTO/MANUAL and mode switches outlined like the library tabs with yellow active, page links in the header font, current page yellow",
  "log": [
-  "16:09:47 update 93d9daca \u2192 74ef1b52 \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
-  "16:09:47 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:21:05 update 74ef1b52 \u2192 31ee2239 \u00b7 1 file(s): web/panel/header.js",
+  "16:21:05 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "TXC x Davido x Tony Duardo x LeeMckrazy x DJ Biza \u2013 Yebo",
+  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
   "listeners": 5,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
