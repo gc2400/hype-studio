@@ -322,23 +322,27 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 @media (max-width:1100px){.cols{grid-template-columns:1fr 1fr}#col3{grid-column:1/-1}}
 @media (max-width:760px){.cols{grid-template-columns:1fr}}
 #airbar{position:sticky;top:0;z-index:30}
-#airbar #cPlayer{display:grid;grid-template-columns:76px minmax(320px,3fr) auto auto auto;column-gap:18px;row-gap:6px;align-items:center;padding:12px 16px!important;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
-#airbar .v2a .art{width:72px!important;height:72px!important;font-size:28px;border-radius:12px}
-#airbar .v2b{display:flex;flex-direction:column;gap:5px;min-width:0}
-#airbar .v2b .t{font-size:20px!important;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#airbar .v2b .a{font-size:13px;color:var(--soft)}
-#airbar .v2b .wave{height:52px!important}
-#airbar .v2c{display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:150px}
-#airbar .v2c #tRem{font-size:32px!important;line-height:1}
-#airbar #v2Next{font-size:11px;color:var(--mut);max-width:240px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#airbar #v2Next b{color:var(--txt)}
-#airbar .v2d .tp{flex-wrap:nowrap;margin:0}#airbar .v2d #tEl{display:none}
-#airbar .v2e{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--deep)}
-#airbar .v2e .meter{width:170px;margin:0}
-#v2Fad{display:flex;gap:12px;justify-content:center}
-@media (max-width:1300px){#airbar{position:static}#airbar #cPlayer{grid-template-columns:64px minmax(260px,1fr) auto}#airbar .v2a .art{width:60px!important;height:60px!important}#airbar .v2d{grid-column:2/4}#airbar .v2e{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px}#airbar .v2e .meter{flex:1;min-width:180px;width:auto}}
-/* phones: the bar is not sticky (it would cover the screen), everything stacked, big touch buttons */
+#airbar #cPlayer{display:grid;grid-template-columns:64px minmax(300px,1fr) auto auto 190px;column-gap:20px;row-gap:8px;align-items:center;padding:12px 16px!important;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+#airbar .v2a .art{width:64px!important;height:64px!important;font-size:26px;border-radius:12px}
+#airbar .v2b{display:flex;flex-direction:column;gap:4px;min-width:0}
+#airbar .v2b>.row:first-child{gap:5px}
+#airbar .v2b .t{font-size:19px!important;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+#airbar .v2b .a{font-size:13px;color:var(--soft);margin-top:-2px}
+#airbar .v2b .wwrap{margin-top:2px}#airbar .v2b .wave{height:52px!important}
+#airbar .v2c{display:flex;flex-direction:column;align-items:flex-end;gap:1px;min-width:140px}
+#airbar .v2c #tRem{font-size:34px!important;line-height:1}
+#airbar #v2Next{font-size:11px;color:var(--mut);max-width:230px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}#airbar #v2Next b{color:var(--txt)}
+#airbar .v2d .tp{flex-wrap:nowrap;margin:0;gap:6px}#airbar .v2d #tEl{display:none}
+#airbar .v2e{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+#airbar .v2e .meter{width:100%;margin:0}
+#airbar #v2MixBtn{align-self:flex-end}
+#v2Mix{position:fixed;right:16px;top:150px;z-index:90;width:min(380px,94vw);background:var(--card);border:1px solid var(--line2);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:14px;display:flex;flex-direction:column;gap:12px}
+#v2MixMore{display:flex;flex-direction:column;gap:12px}
+#v2Mix .gvol{display:grid!important;grid-template-columns:110px 1fr 62px;align-items:center;gap:10px}
+#v2Mix .gvol .lab{color:var(--soft);text-align:left!important;width:auto!important;justify-self:start}
+#v2Mix .gvol .mono{text-align:right;width:auto!important}
+@media (max-width:1300px){#airbar{position:static}#airbar #cPlayer{grid-template-columns:64px minmax(260px,1fr) auto}#airbar .v2d{grid-column:2/3}#airbar .v2e{grid-column:3/4}}
 @media (max-width:760px){
-  #airbar{position:static}
   #airbar #cPlayer{display:flex!important;flex-direction:column;align-items:stretch;gap:10px;padding:12px!important}
   #airbar .v2a{display:none}
   #airbar .v2b .t{white-space:normal;font-size:18px!important}
@@ -347,25 +351,23 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
   #airbar .v2c .lab{display:none}#airbar .v2c #tRem{font-size:30px!important}
   #airbar #v2Next{max-width:100%;text-align:left;white-space:normal;flex-basis:100%}
   #airbar .v2d .tp{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}#airbar .v2d .tp .btn{width:100%;min-width:0;padding:0}
-  #airbar .v2e{flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px}
-  #airbar .v2e .meter{flex:1;min-width:150px;width:auto}
+  #airbar .v2e{flex-direction:row;align-items:center}#airbar .v2e .meter{flex:1}
   #v2Info{gap:6px 14px}
   .v2tag{flex-basis:100%;text-align:center}
+  #v2Mix{left:8px;right:8px;width:auto;top:70px}#v2Mix .gvol{grid-template-columns:80px 1fr 56px}
 }
+#cLog>.row:first-child{display:none!important}
+#cLog .log .li{padding-right:8px}
+.ulist .lacts{background:linear-gradient(90deg,transparent,var(--card) 22px)!important;right:8px!important}
 /* the concept's calmer cards */
 .card{border-radius:14px}
 .lab{letter-spacing:.09em}
-.ri .acts{position:static!important;transform:none!important;opacity:1!important;pointer-events:auto!important;background:none!important;padding-left:0!important;box-shadow:none!important}
-.ri{gap:8px}.ri .tx{flex:1;min-width:0}.ri .acts > button{width:30px;height:30px}
 #sgTabs{margin:0 0 2px}
 /* the tabs and the list below them are one card */
 #cTabs{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent;padding-bottom:4px!important}
 #col1>#cPlayed,#col1>#cLog,#col1>#auxCard{margin-top:-14px;border-top-left-radius:0;border-top-right-radius:0;border-top-color:transparent}
 #auxCard [data-auxtab]{display:none}
 #cLog>.row:first-child .lab:first-child{visibility:hidden}
-#v2Fad label{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:800;color:var(--mut);letter-spacing:.06em}
-#v2Fad input[type=range]{writing-mode:vertical-lr;direction:rtl;width:22px;height:70px;accent-color:var(--b)}
-#v2Fad .v{font:700 10px 'JetBrains Mono',monospace;color:var(--soft)}
 #v2Info{grid-column:1/-1;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);padding:0 4px}
 #v2Info b{color:var(--txt)}
 #v2Msgs{position:fixed;right:16px;top:150px;z-index:90;width:min(440px,94vw);max-height:70vh;overflow:auto;background:var(--card);border:1px solid var(--line2);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:10px;display:flex;flex-direction:column;gap:6px}
@@ -373,7 +375,6 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #v2Msgs .m i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
 #v2Msgs .m small{display:block;color:var(--mut);font-size:11px}
 #v2MsgBtn{display:inline-flex;align-items:center;gap:7px}#v2MsgBtn i{width:9px;height:9px;border-radius:50%;background:var(--g)}
-#cGfx .subbox[hidden]+.subbox[hidden]+#elOn:empty+.v2empty{display:block}#cGfx .v2empty{display:none}
 .v2tag{font:800 10px Inter,sans-serif;letter-spacing:.08em;background:#FFE000;color:#061423;border-radius:6px;padding:3px 7px;text-decoration:none}
 </style>
 </head>
@@ -454,22 +455,9 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <div class="slotg" id="slotsGrid"></div></details>
         <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="lab">Scenes</span>
           <div class="row" style="gap:5px;flex-wrap:wrap">
+            <span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third">Lower third</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
+            <button class="btn sm" id="bEl" title="Put a graphic on screen (tickers, ad box, frames …)">+ Graphic</button>
             <button class="btn sm" id="bAutoScene">Auto scenes</button></div></div>
-        <div class="sgtabs" id="sgTabs"></div>
-        <div class="grid4" id="scenes"></div>
-        <div class="subbox" id="sgEdit" hidden>
-          <div class="row" style="gap:6px;flex-wrap:wrap"><input id="sgName" type="text" maxlength="30" aria-label="Group name" style="width:160px"><span class="muted" style="flex:1;font-size:12px">Click scenes to put them in / out of this group</span><button class="btn sm red" id="sgDel">Delete group</button><button class="btn sm yellow" id="sgDone">Done</button></div>
-        </div>
-        <div class="subbox" id="camEdit" hidden>
-          <div class="row" style="gap:6px;flex-wrap:wrap"><span class="muted" style="flex:1;font-size:12px;min-width:180px">Drag a scene to another place (or click one, then click where it goes). × takes it off.</span><button class="btn sm" id="camRow">+ Row</button><button class="btn sm" id="camReset">Reset</button><button class="btn sm" id="camCancel">Cancel</button><button class="btn sm yellow" id="camDone">Done</button></div>
-          <div class="row" id="camHidden" style="gap:5px;flex-wrap:wrap"></div>
-        </div>
-        <div class="camgrid" id="camScenes"></div>
-      </div>
-      <div class="card" id="cGfx">
-        <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="lab">Graphics on screen</span>
-          <div class="row" style="gap:5px;flex-wrap:wrap"><span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third">Lower third</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
-            <button class="btn sm" id="bEl" title="Put a graphic on screen (tickers, ad box, frames …)">+ Graphic</button></div></div>
         <div class="subbox" id="ltBox" hidden>
           <div class="lt-form">
             <input id="ltName" type="text" placeholder="Line 1 – name, e.g. DJ Kim" maxlength="80" aria-label="Lower third line 1">
@@ -484,14 +472,25 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <span class="muted" style="font-size:11px">Graphics from branding/screen (1920×1080 PNG or transparent WebM).</span>
         </div>
         <div class="row" id="elOn" style="flex-wrap:wrap;gap:5px"></div>
-        <span class="muted v2empty" style="font-size:11px">Nothing extra on screen. Scheduled graphics still come by themselves.</span>
+
+        <div class="sgtabs" id="sgTabs"></div>
+        <div class="grid4" id="scenes"></div>
+        <div class="subbox" id="sgEdit" hidden>
+          <div class="row" style="gap:6px;flex-wrap:wrap"><input id="sgName" type="text" maxlength="30" aria-label="Group name" style="width:160px"><span class="muted" style="flex:1;font-size:12px">Click scenes to put them in / out of this group</span><button class="btn sm red" id="sgDel">Delete group</button><button class="btn sm yellow" id="sgDone">Done</button></div>
+        </div>
+        <div class="subbox" id="camEdit" hidden>
+          <div class="row" style="gap:6px;flex-wrap:wrap"><span class="muted" style="flex:1;font-size:12px;min-width:180px">Drag a scene to another place (or click one, then click where it goes). × takes it off.</span><button class="btn sm" id="camRow">+ Row</button><button class="btn sm" id="camReset">Reset</button><button class="btn sm" id="camCancel">Cancel</button><button class="btn sm yellow" id="camDone">Done</button></div>
+          <div class="row" id="camHidden" style="gap:5px;flex-wrap:wrap"></div>
+        </div>
+        <div class="camgrid" id="camScenes"></div>
       </div>
+      <div id="v2VolHold" hidden><label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label><label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="mediaVol" aria-label="TV Media volume"><span class="mono" id="mediaVolV" style="width:62px">0 dB</span></label></div>
       <div class="card" id="cTvm">
-        <div class="row between"><span class="lab">TV Media</span><div class="row" style="gap:6px"><select id="mScene" aria-label="Media scene" title="The scene a media item / stream / the browser goes on air in" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;max-width:190px"></select><button class="btn sm" id="tvEdit" title="Add live links, delete media, pin / hide listener items">✎ EDIT</button></div></div>
+        <div class="row between"><span class="lab">TV Media</span><button class="btn sm" id="tvGear" aria-expanded="false" aria-label="Media settings" title="Scene for media, edit">⚙</button></div><div class="subbox" id="tvOpts" hidden><div class="row" style="gap:6px;flex-wrap:wrap"><span class="muted" style="font-size:12px">Plays on</span><select id="mScene" aria-label="Media scene" title="The scene a media item / stream / the browser goes on air in" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;max-width:190px"></select><span style="flex:1"></span><button class="btn sm" id="tvEdit" title="Add live links, delete media, pin / hide listener items">Edit media</button></div></div>
         <div class="banks" id="tvTabs"></div>
         <div class="grid4 pads" id="tvPads"></div>
         <div class="padpg" id="tvPg" hidden><button class="btn sm" id="tvPrev" aria-label="Previous page">◀</button><span id="tvPgTxt"></span><button class="btn sm" id="tvNext" aria-label="Next page">▶</button></div>
-        <label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="mediaVol" aria-label="TV Media volume"><span class="mono" id="mediaVolV" style="width:62px">0 dB</span></label>
+        
         <div class="row" id="mediaBar" style="gap:6px;flex-wrap:wrap"><span class="row" style="gap:6px" id="mSound"><button class="btn sm" data-ms="mute" title="The video plays without sound">MUTE</button><button class="btn sm" data-ms="duck" title="The video's sound plays, the music goes down">DUCK</button><button class="btn sm" data-ms="off" title="The video's sound plays, the music is off (live streams / the browser: the music waits)">MUSIC OFF</button></span><span style="flex:1"></span><button class="btn sm yellow" id="mediaDone" hidden title="Stop editing">Done</button><div id="lpvBox" hidden role="dialog" aria-modal="true" aria-label="Preview"><div class="in"><div class="row" style="justify-content:space-between;gap:8px"><b class="lpvT"></b><button class="btn sm" onclick="lPreviewClose()">Close</button></div><div class="lpvBody"></div><div class="muted lpvC"></div></div></div><input type="file" id="mFile" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,.mkv,.m4v" hidden></div>
       </div>
       <div class="card" id="liveCard">
@@ -506,6 +505,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
       </div>
       <div class="card" id="cPads">
         <div class="row between"><span class="lab">Pads</span><span class="row" style="gap:6px"><span class="muted" id="v2PadSum" style="font-size:11px"></span><button class="btn sm" id="padGear" aria-expanded="false" aria-label="Pad settings" title="Duck, video, loop, edit pads and banks">⚙</button></span></div>
+        <div class="subbox" id="padOpts" hidden><div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK: OFF</button><button class="btn sm" id="bPVid" aria-pressed="false" title="When on, pads with a video (▶) also show their video full screen over what's on air">▶ VIDEO: OFF</button><button class="btn sm" id="bPLoop" aria-pressed="false" title="When on, a pad you start repeats until you click it again (or STOP PADS)">⟳ LOOP: OFF</button><span style="flex:1"></span><button class="btn sm" id="padEdit" title="Add banks, add or remove pads">Edit pads</button></div></div>
         <div class="banks" id="padBanks"></div>
         <div class="row" id="padEditBar" hidden style="gap:6px;flex-wrap:wrap">
           <input id="bankName" type="text" aria-label="Bank name" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;width:150px">
@@ -514,8 +514,8 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         </div>
         <div class="grid4 pads" id="pads"></div>
         <div class="padpg" id="padPg" hidden><button class="btn sm" id="pgPrev" aria-label="Previous page">◀</button><span id="pgTxt"></span><button class="btn sm" id="pgNext" aria-label="Next page">▶</button></div>
-        <label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label><div class="row" style="justify-content:flex-end"><button class="btn sm red" id="bPadStop">Stop pads</button></div>
-        <div class="subbox" id="padOpts" hidden><div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK: OFF</button><button class="btn sm" id="bPVid" aria-pressed="false" title="When on, pads with a video (▶) also show their video full screen over what's on air">▶ VIDEO: OFF</button><button class="btn sm" id="bPLoop" aria-pressed="false" title="When on, a pad you start repeats until you click it again (or STOP PADS)">⟳ LOOP: OFF</button><span style="flex:1"></span><button class="btn sm" id="padEdit" title="Add banks, add or remove pads">Edit pads</button></div></div>
+        <div class="row" style="justify-content:flex-end"><button class="btn sm red" id="bPadStop">Stop pads</button></div>
+
       </div>
       <div class="card" id="cXfade" hidden>
         <div class="xnow" id="xNow" hidden></div>
@@ -1401,9 +1401,9 @@ let MODE = 'onair'; try { MODE = localStorage.getItem('hypeMode') || 'onair'; } 
 // v2: the same places in every mode – the player is the on-air bar on top; the left column is Up next (AUTO), the AUX lists
 // (MANUAL) or Deck A + B (DJ); the middle has the scenes, cameras & guests (LIVE) and pads; the right the library + TV media
 const LAYOUT = {
-  onair: {col1: ['cTabs', 'cPlayed', 'cLog', 'auxCard'], col2: ['cScenes', 'cGfx', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
-  dj:    {col1: ['dkA', 'dkB', 'cXfade'], col2: ['cScenes', 'cGfx', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
-  live:  {col1: ['cTabs', 'cPlayed', 'cLog', 'auxCard'], col2: ['cScenes', 'cGuests', 'cGfx', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []}};
+  onair: {col1: ['cTabs', 'cPlayed', 'cLog', 'auxCard'], col2: ['cScenes', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
+  dj:    {col1: ['dkA', 'dkB', 'cXfade'], col2: ['cScenes', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
+  live:  {col1: ['cTabs', 'cPlayed', 'cLog', 'auxCard'], col2: ['cScenes', 'cGuests', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []}};
 const HIDE = {onair: ['cXfade', 'cGuests', 'dkA', 'dkB', 'liveCard'], dj: ['cGuests', 'cLog', 'auxCard', 'liveCard', 'cTabs', 'cPlayed'], live: ['cXfade', 'dkA', 'dkB', 'liveCard']};
 const DECKS = {};
 function deckEl(k) {
@@ -1459,6 +1459,7 @@ function v2Apply() {
 $$('[data-v2tab]').forEach(b => b.onclick = () => { V2TAB = b.dataset.v2tab; v2Apply(); });
 { const _render = render; render = function () { _render.apply(this, arguments); try { v2Apply(); } catch (e) {} }; }
 // ---------- v2: pad settings behind ⚙ ----------
+$('#tvGear').onclick = () => { const o = $('#tvOpts').hidden; $('#tvOpts').hidden = !o; $('#tvGear').classList.toggle('on', o); $('#tvGear').setAttribute('aria-expanded', o); };
 $('#padGear').onclick = () => { const o = $('#padOpts').hidden; $('#padOpts').hidden = !o; $('#padGear').classList.toggle('on', o); $('#padGear').setAttribute('aria-expanded', o); };
 setInterval(() => { const on = [DUCK && 'Duck', PVID && 'Video', PLOOP && 'Loop'].filter(Boolean); $('#v2PadSum').textContent = on.join(' · '); }, 1000);
 // ---------- v2: messages (every toast + what the guard did) ----------
@@ -1487,16 +1488,19 @@ function v2Guard() { api('guard').then(g => { const have = new Set(V2M.filter(m 
     A.appendChild(art); B.append(chips, tbox, wave);
     const lab = document.createElement('span'); lab.className = 'lab'; lab.textContent = 'Left'; C.append(lab, time);
     const nx = document.createElement('div'); nx.id = 'v2Next'; C.appendChild(nx);
-    D.appendChild(tp); E_.dataset.meter = '1'; E_.appendChild(meter);
+    D.appendChild(tp); E_.dataset.meter = '1'; const mxb = document.createElement('button'); mxb.className = 'btn sm'; mxb.id = 'v2MixBtn'; mxb.textContent = 'Mixer'; mxb.setAttribute('aria-haspopup', 'dialog'); E_.append(mxb, meter);
     np.remove(); pl.prepend(A, B, C, D, E_); }
   setInterval(() => { if (!S) return; const u = (S.upcoming || [])[0]; $('#v2Next').innerHTML = u ? 'Next: <b>' + esc((u.artist ? u.artist + ' – ' : '') + (u.title || '')) + '</b>' : ''; }, 1000);
-  const f = document.createElement('div'); f.id = 'v2Fad';
-  f.innerHTML = [['vol_music', 'MUSIC'], ['vol_pads', 'PADS'], ['vol_studio', 'STUDIO']].map(([n, l]) => `<label title="${l} fader (double-click = 0 dB)"><span class="v" data-fv="${n}">0 dB</span><input type="range" min="0" max="1.6" step="0.01" value="1" data-fad="${n}" aria-label="${l} fader">${l}</label>`).join('');
-  pl.querySelector('.v2e').prepend(f);
+  const f = document.createElement('div'); f.id = 'v2Mix'; f.hidden = true; f.setAttribute('role', 'dialog'); f.setAttribute('aria-label', 'Mixer');
+  f.innerHTML = '<div class="row between"><b>Mixer</b><button class="btn sm" id="v2MixX">Close</button></div>' + [['vol_music', 'Music'], ['vol_studio', 'Studio (LIVE)']].map(([n, l]) => `<label class="gvol"><span class="lab">${l}</span><input type="range" min="0" max="1.6" step="0.01" value="1" data-fad="${n}" aria-label="${l} fader"><span class="mono v" data-fv="${n}">0 dB</span></label>`).join('') + '<div id="v2MixMore"></div><span class="muted" style="font-size:11px">Double-click a fader = 0 dB.</span>';
+  document.body.appendChild(f);
+  const more = f.querySelector('#v2MixMore');
+  for (const [id, l] of [['padVol', 'Pads'], ['mediaVol', 'TV media']]) { const lb = document.getElementById(id).closest('label'); lb.querySelector('.lab').textContent = l; more.appendChild(lb); }
   const info = document.createElement('div'); info.id = 'v2Info';
   info.innerHTML = '<span>Show <b id="v2Show">–</b></span><span>Hour plan <b id="v2Clock">–</b></span><span>Radio <b id="v2Rad" class="mono">–</b> · TV <b id="v2Tv" class="mono">–</b></span><button class="btn sm" id="v2MsgBtn" aria-haspopup="dialog"><i></i><span>Messages</span></button><span style="flex:1"></span><a class="v2tag" href="/panel/" title="Back to the current panel">NEW LAYOUT (TEST) · back to the old panel</a>';
   pl.appendChild(info);
   const mb = document.createElement('div'); mb.id = 'v2Msgs'; mb.hidden = true; mb.setAttribute('role', 'dialog'); mb.setAttribute('aria-label', 'Messages'); document.body.appendChild(mb);
+  $('#v2MixBtn').onclick = () => { const r = $('#v2MixBtn').getBoundingClientRect(); if (innerWidth > 760) { f.style.top = Math.round(r.bottom + 8) + 'px'; f.style.right = Math.max(8, Math.round(innerWidth - r.right)) + 'px'; } f.hidden = !f.hidden; $('#v2MixBtn').classList.toggle('on', !f.hidden); }; $('#v2MixX').onclick = () => { f.hidden = true; $('#v2MixBtn').classList.remove('on'); };
   $('#v2MsgBtn').onclick = () => { mb.hidden = !mb.hidden; V2SEEN = Date.now() / 1000; v2MsgPaint(); };
   v2Guard(); setInterval(v2Guard, 30000);
   const busy = {}, tm = {};
