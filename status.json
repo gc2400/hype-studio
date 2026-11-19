@@ -1,17 +1,18 @@
 {
- "time": "2026-11-19T17:17:13",
- "result": "waiting",
- "commit": "b2635579d0c7ba16ae85ab14e2b3e72bba2d6efe",
- "subject": "[night] Radio: a level per channel (music incl. decks, pads, studio) for the panel's mixer meters",
+ "time": "2026-11-19T17:44:37",
+ "result": "ok",
+ "commit": "b81649caae41a38c8e2c4686e3b954fc986236c1",
+ "subject": "Voice: talk over the next song's intro (Start next song while recording, the song starts there on air); Song tab in playlists can open folders; joined buttons get a full border on hover",
  "log": [
-  "17:17:13 update ac893581 \u2192 b2635579 \u00b7 1 file(s): radio/radio.liq",
-  "17:17:13 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "17:43:52 update ac893581 \u2192 b81649ca \u00b7 4 file(s): engine/engine.py, web/panel/index.html, web/panel/plan.html, web/panel/voice.html",
+  "17:43:52 restart hype-engine",
+  "17:44:37 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
   "song": "CLUB HYPE \u2013 MOJO.DJ GIVE ME SOME MO VOL. 6",
-  "listeners": 5,
+  "listeners": 6,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
