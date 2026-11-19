@@ -132,7 +132,8 @@ class Guard:
     def bad(self, pid, is_bad):
         if is_bad: self.since.setdefault(pid, time.time())
         else:
-            if pid in self.since and time.time() - self.since[pid] > 10: self.event("ok", PIDS.get(pid, pid) + " – fine again")
+            # (the TV picture is checked every 30 s: one dark moment of a video or the Hype Screen = no message, 19 Nov)
+            if pid in self.since and time.time() - self.since[pid] > (65 if pid == "tv_black" else 10): self.event("ok", PIDS.get(pid, pid) + " – fine again")
             self.since.pop(pid, None); self.step.pop(pid, None)
         return time.time() - self.since[pid] if is_bad else 0
     def may_restart(self, part):
