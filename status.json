@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T01:14:43",
+ "time": "2026-11-19T01:18:50",
  "result": "ok",
- "commit": "0f92ca53df465b5ece66d20184067b6be2fe47e9",
- "subject": "Panel: shorter text on the Browser pad",
+ "commit": "37ebe952526f8c76bd15907335b97e00f9639e51",
+ "subject": "Panel (On air): TV Media under the Library; its EDIT button like the Pads' (\u270e EDIT)",
  "log": [
-  "01:14:42 update 64d2b0c2 \u2192 0f92ca53 \u00b7 1 file(s): web/panel/index.html",
-  "01:14:43 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "01:18:50 update 0f92ca53 \u2192 37ebe952 \u00b7 1 file(s): web/panel/index.html",
+  "01:18:50 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "French Montana x Max B x Jamie Foxx \u2013 All I need is Somebody",
-  "listeners": 3,
+  "song": "Ir Sais x Ronnie Flex \u2013 Caribbean Girl",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
