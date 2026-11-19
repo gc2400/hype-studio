@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T15:31:48",
+ "time": "2026-11-19T15:35:56",
  "result": "ok",
- "commit": "8b971d6c5396234b6faf9bb1e100712b31f8f838",
- "subject": "Header: radio listeners and TV viewers as numbers in their dots, the LOG dot shows how many new items; the hour plan that plays now next to the clock (click: Planning), on every page",
+ "commit": "d0319acf89b30e7d923b90f46574b1cccb8f38de",
+ "subject": "Panel: LIVE playlist as tall as ON AIR, LIVE scenes column wider; DJ: video + scenes under deck A, pads + media under deck B, the fader without extra text; no message when switching modes; the LOG keeps only warnings of the page (and the guard's repairs / problems)",
  "log": [
-  "15:31:48 update 38406deb \u2192 8b971d6c \u00b7 1 file(s): web/panel/header.js",
-  "15:31:48 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:35:56 update 8b971d6c \u2192 d0319acf \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
+  "15:35:56 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Daddy Yankee x Danny Ocean \u2013 ALFOMBRA VOLADORA",
-  "listeners": 6,
+  "song": "Kamo Mphela x Khalil Harrison x Tyler ICU x Baby S.O.N \u2013 Dalie",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
