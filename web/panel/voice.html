@@ -95,7 +95,7 @@ video.cam{width:100%;border-radius:10px;background:#000;aspect-ratio:16/9;object
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
-<audio id="aPrev" preload="auto"></audio><audio id="aTake"></audio>
+<audio id="aPrev" preload="auto"></audio><audio id="aTake"></audio><audio id="aNext" preload="auto"></audio>
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -138,7 +138,7 @@ function render() {
     if (i === 0) rows.push(gap(-1));
     const at = L.hour ? new Date(t * 1000).toTimeString().slice(0, 8) : fmt(t);
     if (x.vt) { links++; tl += len(x);
-      rows.push(`<div class="it vt" data-i="${i}"><span class="t">${at}</span><span class="ic">●</span><div class="tx"><b>Voice link${x.vt.video ? ' · video' : ''}</b>
+      rows.push(`<div class="it vt" data-i="${i}"><span class="t">${at}</span><span class="ic">●</span><div class="tx"><b>Voice link${x.vt.video ? ' · video' : ''}${x.over_intro ? ' · over the intro' : ''}</b>
         ${x.vt.video ? '<span>Your video plays on TV</span>' : `<div class="tv"><select data-tv>${TVS.map(([v, l]) => `<option value="${v}" ${(x.vt.tv || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select><input type="text" data-tvn placeholder="Name on screen" value="${esc(x.vt.name || '')}" ${x.vt.tv === 'name' ? '' : 'hidden'}></div>`}</div>
         <span class="ln">${x.duration ? fmt(len(x)) : '…'}</span><span class="acts"><button class="btn sm" data-play title="Listen: the end of the song before, then your link">▶</button><button class="btn sm" data-mv="up" title="One place up">↑</button><button class="btn sm" data-mv="down" title="One place down">↓</button><button class="btn sm" data-rm title="Delete this link">✕</button></span></div>`);
     } else rows.push(`<div class="it ${x.section && x.section !== 'music' ? 'j' : ''} ${x.missing || x.problem ? 'miss' : ''}" data-i="${i}"><span class="t">${at}</span><span class="ic">${x.section === 'music' ? '♪' : '◆'}</span><div class="tx"><b>${x.missing ? 'Not in the library: ' + esc(x.path) : (x.artist ? esc(x.artist) + ' – ' : '') + esc(x.title || x.path.split('/').pop())}</b><span>${esc((x.path.split('/').slice(1, -1).join(' / ')) || '')}</span></div>
@@ -160,7 +160,7 @@ function bind() {
     const rm = el.querySelector('[data-rm]'); if (rm) rm.onclick = () => { if (x.vt && !confirm('Delete this voice link?')) return; if (!L.fixed) return toast('Make it a fixed list first', 1);
       post('vt/remove', {pid: PID, i, path: x.path}).then(r => r.ok ? reload() : toast(r.error || 'Not removed', 1)); };
     el.querySelectorAll('[data-mv]').forEach(b => b.onclick = () => post('vt/move', {pid: PID, i, dir: b.dataset.mv}).then(reload));
-    const pl = el.querySelector('[data-play]'); if (pl) pl.onclick = () => listen(i - 1, media(x.path), x.cue_start || 0);
+    const pl = el.querySelector('[data-play]'); if (pl) pl.onclick = () => listen(i - 1, media(x.path), x.cue_start || 0, x.over_intro ? x.cue_mix : 0, nextOf(i));
     const tv = el.querySelector('[data-tv]'), tn = el.querySelector('[data-tvn]');
     if (tv) { const save = () => post('vt/tv', {path: x.path, tv: tv.value, name: tn.value}).then(() => { x.vt.tv = tv.value; x.vt.name = tn.value; });
       tv.onchange = () => { tn.hidden = tv.value !== 'name'; if (tv.value === 'name' && !tn.value) { tn.value = ls('hypeVtName') || ''; tn.focus(); } save(); };
@@ -200,23 +200,28 @@ $('#pre').value = ls('hypeVtPre') || '8'; $('#pre').onchange = () => ls('hypeVtP
 navigator.mediaDevices && navigator.mediaDevices.enumerateDevices && devices();
 
 // ---------- recording in a gap ----------
-function stopRec() { if (REC && REC.mr && REC.mr.state === 'recording') REC.mr.stop(); if (REC && REC.raf) cancelAnimationFrame(REC.raf); $('#aPrev').pause(); $('#aTake').pause(); }
+function stopRec() { if (REC && REC.mr && REC.mr.state === 'recording') REC.mr.stop(); if (REC && REC.raf) cancelAnimationFrame(REC.raf); $('#aPrev').pause(); $('#aTake').pause(); $('#aNext').pause(); clearTimeout(LSN); }
+function nextOf(i) { for (let k = i + 1; k < L.items.length; k++) { const x = L.items[k]; if (x && !x.missing && !x.vt) return x; } return null; }
+const introTxt = n => n && n.cue_intro && n.cue_intro > (n.cue_start || 0) + 1 ? ' (intro ' + Math.round(n.cue_intro - (n.cue_start || 0)) + ' s)' : '';
 function prevOf(i) { for (let k = i; k >= 0; k--) { const x = L.items[k]; if (x && !x.missing) return x; } return null; }
 function recUI(state = 'ready') {
   const box = $('#rec'); if (!box) return; const prev = prevOf(OPEN), video = !!$('#cam').value;
   const head = `<div class="row between"><span class="st ${state === 'rec' ? 'live' : ''}" id="recSt"></span><span class="big" id="recT">0:00</span></div>`;
-  if (state === 'ready') box.innerHTML = head + `<span class="muted">${prev ? 'You hear the last ' + $('#pre').value + ' s of <b>' + esc((prev.artist ? prev.artist + ' – ' : '') + (prev.title || '')) + '</b>; recording starts where it mixes out.' : 'The first link – recording starts at once.'} ${video ? 'With video from your camera.' : 'Voice only.'}</span>
+  if (state === 'ready') box.innerHTML = head + `<span class="muted">${prev ? 'You hear the last ' + $('#pre').value + ' s of <b>' + esc((prev.artist ? prev.artist + ' – ' : '') + (prev.title || '')) + '</b>; recording starts where it mixes out.' : 'The first link – recording starts at once.'} ${video ? 'With video from your camera.' : 'Voice only.'}
+    ${nextOf(OPEN) ? ' To talk over the intro of <b>' + esc((nextOf(OPEN).artist ? nextOf(OPEN).artist + ' – ' : '') + (nextOf(OPEN).title || '')) + '</b>' + introTxt(nextOf(OPEN)) + ', press <b>Start next song</b> (or the space bar) while you talk: it starts there on air, low under your voice.' : ''}</span>
     <div class="row"><button class="btn red" id="rGo">● Record</button><button class="btn" id="rX">Cancel</button></div>`;
-  else if (state === 'rec') box.innerHTML = head + `<div class="meter"><i id="recLvl"></i></div><div class="row"><button class="btn red" id="rStop">■ Stop</button></div>`;
-  else box.innerHTML = head + `<audio id="tk" controls style="width:100%"></audio>
+  else if (state === 'rec') box.innerHTML = head + `<div class="meter"><i id="recLvl"></i></div><div class="row"><button class="btn red" id="rStop">■ Stop</button>${nextOf(OPEN) ? `<button class="btn ${REC.mixAt ? 'on' : ''}" id="rNext" ${REC.mixAt ? 'disabled' : ''}>${REC.mixAt ? '▶ Next song started at ' + fmt(REC.mixAt) : '▶ Start next song'}</button>` : ''}</div>`;
+  else box.innerHTML = head + `<audio id="tk" controls style="width:100%"></audio>${REC.mixAt ? `<span class="muted">The next song starts ${fmt(REC.mixAt)} into your link, low under your voice. <button class="btn sm" id="rNoNext">Start it after my link instead</button></span>` : ''}
     <div class="row"><button class="btn" id="rHear" title="The end of the song before, then your take">▶ Listen with the song</button><span style="flex:1"></span><button class="btn" id="rAgain">Record again</button><button class="btn" id="rX">Cancel</button><button class="btn y" id="rSave">Save link</button></div>`;
   $('#recSt').textContent = state === 'ready' ? 'Ready' : state === 'rec' ? '● RECORDING' : 'Your take';
   const q = s => box.querySelector(s);
   if (q('#rX')) q('#rX').onclick = () => { stopRec(); REC = null; OPEN = -2; render(); };
   if (q('#rGo')) q('#rGo').onclick = go;
   if (q('#rStop')) q('#rStop').onclick = () => REC.mr.stop();
+  if (q('#rNext')) q('#rNext').onclick = startNext;
   if (state === 'done') { q('#tk').src = REC.url; $('#recT').textContent = fmt(REC.secs);
-    q('#rHear').onclick = () => listen(OPEN, REC.url, 0); q('#rAgain').onclick = () => { REC = null; recUI('ready'); }; q('#rSave').onclick = save; }
+    q('#rHear').onclick = () => listen(OPEN, REC.url, 0, REC.mixAt, nextOf(OPEN));
+    if (q('#rNoNext')) q('#rNoNext').onclick = () => { REC.mixAt = 0; recUI('done'); }; q('#rAgain').onclick = () => { REC = null; recUI('ready'); }; q('#rSave').onclick = save; }
 }
 async function go() {
   if (!STREAM && !(await micOn())) return;
@@ -225,7 +230,7 @@ async function go() {
   const st = video ? STREAM : new MediaStream(STREAM.getAudioTracks());
   REC = {chunks: [], video, mime}; const mr = REC.mr = new MediaRecorder(st, {mimeType: mime, audioBitsPerSecond: 192000, videoBitsPerSecond: 4000000});
   mr.ondataavailable = e => e.data.size && REC.chunks.push(e.data);
-  mr.onstop = () => { $('#aPrev').pause(); REC.blob = new Blob(REC.chunks, {type: mime}); REC.url = URL.createObjectURL(REC.blob); REC.secs = (Date.now() - REC.t0) / 1000; recUI('done'); };
+  mr.onstop = () => { $('#aPrev').pause(); $('#aNext').pause(); REC.blob = new Blob(REC.chunks, {type: mime}); REC.url = URL.createObjectURL(REC.blob); REC.secs = (Date.now() - REC.t0) / 1000; recUI('done'); };
   const startRec = () => { if (mr.state !== 'inactive') return; mr.start(500); REC.t0 = Date.now(); recUI('rec');
     const tick = () => { if (!REC || mr.state !== 'recording') return; $('#recT').textContent = fmt((Date.now() - REC.t0) / 1000); const l = $('#micLvl'); const r = $('#recLvl'); if (r && l) r.style.width = l.style.width; REC.raf = requestAnimationFrame(tick); }; tick(); };
   if (!prev) return startRec();
@@ -237,13 +242,21 @@ async function go() {
   const w = () => { if (!REC) return; const left = mixAt - a.currentTime; $('#recT').textContent = '-' + Math.max(0, left).toFixed(1);
     if (left <= 0.03 || a.ended) { startRec(); fadeOut(a, 2); } else REC.raf = requestAnimationFrame(w); }; w();
 }
+function startNext() {          // while recording: the next song starts here (on air too), you hear its intro low under you
+  if (!REC || REC.mixAt || REC.mr.state !== 'recording') return; const n = nextOf(OPEN); if (!n) return;
+  REC.mixAt = (Date.now() - REC.t0) / 1000; const b = $('#aNext'); b.src = media(n.path); b.currentTime = n.cue_start || 0; b.volume = 0.5; b.play().catch(() => {});
+  const r = $('#rNext'); if (r) { r.disabled = true; r.classList.add('on'); r.textContent = '▶ Next song started at ' + fmt(REC.mixAt); } }
+document.addEventListener('keydown', e => { if (e.code === 'Space' && REC && REC.mr && REC.mr.state === 'recording' && !e.target.matches('input,select,textarea')) { e.preventDefault(); startNext(); } });
 function fadeOut(a, s) { const v0 = a.volume, t0 = performance.now(); const f = () => { const k = (performance.now() - t0) / (s * 1000); if (k >= 1) { a.pause(); a.volume = 1; return; } a.volume = v0 * (1 - k); requestAnimationFrame(f); }; f(); }
-function listen(i, url, start) {          // the end of the song before item i+1, then the link (as on air)
-  stopRec(); const prev = prevOf(i), a = $('#aPrev'), tk = $('#aTake'); tk.src = url;
-  const play = () => { tk.currentTime = start || 0; tk.play(); };
+let LSN = null;
+function listen(i, url, start, mixAt, nxt) {          // the end of the song before item i+1, then the link (and the next song under it, as on air)
+  stopRec(); const prev = prevOf(i), a = $('#aPrev'), tk = $('#aTake'), nb = $('#aNext'); tk.src = url;
+  const play = () => { tk.currentTime = start || 0; tk.play();
+    if (mixAt && nxt) LSN = setTimeout(() => { nb.src = media(nxt.path); nb.currentTime = nxt.cue_start || 0; nb.volume = 0.35; nb.play().catch(() => {});
+      const up = () => { if (nb.paused) return; if (tk.ended || tk.paused) { nb.volume = 1; setTimeout(() => nb.pause(), 6000); return; } requestAnimationFrame(up); }; up(); }, Math.max(0, mixAt - (start || 0)) * 1000); };
   if (!prev) return play();
-  const mixAt = prev.cue_mix || prev.cue_end || prev.duration || 0; a.src = media(prev.path); a.volume = 1; a.currentTime = Math.max(prev.cue_start || 0, mixAt - +$('#pre').value);
-  a.play().then(() => { const w = () => { if (a.paused) return; if (mixAt - a.currentTime <= 0.03) { play(); fadeOut(a, 2); } else requestAnimationFrame(w); }; w(); }).catch(play);
+  const pm = prev.cue_mix || prev.cue_end || prev.duration || 0; a.src = media(prev.path); a.volume = 1; a.currentTime = Math.max(prev.cue_start || 0, pm - +$("#pre").value);
+  a.play().then(() => { const w = () => { if (a.paused) return; if (pm - a.currentTime <= 0.03) { play(); fadeOut(a, 2); } else requestAnimationFrame(w); }; w(); }).catch(play);
 }
 async function save() {
   const b = $('#rSave'); b.disabled = true; b.textContent = 'Saving …';
@@ -258,7 +271,7 @@ async function save() {
       off = r.done ? blob.size : r.have;
     }
     const tvSel = ls('hypeVtTv') || '';
-    const r = await post('vt/save', {pid: PID, after: OPEN, take: name, video: REC.video, tv: REC.video ? '' : tvSel, name: tvSel === 'name' ? (ls('hypeVtName') || '') : ''});
+    const r = await post('vt/save', {pid: PID, after: OPEN, take: name, video: REC.video, mix_at: REC.mixAt || 0, tv: REC.video ? '' : tvSel, name: tvSel === 'name' ? (ls('hypeVtName') || '') : ''});
     if (!r.ok) throw new Error(r.error || 'not saved');
     toast('Voice link saved'); REC = null; OPEN = -2; reload();
   } catch (e) { toast(e.message, 1); b.disabled = false; b.textContent = 'Save link'; }

@@ -581,10 +581,10 @@ function renderSources() {
       if (from === null) return; if (from < to) to--; const f = from; from = null; if (to === f) { renderSources(); return; } mv(f, to); };
   });
 }
-let pickMode = 'folder';
+let pickMode = 'folder', PKF = '';     // PKF: the folder opened in the Song tab
 function openPicker(mode) { pickMode = mode; $$('#pkKind button').forEach(x => x.classList.toggle('on', x.dataset.k === mode));
   $('#pickQ').placeholder = {folder: 'Search folders…', song: 'Search songs…', jingle: 'Search jingles…', playlist: 'Search playlists…'}[mode]; fillPicker(); }
-$$('#pkKind button').forEach(b => b.onclick = () => { $('#pickQ').value = ''; openPicker(b.dataset.k); });
+$$('#pkKind button').forEach(b => b.onclick = () => { $('#pickQ').value = ''; PKF = ''; openPicker(b.dataset.k); });
 function pickRow(kind, v, title, sub, pad) { return `<button draggable="true" data-k="${kind}" data-v="${esc(v)}"><b style="${pad ? 'padding-left:' + pad + 'px' : ''}">${title}</b><span>${sub}</span></button>`; }
 function fillPicker() {
   const q = nf($('#pickQ').value);
@@ -602,9 +602,13 @@ function fillPicker() {
     $('#pickRes').innerHTML = PL.filter(p => (!cur || !cur.id || p.id !== cur.id) && nf(p.name).includes(q)).map(p => pickRow('playlist', p.id, esc(p.name), `${p.count} songs`)).join('') || '<span class="muted">No other playlists.</span>';
     bindPick();
   } else {
-    if (!q) { $('#pickRes').innerHTML = '<span class="muted" style="padding:8px">Type an artist or title…</span>'; return; }
-    get('library?section=music&q=' + encodeURIComponent($('#pickQ').value)).then(d => {
-      $('#pickRes').innerHTML = d.items.slice(0, 60).map(s => pickRow('song', s.path, `${esc(s.artist)} – ${esc(s.title)}`, esc(s.folder))).join('') || '<span class="muted">Nothing found.</span>'; bindPick();
+    // songs: no search = the folders; open a folder for its songs (search still works inside it)
+    if (!q && !PKF) { $('#pickRes').innerHTML = '<span class="muted" style="padding:4px 8px">Type an artist or title, or open a folder:</span>' + FOLD.music.map(f => `<button class="pkf" data-f="${esc(f)}"><b style="padding-left:${(f.split('/').length - 1) * 14}px">▸ ${esc(f.split('/').pop())}</b><span>${FOLD.counts[f] || 0} songs</span></button>`).join('');
+      $$('#pickRes [data-f]').forEach(b => b.onclick = () => { PKF = b.dataset.f; fillPicker(); }); return; }
+    get('library?section=music&limit=1000' + (PKF ? '&folder=' + encodeURIComponent(PKF) : '') + '&q=' + encodeURIComponent($('#pickQ').value)).then(d => {
+      $('#pickRes').innerHTML = (PKF ? `<button class="pkf" data-back><b>◂ ${esc(PKF)}</b><span>back to the folders</span></button>` : '') +
+        (d.items.slice(0, PKF ? 1000 : 60).map(s => pickRow('song', s.path, `${esc(s.artist)} – ${esc(s.title)}`, esc(s.folder))).join('') || '<span class="muted">Nothing found.</span>'); bindPick();
+      const bk = $('#pickRes [data-back]'); if (bk) bk.onclick = () => { PKF = ''; $('#pickQ').value = ''; fillPicker(); };
     });
   }
 }

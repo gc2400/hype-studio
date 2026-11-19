@@ -321,7 +321,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #auxCard [data-auxtab]{display:none}
 .btn.ic{width:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
 /* joined buttons (like + TEXT ⚙) */
-.bjoin{display:inline-flex}.bjoin>.btn{border-radius:0;margin:0}.bjoin>.btn+.btn{border-left:0}.bjoin>.btn:first-child{border-radius:10px 0 0 10px}.bjoin>.btn:last-child{border-radius:0 10px 10px 0}.bjoin>.btn[data-camn]{min-width:30px;padding:0 9px}
+.bjoin{display:inline-flex}.bjoin>.btn{border-radius:0;margin:0}.bjoin>.btn{position:relative}.bjoin>.btn+.btn{margin-left:-1px}.bjoin>.btn:hover,.bjoin>.btn:focus-visible{z-index:1}.bjoin>.btn.on{z-index:2}.bjoin>.btn:first-child{border-radius:10px 0 0 10px}.bjoin>.btn:last-child{border-radius:0 10px 10px 0}.bjoin>.btn[data-camn]{min-width:30px;padding:0 9px}
 /* mixer: opens in the player in place of the L/R meter – every volume, each with its own level */
 #mixIn{display:flex;flex-direction:column;gap:6px;margin-top:6px}
 #mixIn .mxh{font:800 10px Inter,system-ui,sans-serif;letter-spacing:.08em;color:var(--mut);text-transform:uppercase;margin-top:4px}
@@ -419,7 +419,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="lab">Scenes</span>
           <div class="row" style="gap:5px;flex-wrap:wrap">
             <button class="btn sm" id="bSlots" aria-expanded="false" title="Camera slots: which camera / guest is in CAM 1–4">SLOTS</button>
-            <span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third (a name / text on screen)">+ TEXT</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
+            <span class="bjoin"><button class="btn sm" id="bLT" title="Show / hide the lower third (a name / text on screen)">+ TEXT</button><button class="btn sm" id="bLTset" aria-label="Lower third text" title="Lower third text">⚙</button></span>
             <button class="btn sm" id="bEl" title="Put a graphic on screen">+ GRAPHIC</button>
             <button class="btn sm" id="bAutoScene" title="AUTO: the TV follows the music (scene per song)">AUTO</button></div></div>
         <div class="subbox" id="ltBox" hidden>

@@ -303,6 +303,9 @@ def annotate(it, pad=False, nxt=None):
             w = lm[int(ce * 2):int(ce * 2) + 4] if lm else None
             if w and L is not None and sum(w) / len(w) >= L - 12:
                 cross = max(0.3, min(MIX_MAX, MIX_OUT, ce - cm)); fade = cross
+    vm = vt_mix_at(it["path"]) if not pad and it["path"].startswith("jingles/VOICETRACK/") else None
+    if vm:      # a voice link that talks over the next song's intro: the song starts at the moment you started it while recording
+        end_ = max(ce, dur or ce); cm = max(cs + 0.3, min(vm, end_ - 0.3)); cross = max(0.3, min(60.0, end_ - cm)); fade = 0.0
     ce = cm + cross
     # every song and jingle: -14 LUFS into the processing (the level the sound presets were tuned on);
     # pads + intro sweepers: -14 (a bit on top of the music, as before)
@@ -311,7 +314,7 @@ def annotate(it, pad=False, nxt=None):
     # one telnet line: no control characters (a newline would split the command), no " or \ inside a quoted value
     if BAD_NAME.search(it["path"]): raise ValueError("file name with control characters: %r" % it["path"])
     q = lambda v: BAD_NAME.sub(" ", str(v)).replace("\\", "/").replace('"', "'")
-    meta = (f'liq_cue_in="{cs:.2f}",liq_cue_out="{ce:.2f}",liq_cross_duration="{cross:.2f}",liq_amplify="{gain:.2f} dB",hype_fade="{fade:.2f}",'
+    meta = (f'liq_cue_in="{cs:.2f}",liq_cue_out="{ce:.2f}",liq_cross_duration="{cross:.2f}",liq_amplify="{gain:.2f} dB",hype_fade="{fade:.2f}",' + ('hype_duck="0.35",' if vm else '') +
             f'artist="{q(it["artist"])}",title="{q(it["title"])}",hype_path="{q(it["path"])}",hype_id="{it["id"]}"')
     return f"annotate:{meta}:{os.path.join(ROOT, it['path'])}"
 
@@ -2609,10 +2612,17 @@ def up_chunk(qs, rfile, n):
 
 # ---------- voice tracking: your own links between the songs of a playlist or of a locked hour ----------
 VT_DIR = os.path.join(ROOT, "jingles", "VOICETRACK"); VT_IN = os.path.join(UP_DIR, "vt")
+VT_MIX = {}          # voice link -> the second the next song starts under it (None = after the link, as a jingle)
 def vt_db(c):
     c.execute("CREATE TABLE IF NOT EXISTS vt(path TEXT PRIMARY KEY, pid INT, tv TEXT DEFAULT '', name TEXT DEFAULT '', video INT DEFAULT 0, created REAL)")
+    if "mix_at" not in [r[1] for r in c.execute("PRAGMA table_info(vt)")]: c.execute("ALTER TABLE vt ADD COLUMN mix_at REAL")
     c.execute("CREATE TABLE IF NOT EXISTS vt_hours(pid INT PRIMARY KEY, date TEXT, hour INT, clock_id INT)")
     return c
+def vt_mix_at(path):
+    if "_loaded" not in VT_MIX:
+        try: VT_MIX.update({p_: m for p_, m in vt_db(dbc()).execute("SELECT path, mix_at FROM vt WHERE mix_at > 0")}); VT_MIX["_loaded"] = 1
+        except Exception as e: log.warning("vt mix: %s", e); return None
+    return VT_MIX.get(path)
 def vt_list(c, pid):
     vt_db(c)
     r = c.execute("SELECT name, strict, shuffle FROM playlists WHERE id=?", (pid,)).fetchone()
@@ -2622,10 +2632,11 @@ def vt_list(c, pid):
     paths = [ref for _, ref in src] if fixed else planner.playlist_songs(c, pid)
     out = []
     for i, p_ in enumerate(paths):
-        row = c.execute("SELECT artist, title, section, duration, cue_start, cue_mix, cue_end, has_video, problem FROM items WHERE path=?", (p_,)).fetchone()
-        v = c.execute("SELECT tv, name, video FROM vt WHERE path=?", (p_,)).fetchone()
+        row = c.execute("SELECT artist, title, section, duration, cue_start, cue_mix, cue_end, has_video, problem, cue_intro FROM items WHERE path=?", (p_,)).fetchone()
+        v = c.execute("SELECT tv, name, video, mix_at FROM vt WHERE path=?", (p_,)).fetchone()
         it = {"i": i, "path": p_, "missing": not row}
-        if row: it.update(artist=row[0], title=row[1], section=row[2], duration=row[3], cue_start=row[4] or 0, cue_mix=row[5], cue_end=row[6], video=bool(row[7]), problem=row[8])
+        if row: it.update(artist=row[0], title=row[1], section=row[2], duration=row[3], cue_start=row[4] or 0, cue_mix=row[5], cue_end=row[6], video=bool(row[7]), problem=row[8], cue_intro=row[9])
+        if v and v[3]: it["cue_mix"] = v[3]; it["over_intro"] = True
         if v or p_.startswith("jingles/VOICETRACK/"): it["vt"] = {"tv": (v or ("",))[0], "name": (v or ("", ""))[1], "video": bool((v or (0, 0, 0))[2])}
         out.append(it)
     h = c.execute("SELECT date, hour, clock_id FROM vt_hours WHERE pid=?", (pid,)).fetchone()
@@ -2665,7 +2676,9 @@ def vt_save(d):
     os.chmod(dst, 0o664); rel = os.path.relpath(dst, ROOT)
     with LOCK:
         paths = vt_paths(c, pid); paths.insert(max(0, min(len(paths), after + 1)), rel); vt_write(c, pid, paths)
-        c.execute("INSERT OR REPLACE INTO vt VALUES(?,?,?,?,?,?)", (rel, pid, str(d.get("tv") or "")[:80], str(d.get("name") or "")[:80], int(video), time.time())); c.commit()
+        ma = float(d.get("mix_at") or 0) - (ts if ts > 0 else 0); ma = ma if ma > 0.5 else None
+        c.execute("INSERT OR REPLACE INTO vt(path, pid, tv, name, video, created, mix_at) VALUES(?,?,?,?,?,?,?)", (rel, pid, str(d.get("tv") or "")[:80], str(d.get("name") or "")[:80], int(video), time.time(), ma)); c.commit()
+        if ma: VT_MIX[rel] = ma
     log.info("voice link saved: %s (after item %d of playlist %d)", rel, after, pid)
     return {"ok": True, "path": rel}
 def vt_cmd(a, d):
