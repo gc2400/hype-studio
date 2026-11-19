@@ -45,6 +45,12 @@ html{scrollbar-gutter:stable}
 #hhead .hpop .ok{color:#3DDC97}#hhead .hpop .bad{color:#FF4D5E}#hhead .hpop .big{font:800 20px ui-monospace,Menlo,Consolas,monospace;color:#FFE000}
 #hhead .hpop .note{color:#7F96AB;font-size:11px;margin-top:8px}
 #hhead #stRadio,#hhead #stTv{display:inline-block;width:11px;height:11px;padding:0;border-radius:50%;font-size:0;background:#55697D;border:0;margin:0}
+#hhead #stLog{display:inline-block;width:11px;height:11px;padding:0;border-radius:50%;font-size:0;border:0;margin:0;background:#3DDC97}
+#hhead #stLog.warn{background:#FFB547;box-shadow:0 0 6px rgba(255,181,71,.6)}#hhead #stLog.bad{background:#FF4D5E;box-shadow:0 0 6px rgba(255,77,94,.6)}
+#hhead #hLogPop{width:400px;max-height:70vh;overflow:auto}
+#hhead #hLogPop .m{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #17344F}#hhead #hLogPop .m:last-child{border-bottom:0}
+#hhead #hLogPop .m i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
+#hhead #hLogPop .m small{display:block;color:#7F96AB;font-size:11px;margin-top:1px}
 #hhead #stRadio.ok,#hhead #stTv.ok{background:#3DDC97;box-shadow:0 0 6px rgba(61,220,151,.5)}#hhead #stRadio.bad,#hhead #stTv.bad{background:#FF4D5E}
 #hhead #stClock{display:none}
 #hhead #clock{font:800 20px Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.2px;color:#FFE000;margin-left:4px}
@@ -82,10 +88,10 @@ html{scrollbar-gutter:stable}
   h.innerHTML = `<div class="hb"><img src="/panel/logo.png" alt="Hype radio tv"><div class="show" id="show">Hype Studio</div></div>
     <div class="hctl"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button>
       <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
-    <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span></button><span class="chip" id="stClock">–</span><span id="clock">--:--:--</span>
+    <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span></button><button class="hdots" id="hLogB" aria-haspopup="dialog" aria-expanded="false" title="Log: what Studio did – repairs, problems, messages"><span class="chip" id="stLog">● LOG</span></button><span class="chip" id="stClock">–</span><span id="clock">--:--:--</span>
       <button class="hlive" id="hLive" title="GO LIVE: your studio mix goes on air (click twice)"><b>GO LIVE</b><span class="t" id="hLiveT"></span></button>
       <button class="hrec" id="hRec" title="Record the TV output (Library → Recordings)"><i></i><b>REC</b><span id="hRecT"></span></button>
-      <div class="hpop" id="hPop" role="dialog" aria-label="Streams" hidden></div></div>
+      <div class="hpop" id="hPop" role="dialog" aria-label="Streams" hidden></div><div class="hpop" id="hLogPop" role="dialog" aria-label="Log" hidden></div></div>
     <span class="sp"></span>
     <button class="menu" id="hMenu" aria-label="Pages" aria-expanded="false">☰</button>
     <nav class="hnav" aria-label="Pages">${P.map(([u, t, k], i) => `<a href="${u}" class="${k === cur ? 'cur' : ''}" ${k === cur ? 'aria-current="page"' : ''} title="${t} (Alt+${i + 1})">${t}</a>`).join('')}<span class="sep"></span><a class="out" href="/logout" title="Log out" aria-label="Log out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span class="lo"> Log out</span></a></nav>`;
@@ -151,9 +157,43 @@ html{scrollbar-gutter:stable}
   })();
   function popLoad() { fetch('/api/streams').then(r => r.json()).then(popRender).catch(() => { pop.innerHTML = '<div class="r"><span>Status</span><b class="bad">● no answer</b></div>'; }); }
   function popOpen(o) { pop.hidden = !o; dots.setAttribute('aria-expanded', o); clearInterval(popT); if (o) { popLoad(); popT = setInterval(popLoad, 5000); } }
-  dots.onclick = e => { e.stopPropagation(); popOpen(pop.hidden); };
+  dots.onclick = e => { e.stopPropagation(); if (!lp.hidden) logOpen(false); popOpen(pop.hidden); };
   document.addEventListener('click', e => { if (!pop.hidden && !pop.contains(e.target)) popOpen(false); });
   addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { popOpen(false); dots.focus(); } });
+  // ---- LOG: what Studio did (the guard's repairs + problems) and this page's messages – the dot is orange / red when
+  //      something new happened since you last looked ----
+  const lb_ = h.querySelector('#hLogB'), lp = h.querySelector('#hLogPop'), LOG = []; let logSeen = 0;
+  try { logSeen = +localStorage.getItem('hypeLogSeen') || 0; } catch (e) {}
+  const LC = {bad: '#FF4D5E', alarm: '#FF4D5E', warn: '#FFB547', repair: '#FFB547', ok: '#3DDC97', info: '#05A9C6'};
+  const lesc = t => String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+  function logDot() {
+    const nw = LOG.filter(m => m.t > logSeen && m.src === 'guard'), now = LOG.some(m => m.now);
+    const d = h.querySelector('#stLog'); d.className = 'chip ' + (now || nw.some(m => m.lvl === 'bad' || m.lvl === 'alarm') ? 'bad' : nw.some(m => m.lvl === 'repair' || m.lvl === 'warn') ? 'warn' : '');
+    lb_.title = 'Log' + (now ? ' – a problem right now' : nw.length ? ' – ' + nw.length + ' new' : ' – all quiet');
+  }
+  function logRender() {
+    if (lp.hidden) return;
+    lp.innerHTML = '<h4>Log</h4>' + (LOG.map(m => `<div class="m"><i style="background:${LC[m.lvl] || '#05A9C6'}"></i><div>${lesc(m.text)}<small>${new Date(m.t * 1000).toLocaleString('nl-NL', {weekday: 'short', hour: '2-digit', minute: '2-digit'})} · ${m.src === 'guard' ? 'Studio guard' : 'this page'}${m.now ? ' · going on now' : ''}</small></div></div>`).join('') || '<div class="note">Nothing yet.</div>') +
+      '<div class="note">Repairs and problems from the Studio guard, plus the messages of this page.</div>';
+  }
+  function logLoad() {
+    fetch('/api/guard').then(r => r.json()).then(g => {
+      for (let i = LOG.length - 1; i >= 0; i--) if (LOG[i].src === 'guard') LOG.splice(i, 1);
+      (g.events || []).forEach(e => LOG.push({t: e.t, text: e.text, lvl: e.level, src: 'guard'}));
+      (g.problems || []).forEach(p => LOG.push({t: p.since, text: p.text, lvl: 'bad', src: 'guard', now: true}));
+      LOG.sort((a, b) => b.t - a.t); logDot(); logRender();
+    }).catch(() => {});
+  }
+  // this page's own messages (toasts) go into the log too
+  const wrapToast = () => { if (typeof window.toast !== 'function' || window.toast._log) return; const t0 = window.toast;
+    window.toast = function (t, err) { const r = t0.apply(this, arguments); LOG.unshift({t: Date.now() / 1000, text: String(t), lvl: err ? 'warn' : 'info', src: 'page'}); if (LOG.length > 120) LOG.length = 120; logRender(); return r; };
+    window.toast._log = true; };
+  setTimeout(wrapToast, 500); setTimeout(wrapToast, 3000);
+  function logOpen(o) { lp.hidden = !o; lb_.setAttribute('aria-expanded', o); if (o) { popOpen(false); logSeen = Date.now() / 1000; try { localStorage.setItem('hypeLogSeen', logSeen); } catch (e) {} logRender(); logDot(); logLoad(); } }
+  lb_.onclick = e => { e.stopPropagation(); logOpen(lp.hidden); };
+  document.addEventListener('click', e => { if (!lp.hidden && !lp.contains(e.target)) logOpen(false); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !lp.hidden) { logOpen(false); lb_.focus(); } });
+  logLoad(); setInterval(logLoad, 30000);
   // ---- REC: start at once, stop with a second click (so it never stops by accident) ----
   const rb = h.querySelector('#hRec'); let REC = null, recAsk = 0;
   const fmtT = s => { s = Math.max(0, Math.floor(s)); const hh = Math.floor(s / 3600), mm = Math.floor(s % 3600 / 60), ss = s % 60; return (hh ? hh + ':' + String(mm).padStart(2, '0') : mm) + ':' + String(ss).padStart(2, '0'); };
