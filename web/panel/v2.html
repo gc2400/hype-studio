@@ -337,6 +337,12 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #v2Info{grid-column:1/-1;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);padding:0 4px}
 #v2Info b{color:var(--txt)}
 @media (max-width:1250px){#airbar #cPlayer{grid-template-columns:1fr 1fr;grid-template-areas:"chips chips" "np tp" "wave wave" "meter fad"}}
+#v2Msgs{position:fixed;right:16px;top:150px;z-index:90;width:min(440px,94vw);max-height:70vh;overflow:auto;background:var(--card);border:1px solid var(--line2);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);padding:10px;display:flex;flex-direction:column;gap:6px}
+#v2Msgs .m{display:flex;gap:9px;align-items:flex-start;padding:8px 10px;border-radius:10px;background:var(--deep);border:1px solid var(--line);font-size:13px}
+#v2Msgs .m i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
+#v2Msgs .m small{display:block;color:var(--mut);font-size:11px}
+#v2MsgBtn{display:inline-flex;align-items:center;gap:7px}#v2MsgBtn i{width:9px;height:9px;border-radius:50%;background:var(--g)}
+#cGfx .subbox[hidden]+.subbox[hidden]+#elOn:empty+.v2empty{display:block}#cGfx .v2empty{display:none}
 .v2tag{font:800 10px Inter,sans-serif;letter-spacing:.08em;background:#FFE000;color:#061423;border-radius:6px;padding:3px 7px;text-decoration:none}
 </style>
 </head>
@@ -377,18 +383,22 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <span class="mono mdb" id="mDb">–∞</span>
         </div>
       </div>
+      <div class="card" id="cTabs" style="padding:6px 8px;flex-direction:row;gap:5px;flex-wrap:wrap" role="tablist" aria-label="Left column">
+        <button class="btn sm" data-v2tab="next" role="tab">Up next</button><button class="btn sm" data-v2tab="1" role="tab">Deck A</button><button class="btn sm" data-v2tab="2" role="tab">Deck B</button><button class="btn sm" data-v2tab="played" role="tab">Played</button>
+      </div>
+      <div class="card" style="padding:8px" id="cPlayed" hidden><div class="log ulist" id="v2Played"></div></div>
       <div class="card" style="padding:8px" id="cLog">
         <div class="row between" style="padding:4px 6px"><span class="lab">Up next</span><span class="lab" id="logInfo" style="color:var(--b);white-space:nowrap"></span></div>
         <div class="log ulist" id="log"></div>
       </div>
       <div class="card" style="padding:8px" id="auxCard">
         <div class="row between" style="padding:4px 6px">
-          <div class="row" style="gap:4px"><span class="lab" style="color:var(--y)">Manual ·</span><button class="btn sm on" data-auxtab="1">AUX 1</button><button class="btn sm" data-auxtab="2">AUX 2</button></div>
+          <div class="row" style="gap:4px"><span class="lab" style="color:var(--y)">Manual ·</span><button class="btn sm on" data-auxtab="1">Deck A</button><button class="btn sm" data-auxtab="2">Deck B</button></div>
           <span class="lab" id="auxInfo" style="color:var(--b)"></span>
         </div>
         <div id="auxNext" style="padding:0 6px"></div>
         <div class="log aux ulist" id="aux"></div>
-        <span class="muted" style="font-size:11px;padding:0 6px 4px">AUX 1 plays top to bottom, then AUX 2. Both empty → the hour plan keeps the music going. Press ▶ PLAY or AUTO to go back to the programming.</span>
+        <span class="muted" style="font-size:11px;padding:0 6px 4px">Deck A plays top to bottom, then Deck B. Both empty → the hour plan keeps the music going. Press ▶ PLAY or AUTO to go back to the programming.</span>
         <div class="row" style="gap:5px;padding:6px 6px 2px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:2px">
           <select id="auxLoad" hidden aria-label="Load a playlist into this AUX" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 6px;max-width:170px"><option value="">Load playlist…</option></select>
           <button class="btn sm" id="auxSave">Save as playlist</button>
@@ -413,9 +423,22 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <div class="slotg" id="slotsGrid"></div></details>
         <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="lab">Scenes</span>
           <div class="row" style="gap:5px;flex-wrap:wrap">
-            <span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third">LOWER THIRD</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
-            <button class="btn sm" id="bEl" title="Put a graphic on screen">+ ELEMENT</button>
-            <button class="btn sm" id="bAutoScene">AUTO SCENES</button></div></div>
+            <button class="btn sm" id="bAutoScene">Auto scenes</button></div></div>
+        <div class="grid4" id="scenes"></div>
+        <div class="sgtabs" id="sgTabs"></div>
+        <div class="subbox" id="sgEdit" hidden>
+          <div class="row" style="gap:6px;flex-wrap:wrap"><input id="sgName" type="text" maxlength="30" aria-label="Group name" style="width:160px"><span class="muted" style="flex:1;font-size:12px">Click scenes to put them in / out of this group</span><button class="btn sm red" id="sgDel">Delete group</button><button class="btn sm yellow" id="sgDone">Done</button></div>
+        </div>
+        <div class="subbox" id="camEdit" hidden>
+          <div class="row" style="gap:6px;flex-wrap:wrap"><span class="muted" style="flex:1;font-size:12px;min-width:180px">Drag a scene to another place (or click one, then click where it goes). × takes it off.</span><button class="btn sm" id="camRow">+ Row</button><button class="btn sm" id="camReset">Reset</button><button class="btn sm" id="camCancel">Cancel</button><button class="btn sm yellow" id="camDone">Done</button></div>
+          <div class="row" id="camHidden" style="gap:5px;flex-wrap:wrap"></div>
+        </div>
+        <div class="camgrid" id="camScenes"></div>
+      </div>
+      <div class="card" id="cGfx">
+        <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="lab">Graphics on screen</span>
+          <div class="row" style="gap:5px;flex-wrap:wrap"><span style="display:inline-flex"><button class="btn sm" id="bLT" style="border-radius:10px 0 0 10px" title="Show / hide the lower third">Lower third</button><button class="btn sm" id="bLTset" style="border-radius:0 10px 10px 0;border-left:0" aria-label="Lower third text" title="Lower third text">⚙</button></span>
+            <button class="btn sm" id="bEl" title="Put a graphic on screen (tickers, ad box, frames …)">+ Graphic</button></div></div>
         <div class="subbox" id="ltBox" hidden>
           <div class="lt-form">
             <input id="ltName" type="text" placeholder="Line 1 – name, e.g. DJ Kim" maxlength="80" aria-label="Lower third line 1">
@@ -430,16 +453,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <span class="muted" style="font-size:11px">Graphics from branding/screen (1920×1080 PNG or transparent WebM).</span>
         </div>
         <div class="row" id="elOn" style="flex-wrap:wrap;gap:5px"></div>
-        <div class="grid4" id="scenes"></div>
-        <div class="sgtabs" id="sgTabs"></div>
-        <div class="subbox" id="sgEdit" hidden>
-          <div class="row" style="gap:6px;flex-wrap:wrap"><input id="sgName" type="text" maxlength="30" aria-label="Group name" style="width:160px"><span class="muted" style="flex:1;font-size:12px">Click scenes to put them in / out of this group</span><button class="btn sm red" id="sgDel">Delete group</button><button class="btn sm yellow" id="sgDone">Done</button></div>
-        </div>
-        <div class="subbox" id="camEdit" hidden>
-          <div class="row" style="gap:6px;flex-wrap:wrap"><span class="muted" style="flex:1;font-size:12px;min-width:180px">Drag a scene to another place (or click one, then click where it goes). × takes it off.</span><button class="btn sm" id="camRow">+ Row</button><button class="btn sm" id="camReset">Reset</button><button class="btn sm" id="camCancel">Cancel</button><button class="btn sm yellow" id="camDone">Done</button></div>
-          <div class="row" id="camHidden" style="gap:5px;flex-wrap:wrap"></div>
-        </div>
-        <div class="camgrid" id="camScenes"></div>
+        <span class="muted v2empty" style="font-size:11px">Nothing extra on screen. Scheduled graphics still come by themselves.</span>
       </div>
       <div class="card" id="cTvm">
         <div class="row between"><span class="lab">TV Media</span><div class="row" style="gap:6px"><select id="mScene" aria-label="Media scene" title="The scene a media item / stream / the browser goes on air in" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;max-width:190px"></select><button class="btn sm" id="tvEdit" title="Add live links, delete media, pin / hide listener items">✎ EDIT</button></div></div>
@@ -460,7 +474,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         <div class="row" id="lvRest" style="gap:6px"></div>
       </div>
       <div class="card" id="cPads">
-        <div class="row between"><span class="lab">Pads</span><button class="btn sm" id="padEdit" title="Add banks, add or remove pads">✎ EDIT</button></div>
+        <div class="row between"><span class="lab">Pads</span><span class="row" style="gap:6px"><span class="muted" id="v2PadSum" style="font-size:11px"></span><button class="btn sm" id="padGear" aria-expanded="false" aria-label="Pad settings" title="Duck, video, loop, edit pads and banks">⚙</button></span></div>
         <div class="banks" id="padBanks"></div>
         <div class="row" id="padEditBar" hidden style="gap:6px;flex-wrap:wrap">
           <input id="bankName" type="text" aria-label="Bank name" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;width:150px">
@@ -469,8 +483,8 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         </div>
         <div class="grid4 pads" id="pads"></div>
         <div class="padpg" id="padPg" hidden><button class="btn sm" id="pgPrev" aria-label="Previous page">◀</button><span id="pgTxt"></span><button class="btn sm" id="pgNext" aria-label="Next page">▶</button></div>
-        <label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label>
-        <div class="row"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK: OFF</button><button class="btn sm" id="bPVid" aria-pressed="false" title="When on, pads with a video (▶) also show their video full screen over what's on air">▶ VIDEO: OFF</button><button class="btn sm" id="bPLoop" aria-pressed="false" title="When on, a pad you start repeats until you click it again (or STOP PADS)">⟳ LOOP: OFF</button><span style="flex:1"></span><button class="btn sm red" id="bPadStop">STOP PADS</button></div>
+        <label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label><div class="row" style="justify-content:flex-end"><button class="btn sm red" id="bPadStop">Stop pads</button></div>
+        <div class="subbox" id="padOpts" hidden><div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK: OFF</button><button class="btn sm" id="bPVid" aria-pressed="false" title="When on, pads with a video (▶) also show their video full screen over what's on air">▶ VIDEO: OFF</button><button class="btn sm" id="bPLoop" aria-pressed="false" title="When on, a pad you start repeats until you click it again (or STOP PADS)">⟳ LOOP: OFF</button><span style="flex:1"></span><button class="btn sm" id="padEdit" title="Add banks, add or remove pads">Edit pads</button></div></div>
       </div>
       <div class="card" id="cXfade" hidden>
         <div class="xnow" id="xNow" hidden></div>
@@ -646,7 +660,7 @@ let AUX = '1', auxSig = '';
 function renderAux() {
   const L = (S.aux || {})[AUX] || [], tot = L.reduce((n, u) => n + ((u.cue_mix || u.duration || 0) - (u.cue_start || 0)), 0);
   $('#auxInfo').textContent = L.length ? L.length + ' songs · ' + fmt(tot) : '';
-  $$('[data-auxtab]').forEach(b => { const n = ((S.aux || {})[b.dataset.auxtab] || []).length; b.classList.toggle('on', b.dataset.auxtab === AUX); b.textContent = 'AUX ' + b.dataset.auxtab + (n ? ' · ' + n : ''); });
+  $$('[data-auxtab]').forEach(b => { const n = ((S.aux || {})[b.dataset.auxtab] || []).length; b.classList.toggle('on', b.dataset.auxtab === AUX); b.textContent = 'Deck ' + (b.dataset.auxtab === '1' ? 'A' : 'B') + (n ? ' · ' + n : ''); });
   const nx = (S.upcoming || [])[0];
   const nxh = nx ? `<div class="li next"><span class="ic" style="color:var(--y)">▸</span><div class="tx"><b>${nx.artist ? esc(nx.artist) + ' – ' : ''}${esc(nx.title)}</b><span>NEXT · ${nx.src === 'clock' ? 'from the hour plan (AUX empty)' : nx.deck ? 'from AUX ' + nx.deck : esc(nx.folder)}</span></div><button class="x" style="opacity:1" data-nxrm="${nx.id}" aria-label="Remove the next song">×</button></div>` : '';
   if ($('#auxNext').dataset.h !== nxh) { $('#auxNext').dataset.h = nxh; $('#auxNext').innerHTML = nxh; const nb = $('#auxNext [data-nxrm]'); if (nb) nb.onclick = () => cmd('remove', {id: nb.dataset.nxrm}); }
@@ -1147,12 +1161,12 @@ setInterval(() => { if (!S || !S.faders || Date.now() - padBusy < 1500) return; 
 $('#padVol').oninput = () => { padBusy = Date.now(); const v = +$('#padVol').value; $('#padVolV').textContent = dbTxt(v); clearTimeout(padT); padT = setTimeout(() => api('cmd/fader', {name: 'vol_pads', value: v}), 80); };
 $('#padVol').ondblclick = () => { $('#padVol').value = 1; $('#padVol').oninput(); };
 let PVID = false; try { PVID = localStorage.getItem('hypePVid') === '1'; } catch (e) {}
-function showPVid() { $('#bPVid').textContent = 'VIDEO: ' + (PVID ? 'ON' : 'OFF'); $('#bPVid').classList.toggle('on', PVID); $('#bPVid').setAttribute('aria-pressed', PVID); }
+function showPVid() { $('#bPVid').textContent = 'Video'; $('#bPVid').classList.toggle('on', PVID); $('#bPVid').setAttribute('aria-pressed', PVID); }
 $('#bPVid').onclick = () => { PVID = !PVID; try { localStorage.setItem('hypePVid', PVID ? '1' : '0'); } catch (e) {} showPVid(); }; showPVid();
 let PLOOP = false; try { PLOOP = localStorage.getItem('hypePLoop') === '1'; } catch (e) {}
-function showPLoop() { $('#bPLoop').textContent = 'LOOP: ' + (PLOOP ? 'ON' : 'OFF'); $('#bPLoop').classList.toggle('on', PLOOP); $('#bPLoop').setAttribute('aria-pressed', PLOOP); }
+function showPLoop() { $('#bPLoop').textContent = 'Loop'; $('#bPLoop').classList.toggle('on', PLOOP); $('#bPLoop').setAttribute('aria-pressed', PLOOP); }
 $('#bPLoop').onclick = () => { PLOOP = !PLOOP; try { localStorage.setItem('hypePLoop', PLOOP ? '1' : '0'); } catch (e) {} showPLoop(); }; showPLoop();
-function showDuck() { $('#bDuck').textContent = 'DUCK: ' + (DUCK ? 'ON' : 'OFF'); $('#bDuck').classList.toggle('on', DUCK); $('#bDuck').setAttribute('aria-pressed', DUCK); }
+function showDuck() { $('#bDuck').textContent = 'Duck'; $('#bDuck').classList.toggle('on', DUCK); $('#bDuck').setAttribute('aria-pressed', DUCK); }
 $('#bDuck').onclick = () => { DUCK = !DUCK; try { localStorage.setItem('hypeDuck', DUCK ? '1' : '0'); } catch (e) {} showDuck(); }; showDuck();
 // ---------- library ----------
 let SEC = 'music', GENRE = '', FOLDER = '', SEL = null, LIB = null, LSORT = 'az';
@@ -1163,7 +1177,7 @@ let PLC = {pl: [], ck: []}, PLCN = {};   // PLCN: how many playlists / hour plan
 function plcCount() { return Promise.all([api('playlists'), api('clocks')]).then(([pl, ck]) => { PLCN = {playlists: pl.length, clocks: ck.length}; $$('#secs [data-sec="playlists"] span, #secs [data-sec="clocks"] span').forEach(el => el.textContent = PLCN[el.parentNode.dataset.sec]); }).catch(() => {}); }
 // AUX buttons on library rows: in DJ mode they are the decks A / B (in the deck colours)
 function auxBtns(attr) {
-  if (MODE === 'dj') return `<span class="auxbtn" title="Add to deck A or deck B"><button data-${attr}="aux" data-aux="1" aria-label="Add to deck A" style="color:var(--b);font-weight:900">A</button><button data-${attr}="aux" data-aux="2" aria-label="Add to deck B" style="color:#FF9D3D;font-weight:900">B</button></span>`;
+  if (true) return `<span class="auxbtn" title="Add to deck A or deck B"><button data-${attr}="aux" data-aux="1" aria-label="Add to deck A" style="color:var(--b);font-weight:900">A</button><button data-${attr}="aux" data-aux="2" aria-label="Add to deck B" style="color:#FF9D3D;font-weight:900">B</button></span>`;
   return `<span class="auxbtn" title="Add to AUX 1 or AUX 2"><span class="lbl">AUX</span><button data-${attr}="aux" data-aux="1" aria-label="Add to AUX 1">1</button><button data-${attr}="aux" data-aux="2" aria-label="Add to AUX 2">2</button></span>`;
 }
 function libPlan() {     // the Playlists / Hour plans tabs of the library card
@@ -1356,10 +1370,10 @@ let MODE = 'onair'; try { MODE = localStorage.getItem('hypeMode') || 'onair'; } 
 // v2: the same places in every mode – the player is the on-air bar on top; the left column is Up next (AUTO), the AUX lists
 // (MANUAL) or Deck A + B (DJ); the middle has the scenes, cameras & guests (LIVE) and pads; the right the library + TV media
 const LAYOUT = {
-  onair: {col1: ['cLog', 'auxCard'], col2: ['cScenes', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
-  dj:    {col1: ['dkA', 'dkB', 'cXfade'], col2: ['cScenes', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
-  live:  {col1: ['cLog', 'auxCard'], col2: ['cScenes', 'cGuests', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []}};
-const HIDE = {onair: ['cXfade', 'cGuests', 'dkA', 'dkB', 'liveCard'], dj: ['cGuests', 'cLog', 'auxCard', 'liveCard'], live: ['cXfade', 'dkA', 'dkB', 'liveCard']};
+  onair: {col1: ['cTabs', 'cPlayed', 'cLog', 'auxCard'], col2: ['cScenes', 'cGfx', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
+  dj:    {col1: ['dkA', 'dkB', 'cXfade'], col2: ['cScenes', 'cGfx', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []},
+  live:  {col1: ['cTabs', 'cPlayed', 'cLog', 'auxCard'], col2: ['cScenes', 'cGuests', 'cGfx', 'cPads'], col3: ['cLib', 'cTvm'], deckA: [], deckB: [], bottom: []}};
+const HIDE = {onair: ['cXfade', 'cGuests', 'dkA', 'dkB', 'liveCard'], dj: ['cGuests', 'cLog', 'auxCard', 'liveCard', 'cTabs', 'cPlayed'], live: ['cXfade', 'dkA', 'dkB', 'liveCard']};
 const DECKS = {};
 function deckEl(k) {
   const id = k === '1' ? 'dkA' : 'dkB'; let el = DECKS[k]; if (el) return el;
@@ -1397,6 +1411,41 @@ function deckEl(k) {
   L.ondrop = e => { e.preventDefault(); const d = e.dataTransfer.getData('text/plain'), keep = AUX; AUX = k; auxDrop(d, ((S.aux || {})[k] || []).length); AUX = keep; };
   return el;
 }
+// ---------- v2: left column tabs (Up next · Deck A · Deck B · Played) ----------
+let V2TAB = null, V2MAN = null;
+function v2Apply() {
+  if (!S || MODE === 'dj') return;
+  const man = !S.auto && !(S.dj && S.dj.on);
+  if (V2MAN !== man) { V2MAN = man; V2TAB = man ? AUX : 'next'; }       // AUTO opens on Up next, MANUAL on the deck that plays
+  const t = V2TAB;
+  $$('[data-v2tab]').forEach(b => { const n = b.dataset.v2tab, cnt = (n === '1' || n === '2') ? ((S.aux || {})[n] || []).length : 0;
+    b.classList.toggle('on', n === t); b.setAttribute('aria-selected', n === t); if (cnt) b.textContent = (n === '1' ? 'Deck A' : 'Deck B') + ' · ' + cnt; else if (n === '1' || n === '2') b.textContent = n === '1' ? 'Deck A' : 'Deck B'; });
+  $('#cLog').hidden = t !== 'next'; $('#auxCard').hidden = !(t === '1' || t === '2'); $('#cPlayed').hidden = t !== 'played';
+  if ((t === '1' || t === '2') && AUX !== t) { AUX = t; auxSig = ''; renderAux(); }
+  if (t === 'played') { const h = (S.history || []).map(x => `<div class="li"><span class="mono" style="color:var(--mut);width:44px;flex:none">${new Date(x.started * 1000).toTimeString().slice(0, 5)}</span><div class="tx"><b>${x.artist ? esc(x.artist) + ' – ' : ''}${esc(x.title || '')}</b><span>${esc(x.folder || '')}${x.scene ? ' · ' + esc(x.scene) : ''}</span></div></div>`).join('') || '<span class="muted" style="padding:8px">Nothing yet.</span>';
+    if ($('#v2Played').dataset.h !== h) { $('#v2Played').dataset.h = h; $('#v2Played').innerHTML = h; } }
+}
+$$('[data-v2tab]').forEach(b => b.onclick = () => { V2TAB = b.dataset.v2tab; v2Apply(); });
+{ const _render = render; render = function () { _render.apply(this, arguments); try { v2Apply(); } catch (e) {} }; }
+// ---------- v2: pad settings behind ⚙ ----------
+$('#padGear').onclick = () => { const o = $('#padOpts').hidden; $('#padOpts').hidden = !o; $('#padGear').classList.toggle('on', o); $('#padGear').setAttribute('aria-expanded', o); };
+setInterval(() => { const on = [DUCK && 'Duck', PVID && 'Video', PLOOP && 'Loop'].filter(Boolean); $('#v2PadSum').textContent = on.join(' · '); }, 1000);
+// ---------- v2: messages (every toast + what the guard did) ----------
+const V2M = []; let V2SEEN = 0;
+{ const _toast = toast; toast = function (t, err) { _toast(t, err); V2M.unshift({t: Date.now() / 1000, text: String(t), lvl: err ? 'warn' : 'info', src: 'panel'}); V2M.length = Math.min(V2M.length, 80); v2MsgPaint(); }; }
+const V2C = {bad: 'var(--r)', alarm: 'var(--r)', warn: 'var(--o)', repair: 'var(--o)', ok: 'var(--g)', info: 'var(--b)'};
+function v2MsgPaint() {
+  const b = $('#v2MsgBtn'); if (!b) return; const nw = V2M.filter(m => m.t > V2SEEN && m.src === 'guard');
+  const worst = nw.some(m => m.lvl === 'bad' || m.lvl === 'alarm') ? 'var(--r)' : nw.some(m => m.lvl === 'repair' || m.lvl === 'warn') ? 'var(--o)' : 'var(--g)';
+  b.querySelector('i').style.background = worst; b.querySelector('span').textContent = 'Messages' + (nw.length ? ' · ' + nw.length : '');
+  const box = $('#v2Msgs'); if (!box || box.hidden) return;
+  box.innerHTML = '<div class="row between"><b>Messages</b><button class="btn sm" id="v2MsgX">Close</button></div>' + (V2M.map(m => `<div class="m"><i style="background:${V2C[m.lvl] || 'var(--b)'}"></i><div>${esc(m.text)}<small>${new Date(m.t * 1000).toLocaleString('nl-NL', {weekday: 'short', hour: '2-digit', minute: '2-digit'})} · ${m.src === 'guard' ? 'Studio guard' : 'panel'}</small></div></div>`).join('') || '<span class="muted">No messages.</span>');
+  $('#v2MsgX').onclick = () => { box.hidden = true; };
+}
+function v2Guard() { api('guard').then(g => { const have = new Set(V2M.filter(m => m.src === 'guard').map(m => m.t + m.text));
+  (g.events || []).forEach(e => { if (!have.has(e.t + e.text)) V2M.push({t: e.t, text: e.text, lvl: e.level, src: 'guard'}); });
+  (g.problems || []).forEach(p => { const k = p.since + p.text; if (!have.has(k)) V2M.push({t: p.since, text: '⚠ ' + p.text + ' (still going on)', lvl: 'bad', src: 'guard'}); });
+  V2M.sort((a, b) => b.t - a.t); V2M.length = Math.min(V2M.length, 80); v2MsgPaint(); }).catch(() => {}); }
 // ---------- v2: on-air bar ----------
 (() => {
   const bar = $('#airbar'), pl = $('#cPlayer'); bar.appendChild(pl);
@@ -1404,8 +1453,11 @@ function deckEl(k) {
   f.innerHTML = [['vol_music', 'MUSIC'], ['vol_pads', 'PADS'], ['vol_studio', 'STUDIO']].map(([n, l]) => `<label title="${l} fader (double-click = 0 dB)"><span class="v" data-fv="${n}">0 dB</span><input type="range" min="0" max="1.6" step="0.01" value="1" data-fad="${n}" aria-label="${l} fader">${l}</label>`).join('');
   pl.appendChild(f);
   const info = document.createElement('div'); info.id = 'v2Info';
-  info.innerHTML = '<span>Show <b id="v2Show">–</b></span><span>Hour plan <b id="v2Clock">–</b></span><span>Radio <b id="v2Rad" class="mono">–</b> · TV <b id="v2Tv" class="mono">–</b></span><span style="flex:1"></span><a class="v2tag" href="/panel/" title="Back to the current panel">NEW LAYOUT (TEST) · back to the old panel</a>';
+  info.innerHTML = '<span>Show <b id="v2Show">–</b></span><span>Hour plan <b id="v2Clock">–</b></span><span>Radio <b id="v2Rad" class="mono">–</b> · TV <b id="v2Tv" class="mono">–</b></span><button class="btn sm" id="v2MsgBtn" aria-haspopup="dialog"><i></i><span>Messages</span></button><span style="flex:1"></span><a class="v2tag" href="/panel/" title="Back to the current panel">NEW LAYOUT (TEST) · back to the old panel</a>';
   pl.appendChild(info);
+  const mb = document.createElement('div'); mb.id = 'v2Msgs'; mb.hidden = true; mb.setAttribute('role', 'dialog'); mb.setAttribute('aria-label', 'Messages'); document.body.appendChild(mb);
+  $('#v2MsgBtn').onclick = () => { mb.hidden = !mb.hidden; V2SEEN = Date.now() / 1000; v2MsgPaint(); };
+  v2Guard(); setInterval(v2Guard, 30000);
   const busy = {}, tm = {};
   f.querySelectorAll('[data-fad]').forEach(r => {
     const n = r.dataset.fad, out = f.querySelector(`[data-fv="${n}"]`);
@@ -1464,7 +1516,7 @@ function xNow() {      // DJ page: a song from the programming (AUTO / the clock
 function renderDecks() {
   const n = S.now || {}, nxt = (S.upcoming || [])[0] || {}, DK = S.decks || {}, dm = !!DK.on, PL = DK.playing || {};
   $('#xfRow').hidden = dm; $('#ovRow').hidden = !dm;
-  if (dm) { const b = $('#bOverlap'); b.textContent = 'OVERLAP: ' + (DK.overlap ? 'ON' : 'OFF'); b.classList.toggle('on', !!DK.overlap); b.setAttribute('aria-pressed', !!DK.overlap); }
+  if (dm) { const b = $('#bOverlap'); b.textContent = 'Overlap'; b.classList.toggle('on', !!DK.overlap); b.setAttribute('aria-pressed', !!DK.overlap); }
   ['1', '2'].forEach(k => {
     const el = deckEl(k), onair = dm ? !!PL[k] : n.deck === k, cued = !dm && nxt.deck === k, it = dm ? (PL[k] || ((S.aux || {})[k] || [])[0] || null) : onair ? n : cued ? nxt : ((S.aux || {})[k] || [])[0] || null;
     el.classList.toggle('air', onair); el._dm = dm; el._pl = PL[k] || null;
