@@ -2950,7 +2950,7 @@ def meter_loop():
                 try: sock.close()
                 except Exception: pass
                 sock = None
-            LEVEL.update(l=0.0, r=0.0); time.sleep(0.5); continue
+            LEVEL.update(l=0.0, r=0.0, ch=None); time.sleep(0.5); continue
         try:
             if sock is None: sock = socket.create_connection(("127.0.0.1", 1234), timeout=2)
             sock.sendall(b"radio.level\n"); buf = b""
@@ -2961,6 +2961,7 @@ def meter_loop():
             v = buf.decode(errors="ignore").split("END")[0].split()
             LEVEL["l"], LEVEL["r"] = float(v[0]), float(v[1])
             if len(v) >= 5: LEVEL["comp"], LEVEL["lim"], LEVEL["lufs"] = float(v[2]), float(v[3]), float(v[4])
+            if len(v) >= 9: LEVEL["ch"] = {"music": float(v[6]), "pads": float(v[7]), "studio": float(v[8])}   # the mixer's channel meters
         except Exception:
             try: sock and sock.close()
             except Exception: pass
@@ -3291,7 +3292,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/audience": return self.send(200, {"radio": listeners(), "tv": viewers(), "t": int(time.time())})
             if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))
-            if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"] + AGC["lift"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01})
+            if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"] + AGC["lift"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01, "ch": LEVEL.get("ch")})
             if p in ("/rights.csv", "/rights_check"):
                 return self.send(200, *rights_report(qs, p.endswith(".csv")))
             if p == "/history.csv":

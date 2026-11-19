@@ -248,7 +248,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 .padadd.over{outline:2px dashed var(--y)}
 #lpvBox{position:fixed;inset:0;background:rgba(3,10,18,.78);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
 #lpvBox .in{background:var(--card,#0B2238);border:1px solid #17344F;border-radius:16px;padding:14px;width:min(720px,100%);display:flex;flex-direction:column;gap:10px}
-#camScenes .scene{position:relative}.ssx{position:absolute;top:3px;right:4px;background:rgba(0,0,0,.55);color:#fff;border-radius:6px;font-size:14px;line-height:1;padding:2px 6px;cursor:pointer}
+#camN{margin:2px 0 8px}#camScenes .scene{position:relative}.ssx{position:absolute;top:3px;right:4px;background:rgba(0,0,0,.55);color:#fff;border-radius:6px;font-size:14px;line-height:1;padding:2px 6px;cursor:pointer}
 .pad .rm{position:absolute;top:2px;right:4px;border:0;background:rgba(0,0,0,.45);color:#fff;border-radius:6px;font-size:14px;line-height:1;padding:2px 6px;cursor:pointer}
 .pads.edit .pad{cursor:grab;outline:1px dashed rgba(255,255,255,.35)}
 .padadd.over{border-color:var(--y);color:var(--y)}
@@ -320,21 +320,20 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #cTabs~#cFixed,#cTabs~#cLog,#cTabs~#auxCard{margin-top:-14px;padding-top:2px!important;padding-left:6px!important;padding-right:6px!important;border-top-left-radius:0;border-top-right-radius:0;border-top-color:transparent}
 #auxCard [data-auxtab]{display:none}
 .btn.ic{width:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
-#mixBack{position:fixed;inset:0;z-index:89;background:rgba(2,8,15,.55)}
-#mixWin{position:fixed;z-index:90;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,96vw);max-height:92vh;overflow:auto;background:var(--card);border:1px solid var(--line2);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.65);padding:16px 18px 14px;display:flex;flex-direction:column;gap:12px}
-#mixWin .mhead{display:flex;align-items:center;justify-content:space-between;gap:10px}#mixWin .mhead b{font:800 16px Inter,system-ui,sans-serif}
-#mixWin .mgroups{display:flex;gap:14px;flex-wrap:wrap}
-#mixWin .mgrp{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:8px;background:var(--deep);border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px}
-#mixWin .mgrp>h4{margin:0;font:800 11px Inter,system-ui,sans-serif;letter-spacing:.08em;color:var(--mut);text-transform:uppercase}
-#mixWin .strips{display:flex;gap:10px;flex-wrap:wrap}
-#mixWin .gvol{display:flex!important;flex-direction:column;align-items:center;gap:8px!important;width:74px;margin:0;padding:8px 4px 6px;border-radius:10px;background:var(--card);border:1px solid var(--line)}
-#mixWin .gvol>span:not(.lab){order:1;width:auto!important;text-align:center;font:700 12px 'JetBrains Mono',monospace;color:var(--y)}
-#mixWin .gvol input{order:2;writing-mode:vertical-lr;direction:rtl;width:26px!important;height:150px;flex:none;margin:0;accent-color:var(--y);cursor:pointer}
-#mixWin .gvol .lab{order:3;width:100%!important;color:var(--soft)!important;text-align:center;font:700 12px Inter,system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#mixWin .gvol .gm{order:4;height:26px;min-height:26px;padding:0 8px;font-size:10.5px}
-#mixWin .gvol.off input{opacity:.35}#mixWin .gvol .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4A6277;margin-right:4px;vertical-align:1px}#mixWin .gvol .dot.ok{background:#3DDC97}
-#mixWin .mnote{font-size:11px;color:var(--mut)}
-@media (max-width:600px){#mixWin{padding:12px}#mixWin .gvol{width:auto;flex:1 1 0;min-width:62px}#mixWin .gvol .lab{font-size:10.5px}#mixWin .gvol input{height:120px}#mixWin .strips{gap:8px}}
+/* mixer: opens in the player in place of the L/R meter – every volume, each with its own level */
+#mixIn{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+#mixIn .mxh{font:800 10px Inter,system-ui,sans-serif;letter-spacing:.08em;color:var(--mut);text-transform:uppercase;margin-top:4px}
+#mixIn .mxr{display:grid;grid-template-columns:62px minmax(0,1fr) 54px 30px;align-items:center;gap:8px}
+#mixIn .mxl{font:700 12px Inter,system-ui,sans-serif;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mixIn .mxl .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#4A6277;margin-right:4px;vertical-align:1px}#mixIn .mxl .dot.ok{background:#3DDC97}
+#mixIn .mxt{display:flex;flex-direction:column;gap:3px;min-width:0}
+#mixIn .mxt input{width:100%;margin:0;accent-color:var(--y);height:16px;cursor:pointer}
+#mixIn .mxt .mb{height:4px;flex:none}#mixIn .mxt .mb.none{visibility:hidden}
+#mixIn .mxv{font:700 11.5px 'JetBrains Mono',monospace;color:var(--y);text-align:right;white-space:nowrap}
+#mixIn .mxr.off input,#mixIn .mxr.off .mb{opacity:.35}
+#mixIn .gm{width:30px;height:26px;min-height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+#mixIn .mxn{font-size:11px;color:var(--mut)}
+#mixIn .mxo .mb{height:4px}
 @media (max-width:520px){#cPlayer .tp{gap:5px}#cPlayer .tp .btn.ib{flex:1 1 0;min-width:0;padding:0 2px}#cPlayer .tp #tEl{display:none}}
 .sgopts{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;padding:6px 8px;margin-top:2px;border-radius:10px;background:var(--deep);border:1px solid var(--line)}
 </style>
@@ -366,7 +365,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <button class="btn ib red" id="bStop" aria-label="Stop now" title="Stop"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button>
           <button class="btn ib loop" id="bLoop" aria-label="Loop this song" title="Loop: the song on air plays again and again"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="btn ib" id="bNext" aria-label="Next song" title="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
-          <button class="btn ib" id="bMixer" aria-label="Mixer" aria-haspopup="dialog" aria-expanded="false" title="Mixer: every volume – music, studio, pads, media, guests"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><rect x="3.5" y="13" width="5" height="3" rx="1" fill="currentColor"/><rect x="9.5" y="7" width="5" height="3" rx="1" fill="currentColor"/><rect x="15.5" y="11" width="5" height="3" rx="1" fill="currentColor"/></svg></button>
+          <button class="btn ib" id="bMixer" aria-label="Mixer" aria-expanded="false" aria-controls="mixIn" title="Mixer: every volume – music, studio, pads, media, guests"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><rect x="3.5" y="13" width="5" height="3" rx="1" fill="currentColor"/><rect x="9.5" y="7" width="5" height="3" rx="1" fill="currentColor"/><rect x="15.5" y="11" width="5" height="3" rx="1" fill="currentColor"/></svg></button>
           <span class="mono muted" id="tEl" style="margin-left:auto;font-size:12px">0:00</span>
         </div>
         <div class="meter" aria-label="On-air level (left and right)" role="img">
@@ -374,10 +373,11 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <div class="mrow"><span>R</span><div class="mb"><i id="mR"></i><b id="pR"></b></div></div>
           <span class="mono mdb" id="mDb">–∞</span>
         </div>
+        <div id="mixIn" hidden role="group" aria-label="Mixer"></div>
       </div>
       <div class="card" id="cTabs" style="padding:14px 14px 8px;gap:10px;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap">
         <span class="lab">Playlist</span>
-        <div class="row" style="gap:5px;flex-wrap:wrap;justify-content:flex-end" role="tablist" aria-label="Playlist"><button class="btn sm" data-pltab="next" role="tab">MAIN</button><button class="btn sm" data-pltab="1" role="tab">AUX 1</button><button class="btn sm" data-pltab="2" role="tab">AUX 2</button><button class="btn sm" data-pltab="fixed" role="tab">Fixed times</button></div>
+        <div class="row" style="gap:5px;flex-wrap:wrap;justify-content:flex-end" role="tablist" aria-label="Playlist"><button class="btn sm" data-pltab="next" role="tab">MAIN</button><button class="btn sm" data-pltab="1" role="tab">AUX 1</button><button class="btn sm" data-pltab="2" role="tab">AUX 2</button><button class="btn sm" data-pltab="fixed" role="tab">FIXED</button></div>
       </div>
       <div class="card" style="padding:8px" id="cFixed" hidden><div class="log ulist" id="fixedList"></div></div>
       <div class="card" style="padding:8px" id="cLog">
@@ -442,7 +442,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
           <div class="row" style="gap:6px;flex-wrap:wrap"><span class="muted" style="flex:1;font-size:12px;min-width:180px">Drag a scene to another place (or click one, then click where it goes). × takes it off.</span><button class="btn sm" id="camRow">+ Row</button><button class="btn sm" id="camReset">Reset</button><button class="btn sm" id="camCancel">Cancel</button><button class="btn sm yellow" id="camDone">Done</button></div>
           <div class="row" id="camHidden" style="gap:5px;flex-wrap:wrap"></div>
         </div>
-        <div class="camgrid" id="camScenes"></div>
+        <div class="seg" id="camN" role="tablist" aria-label="Cameras on screen" hidden></div><div class="camgrid" id="camScenes"></div>
       </div>
       <div id="volHold" hidden><label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="padVol" aria-label="Pads volume"><span class="mono" id="padVolV" style="width:62px">0 dB</span></label><label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="mediaVol" aria-label="TV Media volume"><span class="mono" id="mediaVolV" style="width:62px">0 dB</span></label></div>
       <div class="card" id="cTvm">
@@ -490,7 +490,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
       <div class="card" id="cGuests" hidden>
         <div class="row between"><span class="lab">Cameras &amp; guests</span><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="gnName" type="text" placeholder="Guest name" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:34px;padding:0 8px;width:150px"><select id="gnMode" aria-label="Video or audio only" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:34px;padding:0 6px"><option value="video">Video</option><option value="audio">Audio only</option></select><button class="btn sm yellow" id="gnAdd">+ Invite</button></div></div>
         <div id="gList" style="display:flex;flex-direction:column;gap:8px"></div>
-        <span class="muted" style="font-size:12px">Guests' sound comes in on your Mixcast via the Broadcast page on the studio laptop. VOL up to 200 % (double-click = 100 %).</span>
+        <span class="muted" style="font-size:12px">Guests' sound comes in on your Mixcast via the Broadcast page on the studio laptop. Their volume is in the mixer (the player's mixer button).</span>
       </div>
     </section>
 
@@ -721,6 +721,8 @@ function camLayout(t = LTAB()) {      // your own arrangement (saved on the serv
 }
 let SG = -1, SGEDIT = null, SGHIDE = false, SSEDIT = false;     // SSEDIT: SLIDESHOW tab in edit (+ NEW, × delete)
 let SGOPT = false;
+let CAMN = 1; try { CAMN = +(localStorage.getItem('hypeCamN') || 1); } catch (e) {}     // Cameras tab: how many cameras on screen (1-4)
+const camCount = n => Math.max(1, Math.min(4, (n.match(/\b\d\b/g) || []).length));
 try { SGHIDE = localStorage.getItem('hypeSGhide') === '1'; } catch (e) {}   // -1 = Cameras (all layouts); n = your group n
 try { SG = +(localStorage.getItem('hypeSG') ?? -1); } catch (e) {}
 function groups() { return (S && S.scene_groups) || []; }
@@ -755,9 +757,13 @@ function renderScenes() {
   const CL = mx ? camLayout() : null;
   const html = mx && CAMEDIT ? CL.cells.map((n, i) => n ? `<div class="camc ${CAMPICK === i ? 'pick' : ''}" draggable="true" data-ci="${i}"><span class="btn scene">${esc(scName(n))}</span><button class="camx" data-cx="${i}" aria-label="Remove ${esc(scName(n))}" title="Take it off the grid">×</button></div>`
         : `<div class="camc empty ${CAMPICK === i ? 'pick' : ''}" data-ci="${i}"></div>`).join('')
+    : mx && LTAB() === 'cam' ? CL.cells.filter(n => n && camCount(n) === CAMN).map(btn).join('')
     : mx ? CL.cells.map(n => n ? btn(n) : '<span></span>').join('')
     : list.map(btn).join('') + (SG === -4 && !SGEDIT && SSEDIT ? '<button class="btn scene" data-ssnew title="A new slideshow = a new folder; drop photos or videos on its button">+ NEW<small>slideshow</small></button>' : '')
       || '<span class="muted" style="grid-column:1/-1">Empty group – press ✎ and click scenes to add them.</span>';
+  const cn = $('#camN'), cnOn = mx && !CAMEDIT && LTAB() === 'cam' && !(SGHIDE && !SGEDIT);
+  cn.hidden = !cnOn; if (cnOn) { const t = [1, 2, 3, 4].map(k => `<button class="${k === CAMN ? 'on' : ''}" role="tab" aria-selected="${k === CAMN}" data-camn="${k}">CAM ${k}</button>`).join('');
+    if (cn.dataset.h !== t) { cn.innerHTML = t; cn.dataset.h = t; cn.querySelectorAll('[data-camn]').forEach(b => b.onclick = () => { CAMN = +b.dataset.camn; try { localStorage.setItem('hypeCamN', CAMN); } catch (e) {} renderScenes(); }); } }
   const cg = $('#camScenes'); cg.hidden = SGHIDE && !SGEDIT; cg.classList.toggle('mx', mx); cg.classList.toggle('cedit', !!CAMEDIT); if (cg.dataset.h !== html) { cg.innerHTML = html; cg.dataset.h = html; }
   $('#camEdit').hidden = !CAMEDIT;
   if (CAMEDIT) camEditBind();
@@ -1276,6 +1282,7 @@ function meterTick() {
       if (MET[k] >= MET['p' + k] || now - MET['t' + k] > 1500) { MET['p' + k] = MET[k]; MET['t' + k] = now; } });
     $('#mL').style.left = (MET.l * 100) + '%'; $('#mR').style.left = (MET.r * 100) + '%';
     $('#pL').style.left = 'calc(' + (MET.pl * 100) + '% - 2px)'; $('#pR').style.left = 'calc(' + (MET.pr * 100) + '% - 2px)';
+    window.mixLevels && mixLevels(d);
     const pk = Math.max(d.l || 0, d.r || 0); $('#mDb').textContent = pk > 1e-4 ? (20 * Math.log10(pk)).toFixed(1) + ' dB' : '–∞';
   }).catch(() => {}).finally(() => setTimeout(meterTick, 250));      // 4 a second is plenty (home wifi during a show)
 }
@@ -1438,40 +1445,45 @@ function fixedRender() {
   const h = past.map(x => row(x, true)).join('') + next.map(x => row(x, false)).join('') || '<span class="muted" style="padding:8px">No fixed times.</span>';
   if ($('#fixedList').dataset.h !== h) { $('#fixedList').dataset.h = h; $('#fixedList').innerHTML = h; }
 }
-// ---------- Mixer (the icon next to Next): every volume in one place – radio, pads, media, guests ----------
+// ---------- Mixer (the icon next to Next): opens in the player in place of the L/R meter – every volume with its own level ----------
 (() => {
-  const bk = document.createElement('div'); bk.id = 'mixBack'; bk.hidden = true;
-  const w = document.createElement('div'); w.id = 'mixWin'; w.hidden = true; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', 'Mixer');
-  const strip = (n, l) => `<label class="gvol"><span class="lab">${l}</span><input type="range" min="0" max="1.6" step="0.01" value="1" data-fad="${n}" aria-label="${l} volume"><span class="mono" data-fv="${n}">0 dB</span></label>`;
-  w.innerHTML = '<div class="mhead"><b>Mixer</b><button class="btn sm" id="mixX">Close</button></div><div class="mgroups">'
-    + '<div class="mgrp"><h4>On air</h4><div class="strips" id="mixMain">' + strip('vol_music', 'Music') + strip('vol_studio', 'Studio') + '</div></div>'
-    + '<div class="mgrp"><h4>Guests</h4><div class="strips" id="mixGuests"></div></div></div>'
-    + '<span class="mnote">Double-click a fader = back to normal (0 dB / 100%).</span>';
-  document.body.appendChild(bk); document.body.appendChild(w);
-  for (const [id, l] of [['padVol', 'Pads'], ['mediaVol', 'Media']]) { const lb = document.getElementById(id).closest('label'); lb.removeAttribute('style'); lb.querySelector('.lab').textContent = l; w.querySelector('#mixMain').appendChild(lb); }
+  const w = $('#mixIn');
+  const mute = on => `<button type="button" class="btn sm ib3 gm${on ? ' on' : ''}" aria-pressed="${on}" title="${on ? 'Unmute' : 'Mute'}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/>${on ? '<path d="M22 9l-6 6M16 9l6 6"/>' : '<path d="M15.5 8.5a5 5 0 0 1 0 7"/>'}</svg></button>`;
+  const row = (l, inner, val, mm) => `<div class="mxr"><span class="mxl">${l}</span><div class="mxt">${inner}<div class="mb${mm ? '' : ' none'}"${mm ? ` data-mm="${mm}"` : ''}><i></i></div></div>${val}<span></span></div>`;
+  const fad = (n, l) => row(l, `<input type="range" min="0" max="1.6" step="0.01" value="1" data-fad="${n}" aria-label="${l} volume">`, `<span class="mxv" data-fv="${n}">0 dB</span>`, n === 'vol_music' ? 'music' : 'studio');
+  w.innerHTML = '<div class="mxr mxo"><span class="mxl">Out L/R</span><div class="mxt"><div class="mb" data-mm="l"><i></i></div><div class="mb" data-mm="r"><i></i></div></div><span class="mxv" id="mxOut">–∞</span><span></span></div>'
+    + '<span class="mxh">On air</span>' + fad('vol_music', 'Music') + fad('vol_studio', 'Studio')
+    + row('Pads', '<span id="mxPads"></span>', '<span id="mxPadsV"></span>', 'pads') + row('Media', '<span id="mxMedia"></span>', '<span id="mxMediaV"></span>', '')
+    + '<span class="mxh">Guests</span><div id="mixGuests" style="display:flex;flex-direction:column;gap:6px"></div>'
+    + '<span class="mxn">Double-click a fader = back to normal. Media and guests have no level meter here.</span>';
+  for (const [id, at] of [['padVol', 'Pads'], ['mediaVol', 'Media']]) { const inp = document.getElementById(id), v = document.getElementById(id + 'V');
+    w.querySelector('#mx' + at).replaceWith(inp); v.removeAttribute('style'); v.className = 'mxv'; w.querySelector('#mx' + at + 'V').replaceWith(v); }
   const busy = {}, tm = {};
   w.querySelectorAll('[data-fad]').forEach(r => { const n = r.dataset.fad, out = w.querySelector(`[data-fv="${n}"]`);
     r.oninput = () => { busy[n] = Date.now(); out.textContent = dbTxt(+r.value); clearTimeout(tm[n]); tm[n] = setTimeout(() => api('cmd/fader', {name: n, value: +r.value}), 120); };
     r.ondblclick = () => { r.value = 1; r.oninput(); }; });
-  // guests: one fader + mute each (the same as before in the guest cards)
   const gBusy = {};
   window.mixGuests = () => { const box = w.querySelector('#mixGuests'), G = (LV && LV.guests) || {};
     const sig = JSON.stringify(Object.entries(G).map(([s, g]) => [s, g.name, g.online, !!g.muted]));
     if (box.dataset.sig !== sig) { box.dataset.sig = sig;
-      box.innerHTML = Object.entries(G).map(([s, g]) => `<label class="gvol${g.muted ? ' off' : ''}" data-mg="${s}"><span class="lab" title="${esc(g.name)}"><i class="dot${g.online ? ' ok' : ''}"></i>${esc(g.name)}</span><input type="range" min="0" max="2" step="0.01" value="${g.vol == null ? 1 : g.vol}" aria-label="Volume of ${esc(g.name)}"><span class="mono">${Math.round(100 * (g.vol == null ? 1 : g.vol))}%</span><button type="button" class="btn sm gm${g.muted ? ' on' : ''}" aria-pressed="${!!g.muted}">${g.muted ? 'MUTED' : 'MUTE'}</button></label>`).join('')
-        || '<span class="mnote" style="padding:6px 2px">No guests. Invite them in LIVE.</span>';
-      box.querySelectorAll('[data-mg]').forEach(el => { const s = el.dataset.mg, r = el.querySelector('input'), out = el.querySelector('.mono'); let t;
+      box.innerHTML = Object.entries(G).map(([s, g]) => `<div class="mxr${g.muted ? ' off' : ''}" data-mg="${s}"><span class="mxl" title="${esc(g.name)}"><i class="dot${g.online ? ' ok' : ''}"></i>${esc(g.name)}</span><div class="mxt"><input type="range" min="0" max="2" step="0.01" value="${g.vol == null ? 1 : g.vol}" aria-label="Volume of ${esc(g.name)}"></div><span class="mxv">${Math.round(100 * (g.vol == null ? 1 : g.vol))}%</span>${mute(!!g.muted)}</div>`).join('')
+        || '<span class="mxn">No guests. Invite them in LIVE.</span>';
+      box.querySelectorAll('[data-mg]').forEach(el => { const s = el.dataset.mg, r = el.querySelector('input'), out = el.querySelector('.mxv'); let t;
         r.oninput = () => { gBusy[s] = Date.now(); out.textContent = Math.round(r.value * 100) + '%'; clearTimeout(t); t = setTimeout(() => api('live/guest_vol', {slot: s, vol: +r.value}), 120); };
         r.ondblclick = () => { r.value = 1; r.oninput(); };
-        el.querySelector('.gm').onclick = e => { e.preventDefault(); const g = LV.guests[s]; api('live/guest_mute', {slot: s, on: !g.muted}).then(d => { LV = d; mixGuests(); if (MODE === 'live') { $('#gList').dataset.sig = ''; renderGuests(); } }); }; }); }
-    box.querySelectorAll('[data-mg]').forEach(el => { const s = el.dataset.mg, g = G[s]; if (!g || Date.now() - (gBusy[s] || 0) < 1500) return; const v = g.vol == null ? 1 : g.vol; el.querySelector('input').value = v; el.querySelector('.mono').textContent = Math.round(v * 100) + '%'; }); };
+        el.querySelector('.gm').onclick = () => { const g = LV.guests[s]; api('live/guest_mute', {slot: s, on: !g.muted}).then(d => { LV = d; mixGuests(); if (MODE === 'live') { $('#gList').dataset.sig = ''; renderGuests(); } }); }; }); }
+    box.querySelectorAll('[data-mg]').forEach(el => { const s = el.dataset.mg, g = G[s]; if (!g || Date.now() - (gBusy[s] || 0) < 1500) return; const v = g.vol == null ? 1 : g.vol; el.querySelector('input').value = v; el.querySelector('.mxv').textContent = Math.round(v * 100) + '%'; }); };
+  // the levels: the on-air meter fetches them 4× a second and calls this
+  const ML = {};
+  window.mixLevels = d => { if (w.hidden) return; const ch = Object.assign({l: d.l, r: d.r}, d.ch || {});
+    w.querySelectorAll('[data-mm]').forEach(m => { const k = m.dataset.mm, v = dbPos(ch[k] || 0); ML[k] = Math.max(v, (ML[k] || 0) * 0.6); m.firstChild.style.left = (ML[k] * 100) + '%'; });
+    const pk = Math.max(d.l || 0, d.r || 0); $('#mxOut').textContent = pk > 1e-4 ? (20 * Math.log10(pk)).toFixed(1) + ' dB' : '–∞'; };
   setInterval(() => { if (!S || w.hidden) return; const F = S.faders || {};
     w.querySelectorAll('[data-fad]').forEach(r => { const n = r.dataset.fad; if (Date.now() - (busy[n] || 0) < 1500 || F[n] == null) return; r.value = F[n]; w.querySelector(`[data-fv="${n}"]`).textContent = dbTxt(F[n]); });
     mixGuests(); }, 1000);
-  const close = () => { w.hidden = true; bk.hidden = true; $('#bMixer').classList.remove('on'); $('#bMixer').setAttribute('aria-expanded', false); };
-  $('#bMixer').onclick = () => { if (!w.hidden) return close(); mixGuests(); w.hidden = false; bk.hidden = false; $('#bMixer').classList.add('on'); $('#bMixer').setAttribute('aria-expanded', true); };
-  w.querySelector('#mixX').onclick = close; bk.onclick = close;
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !w.hidden) close(); });
+  const set = o => { w.hidden = !o; $('#cPlayer .meter').hidden = o; $('#bMixer').classList.toggle('on', o); $('#bMixer').setAttribute('aria-expanded', o); if (o) mixGuests(); };
+  $('#bMixer').onclick = () => set(w.hidden);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !w.hidden) set(false); });
 })();
 // ---------- Pads / TV media: settings behind ⚙, stop next to it ----------
 const gearToggle = (g, box) => { const o = $(box).hidden; $(box).hidden = !o; $(g).classList.toggle('on', o); $(g).setAttribute('aria-expanded', o); };

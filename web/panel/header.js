@@ -119,6 +119,12 @@ html{scrollbar-gutter:stable}
     <span class="sp"></span>
     <button class="menu" id="hMenu" aria-label="Pages" aria-expanded="false">☰</button>
     <nav class="hnav" aria-label="Pages">${P.map(([u, t, k], i) => `<a href="${u}" class="${k === cur ? 'cur' : ''}" ${k === cur ? 'aria-current="page"' : ''} title="${t} (Alt+${i + 1})">${t}</a>`).join('')}<span class="sep"></span><a class="out" href="/logout" title="Log out" aria-label="Log out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span class="lo"> Log out</span></a></nav>`;
+  // page changes: show the header exactly as it was (dots, numbers, AUTO/MANUAL, mode, GO LIVE, REC) until fresh data comes in
+  const SNAP = () => [['A', h.querySelector('#' + A)], ['M', h.querySelector('#' + M)], ...[...h.querySelectorAll('.modes [data-mode]')].map(b => ['m_' + b.dataset.mode, b]),
+    ...['stRadio', 'stTv', 'stLog', 'hLive', 'hLiveT', 'hRec', 'hRecT'].map(i => [i, h.querySelector('#' + i)])].filter(x => x[1]);
+  try { const o = JSON.parse(sessionStorage.getItem('hypeHdr') || 'null'); if (o) SNAP().forEach(([k, el]) => { const v = o[k]; if (v) { el.className = v[0]; el.innerHTML = v[1]; } }); } catch (e) {}
+  const snapSave = () => { try { const o = {}; SNAP().forEach(([k, el]) => { o[k] = [el.className, el.innerHTML]; }); sessionStorage.setItem('hypeHdr', JSON.stringify(o)); } catch (e) {} };
+  setInterval(snapSave, 1000); addEventListener('pagehide', snapSave);
   h.querySelector('#hMenu').onclick = () => { const o = h.classList.toggle('open'); h.querySelector('#hMenu').setAttribute('aria-expanded', o); };
   // do the page links fit next to the rest? if not (they would wrap to a second line): the ☰ menu
   const nav = h.querySelector('.hnav'), hb = h.querySelector('.hb');
