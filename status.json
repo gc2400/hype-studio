@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T14:07:33",
+ "time": "2026-11-19T14:12:42",
  "result": "ok",
- "commit": "d2a556b846c1991b7266858ce3bfc2dcd3196caf",
- "subject": "Panel v2 (test, next to the current panel): /panel/v2.html \u2013 the player as an on-air bar on top (waveform, buttons, meters, Music/Pads/Studio faders, show, hour plan, listeners), the same three columns in every mode (Up next / AUX / decks \u00b7 scenes, guests, pads \u00b7 library, TV media)",
+ "commit": "0d2fb687be2491d03aa65b546d60254be2fc4d36",
+ "subject": "Panel v2: the header treats v2.html like the On Air panel (its AUTO / MANUAL buttons) \u2013 without it v2 stopped at start-up",
  "log": [
-  "14:07:33 update a02d8bbb \u2192 d2a556b8 \u00b7 1 file(s): web/panel/v2.html",
-  "14:07:33 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:12:42 update d2a556b8 \u2192 0d2fb687 \u00b7 1 file(s): web/panel/header.js",
+  "14:12:42 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "KM X IDALY \u2013 BEND OVA",
+  "song": "B'JAY X RULY \u2013 COCO",
   "listeners": 4,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
