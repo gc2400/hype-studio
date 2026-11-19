@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T18:04:57",
- "result": "waiting",
- "commit": "6d701e412950fbe4c164b95cf6a77b13494b43cf",
- "subject": "[night] Radio: mixer channel meters; voice tracking: the song before stays low under a link that starts over its end, the next song stays low under a link that talks over its intro",
+ "time": "2026-11-19T18:18:18",
+ "result": "ok",
+ "commit": "5e5e4ba29cd82b5c2d2e531dbfb803760f90ebc9",
+ "subject": "Panel preview: the Hype Radio TV artwork when the preview is stopped (and before the picture arrives)",
  "log": [
-  "18:04:57 update 1073e934 \u2192 6d701e41 \u00b7 1 file(s): radio/radio.liq",
-  "18:04:57 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "18:18:18 update 1073e934 \u2192 5e5e4ba2 \u00b7 2 file(s): web/panel/index.html, web/panel/preview-off.jpg",
+  "18:18:18 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Fireboy DML x Masicka \u2013 CLAAT!",
+  "song": "Noano x KM \u2013 BADBAD",
   "listeners": 5,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
