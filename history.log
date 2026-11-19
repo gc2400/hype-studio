@@ -397,3 +397,4 @@
 2026-11-19T12:17:22 waiting b01a57c8 [night] LIVE: Split music routing + two real decks + OVERLAP, and CUE
 2026-11-19T12:23:32 waiting ac9fe189 [night] Hour plans: Preview hour as a list or as a clock (an example hour on a 60-minute ring, coloured per hour-plan row) with how many of each row and how long; the list shows the row too
 2026-11-19T12:31:48 waiting 3fa4f960 [night] Library: an MP4/M4A/MOV whose upload stopped halfway (index at the front, so it looked fine) is marked as a problem and never played – 19 Nov 08:39 such a song ended at once on air (11 s silence)
+2026-11-19T12:48:42 ok 8f8bdd1b Install the waiting updates now (Gianno, 12:46): decks/Split/CUE, preload fix, clock view, broken-upload check

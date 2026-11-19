@@ -1,17 +1,22 @@
 {
- "time": "2026-11-19T12:31:48",
- "result": "waiting",
- "commit": "3fa4f960cb357a3e6179187014fe1093201e0f3a",
- "subject": "[night] Library: an MP4/M4A/MOV whose upload stopped halfway (index at the front, so it looked fine) is marked as a problem and never played \u2013 19 Nov 08:39 such a song ended at once on air (11 s silence)",
+ "time": "2026-11-19T12:48:42",
+ "result": "ok",
+ "commit": "8f8bdd1be2f8a879712749f767f296316fc6b3c6",
+ "subject": "Install the waiting updates now (Gianno, 12:46): decks/Split/CUE, preload fix, clock view, broken-upload check",
  "log": [
-  "12:31:48 update b05566ec \u2192 3fa4f960 \u00b7 12 file(s): engine/engine.py, engine/hype_auth.py, engine/indexer.py, engine/live.py, engine/planner.py, radio/radio.liq, web/panel/cue.js, web/panel/header.js, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/studio.html",
-  "12:31:48 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "12:47:11 update b05566ec \u2192 8f8bdd1b \u00b7 12 file(s): engine/engine.py, engine/hype_auth.py, engine/indexer.py, engine/live.py, engine/planner.py, radio/radio.liq, web/panel/cue.js, web/panel/header.js, web/panel/index.html, web/panel/library.html, web/panel/plan.html, web/panel/studio.html",
+  "12:47:57 lab: PASS (6/6 good readings)",
+  "12:47:57 restart hype-auth",
+  "12:47:57 restart hype-indexer",
+  "12:47:57 restart hype-engine",
+  "12:47:57 restart hype-radio",
+  "12:48:42 installed OK \u00b7 restarted: hype-engine, hype-auth, hype-indexer, hype-radio"
  ],
  "guard": {
-  "song": "Kybba x J Balvin x Rytikal \u2013 I Love It",
-  "listeners": 4,
+  "song": "Chip Charlez \u2013 Out Of The Blue",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
