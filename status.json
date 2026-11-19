@@ -1,12 +1,11 @@
 {
- "time": "2026-11-19T22:41:10",
- "result": "ok",
- "commit": "8ff4988a1dad9de7af09ac05dc9dac6250e51a48",
- "subject": "Guard: no 'TV picture black \u2013 fine again' message for one dark moment (a dark video frame); only when it lasted a minute or more",
+ "time": "2026-11-19T22:42:13",
+ "result": "waiting",
+ "commit": "9199befd7628798a4848eb79f82025c14edfe0e5",
+ "subject": "[night] Radio: mixer channel meters; voice tracking dips",
  "log": [
-  "22:40:25 update 5fa771c6 \u2192 8ff4988a \u00b7 1 file(s): engine/guard.py",
-  "22:40:25 restart hype-guard",
-  "22:41:10 installed OK \u00b7 restarted: hype-guard"
+  "22:42:13 update 8ff4988a \u2192 9199befd \u00b7 1 file(s): radio/radio.liq",
+  "22:42:13 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
   "song": "Ango x DS19 x Dongo \u2013 Wine",
