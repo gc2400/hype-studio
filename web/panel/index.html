@@ -326,6 +326,7 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 #mixWin .gvol>span:last-child{width:auto!important;justify-self:end;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px}
 #mixWin .gvol input{width:100%;margin:0}
 @media (max-width:760px){#mixWin{left:8px!important;right:8px!important;width:auto;top:70px!important}#mixWin .gvol{grid-template-columns:80px 1fr 56px}}
+.sgopts{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;padding:6px 8px;margin-top:2px;border-radius:10px;background:var(--deep);border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -708,6 +709,7 @@ function camLayout(t = LTAB()) {      // your own arrangement (saved on the serv
   return {cells: cells.filter(n => !n || CAMS.includes(n)), hidden: L.hidden.filter(n => CAMS.includes(n))};
 }
 let SG = -1, SGEDIT = null, SGHIDE = false, SSEDIT = false;     // SSEDIT: SLIDESHOW tab in edit (+ NEW, × delete)
+let SGOPT = false;
 try { SGHIDE = localStorage.getItem('hypeSGhide') === '1'; } catch (e) {}   // -1 = Cameras (all layouts); n = your group n
 try { SG = +(localStorage.getItem('hypeSG') ?? -1); } catch (e) {}
 function groups() { return (S && S.scene_groups) || []; }
@@ -719,15 +721,17 @@ function renderScenes() {
     $('#bLL').onclick = () => { const on = !(S.live_layer !== false); cmd('live_layer', {on}).then(() => { S.live_layer = on; $('#scenes').dataset.h = ''; renderScenes(); toast(on ? 'Live Layer on' : 'Live Layer off – back on at Music video, Hype Screen, Branding or AUTO'); }); }; }
   const G = SGEDIT ? SGEDIT.list : groups(); if (SG >= G.length || SG < -4) SG = -1;
   const SSL = S.slideshows || [], SSN = SSL.map(x => x.scene);
-  const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras ${SG === -1 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP ${SG === -2 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA ${SG === -3 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + `<button class="btn sm ${SG === -4 && !SGHIDE ? 'on' : ''}" data-sg="-4" title="Full-screen slideshows: every folder in branding/slideshow/photos and /videos is a scene">SLIDESHOW ${SG === -4 ? (SGHIDE ? '▸' : '▾') : ''}</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)} ${SG === i ? (SGHIDE ? '▸' : '▾') : ''}</button>`).join('') + (SGEDIT ? '' : '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ GROUP</button>') + (!SGEDIT && SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">✎</button>' : '') + (!SGEDIT && !CAMEDIT && SG < 0 && SG !== -4 && !SGHIDE ? '<button class="btn sm" data-camedit title="Arrange these scenes: move, remove, add back">✎</button>' : '') + (SG === -4 && !SGHIDE ? `<button class="btn sm ${SSEDIT ? 'yellow' : ''}" data-ssedit title="New slideshow / delete slideshows">${SSEDIT ? 'Done' : '✎'}</button>` : '');
+  const tabs = `<button class="btn sm ${SG === -1 && !SGHIDE ? 'on' : ''}" data-sg="-1">Cameras</button>` + `<button class="btn sm ${SG === -2 && !SGHIDE ? 'on' : ''}" data-sg="-2">PIP</button>` + `<button class="btn sm ${SG === -3 && !SGHIDE ? 'on' : ''}" data-sg="-3">MEDIA</button>` + `<button class="btn sm ${SG === -4 && !SGHIDE ? 'on' : ''}" data-sg="-4" title="Full-screen slideshows: every folder in branding/slideshow/photos and /videos is a scene">SLIDESHOW</button>` + G.map((g, i) => `<button class="btn sm ${SG === i && !SGHIDE ? 'on' : ''}" data-sg="${i}">${esc(g.name)}</button>`).join('') + (SGEDIT || CAMEDIT ? '' : `<button class="btn sm ic ${SGOPT ? 'on' : ''}" data-sgopt aria-expanded="${SGOPT}" aria-label="Scene settings" title="New group, edit, arrange">⚙</button>`) + (SSEDIT ? '<button class="btn sm yellow" data-ssedit>Done</button>' : '') +
+    (SGOPT && !SGEDIT && !CAMEDIT ? '<span class="sgopts">' + '<button class="btn sm" data-sgnew title="Make a group of scenes, e.g. for a show">+ Group</button>' + (SG >= 0 ? '<button class="btn sm" data-sgedit title="Edit this group">Edit group</button>' : '') + (SG < 0 && SG !== -4 ? '<button class="btn sm" data-camedit title="Arrange these scenes: move, remove, add back">Arrange scenes</button>' : '') + (SG === -4 && !SSEDIT ? '<button class="btn sm" data-ssedit title="New slideshow / delete slideshows">Edit slideshows</button>' : '') + '</span>' : '');
   if ($('#sgTabs').dataset.h !== tabs) { $('#sgTabs').innerHTML = tabs; $('#sgTabs').dataset.h = tabs;
     $$('#sgTabs [data-sg]').forEach(b => b.onclick = () => { const n = +b.dataset.sg;
       if (n === SG && !SGEDIT) SGHIDE = !SGHIDE; else { SG = n; SGHIDE = false; }      // click the open group again = fold it away
       try { localStorage.setItem('hypeSG', SG); localStorage.setItem('hypeSGhide', SGHIDE ? '1' : '0'); } catch (e) {} if (SGEDIT) SGEDIT.i = SG; $('#sgTabs').dataset.h = ''; renderScenes(); });
+    const go = $('#sgTabs [data-sgopt]'); if (go) go.onclick = () => { SGOPT = !SGOPT; $('#sgTabs').dataset.h = ''; renderScenes(); };
     const nw = $('#sgTabs [data-sgnew]'); if (nw) nw.onclick = () => { const n = prompt('Name of the new group (e.g. a show):'); if (!n) return; SGEDIT = {list: JSON.parse(JSON.stringify(groups()))}; SGEDIT.list.push({name: n.slice(0, 30), scenes: []}); SG = SGEDIT.i = SGEDIT.list.length - 1; renderScenes(); };
-    const ce = $('#sgTabs [data-camedit]'); if (ce) ce.onclick = () => { CAMEDIT = Object.assign(JSON.parse(JSON.stringify(camLayout())), {tab: LTAB()}); CAMPICK = -1; $('#sgTabs').dataset.h = ''; renderScenes(); };
-    const se = $('#sgTabs [data-ssedit]'); if (se) se.onclick = () => { SSEDIT = !SSEDIT; $('#sgTabs').dataset.h = ''; $('#camScenes').dataset.h = ''; renderScenes(); };
-    const ed = $('#sgTabs [data-sgedit]'); if (ed) ed.onclick = () => { SGEDIT = {list: JSON.parse(JSON.stringify(groups())), i: SG}; renderScenes(); };
+    const ce = $('#sgTabs [data-camedit]'); if (ce) ce.onclick = () => { SGOPT = false; CAMEDIT = Object.assign(JSON.parse(JSON.stringify(camLayout())), {tab: LTAB()}); CAMPICK = -1; $('#sgTabs').dataset.h = ''; renderScenes(); };
+    const se = $('#sgTabs [data-ssedit]'); if (se) se.onclick = () => { SGOPT = false; SSEDIT = !SSEDIT; $('#sgTabs').dataset.h = ''; $('#camScenes').dataset.h = ''; renderScenes(); };
+    const ed = $('#sgTabs [data-sgedit]'); if (ed) ed.onclick = () => { SGOPT = false; SGEDIT = {list: JSON.parse(JSON.stringify(groups())), i: SG}; renderScenes(); };
   }
   $('#sgEdit').hidden = !SGEDIT; if (SGEDIT && SG >= 0 && document.activeElement !== $('#sgName')) $('#sgName').value = (G[SG] || {}).name || '';
   const PIPS = (S.pip_frames || []).map(f => 'PIP@' + f).concat(['Up next']);

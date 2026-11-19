@@ -56,9 +56,10 @@ html{scrollbar-gutter:stable}
 #hhead #stRadio.ok,#hhead #stTv.ok{background:#3DDC97;box-shadow:0 0 6px rgba(61,220,151,.5)}#hhead #stRadio.bad,#hhead #stTv.bad{background:#FF4D5E}
 #hhead #stClock{order:5;display:inline-flex;align-items:center;gap:5px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:700 12px Inter,system-ui,sans-serif;color:#C9D7E3;background:#0F2B44;border:1px solid #23496B;border-radius:999px;padding:4px 10px;text-decoration:none}
 #hhead #stClock:hover{border-color:#05A9C6;color:#fff}
-#hhead .hst #clock{order:4}#hhead .hst .hlive,#hhead .hst .hrec{order:6}#hhead .hst>.hdots{order:1}
+#hhead .hst #clock{order:4}#hhead .hst>.hdots{order:1}
 #hhead #clock{font:800 20px Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.2px;color:#FFE000;margin-left:4px}
 #hhead .sp{flex:1}
+#hhead .hb{order:1}#hhead .hnav{order:2}#hhead .sp{order:3}#hhead .hst{order:4}#hhead .hctl{order:5}#hhead .hact{order:6;display:flex;align-items:center;gap:8px;flex:none}#hhead .menu{order:7}
 #hhead .hnav{display:flex;align-items:center;gap:2px;padding:3px;border-radius:12px;background:rgba(10,24,40,.9);border:1px solid #1E3A56;flex:none}
 #hhead .hnav a{font:700 13px/1 Inter,system-ui,sans-serif;color:#A9BCCD;text-decoration:none;padding:9px 12px;border-radius:9px;white-space:nowrap}
 #hhead .hnav a:hover{background:#143049;color:#fff}#hhead .hnav a.cur{background:#FFE000;color:#061321}
@@ -68,7 +69,7 @@ html{scrollbar-gutter:stable}
 @media (max-width:1180px){#hhead .hnav a{padding:9px 9px;font-size:12px}#hhead .show{display:none}}
 @media (max-width:900px){
   #hhead{flex-wrap:wrap;gap:8px;padding:8px 12px}
-  #hhead .hb{order:1}#hhead .hst{order:2}#hhead .sp{order:3}#hhead .menu{display:block;order:4}
+  #hhead .hb{order:1}#hhead .hst{order:2}#hhead .hact{order:2}#hhead .sp{order:3}#hhead .menu{display:block;order:4}
   #hhead .hctl{order:5;width:100%;justify-content:space-between}
   #hhead .hctl{gap:6px;flex-wrap:nowrap}
   #hhead .hctl > .btn{flex:1 1 0;min-height:38px;height:38px;font-size:12px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;text-align:center;margin:0}
@@ -93,9 +94,11 @@ html{scrollbar-gutter:stable}
     <div class="hctl"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button>
       <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
     <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span></button><button class="hdots" id="hLogB" aria-haspopup="dialog" aria-expanded="false" title="Log: what Studio did – repairs, problems, messages"><span class="chip" id="stLog">● LOG</span></button><a class="chip" id="stClock" href="/panel/plan.html" title="The hour plan that plays now – click: Planning">–</a><span id="clock">--:--:--</span>
+      <div class="hpop" id="hPop" role="dialog" aria-label="Streams" hidden></div><div class="hpop" id="hLogPop" role="dialog" aria-label="Log" hidden></div></div>
+    <div class="hact">
       <button class="hlive" id="hLive" title="GO LIVE: your studio mix goes on air (click twice)"><b>GO LIVE</b><span class="t" id="hLiveT"></span></button>
       <button class="hrec" id="hRec" title="Record the TV output (Library → Recordings)"><i></i><b>REC</b><span id="hRecT"></span></button>
-      <div class="hpop" id="hPop" role="dialog" aria-label="Streams" hidden></div><div class="hpop" id="hLogPop" role="dialog" aria-label="Log" hidden></div></div>
+    </div>
     <span class="sp"></span>
     <button class="menu" id="hMenu" aria-label="Pages" aria-expanded="false">☰</button>
     <nav class="hnav" aria-label="Pages">${P.map(([u, t, k], i) => `<a href="${u}" class="${k === cur ? 'cur' : ''}" ${k === cur ? 'aria-current="page"' : ''} title="${t} (Alt+${i + 1})">${t}</a>`).join('')}<span class="sep"></span><a class="out" href="/logout" title="Log out" aria-label="Log out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span class="lo"> Log out</span></a></nav>`;
@@ -105,7 +108,7 @@ html{scrollbar-gutter:stable}
   function fitNav() {
     if (window.innerWidth <= 900) { h.classList.remove('compact'); return; }      // phone layout has its own menu
     const was = h.classList.contains('compact'); h.classList.remove('compact');
-    const wraps = nav.offsetTop > hb.offsetTop + hb.offsetHeight / 2;
+    const wraps = [nav, h.querySelector('.hst'), h.querySelector('.hctl'), h.querySelector('.hact')].some(x => x && x.offsetTop > hb.offsetTop + hb.offsetHeight / 2);   // anything on a 2nd line: pages into the ☰ menu
     h.classList.toggle('compact', wraps); if (!wraps && was) h.classList.remove('open');
   }
   let fitT; window.addEventListener('resize', () => { clearTimeout(fitT); fitT = setTimeout(fitNav, 80); });
