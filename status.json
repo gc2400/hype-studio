@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T15:49:16",
+ "time": "2026-11-19T15:58:30",
  "result": "ok",
- "commit": "e4c25d68864a8ea4312f69017d6f57419ee58c43",
- "subject": "Header in the concept's order: logo \u00b7 pages \u2026 \u00b7 radio/TV/log dots, clock, hour plan \u00b7 AUTO/MANUAL + modes \u00b7 GO LIVE + REC (pages into \u2630 when the line is full; phones as before); Scenes: one \u2699 (+ Group, Edit group / Arrange scenes / Edit slideshows) instead of + GROUP and \u270e, no \u25b8/\u25be on the tabs; Reports: Rights report as its own tab next to Station report",
+ "commit": "93d9dacaface1ec60e6b510f1f22071fc0a94e8b",
+ "subject": "Panel: CAMERA SLOTS is a button next to Lower third; the player's red chip shows the hour plan with a clock icon (instead of the show name); header: calmer page links, AUTO/MANUAL as a switch like ON AIR/DJ/LIVE, the hour plan out of the header; phone: the player buttons fit on one line",
  "log": [
-  "15:49:16 update d0319acf \u2192 e4c25d68 \u00b7 3 file(s): web/panel/header.js, web/panel/history.html, web/panel/index.html",
-  "15:49:16 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:58:30 update e4c25d68 \u2192 93d9daca \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
+  "15:58:30 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Bad Bunny \u2013 Titi Me Pregunto",
-  "listeners": 5,
+  "song": "Ozuna x Jory Boy x \u00d1engo Flow \u2013 Vulnerable",
+  "listeners": 6,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
