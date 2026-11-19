@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T17:01:00",
- "result": "waiting",
- "commit": "a74fd017d1e65049c625f0b4aa1e045af8b0b44c",
- "subject": "[night] Radio: a level per channel (music incl. decks, pads, studio) for the panel's mixer meters",
+ "time": "2026-11-19T17:02:04",
+ "result": "ok",
+ "commit": "836cda299028ba200bd53f48e77278d7030c639a",
+ "subject": "Panel: install the CAM button and mixer layout now (radio channel meters held back until the night)",
  "log": [
-  "17:01:00 update 486ff534 \u2192 a74fd017 \u00b7 2 file(s): radio/radio.liq, web/panel/index.html",
-  "17:01:00 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "17:02:04 update 486ff534 \u2192 836cda29 \u00b7 1 file(s): web/panel/index.html",
+  "17:02:04 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Rich2Gether x BKO x Johnny x Jhorrmountain x Brasco \u2013 Wat Regel Je",
-  "listeners": 7,
+  "listeners": 6,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
