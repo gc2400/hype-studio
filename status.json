@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T16:21:05",
+ "time": "2026-11-19T16:23:10",
  "result": "ok",
- "commit": "31ee22391a99acd8ee551b003e4b8805f9423d61",
- "subject": "Header: dots one size and spacing, AUTO/MANUAL and mode switches outlined like the library tabs with yellow active, page links in the header font, current page yellow",
+ "commit": "907f7d9c7387844434af2c6e292ddc37e0a8c610",
+ "subject": "Header clock keeps running between pages: server-time offset remembered, time shown from the first frame",
  "log": [
-  "16:21:05 update 74ef1b52 \u2192 31ee2239 \u00b7 1 file(s): web/panel/header.js",
-  "16:21:05 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:23:10 update 31ee2239 \u2192 907f7d9c \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
+  "16:23:10 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
-  "listeners": 5,
+  "listeners": 7,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },

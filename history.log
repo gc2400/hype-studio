@@ -418,3 +418,4 @@
 2026-11-19T15:58:30 ok 93d9daca Panel: CAMERA SLOTS is a button next to Lower third; the player's red chip shows the hour plan with a clock icon (instead of the show name); header: calmer page links, AUTO/MANUAL as a switch like ON AIR/DJ/LIVE, the hour plan out of the header; phone: the player buttons fit on one line
 2026-11-19T16:09:47 ok 74ef1b52 Header: page links on the right, Hype Studio · dots · clock · switches · GO LIVE / REC on the left; the three dots (radio · TV · log) in one button with one window (tabs Streams / Log – it opens on Log when something new happened); phones fit on one line; Playlist: MAIN (was Up next)
 2026-11-19T16:21:05 ok 31ee2239 Header: dots one size and spacing, AUTO/MANUAL and mode switches outlined like the library tabs with yellow active, page links in the header font, current page yellow
+2026-11-19T16:23:10 ok 907f7d9c Header clock keeps running between pages: server-time offset remembered, time shown from the first frame
