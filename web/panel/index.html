@@ -415,15 +415,12 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
         <div class="camgrid" id="camScenes"></div>
       </div>
       <div class="card" id="cTvm">
-        <div class="row between"><span class="lab">TV Media</span><button class="btn sm" id="tvEdit" title="Add live links, delete media, pin / hide listener items">EDIT</button></div>
+        <div class="row between"><span class="lab">TV Media</span><div class="row" style="gap:6px"><select id="mScene" aria-label="Media scene" title="The scene a media item / stream / the browser goes on air in" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;max-width:190px"></select><button class="btn sm" id="tvEdit" title="Add live links, delete media, pin / hide listener items">EDIT</button></div></div>
         <div class="banks" id="tvTabs"></div>
-        <div class="row" id="mediaBar" style="gap:6px;flex-wrap:wrap">
-          <select id="mScene" aria-label="Media scene" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px"></select>
-          <span class="row" style="gap:3px" id="mSound"><button class="btn sm" data-ms="mute" title="The video plays without sound">Mute</button><button class="btn sm" data-ms="duck" title="The video's sound plays, the music goes down">Duck</button><button class="btn sm" data-ms="off" title="The video's sound plays, the music is off">Music off</button></span>
-          <button class="btn sm yellow" id="mediaDone" hidden title="Stop editing">Done</button><div id="lpvBox" hidden role="dialog" aria-modal="true" aria-label="Preview"><div class="in"><div class="row" style="justify-content:space-between;gap:8px"><b class="lpvT"></b><button class="btn sm" onclick="lPreviewClose()">Close</button></div><div class="lpvBody"></div><div class="muted lpvC"></div></div></div><input type="file" id="mFile" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,.mkv,.m4v" hidden>
-        </div>
         <div class="grid4 pads" id="tvPads"></div>
         <div class="padpg" id="tvPg" hidden><button class="btn sm" id="tvPrev" aria-label="Previous page">◀</button><span id="tvPgTxt"></span><button class="btn sm" id="tvNext" aria-label="Next page">▶</button></div>
+        <label class="gvol" style="gap:10px"><span class="lab" style="color:var(--mut)">VOL</span><input type="range" min="0" max="1.6" step="0.01" id="mediaVol" aria-label="TV Media volume"><span class="mono" id="mediaVolV" style="width:62px">0 dB</span></label>
+        <div class="row" id="mediaBar" style="gap:6px;flex-wrap:wrap"><span class="row" style="gap:6px" id="mSound"><button class="btn sm" data-ms="mute" title="The video plays without sound">MUTE</button><button class="btn sm" data-ms="duck" title="The video's sound plays, the music goes down">DUCK</button><button class="btn sm" data-ms="off" title="The video's sound plays, the music is off (live streams / the browser: the music waits)">MUSIC OFF</button></span><span style="flex:1"></span><button class="btn sm yellow" id="mediaDone" hidden title="Stop editing">Done</button><div id="lpvBox" hidden role="dialog" aria-modal="true" aria-label="Preview"><div class="in"><div class="row" style="justify-content:space-between;gap:8px"><b class="lpvT"></b><button class="btn sm" onclick="lPreviewClose()">Close</button></div><div class="lpvBody"></div><div class="muted lpvC"></div></div></div><input type="file" id="mFile" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,.mkv,.m4v" hidden></div>
       </div>
       <div class="card" id="liveCard">
         <div class="row between"><span class="lab">Live</span><a class="btn sm" href="studio.html" style="text-decoration:none;display:inline-flex;align-items:center">Open broadcast ↗</a></div>
@@ -939,7 +936,7 @@ function padDrop(d, pos) {
 function renderTv() {
   const nl = LSN.items.filter(x => !x.played).length, nlive = ((S && S.streams) || []).length;
   $('#tvTabs').innerHTML = [[-1, 'Media', 'Your own pictures and videos from branding/media'], [-2, 'Listeners' + (nl ? ` <b style="background:#FFE000;color:#061423;border-radius:8px;padding:0 5px;font-size:10px">${nl}</b>` : ''), 'Voices, photos and videos from listeners (Hype Live), newest first'],
-    [-3, 'Live', 'The browser and your live stream links']].map(([k, t, ti]) => `<button class="btn sm ${tvb === k ? 'on' : ''}" data-tvb="${k}" title="${ti}">${t}</button>`).join('');
+    [-3, 'Live', 'Your live stream links (HLS / RTMP / SRT)'], [-4, 'Browser', 'Browse any page and put it on air']].map(([k, t, ti]) => `<button class="btn sm ${tvb === k ? 'on' : ''}" data-tvb="${k}" title="${ti}">${t}</button>`).join('');
   $$('#tvTabs [data-tvb]').forEach(b => b.onclick = () => { tvb = +b.dataset.tvb; if (tvb === -1) loadMedia(); if (tvb === -2) loadListeners(); renderTv(); });
   $('#mediaDone').hidden = !TEDIT; $('#tvEdit').classList.toggle('on', TEDIT);
   return tvb === -2 ? renderListenerPads() : renderMediaPads();
@@ -948,13 +945,17 @@ const TVPG = {};
 function tvPage(n) {
   const pages = Math.max(1, Math.ceil(n / PADS_PER_PAGE)), k = String(tvb);
   TVPG[k] = Math.min(TVPG[k] || 0, pages - 1);
-  const show = !TEDIT && pages > 1 && tvb !== -3; $('#tvPg').hidden = !show;
+  const show = !TEDIT && pages > 1 && tvb > -3; $('#tvPg').hidden = !show;
   if (show) { $('#tvPgTxt').textContent = (TVPG[k] + 1) + ' / ' + pages; $('#tvPrev').disabled = TVPG[k] === 0; $('#tvNext').disabled = TVPG[k] >= pages - 1; }
   return [TVPG[k] * PADS_PER_PAGE, (TVPG[k] + 1) * PADS_PER_PAGE];
 }
 $('#tvPrev').onclick = () => { TVPG[String(tvb)] = Math.max(0, (TVPG[String(tvb)] || 0) - 1); renderTv(); };
 $('#tvNext').onclick = () => { TVPG[String(tvb)] = (TVPG[String(tvb)] || 0) + 1; renderTv(); };
 $('#tvEdit').onclick = () => { TEDIT = !TEDIT; renderTv(); };
+let mvBusy = 0, mvT = null;
+setInterval(() => { if (!S || S.media_vol === undefined || Date.now() - mvBusy < 1500) return; $('#mediaVol').value = S.media_vol; $('#mediaVolV').textContent = dbTxt(S.media_vol); }, 1000);
+$('#mediaVol').oninput = () => { mvBusy = Date.now(); const v = +$('#mediaVol').value; $('#mediaVolV').textContent = dbTxt(v); clearTimeout(mvT); mvT = setTimeout(() => api('cmd/media_vol', {value: v}), 120); };
+$('#mediaVol').ondblclick = () => { $('#mediaVol').value = 1; $('#mediaVol').oninput(); };
 // ---------- media pads: a picture or video from branding/media in the MEDIA scenes ----------
 let MEDIA = {files: [], scenes: MSC}, MSOUND = 'duck', MSCENE = 'MEDIA FULL';
 try { MSOUND = localStorage.getItem('hypeMSound') || 'duck'; MSCENE = localStorage.getItem('hypeMScene') || 'MEDIA FULL'; if (MSCENE === 'MEDIA') MSCENE = 'MEDIA FULL'; } catch (e) {}
@@ -970,7 +971,7 @@ function renderMediaPads() {
   const livePads = LV.map((x, i) => { const on = cur && cur.file === 'live:' + x.id;
     return `<button class="btn pad lpad ${on ? 'looping' : ''}" style="background:#3A0A14;border-color:#FF4D6A" data-lv="${i}" title="${on ? 'Click: stop the stream' : 'Click: on air (Mute = picture only · Music off = its sound on radio + TV, the music waits)'}">${esc(x.name)}<small>${on ? (cur.error ? '⚠ ' + esc(cur.error) : 'LIVE · <span data-livet="' + cur.started + '"></span>') : 'live stream' + (x.yt ? ' · YouTube' : '')}</small><span class="lpv" data-lvtest="${i}" title="Test the link (not on air)">👁</span><span class="bar"></span>${TEDIT ? `<span class="rm" data-rmlv="${i}" title="Delete this live pad">×</span>` : ''}</button>`; }).join('')
     + (TEDIT ? '<button class="padadd" id="lvAdd" title="A live stream link: https://….m3u8, rtmp://…, srt://… or a YouTube live">+ LIVE</button>' : '');
-  $('#tvPads').innerHTML = tvb === -3 ? webPad + livePads : MEDIA.files.map((m, i) => m.listener ? '' : (++J, !TEDIT && (J < pg[0] || J >= pg[1])) ? '' : `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.listener ? '#062A1E' : m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.listener ? '#3DDC97' : m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}" ${m.listener && m.listener.caption ? `title="${esc(m.listener.caption)}"` : ''}>${m.listener ? '📱 ' + esc(m.listener.name + (m.listener.city ? ' · ' + m.listener.city : '')) : esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.listener ? 'listener ' + (m.kind === 'video' ? 'video · ' + fmt(m.duration) : 'photo') + (Date.now() / 1000 - (m.listener.added || 0) < 86400 ? ' · NEW' : '') : m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${TEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('') + '<button class="padadd" id="mDrop" title="Drop pictures or videos here (from your computer or a website), or click to choose them">drop here</button>';
+  $('#tvPads').innerHTML = tvb === -4 ? webPad + '<span class="muted" style="grid-column:span 3;align-self:center;font-size:12px">Open the browser (⧉), browse to a page, then click the pad or On air. Sound: MUTE or MUSIC OFF.</span>' : tvb === -3 ? (livePads || '<span class="muted">No live links yet – EDIT → + LIVE</span>') : MEDIA.files.map((m, i) => m.listener ? '' : (++J, !TEDIT && (J < pg[0] || J >= pg[1])) ? '' : `<button class="btn pad ${cur && cur.file === m.file ? 'looping' : ''}" style="background:${m.listener ? '#062A1E' : m.kind === 'video' ? '#3A2A00' : '#062F38'};border-color:${m.listener ? '#3DDC97' : m.kind === 'video' ? '#FFB54D' : '#05A9C6'}" data-mf="${i}" ${m.listener && m.listener.caption ? `title="${esc(m.listener.caption)}"` : ''}>${m.listener ? '📱 ' + esc(m.listener.name + (m.listener.city ? ' · ' + m.listener.city : '')) : esc(m.file.replace(/\.[^.]+$/, ''))}<small>${m.listener ? 'listener ' + (m.kind === 'video' ? 'video · ' + fmt(m.duration) : 'photo') + (Date.now() / 1000 - (m.listener.added || 0) < 86400 ? ' · NEW' : '') : m.kind === 'video' ? 'video · ' + fmt(m.duration) + (m.audio ? '' : ' · no sound') : 'picture'}</small><span class="bar"></span>${TEDIT ? `<span class="rm" data-rmmedia="${i}" title="Delete">×</span>` : ''}</button>`).join('') + '<button class="padadd" id="mDrop" title="Drop pictures or videos here (from your computer or a website), or click to choose them">drop here</button>';
   $('#tvPads').classList.toggle('edit', TEDIT);
   const md = $('#mDrop'); if (md) { md.onclick = () => $('#mFile').click();
     md.ondragover = e => { e.preventDefault(); md.classList.add('over'); }; md.ondragleave = () => md.classList.remove('over');
@@ -1307,10 +1308,10 @@ $('#ovSel').onchange = () => { const v = $('#ovSel').value; cmd('set_overlay', v
 // ---------- modes: ON AIR · DJ MODE · LIVE · GUESTS ----------
 let MODE = 'onair'; try { MODE = localStorage.getItem('hypeMode') || 'onair'; } catch (e) {}
 const LAYOUT = {
-  onair: {col1: ['cPlayer', 'cLog', 'auxCard'], col2: ['cScenes', 'cPads'], col3: ['cLib', 'liveCard'], deckA: [], deckB: [], bottom: []},
-  dj:    {deckA: ['dkA', 'cPads'], col2: ['cLib', 'cXfade'], deckB: ['dkB', 'cScenes'], col1: [], col3: [], bottom: []},
-  live:  {col1: ['cScenes'], col2: ['liveCard', 'cGuests', 'cPads'], col3: ['cPlayer', 'cLog', 'auxCard', 'cLib'], deckA: [], deckB: [], bottom: []}};
-const HIDE = {onair: ['cXfade', 'cGuests', 'dkA', 'dkB'], dj: ['cGuests', 'cLog', 'auxCard', 'cPlayer', 'liveCard'], live: ['cXfade', 'dkA', 'dkB']};
+  onair: {col1: ['cPlayer', 'cLog', 'auxCard'], col2: ['cScenes', 'cTvm', 'cPads'], col3: ['cLib'], deckA: [], deckB: [], bottom: []},
+  dj:    {deckA: ['dkA', 'cPads'], col2: ['cLib', 'cXfade'], deckB: ['dkB', 'cScenes', 'cTvm'], col1: [], col3: [], bottom: []},
+  live:  {col1: ['cScenes', 'cTvm'], col2: ['cGuests', 'cPads'], col3: ['cPlayer', 'cLog', 'auxCard', 'cLib'], deckA: [], deckB: [], bottom: []}};
+const HIDE = {onair: ['cXfade', 'cGuests', 'dkA', 'dkB', 'liveCard'], dj: ['cGuests', 'cLog', 'auxCard', 'cPlayer', 'liveCard'], live: ['cXfade', 'dkA', 'dkB', 'liveCard']};
 const DECKS = {};
 function deckEl(k) {
   const id = k === '1' ? 'dkA' : 'dkB'; let el = DECKS[k]; if (el) return el;

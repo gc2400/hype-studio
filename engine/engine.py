@@ -2,7 +2,7 @@
 """Hype Studio playout engine (phase 2).
 Keeps the upcoming plan (hour clock + your own picks), feeds Liquidsoap one song ahead,
 switches the TV in OBS on every song start, and serves the control panel API."""
-import shutil, os, re, json, time, random, sqlite3, socket, threading, logging, uuid, base64, hashlib, subprocess, array, urllib.request, unicodedata
+import shutil, math, os, re, json, time, random, sqlite3, socket, threading, logging, uuid, base64, hashlib, subprocess, array, urllib.request, unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 os.environ["TZ"] = "Europe/Amsterdam"; time.tzset()   # all show times are Amsterdam time, whatever the server's zone
@@ -1869,6 +1869,9 @@ class Engine:
                 slideshow.STATE["force"] = True; log.info("slideshow deleted: %s", "/".join(f)); return {"ok": True}
             elif action == "fetch_url":      # a picture / video / sound dragged from a website onto the pads: the server fetches it
                 return fetch_url(c, d)
+            elif action == "media_vol":
+                MEDIA_VOL["v"] = max(0.0, min(1.6, float(d.get("value", 1)))); planner.set_setting(dbc(), "media_vol", MEDIA_VOL["v"])
+                return {"ok": True, "media_vol": MEDIA_VOL["v"]}
             elif action == "tv_sound_radio":     # the guard: TV silent while a paired video plays its own sound -> the radio's sound for this song
                 if not self.tv.split: return {"ok": True, "acted": False}
                 self.tv.clip_sound = False; self.tv.route_audio(force=True)
@@ -2201,7 +2204,7 @@ class Engine:
             self.tv.ll_on = bool(planner.get_setting(c, "live_layer", True))
             cid = planner.clock_for(c, time.time()); cname = c.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() if cid else None
             return {"show": SHOW["title"], "clock": cname[0] if cname else None, "now": n, "elapsed": round(el, 1), "upcoming": upcoming, "history": hist, "auto": self.auto,
-                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "streams": [{"id": x["id"], "name": x["name"], "yt": is_youtube(x["url"])} for x in streams_load(True)], "web": {"on": hypeweb.ST["on"], "starting": hypeweb.ST["starting"]}, "stream_note": STREAM_NOTE if time.time() - STREAM_NOTE["t"] < 120 else None, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
+                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "streams": [{"id": x["id"], "name": x["name"], "yt": is_youtube(x["url"])} for x in streams_load(True)], "web": {"on": hypeweb.ST["on"], "starting": hypeweb.ST["starting"]}, "media_vol": MEDIA_VOL["v"], "stream_note": STREAM_NOTE if time.time() - STREAM_NOTE["t"] < 120 else None, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
                     "tv_sound": "clip" if self.tv.split else "radio", "live_layer": bool(planner.get_setting(c, "live_layer", True)),
                     "time": time.strftime("%H:%M:%S"), "server_time": time.time(), "slideshows": slideshow.STATE["list"]}
 
@@ -3435,6 +3438,7 @@ class Media:
         self.cur = {"file": f, "kind": info["kind"], "sound": sound, "loop": loop, "started": time.time(), "duration": info["duration"], "scene": "manual" if manual else sc, "manual": manual}
         if info["kind"] == "video" and info["audio"] and sound != "mute":
             ln = max(1.0, info["duration"]); gain = 0.0 if info["lufs"] is None else max(-12.0, min(12.0, -14.0 - info["lufs"]))
+            gain += 20 * math.log10(max(0.01, MEDIA_VOL["v"]))      # the TV Media card's VOL
             ann = f'annotate:liq_cue_in="0",liq_amplify="{gain:.2f} dB",hype_fade="0":{full}'
             level = 0.0 if sound == "off" else float(planner.get_setting(dbc(), "pad_duck", 0.25))
             def run():
@@ -3554,6 +3558,7 @@ class Media:
                 if eng.now: eng.tv.set_scene(eng.now.get("scene") or "Hype Screen")
 
 STREAMS = "/var/lib/hype/streams.json"; STREAM_NOTE = {"t": 0, "text": ""}
+MEDIA_VOL = {"v": 1.0}     # TV Media card → VOL (0 – 1.6, like the pads): media videos' sound + a live stream / the browser with Music off
 WEB_STREAM = {"id": "web", "name": "Browser", "url": "rtsp://127.0.0.1:8554/web"}
 def streams_load(saved_only=False):
     try: L = json.load(open(STREAMS))
@@ -3576,7 +3581,7 @@ class StreamFeed:
         pw = json.load(open("/etc/hype/live.json"))["harbor_pw"]
         while self.on:
             net = ["-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "4"] if self.url.startswith("http") else []
-            self.p = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", *net, "-i", self.url, "-vn", "-ac", "2", "-ar", "48000",
+            self.p = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", *net, "-i", self.url, "-vn", "-af", "volume=%.3f" % MEDIA_VOL["v"], "-ac", "2", "-ar", "48000",
                                        "-c:a", "flac", "-compression_level", "2", "-f", "ogg", "-content_type", "application/ogg",
                                        "icecast://source:%s@127.0.0.1:8006/ext" % pw], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             self.t_ok = time.time(); self.p.wait()
@@ -4657,6 +4662,8 @@ if __name__ == "__main__":
     threading.Thread(target=recap_loop, daemon=True).start()
     threading.Thread(target=media_in_loop, daemon=True).start()
     threading.Thread(target=hl_sync_loop, daemon=True).start()
+    try: MEDIA_VOL["v"] = float(planner.get_setting(dbc(), "media_vol", 1.0))
+    except Exception: pass
     threading.Thread(target=slideshow_loop, daemon=True).start()
     threading.Thread(target=hypeweb.watch, args=(lambda: bool(E.media.cur and E.media.cur.get("file") == "live:web"),), daemon=True).start()
     # (charts go to the website only when you press Publish in the chart – no automatic sending any more)

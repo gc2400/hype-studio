@@ -92,6 +92,7 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
         <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:900" id="airTitle">On air: the automation</div><div class="muted" id="airSub" style="font-size:12px">When you are LIVE this turns green: only your studio mix is on the radio and the TV (no clip sound).</div>
           <div class="row" style="margin-top:6px;gap:6px"><span class="chip" id="stStudio">Studio: not connected</span><span class="chip" id="stOnAir">On air: automation</span><span class="chip" id="stRec">REC off</span><span class="chip" id="airDrops" hidden></span></div></div></div>
     </div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center"><b style="font-size:13px">Restream</b><span class="muted" style="font-size:12px">your TV picture + sound also to:</span><span class="row" id="rest" style="gap:6px;flex-wrap:wrap"></span></div>
     <span class="muted" id="stHint" hidden style="font-size:12px">Connect the studio below, then press GO LIVE. Your Mixcast mix goes on air; END LIVE goes back to the automation (music never stops).</span>
   </section>
 
@@ -386,7 +387,13 @@ async function health() {
 setInterval(health, 2000);
 // ---------- status ----------
 let since = null;
+function restRender() {    // Facebook / YouTube / … on and off here (moved from the panel's LIVE card, 19 Nov); add them in Settings
+  const h = Object.entries(L.restream || {}).map(([k, d]) => `<button class="btn sm ${d.on ? 'on' : ''}" data-rs="${k}" title="${d.on ? (d.ok ? 'streaming – click to stop' : 'connecting / retrying – click to stop') : 'off – click to start'}">${d.on ? (d.ok ? '● ' : '◌ ') : ''}${d.name.replace(/[&<>"]/g, '')}</button>`).join('') || '<span class="muted" style="font-size:12px">none yet – add YouTube / Facebook / … in Settings</span>';
+  const el = $('#rest'); if (el.dataset.h === h) return; el.dataset.h = h; el.innerHTML = h;
+  el.querySelectorAll('[data-rs]').forEach(b => b.onclick = () => post('live/restream', {key: b.dataset.rs, on: !L.restream[b.dataset.rs].on}).then(d => { L = d; render(); }));
+}
 function render() {
+  restRender();
   const g = $('#goLive'); g.disabled = false; g.textContent = L.live ? 'END LIVE' : 'GO LIVE'; g.classList.toggle('live', L.live);
   $('#stOnAir').textContent = L.live ? (L.studio_online ? 'On air: STUDIO' : 'On air: automation (studio lost!)') : 'On air: automation'; $('#stOnAir').className = 'chip ' + (L.live ? (L.studio_online ? 'bad' : 'wait') : '');
   const ab = $('#airBox'), studioAir = L.live && L.air === 'studio';
