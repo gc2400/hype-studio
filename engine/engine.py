@@ -317,10 +317,9 @@ def annotate(it, pad=False, nxt=None):
 
 BAD_NAME = re.compile(r"[\x00-\x1f\x7f]")
 DECKS_FILE = "/var/lib/hype/decks.json"
-# Preloading the next clip (paused on its keyframe) is OFF since 19 Nov 13:05: with the picture-only TV copies (no sound
-# track, since 19 Nov 00:09) OBS 32 keeps playing a "paused" clip (it says PAUSED but runs on, measured: +0.5 s after 0.5 s,
-# ENDED after 12 s) -> wrong / black starts. Without it every clip starts the normal way (as before 5 Nov).
-PRELOAD = False
+# Preloading the next clip (paused on its keyframe). 19 Nov: with the picture-only TV copies OBS 32 played a clip on while it
+# said PAUSED when we paused BEFORE seeking -> now seek, then pause, then check it stands still (else no preload).
+PRELOAD = True
 def annotate_deck(it):
     """A song for a LIVE deck: START → END, no automatic mix (you mix on the Mixcast), the same loudness as on air."""
     cs = it.get("cue_start") or 0.0; dur = it.get("duration") or it.get("cue_end") or 0; ce = it.get("cue_end") or dur
@@ -732,18 +731,24 @@ class TV:
                 # wait until OBS really opened it (was a fixed 0.25 s: when opening took longer, PAUSE came too early and was
                 # ignored – the clip then ran on hidden, 10-14 s ahead at its start, or did not play: 19 Nov, 5x in one hour)
                 self._wait_open(cl, nxt); t_open = time.time() - t_r
-                cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PAUSE")
-                cl.set_media_input_cursor(nxt, int(k * 1000))
-                time.sleep(0.15); st = cl.get_media_input_status(nxt)
-                if st.media_state != "OBS_MEDIA_STATE_PAUSED" or abs((st.media_cursor or 0) / 1000 - k) > 0.3:     # not paused on its spot: once more
-                    cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PAUSE"); cl.set_media_input_cursor(nxt, int(k * 1000))
-                    time.sleep(0.15); st2 = cl.get_media_input_status(nxt)
-                else: st2 = st
-                if st2.media_state == "OBS_MEDIA_STATE_PAUSED" and st2.media_cursor is not None: k = st2.media_cursor / 1000   # where it REALLY waits (OBS lands on a keyframe of its own)
+                # SEEK first, then PAUSE (measured on air 19 Nov: PAUSE then seek – the old order – let OBS 32 play the picture-only
+                # copy on while it SAID "paused" in 3 of 5 tries; seek then pause held 7 of 7). Then check it really stands still.
+                held = False; tries = 0; st = st2 = None
+                while tries < 3 and not held:
+                    tries += 1
+                    cl.set_media_input_cursor(nxt, int(k * 1000)); time.sleep(0.2)
+                    cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PAUSE"); time.sleep(0.2)
+                    st = cl.get_media_input_status(nxt); time.sleep(0.4); st2 = cl.get_media_input_status(nxt)
+                    held = (st2.media_state == "OBS_MEDIA_STATE_PAUSED" and st.media_cursor is not None
+                            and abs((st2.media_cursor or 0) - st.media_cursor) < 60 and abs(st2.media_cursor / 1000 - k) < 0.6)
+                if not held:     # it won't stand still: no preload – the song starts its clip the normal way
+                    cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_STOP")
+                    pre_diag({"ev": "preload_failed", "file": os.path.basename(clip_file), "tries": tries, "cur": st2.media_cursor if st2 else None, "k": k})
+                    log.warning("preload: the clip would not stand still – it starts the normal way"); self.pre = None; return
+                k = st2.media_cursor / 1000      # where it REALLY waits (OBS lands on a keyframe of its own)
                 self.pre = {"file": clip_file, "name": nxt, "k": k, "t": time.time()}
                 threading.Thread(target=self.pre_watch, args=(self.pre,), daemon=True).start()
-                pre_diag({"ev": "preload", "file": os.path.basename(clip_file), "open_s": round(t_open, 2), "state": st.media_state, "cur": st.media_cursor, "k": k,
-                          "retry": st2 is not st, "state2": st2.media_state, "cur2": st2.media_cursor})
+                pre_diag({"ev": "preload", "file": os.path.basename(clip_file), "open_s": round(t_open, 2), "state": st2.media_state, "cur": st2.media_cursor, "k": k, "tries": tries})
             except Exception as e: log.warning("preload: %s", e); self.cl = None; self.pre = None
     def pre_watch(self, pre):
         """Measuring (19 Nov): does the waiting clip stay paused until its song starts? Logs the moment it moves + the scene then."""
