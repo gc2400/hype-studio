@@ -434,3 +434,4 @@
 2026-11-19T18:04:57 waiting 6d701e41 [night] Radio: mixer channel meters; voice tracking: the song before stays low under a link that starts over its end, the next song stays low under a link that talks over its intro
 2026-11-19T18:18:18 ok 5e5e4ba2 Panel preview: the Hype Radio TV artwork when the preview is stopped (and before the picture arrives)
 2026-11-19T18:19:21 waiting 22798824 [night] Radio: mixer channel meters; voice tracking dips (song before low under a link over its end, next song low under a link over its intro)
+2026-11-19T18:22:28 ok 5fa771c6 Panel preview: muted plays the same stream as with sound (the picture-only stream stuttered in the browser)

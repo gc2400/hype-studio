@@ -1,17 +1,17 @@
 {
- "time": "2026-11-19T18:19:21",
- "result": "waiting",
- "commit": "22798824516aff458dc13215955f5be1c40b7581",
- "subject": "[night] Radio: mixer channel meters; voice tracking dips (song before low under a link over its end, next song low under a link over its intro)",
+ "time": "2026-11-19T18:22:28",
+ "result": "ok",
+ "commit": "5fa771c6d0a95acd80ad250db2f070f8a40fe254",
+ "subject": "Panel preview: muted plays the same stream as with sound (the picture-only stream stuttered in the browser)",
  "log": [
-  "18:19:21 update 5e5e4ba2 \u2192 22798824 \u00b7 1 file(s): radio/radio.liq",
-  "18:19:21 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "18:22:28 update 5e5e4ba2 \u2192 5fa771c6 \u00b7 1 file(s): web/panel/index.html",
+  "18:22:28 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Noano x KM \u2013 BADBAD",
+  "song": "Ryan Castro x Feid \u2013 MENTIRA",
   "listeners": 5,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
