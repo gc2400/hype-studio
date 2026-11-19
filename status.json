@@ -1,18 +1,17 @@
 {
- "time": "2026-11-19T01:12:37",
+ "time": "2026-11-19T01:14:43",
  "result": "ok",
- "commit": "64d2b0c27ec2f2936f418711c24348e9a625cae3",
- "subject": "Panel: TV Media card under Scenes (in every mode), scene picker next to EDIT, VOL (media sound) + MUTE / DUCK / MUSIC OFF under the pads like the Pads card, Browser its own tab apart from Live; LIVE card gone (live + REC in the header), restream on/off on the Broadcast page",
+ "commit": "0f92ca53df465b5ece66d20184067b6be2fe47e9",
+ "subject": "Panel: shorter text on the Browser pad",
  "log": [
-  "01:11:52 update 70d6ac31 \u2192 64d2b0c2 \u00b7 3 file(s): engine/engine.py, web/panel/index.html, web/panel/studio.html",
-  "01:11:52 restart hype-engine",
-  "01:12:37 installed OK \u00b7 restarted: hype-engine"
+  "01:14:42 update 64d2b0c2 \u2192 0f92ca53 \u00b7 1 file(s): web/panel/index.html",
+  "01:14:43 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Vybz Kartel x Shenseea \u2013 PANIC",
-  "listeners": 1,
+  "song": "French Montana x Max B x Jamie Foxx \u2013 All I need is Somebody",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
