@@ -735,10 +735,27 @@ class TV:
                     cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PAUSE"); cl.set_media_input_cursor(nxt, int(k * 1000))
                     time.sleep(0.15); st2 = cl.get_media_input_status(nxt)
                 else: st2 = st
+                if st2.media_state == "OBS_MEDIA_STATE_PAUSED" and st2.media_cursor is not None: k = st2.media_cursor / 1000   # where it REALLY waits (OBS lands on a keyframe of its own)
                 self.pre = {"file": clip_file, "name": nxt, "k": k, "t": time.time()}
+                threading.Thread(target=self.pre_watch, args=(self.pre,), daemon=True).start()
                 pre_diag({"ev": "preload", "file": os.path.basename(clip_file), "open_s": round(t_open, 2), "state": st.media_state, "cur": st.media_cursor, "k": k,
                           "retry": st2 is not st, "state2": st2.media_state, "cur2": st2.media_cursor})
             except Exception as e: log.warning("preload: %s", e); self.cl = None; self.pre = None
+    def pre_watch(self, pre):
+        """Measuring (19 Nov): does the waiting clip stay paused until its song starts? Logs the moment it moves + the scene then."""
+        last = None
+        while self.pre is pre:
+            time.sleep(0.5)
+            if self.pre is not pre: return
+            try:
+                with self.olock: st = self.client().get_media_input_status(pre["name"])
+            except Exception: continue
+            cur = (st.media_cursor or 0) / 1000
+            moved = st.media_state != "OBS_MEDIA_STATE_PAUSED" or abs(cur - pre["k"]) > 0.25
+            if moved and last != st.media_state:
+                last = st.media_state
+                pre_diag({"ev": "moved", "file": os.path.basename(pre["file"]), "after_s": round(time.time() - pre["t"], 1), "state": st.media_state, "cur": st.media_cursor, "k": pre["k"], "scene": self.scene, "cur_player": self.cur})
+                log.warning("waiting clip moved %.1f s after preload: %s at %.1f s (scene %s)", time.time() - pre["t"], st.media_state, cur, self.scene)
     def _wait_open(self, cl, name):
         """Wait until OBS really restarted the new file (its status first still shows the old file)."""
         for i in range(60):
@@ -776,6 +793,12 @@ class TV:
                 # preloaded (preload(): this clip waits paused at its keyframe in this player): only PLAY at the moment
                 pre = getattr(self, "pre", None); self.pre = None; self.pre_last = pre
                 use_pre = bool(not sound and pre and pre["file"] == clip_file and pre["name"] == nxt)
+                if use_pre:      # it must still wait paused on its spot – else the normal start (a moved / ended clip = wrong or black picture)
+                    try:
+                        stp = cl.get_media_input_status(nxt)
+                        if stp.media_state != "OBS_MEDIA_STATE_PAUSED" or abs((stp.media_cursor or 0) / 1000 - pre["k"]) > 0.3:
+                            use_pre = False; log.warning("preloaded clip did not wait (%s at %.1f s, not %.1f s) – started the normal way", stp.media_state, (stp.media_cursor or 0) / 1000, pre["k"])
+                    except Exception: use_pre = False
                 if use_pre:
                     when = (pre["k"] - (cue_start or 0)) + AV_LAG - (time.time() - t0)   # the radio reaches the keyframe in OBS then
                     if when < -0.05: use_pre = False; log.info("preloaded clip too late – started the normal way")
