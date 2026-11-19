@@ -816,6 +816,13 @@ class TV:
                             cl2 = self.client()
                             if sound and not getattr(self, "live", False): cl2.set_input_mute(nxt, False)
                             if play_k is not None:       # preloaded: it waits paused at play_k – start it, no seek
+                                # 19 Nov: some preloaded clips had NOT stayed paused (10-14 s ahead) or did not start on PLAY (a black
+                                # sweeper): check the waiting spot first, and look again after 0.5 s and 1.5 s
+                                try:
+                                    st0 = cl2.get_media_input_status(nxt)
+                                    if abs((st0.media_cursor or 0) / 1000 - play_k) > 0.3:
+                                        cl2.set_media_input_cursor(nxt, int(play_k * 1000)); log.info("preloaded clip had moved (%.1f s) – back to its start first", (st0.media_cursor or 0) / 1000 - play_k)
+                                except Exception: pass
                                 cl2.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY")
                                 t_pl = time.time()
                                 def verify_pre(nxt=nxt, k0=play_k, t1=t_pl, g=gen):
@@ -823,11 +830,13 @@ class TV:
                                         if g != self.gen: return
                                         try:
                                             cl4 = self.client(); want = k0 + (time.time() - t1)
-                                            cur = (cl4.get_media_input_status(nxt).media_cursor or 0) / 1000
+                                            st_ = cl4.get_media_input_status(nxt); cur = (st_.media_cursor or 0) / 1000
+                                            if st_.media_state != "OBS_MEDIA_STATE_PLAYING":
+                                                cl4.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY"); log.info("preloaded clip did not play (%s) – started again", st_.media_state)
                                             if abs(cur - want) > 0.5:
                                                 cl4.set_media_input_cursor(nxt, int((want + 0.12) * 1000)); log.info("preloaded clip was %.1f s off – put back", cur - want)
                                         except Exception: pass
-                                threading.Timer(1.5, verify_pre).start()   # LIVE: only the studio mix (the music is in it already) – never the clip's own sound on top
+                                threading.Timer(0.5, verify_pre).start(); threading.Timer(1.5, verify_pre).start()   # LIVE: only the studio mix (the music is in it already) – never the clip's own sound on top
                             if seek_k is not None:
                                 try: cl2.set_media_input_cursor(nxt, int(seek_k * 1000))
                                 except Exception as e:      # OBS: "the media must be playing" (the clip was stopped) – start it, seek again; never leave the TV black
