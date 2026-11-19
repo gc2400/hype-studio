@@ -393,3 +393,4 @@
 2026-11-19T01:25:45 ok b05566ec TV sync: a song's start time = the moment the radio started it (not ~1 s later after OBS + database), so the 20-s video check measures right after short video jingles
 2026-11-19T10:56:25 waiting 313c59b6 [night] On-air waveform: unlock (lock button on hover) → one click jumps in the song (radio.seek; the video follows at once), locks again by itself; not in the last 10 s before the mix, not while LIVE
 2026-11-19T11:51:41 waiting f0e58ca6 [night] TV: a preloaded clip is put back on its start spot before PLAY if it moved, and checked after 0.5 + 1.5 s (state and position) – no more 2 s of a wrong or black picture
+2026-11-19T12:00:56 waiting 291ef7a5 [night] TV preload: wait until OBS really opened the clip before PAUSE (was a fixed 0.25 s – a too-early PAUSE was ignored and the clip ran on hidden), check it is paused on its spot (once more if not); measuring every preload / start in /var/lib/hype/preload_diag.jsonl
