@@ -218,6 +218,17 @@ def follow_move(c, rel, fp):
             c.execute("UPDATE items SET clip_suggest=? WHERE clip_suggest=?", (rel, old))
             try: c.execute("UPDATE asrun SET path=? WHERE path=?", (rel, old))
             except sqlite3.OperationalError: pass
+            # the theme channels' own databases follow the move too (their play history = their rotation, pads, playlists …)
+            import glob
+            for f_ in glob.glob("/srv/hype-data/chan_*.db"):
+                try:
+                    cc = sqlite3.connect(f_, timeout=30)
+                    for sql in ("UPDATE asrun SET path=? WHERE path=?", "UPDATE pad_items SET path=? WHERE path=?", "UPDATE events SET ref=? WHERE ref=?",
+                                "UPDATE playlist_sources SET ref=? WHERE kind='song' AND ref=?", "UPDATE clock_slots SET ref=? WHERE kind IN ('song','file','jingle','id') AND ref=?"):
+                        try: cc.execute(sql, (rel, old))
+                        except sqlite3.OperationalError: pass
+                    cc.commit(); cc.close()
+                except sqlite3.Error as e: print("move in", f_, e, flush=True)
             print("moved:", old, "->", rel, flush=True)
             return True
     return False

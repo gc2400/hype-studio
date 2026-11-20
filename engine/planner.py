@@ -77,12 +77,16 @@ def take_smart(c, songs, ok, fit):
     # no song fits every rule (e.g. the artist rule in a small folder full of "X x Y" songs): relax only what the caller allows
     # (ok.fallback: the theme channels keep "not the same song within N hours / not already planned"), never everything at once
     cand = [p_ for p_ in songs if ok(p_)] or [p_ for p_ in songs if getattr(ok, "fallback", lambda _: True)(p_)] or songs[:]
-    for p_ in [p_ for p_, t_ in NEW_PICKS.items() if H["last"].get(p_) or t_ < time.time() - 7200]: NEW_PICKS.pop(p_, None)
-    if any(5 < abs(t_ - at) < NEW_GAP for t_ in NEW_PICKS.values()):      # (the same slot planned again = not "another" new song)
-        old = [p_ for p_ in cand if H["last"].get(p_)]
-        if old: cand = old                       # a new song played / is planned close by: a familiar one now
+    # "a new song, then a familiar one" spaces out NEW UPLOADS on Hype Radio (months of history: never played = just uploaded).
+    # A theme channel is new itself – almost everything has never played there – so this rule would replay songs every other
+    # pick (21 Nov, Ambiente). There: no spacing, the folder is worked through, longest rested first.
+    if not station_of(c):
+        for p_ in [p_ for p_, t_ in NEW_PICKS.items() if H["last"].get(p_) or t_ < time.time() - 7200]: NEW_PICKS.pop(p_, None)
+        if any(5 < abs(t_ - at) < NEW_GAP for t_ in NEW_PICKS.values()):      # (the same slot planned again = not "another" new song)
+            old = [p_ for p_ in cand if H["last"].get(p_)]
+            if old: cand = old                       # a new song played / is planned close by: a familiar one now
     pick = _take_smart(c, cand, H, at, y0, fit)
-    if pick and not H["last"].get(pick): NEW_PICKS[pick] = at
+    if pick and not H["last"].get(pick) and not station_of(c): NEW_PICKS[pick] = at
     return pick
 def _take_smart(c, cand, H, at, y0, fit):
     fresh = [p_ for p_ in cand if not any(abs(t_ - y0) < 1800 for t_ in H["recent"].get(p_, []))]
