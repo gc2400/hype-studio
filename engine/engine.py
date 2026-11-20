@@ -2166,7 +2166,7 @@ class Engine:
                 self.tv.first_show_seen = True; self.tv.show_changed(SHOW.get("title"))
             elif action == "delete_item":      # Library: delete a file - it goes to the bin (/srv/hype-data/deleted, 30 days), never straight away
                 rel = os.path.normpath(str(d.get("path") or "")).lstrip("/")
-                if not rel or rel.startswith("..") or rel.split("/")[0] not in ("music", "clips", "jingles", "ads"): return {"ok": False, "error": "not a library file"}
+                if not rel or rel.startswith("..") or not lib_root_ok(rel): return {"ok": False, "error": "not a library file"}
                 if (self.now or {}).get("path") == rel: return {"ok": False, "error": "it is on air right now"}
                 if self.liq_next and self.liq_next.get("path") == rel: return {"ok": False, "error": "it is the next item (already queued) - try again in a minute"}
                 src = os.path.join(ROOT, rel)
@@ -2292,7 +2292,7 @@ class Engine:
     def rename_item(self, c, d):
         import indexer as _ix
         rel = os.path.normpath(str(d.get("path") or "")).lstrip("/")
-        if not rel or rel.startswith("..") or rel.split("/")[0] not in ("music", "clips", "jingles", "ads"): return {"ok": False, "error": "not a library file"}
+        if not rel or rel.startswith("..") or not lib_root_ok(rel): return {"ok": False, "error": "not a library file"}
         src = os.path.join(ROOT, rel)
         if not os.path.isfile(src) or not c.execute("SELECT 1 FROM items WHERE path=?", (rel,)).fetchone(): return {"ok": False, "error": "not a library file"}
         if (self.now or {}).get("path") == rel: return {"ok": False, "error": "it is on air right now – rename it after it played"}
@@ -2322,7 +2322,7 @@ class Engine:
             fa, ft = _ix.split_name(fn)
             row = c.execute("SELECT section, artist, title FROM items WHERE path=?", (rel,)).fetchone()
             artist, title = (fa, _ix.clean_title(ft)) if fa else (row[1], row[2]) if row[0] == "music" else ("", _ix.clean_title(ft))
-            c.execute("UPDATE items SET path=?, filename=?, artist=?, title=?, folder=? WHERE path=?", (new, fn, artist, title, "/".join(new.split("/")[1:-1]), rel))
+            c.execute("UPDATE items SET path=?, filename=?, artist=?, title=?, folder=? WHERE path=?", (new, fn, artist, title, _ix.split_path(new)[1], rel))   # (a theme channel's file: LATINA/…)
             for sql in ("UPDATE items SET clip_path=? WHERE clip_path=?", "UPDATE items SET overlay_path=? WHERE overlay_path=?",
                         "UPDATE asrun SET path=? WHERE path=?", "UPDATE pad_items SET path=? WHERE path=?", "UPDATE ad_spots SET path=? WHERE path=?",
                         "UPDATE events SET ref=? WHERE ref=?", "UPDATE playlist_sources SET ref=? WHERE kind='song' AND ref=?",
@@ -2347,6 +2347,21 @@ class Engine:
                 if p_.get("clip_path") == rel: p_["clip_path"] = new
         try: self.aux_save_file()
         except Exception: pass
+        for ch_ in chancfg.load():      # the theme channels' own databases follow too (their history, pads, playlists, fixed times, hour plans)
+            try:
+                cc = sqlite3.connect(chancfg.db_path(ch_["id"]), timeout=30)
+                for sql in ("UPDATE asrun SET path=? WHERE path=?", "UPDATE pad_items SET path=? WHERE path=?", "UPDATE events SET ref=? WHERE ref=?",
+                            "UPDATE playlist_sources SET ref=? WHERE kind='song' AND ref=?",
+                            "UPDATE clock_slots SET ref=? WHERE kind IN ('song','file','jingle','id') AND ref=?"):
+                    try: cc.execute(sql, (new, rel))
+                    except sqlite3.OperationalError: pass
+                for pid, ord_ in cc.execute("SELECT playlist_id, ord FROM playlist_state WHERE ord LIKE ?", ("%" + os.path.basename(rel)[:40] + "%",)).fetchall():
+                    try:
+                        o = json.loads(ord_)
+                        if rel in o: cc.execute("UPDATE playlist_state SET ord=? WHERE playlist_id=?", (json.dumps([new if x == rel else x for x in o]), pid))
+                    except Exception: pass
+                cc.commit(); cc.close()
+            except Exception as e: log.warning("rename in channel %s: %s", ch_["id"], e)
         LM_CACHE.pop(rel, None); log.info("renamed: %s -> %s", rel, new)
         try:
             sc = audstats.db(); sc.execute("UPDATE plays SET path=? WHERE path=?", (new, rel)); sc.commit(); sc.close()
@@ -2564,6 +2579,10 @@ def library(qs):
     return {"fixn": fixn, "problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "station_roots": {x["id"].upper(): x["id"] for x in chancfg.load()}, "counts": counts, "total": total, "offset": off}
 
 # ---------- upload from the Library page (WinSCP stays the main way; this is for a phone / someone without server access) ----------
+def lib_root_ok(rel):
+    """A file in one of the library's roots: Hype Radio's (music, clips, jingles, ads) or a theme channel's (music-latina, jingles-ambiente …)."""
+    top = rel.split("/")[0]
+    return top in ("music", "clips", "jingles", "ads") or bool(re.fullmatch(r"(music|jingles)-[a-z][a-z0-9]{1,19}", top))
 UP_DIR = "/srv/hype-data/uploads"; UP_SECTIONS = ("music", "clips", "jingles", "ads")
 UP_EXT = {".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus", ".mp4", ".mov", ".mkv", ".m4v", ".webm"}
 def up_check(qs):
