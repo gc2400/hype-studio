@@ -1,19 +1,18 @@
 {
- "time": "2026-11-20T23:07:40",
+ "time": "2026-11-20T23:13:34",
  "result": "ok",
- "commit": "3444d60bd140ede0b929754376dcaf083fe77fe2",
- "subject": "Theme channels: shows per station from the website (?station=, only when the answer is really for that station), cover lookups for their songs",
+ "commit": "c01ba06a2a2f664002f9bcb0d8d49f84fc033c50",
+ "subject": "Library: rename / delete / move also for the theme channels' files (music-<id>, jingles-<id>); their own databases follow a rename",
  "log": [
-  "23:06:54 update 1e9c59ee \u2192 3444d60b \u00b7 2 file(s): engine/engine.py, engine/planner.py",
-  "23:06:54 restart hype-channels",
-  "23:06:54 restart hype-engine",
-  "23:07:40 installed OK \u00b7 restarted: hype-engine, hype-channels"
+  "23:12:49 update 3444d60b \u2192 c01ba06a \u00b7 1 file(s): engine/engine.py",
+  "23:12:49 restart hype-engine",
+  "23:13:34 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "KM x Jandro \u2013 HEART",
+  "song": "Kapo \u2013 RUFF",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },

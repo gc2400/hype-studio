@@ -472,3 +472,4 @@
 2026-11-20T22:31:18 ok 5eacee7b Song picking: when no song fits every rule, only the artist rule is relaxed – never 'same song within 3 h / already planned' (theme channels repeated songs)
 2026-11-20T22:49:29 ok 1e9c59ee Theme channels: updates no longer interrupt the channels (radio engines keep running, the new service takes them over with its plan); a fixed liner never right after a queued ID; 🔥 per station from Hype Live 2.53
 2026-11-20T23:07:40 ok 3444d60b Theme channels: shows per station from the website (?station=, only when the answer is really for that station), cover lookups for their songs
+2026-11-20T23:13:34 ok c01ba06a Library: rename / delete / move also for the theme channels' files (music-<id>, jingles-<id>); their own databases follow a rename
