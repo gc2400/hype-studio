@@ -1,17 +1,18 @@
 {
- "time": "2026-11-20T21:33:35",
+ "time": "2026-11-20T21:40:31",
  "result": "ok",
- "commit": "c5762454964b669514bdcb8a36861c65ccfa348f",
- "subject": "Header: a dot per theme channel (station colour + listeners), Hype Radio's radio / TV dots on every page incl. the theme channels",
+ "commit": "cde4b14c6252201ef0757ae3aa701381b39ecccf",
+ "subject": "Theme channels: ID over soft intros exactly like Hype Radio (soft intro only, song->song, max per hour, minutes apart, own level, voice-length check, music back when the voice ends)",
  "log": [
-  "21:33:35 update b6289ae3 \u2192 c5762454 \u00b7 1 file(s): web/panel/header.js",
-  "21:33:35 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "21:39:46 update c5762454 \u2192 cde4b14c \u00b7 2 file(s): engine/chan.py, web/panel/channel.html",
+  "21:39:46 restart hype-channels",
+  "21:40:31 installed OK \u00b7 restarted: hype-channels"
  ],
  "guard": {
   "song": "Caribang Radio 001 \u2013 Hosted by Essovilla",
-  "listeners": 2,
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
