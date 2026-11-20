@@ -439,6 +439,44 @@ class Channel:
                 "pad": self.pad_now if self.pad_now and self.pad_now["until"] > time.time() else None, "queued": self.pushed,
                 "idi": self.setting("idi"), "voice": self.setting("voice"), "history": self.last_played()}
 
+    def nowplaying(self):
+        """The same answer as Hype Radio's /api/nowplaying/hype_radio (AzuraCast style): now playing, next, the last 10 songs
+        (song_history, "recently played" on the website / apps), covers from the shared cover store (else the station logo).
+        Only songs: while a jingle / ID plays, "now playing" stays the last song."""
+        import hashlib
+        logo = "https://stream.hyperadio.nl/logo/%s.png" % self.id; t = time.time()
+        def art(a, ti):
+            k = hashlib.sha1(("%s|%s" % ((a or "").lower().strip(), (ti or "").lower().strip())).encode()).hexdigest()[:16]
+            return "https://stream.hyperadio.nl/cover/%s.jpg" % k if a and ti and os.path.exists("/srv/hype-data/covers/%s.jpg" % k) else logo
+        def song(a, ti, folder=""):
+            a, ti = a or "", ti or ""
+            return {"id": hashlib.md5((a + ti).encode()).hexdigest(), "text": (a + " - " + ti) if a else ti, "artist": a, "title": ti, "album": "",
+                    "genre": folder or "", "art": art(a, ti), "custom_fields": {}}
+        rows = []
+        try:
+            c = chancfg.connect(self.id)
+            rows = c.execute("SELECT started, artist, title, folder, path FROM asrun WHERE section_ok(path) ORDER BY started DESC LIMIT 11".replace(
+                "section_ok(path)", "(path LIKE 'music/%' OR path LIKE 'music-%')")).fetchall(); c.close()
+        except Exception: pass
+        n = self.now or {}
+        if n.get("section") != "music" and rows:
+            r0 = rows[0]; n = {"artist": r0[1], "title": r0[2], "folder": r0[3], "started": r0[0], "path": r0[4], "section": "music"}
+        dur = round(self.len_of(n)) if n.get("path") else 0; el = max(0, t - (n.get("started") or t))
+        nxt = next((x for x in self.plan if x and x.get("section") == "music"), None)
+        hist = [{"played_at": int(r[0]), "duration": 0, "playlist": r[3] or "", "is_request": False, "song": song(r[1], r[2], r[3])}
+                for r in rows if int(r[0]) != int(n.get("started") or 0)][:10]
+        L = self.listeners or {}
+        return {"station": {"id": self.id, "name": self.cfg["name"], "shortcode": self.id, "listen_url": "https://stream.hyperadio.nl/" + self.cfg["mount"],
+                            "hls_url": "https://stream.hyperadio.nl/%s.m3u8" % self.id, "hls_enabled": True, "is_public": True, "logo": logo,
+                            "mounts": [{"name": "MP3 128", "url": "https://stream.hyperadio.nl/" + self.cfg["mount"], "bitrate": 128, "format": "mp3", "is_default": True}]},
+                "live": {"is_live": bool(self.sim), "streamer_name": "", "broadcast_start": None},
+                "now_playing": {"sh_id": int(n.get("started") or 0), "played_at": int(n.get("started") or t), "duration": dur, "elapsed": round(el),
+                                "remaining": round(max(0, dur - el)), "playlist": n.get("folder") or "", "streamer": "", "is_request": False,
+                                "song": song(n.get("artist"), n.get("title"), n.get("folder")), "type": "song"},
+                "playing_next": {"song": song(nxt.get("artist"), nxt.get("title"), nxt.get("folder"))} if nxt else None,
+                "song_history": hist, "listeners": {"current": (L.get("mp3") or 0) + (L.get("hls") or 0)}, "is_online": bool(self.liq and self.liq.poll() is None),
+                "hype": {"source": "hype-studio", "station": self.id}}
+
     def last_played(self, n=3):
         """The last songs (as on Hype Radio's playlist: the 2 before the one on air)."""
         try:
@@ -491,12 +529,7 @@ class H(BaseHTTPRequestHandler):
                                                                          "enabled": False, "running": False, "mount": c["mount"]})
             return self.send(200, {"channels": out})
         m = re.match(r"^/nowplaying/([a-z0-9]+)$", p)
-        if m and m.group(1) in CH:
-            s = CH[m.group(1)].status(); n = s["now"] or {}
-            return self.send(200, {"station": {"name": s["name"], "listen_url": "https://stream.hyperadio.nl/" + s["mount"], "hls_url": "https://stream.hyperadio.nl/%s.m3u8" % s["id"], "logo": "https://stream.hyperadio.nl/logo/%s.png" % s["id"]},
-                                   "now_playing": {"song": {"artist": n.get("artist", ""), "title": n.get("title", "")}, "played_at": int(n.get("started") or 0)},
-                                   "playing_next": {"song": {"artist": (s["next"][0] or {}).get("artist", ""), "title": (s["next"][0] or {}).get("title", "")}} if s["next"] else None,
-                                   "listeners": {"current": s["listeners"]["mp3"] + s["listeners"]["hls"]}, "live": {"is_live": s["sim"]}})
+        if m and m.group(1) in CH: return self.send(200, CH[m.group(1)].nowplaying())
         return self.send(404, {"error": "unknown"})
     def do_POST(self):
         try: d = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
