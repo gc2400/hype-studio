@@ -470,3 +470,4 @@
 2026-11-20T22:17:26 ok ae413323 Theme channels: never two jingles / liners back to back (a fixed-time liner replaces the hour plan's next jingle)
 2026-11-20T22:27:26 ok 000a3120 Planner: the 'rested longest' history per database – the theme channels shared one cache, so songs repeated
 2026-11-20T22:31:18 ok 5eacee7b Song picking: when no song fits every rule, only the artist rule is relaxed – never 'same song within 3 h / already planned' (theme channels repeated songs)
+2026-11-20T22:49:29 ok 1e9c59ee Theme channels: updates no longer interrupt the channels (radio engines keep running, the new service takes them over with its plan); a fixed liner never right after a queued ID; 🔥 per station from Hype Live 2.53

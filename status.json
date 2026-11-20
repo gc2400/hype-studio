@@ -1,19 +1,19 @@
 {
- "time": "2026-11-20T22:31:18",
+ "time": "2026-11-20T22:49:29",
  "result": "ok",
- "commit": "5eacee7b8b505b49ead19f76f31e51ab89e75f5d",
- "subject": "Song picking: when no song fits every rule, only the artist rule is relaxed \u2013 never 'same song within 3 h / already planned' (theme channels repeated songs)",
+ "commit": "1e9c59ee981697a4c4c3d9d3a8971071adb54544",
+ "subject": "Theme channels: updates no longer interrupt the channels (radio engines keep running, the new service takes them over with its plan); a fixed liner never right after a queued ID; \ud83d\udd25 per station from Hype Live 2.53",
  "log": [
-  "22:30:32 update 000a3120 \u2192 5eacee7b \u00b7 2 file(s): engine/chan.py, engine/planner.py",
-  "22:30:32 restart hype-channels",
-  "22:30:33 restart hype-engine",
-  "22:31:18 installed OK \u00b7 restarted: hype-channels, hype-engine"
+  "22:48:43 update 5eacee7b \u2192 1e9c59ee \u00b7 4 file(s): engine/chan.py, engine/engine.py, system/hype-channels.service, web/panel/channel.html",
+  "22:48:44 restart hype-channels",
+  "22:48:44 restart hype-engine",
+  "22:49:29 installed OK \u00b7 restarted: hype-channels, hype-engine"
  ],
  "guard": {
   "song": " \u2013 MENASA | PLAYAJERO | VOL 1 | GROOT KNIP | SHATTA | DANCEHALL | LATIN | AFRO",
-  "listeners": 2,
+  "listeners": 3,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 2.0,
   "problems": [],
   "ok": true
  },
