@@ -137,7 +137,12 @@ class Channel:
         """Started after an update of hype-channels: take over the radio engine + HLS that kept running (no break on air),
         unless channel.liq itself changed (then the new one starts). Plan, song on air and ID-rules state come back too."""
         p = os.path.join(RUN, self.id + ".liq")
-        lp = pids_of("liquidsoap %s" % p); hp = pids_of("chan_hls.sh %s" % self.id)
+        lp = pids_of("liquidsoap %s" % p); hp = self.hls_pids()
+        if len(hp) > 1:                                  # (20 Nov: earlier handovers left extra HLS encoders running – keep one)
+            for pid in hp[1:]:
+                try: os.kill(pid, signal.SIGTERM)
+                except OSError: pass
+            log.info("%s: %d extra HLS encoders stopped", self.id, len(hp) - 1); hp = hp[:1]
         try: same = open(p).read() == self.liq_text()
         except OSError: same = False
         if lp and same:
@@ -154,6 +159,10 @@ class Channel:
                 try: os.kill(pid, signal.SIGTERM)
                 except OSError: pass
             if lp: log.info("%s: channel.liq changed – radio engine restarted", self.id); time.sleep(2)
+
+    def hls_pids(self):
+        """This channel's HLS encoder(s): chan_hls.sh execs ffmpeg, so look for the ffmpeg writing /dev/shm/ch-<id>/<id>.m3u8."""
+        return sorted(pids_of("ffmpeg .*/dev/shm/ch-%s/%s\\.m3u8" % (self.id, self.id)))
 
     def save_state(self):
         try:
@@ -182,6 +191,9 @@ class Channel:
             self.pushed = None; self.fresh = True
         if not self.hls or self.hls.poll() is not None:
             if self.hls is not None: self.hls_fail += 1
+            for pid in self.hls_pids():                  # never two encoders writing the same playlist
+                try: os.kill(pid, signal.SIGTERM)
+                except OSError: pass
             self.hls = subprocess.Popen(["nice", "-n", "5", HLS_SH, self.id], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def stop_procs(self):
