@@ -43,15 +43,21 @@ def set_setting(c, key, value):
 VOICE_PICK = None   # set by the engine: a listener voice (✓ OK for air in Hype Live) for a "Listener voice" slot
 CTX = {"at": None, "fit": None}     # set by the ClockRunner while it picks: planned start time, seconds left to the hour
 _HIST = {"t": 0, "last": {}, "recent": {}}
+_HISTS = {}
 def history(c):
-    """When each song last played (and its plays of the last 27 h), cached for 20 s."""
-    if time.time() - _HIST["t"] > 20:
+    """When each song last played (and its plays of the last 27 h), cached for 20 s – PER DATABASE: the theme channels run in
+    one process, and each must judge "rested longest" by its OWN as-run (20 Nov: a shared cache made songs repeat)."""
+    try: key = next((r[2] for r in c.execute("PRAGMA database_list") if r[1] == "main"), "") or ""
+    except sqlite3.Error: key = ""
+    H = _HISTS.setdefault(key, {"t": 0, "last": {}, "recent": {}})
+    if time.time() - H["t"] > 20:
         try:
             last = dict(c.execute("SELECT path, MAX(started) FROM asrun GROUP BY path").fetchall()); rec = {}
             for p_, t_ in c.execute("SELECT path, started FROM asrun WHERE started > ?", (time.time() - 27 * 3600,)): rec.setdefault(p_, []).append(t_)
         except sqlite3.OperationalError: last, rec = {}, {}
-        _HIST.update(t=time.time(), last=last, recent=rec)
-    return _HIST
+        H.update(t=time.time(), last=last, recent=rec)
+    if not key: _HIST.update(H)
+    return H
 
 def song_lens(c, paths):
     if not paths: return {}
