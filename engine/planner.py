@@ -25,8 +25,9 @@ def init(c):
                           ("playlists", "chart_web", "INT DEFAULT 1"), ("playlists", "rotate", "INT DEFAULT 0"), ("playlists", "strict", "INT DEFAULT 0"), ("playlist_sources", "amount", "INT DEFAULT 1"), ("clocks", "resume", "INT DEFAULT 0")]:
         if col not in [r[1] for r in c.execute(f"PRAGMA table_info({tbl})")]:
             c.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {typ}")
-            if col == "chart":   # the Hype Top 10 becomes the first chart
-                c.execute("UPDATE playlists SET chart=1 WHERE name LIKE '%TOP%10%' AND COALESCE(strict,0)=1")
+            if col == "chart": new_chart = True
+    if locals().get("new_chart"):   # the Hype Top 10 becomes the first chart (after all columns exist: a new database has no 'strict' yet)
+        c.execute("UPDATE playlists SET chart=1 WHERE name LIKE '%TOP%10%' AND COALESCE(strict,0)=1")
     c.commit()
 
 def get_setting(c, key, default=None):
@@ -733,6 +734,9 @@ def preview_hour(c, day=None, hour=None, clock=None, at=None):
     finally: CTX["preview"] = False
 def _preview_hour(c, day=None, hour=None, clock=None, at=None):
     mem = sqlite3.connect(":memory:"); c.backup(mem)
+    try:                                   # a theme channel's database: the songs come from the attached library (chancfg)
+        import chancfg; chancfg.attach_like(c, mem)
+    except ImportError: pass
     now = time.time(); start = (int(now) // 3600 + 1) * 3600
     if at: start = int(at)
     elif day is not None and hour is not None:

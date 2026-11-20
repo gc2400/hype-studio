@@ -1,0 +1,263 @@
+# Hype theme channel @NAME@ (@ID@) – its own radio engine, made by hype-channels (engine/chan.py) from radio/channel.liq.
+# A copy of Hype Radio's sound chain and mixing, without the studio, decks, pads and TV parts. Hype Radio (radio.liq) is not
+# touched by it: other telnet port, other Icecast mounts, its own sound settings (/var/lib/hype/sound-@ID@.json).
+settings.init.allow_root.set(true)
+settings.server.telnet.set(true)
+settings.server.telnet.bind_addr.set("127.0.0.1")
+settings.server.telnet.port.set(@TELNET@)
+settings.log.file.set(true)
+settings.log.file.path.set("/var/log/hype/ch-@ID@.log")
+settings.log.stdout.set(false)
+settings.server.log.level.set(4)
+settings.frame.audio.samplerate.set(48000)
+
+let json.parse (conf : {icecast_source : string}) = file.contents("/etc/hype/engine.json")
+
+# --- sound settings: changed live from the panel (Settings → Sound), kept in /var/lib/hype/sound.json ---
+snd_drive    = interactive.float("snd_drive", min=0., max=10., description="Loudness (drive into the limiter, dB)", 5.)
+snd_bass     = interactive.float("snd_bass", min=0., max=8., description="Bass warmth (dB)", 3.)
+snd_bass_f   = interactive.float("snd_bass_f", min=50., max=160., description="Bass frequency (Hz)", 85.)
+snd_treble   = interactive.float("snd_treble", min=-4., max=4., description="Treble (dB, minus = warmer)", -0.5)
+snd_ratio    = interactive.float("snd_ratio", min=1., max=6., description="Compression ratio", 2.)
+snd_thresh   = interactive.float("snd_thresh", min=-30., max=0., description="Compression threshold (dB)", -16.)
+snd_attack   = interactive.float("snd_attack", min=1., max=100., description="Compression attack (ms)", 30.)
+snd_release  = interactive.float("snd_release", min=50., max=1000., description="Compression release (ms)", 220.)
+snd_ceiling  = interactive.float("snd_ceiling", min=-3., max=-0.1, description="Ceiling (dB)", -1.5)
+snd_comp     = interactive.float("snd_comp", min=0., max=1., description="Compressor on (1) / off (0) – the limiter always stays on", 1.)
+snd_monob    = interactive.float("snd_monob", min=0., max=1., description="Mono bass below 120 Hz on (1) / off (0)", 0.)
+snd_mid      = interactive.float("snd_mid", min=-4., max=3., description="Upper mids 3.5 kHz (dB, minus = less harsh)", 0.)
+snd_lowmid   = interactive.float("snd_lowmid", min=-4., max=2., description="Low mids 300 Hz (dB, minus = less muddy / boxy)", 0.)
+snd_hpf      = interactive.float("snd_hpf", min=20., max=40., description="Rumble cut (Hz): everything below is filtered out", 25.)
+# --- master_me (Settings → Sound → master_me): the open-source streaming processor, a second choice next to Classic (snd_punch 0.5) ---
+mm_target    = interactive.float("mm_target", min=-20., max=-8., description="master_me target loudness (LUFS)", -12.)
+mm_comp      = interactive.float("mm_comp", min=0., max=100., description="master_me compressor strength (%)", 25.)
+mm_mb        = interactive.float("mm_mb", min=0., max=100., description="master_me multiband strength (%)", 25.)
+mm_lim       = interactive.float("mm_lim", min=0., max=100., description="master_me limiter strength (%)", 70.)
+mm_lev       = interactive.float("mm_lev", min=0.0, max=100.0, description="master_me Leveler speed (%)", 20.0)
+mm_kc_th     = interactive.float("mm_kc_th", min=-12.0, max=6.0, description="master_me Compressor starts at (dB)", -4.0)
+mm_kc_att    = interactive.float("mm_kc_att", min=1.0, max=100.0, description="master_me Compressor attack (ms)", 20.0)
+mm_kc_rel    = interactive.float("mm_kc_rel", min=20.0, max=1000.0, description="master_me Compressor release (ms)", 200.0)
+mm_lo_str    = interactive.float("mm_lo_str", min=0.0, max=100.0, description="master_me Bass strength (%)", 25.0)
+mm_lo_f      = interactive.float("mm_lo_f", min=30.0, max=250.0, description="master_me Bass up to (Hz)", 60.0)
+mm_lo_th     = interactive.float("mm_lo_th", min=-12.0, max=12.0, description="master_me Bass starts at (dB)", -3.0)
+mm_lo_att    = interactive.float("mm_lo_att", min=1.0, max=100.0, description="master_me Bass attack (ms)", 15.0)
+mm_lo_rel    = interactive.float("mm_lo_rel", min=20.0, max=1000.0, description="master_me Bass release (ms)", 150.0)
+mm_hi_str    = interactive.float("mm_hi_str", min=0.0, max=100.0, description="master_me Treble strength (%)", 25.0)
+mm_hi_f      = interactive.float("mm_hi_f", min=5000.0, max=12000.0, description="master_me Treble from (Hz)", 8000.0)
+mm_hi_th     = interactive.float("mm_hi_th", min=-12.0, max=12.0, description="master_me Treble starts at (dB)", -12.0)
+mm_hi_att    = interactive.float("mm_hi_att", min=1.0, max=100.0, description="master_me Treble attack (ms)", 8.0)
+mm_hi_rel    = interactive.float("mm_hi_rel", min=10.0, max=1000.0, description="master_me Treble release (ms)", 30.0)
+mm_lim_att   = interactive.float("mm_lim_att", min=0.5, max=20.0, description="master_me Limiter attack (ms)", 3.0)
+mm_lim_rel   = interactive.float("mm_lim_rel", min=10.0, max=400.0, description="master_me Limiter release (ms)", 40.0)
+# --- fader (Settings → Sound / the channel page): the music (1.0 = 0 dB) ---
+vol_music  = interactive.float("vol_music", min=0., max=1.6, description="Music fader", 1.)
+
+# --- music: the engine pushes one song ahead into this queue ---
+q = request.queue(id="q")
+s = cue_cut(id="cue", cue_in_metadata="liq_cue_in", cue_out_metadata="liq_cue_out", on_cue_in=fun () -> (), on_cue_out=fun () -> (), q)
+mix_out = interactive.float("mix_out", min=0.1, max=6., description="Mixing: fade-out of the old song (s)", 1.5)
+mix_in = interactive.float("mix_in", min=0., max=3., description="Mixing: fade-in of the new song (s, 0 = full volume at once)", 0.)
+cut_next = ref(false)   # "play now" in the panel/DJ decks: the next change is a quick cut instead of a mix
+def db_of(m) =
+  float_of_string(default=0., string.replace(pattern="[^0-9.-]", fun (_) -> "", m["liq_amplify"]))
+end
+def mix(a, b) =
+  # a = the end of the old song (from its MIX point), b = the start of the new song.
+  # The new song starts at its own full volume at once; the old one fades out under it over the whole overlap.
+  # Two Liquidsoap 2.2 quirks handled here: the old tail arrives with the NEW song gain (liq_amplify) -> corrected,
+  # and fade.out does nothing on the buffered tail -> our own ramp on the tail clock.
+  sa = a.source
+  comp = lin_of_dB(db_of(a.metadata) - db_of(b.metadata))
+  d = if cut_next() then 0.25 else max(0.1, float_of_string(default=1.5, a.metadata["liq_cross_duration"])) end
+  fin = if cut_next() then 0.05 else max(0.02, mix_in()) end
+  # how long the old item fades: songs = the whole overlap; jingles = Settings (0 = plays out at full volume to its END)
+  f = if cut_next() then 0.25 else float_of_string(default=d, a.metadata["hype_fade"]) end
+  cut_next := false
+  t0 = ref(-1.)
+  # voice tracking: a link that starts over the END of this song (hype_tail): the song goes low under the voice in 0.6 s,
+  # stays there and fades out over the last 1.5 s of the overlap
+  td = float_of_string(default=1., a.metadata["hype_tail"])
+  def g() =
+    t = time()
+    if t0() < 0. then t0 := t end
+    e = t - t0()
+    if td < 1. then
+      lv = if e < 0.6 then 1. - (1. - td) * e / 0.6 else td end
+      fo = if e > d - 1.5 then max(0., (d - e) / 1.5) else 1. end
+      comp * lv * fo
+    elsif f <= 0. then comp else comp * max(0., 1. - e / f) end
+  end
+  # a voice link that talks over the next song's intro (voice tracking, hype_duck): the song stays low under the voice and
+  # comes up to full in the last 1.2 s of the overlap (the voice ends at the end of the overlap)
+  dk = float_of_string(default=1., a.metadata["hype_duck"])
+  t1 = ref(-1.)
+  def gb() =
+    t = time()
+    if t1() < 0. then t1 := t end
+    k = (t - t1()) - (d - 1.2)
+    if dk >= 1. or k >= 1.2 then 1. elsif k <= 0. then dk else dk + (1. - dk) * k / 1.2 end
+  end
+  add(normalize=false, [amplify(override=null(), gb, fade.in(duration=fin, b.source)), amplify(override=null(), g, sa)])
+end
+s = metadata.deduplicate(cross(duration=3., override_duration="liq_cross_duration", mix, s))   # cross() so OUR mix is used
+agc_g = interactive.float("agc_g", min=0.3, max=3., description="AGC gain on the music (set by the engine 5x/s)", 1.)
+snd_agc = interactive.float("snd_agc", min=0., max=1., description="AGC strength: 0 off, 0.4 light, 0.7 normal, 1 strong", 0.7)
+duck_lvl = interactive.float("duck_lvl", min=0., max=1., description="music level under ducked pads / sweepers (the engine glides it)", 1.)
+s = amplify(override="liq_amplify", 1., s)   # song gain AFTER the mix: the new song gain starts at the mix, so the old tail gets compensated in mix()
+s = amplify(override=null(), {vol_music() * duck_lvl() * agc_g()}, s)   # override=null: do NOT apply the song gain (liq_amplify) a second time
+
+
+def notify(m) =
+  if m["hype_path"] != "" then
+    data = json.stringify({ch = "@ID@", hype_path = m["hype_path"], hype_id = m["hype_id"], artist = m["artist"], title = m["title"]})
+    thread.run(fun () -> ignore(http.post(data=data, headers=[("Content-Type","application/json")], "http://127.0.0.1:@API@/track")))
+  end
+end
+s = source.on_metadata(s, notify)
+mus_pk = peak(duration=0.1, s)
+s = mus_pk
+
+# --- broadcast processing: warm bass, light compression, loud but clean limiter ---
+# Sound presets on ONE chain (switching chains is not possible here): snd_punch 0 = classic (the sliders), 1 = "Hype Punch":
+# no rumble, punch at 100 Hz instead of deep sub, vocal presence + air, 3-band compression (the bass can't push the vocals down);
+# the Loudness (drive) and Ceiling sliders work in both.
+snd_punch = interactive.float("snd_punch", min=0., max=1., description="Sound chain: 0 = classic, 0.5 = classic multiband, 1 = Hype Punch", 0.)
+# meters for Settings → Sound: how many dB the compressor and the limiter take off (on the automation chain)
+dyn_pre = ref(fun () -> 0.)
+dyn_mid = ref(fun () -> 0.)
+dyn_post = ref(fun () -> 0.)
+dyn_cg = ref(fun () -> 0.)
+dyn_lg = ref(fun () -> 0.)
+dyn_mm = ref(fun () -> (0., 0.))   # master_me: (compressor, limiter) dB, estimated from before / after the plugin
+# 3-band compressor = Liquidsoap's compress.multiband, but its dry/wet mix no longer re-applies the song gain:
+# the built-in one uses amplify() WITH the liq_amplify override, so every song's loudness correction was applied twice
+def hype_multiband(~limit=true, ~wet=getter(1.), s, l)
+  def band(low, band)
+    high = if getter.is_constant(band.frequency) and getter.get(band.frequency) >= float_of_int(audio.samplerate()) / 2. then infinity else band.frequency end
+    s = filter.iir.eq.low_high(low=low, high=high, s)
+    s = compress(attack=band.attack, release=band.release, threshold=band.threshold, ratio=band.ratio, gain=band.gain, s)
+    if limit then limiter(s) else s end
+  end
+  ls = list.mapi(fun (i, b) -> band(if i == 0 then 0. else list.nth(l,i-1).frequency end, b), l)
+  c = add(normalize=false, ls)
+  s = add(normalize=false, [amplify(override=null(), {1.-getter.get(wet)}, s), amplify(override=null(), wet, c)])
+  if false then () else list.hd(l) end
+  limiter(s)
+end
+def db_m(v) = if v < 0.00003 then -90. else dB_of_lin(v) end end
+def process(~meter=false, ~light=false, x) =
+  p = fun () -> snd_punch() > 0.75     # 1 = Hype Punch
+  x = filter.iir.eq.high(frequency=snd_hpf, q=0.7, x)     # rumble cut (slider, 20–40 Hz)
+  # mono bass: below 120 Hz left and right become the same (Linkwitz-Riley crossover) – off = the original signal, untouched
+  # (only on the music + studio chains – the pads chain for the TV does not need it: saves CPU)
+  x = if true then x else
+    lo = filter.iir.eq.low(frequency=120., q=0.7071, filter.iir.eq.low(frequency=120., q=0.7071, mean(x)))   # the low end in mono (filtered as 1 channel = cheaper)
+    hi = filter.iir.eq.high(frequency=120., q=0.7071, filter.iir.eq.high(frequency=120., q=0.7071, x))
+    mbx = add(normalize=false, [audio_to_stereo(lo), hi])
+    add(normalize=false, [amplify(override=null(), {if snd_monob() > 0.5 then 0. else 1. end}, x), amplify(override=null(), {if snd_monob() > 0.5 then 1. else 0. end}, mbx)])
+  end
+  x = filter.iir.eq.peak(frequency={if p() then 100. else snd_bass_f() end}, gain={if p() then 2. else snd_bass() end}, q=0.75, x)
+  x = filter.iir.eq.peak(frequency=300., gain={if p() then 0. else snd_lowmid() end}, q=0.9, x)
+  x = filter.iir.eq.peak(frequency=3500., gain={if p() then 1.5 else snd_mid() end}, q=0.9, x)
+  x = filter.iir.eq.peak(frequency=9500., gain={if p() then 1. else snd_treble() end}, q=0.7, x)
+  xeq = x      # after the EQ: Classic (below) or master_me
+  con = fun () -> snd_comp() > 0.5     # compressor switch (Settings → Sound)
+  mb = fun () -> false      # the old 3-band multiband is off for good (it had holes at 120 Hz and 4 kHz); 0.5 now = master_me
+  r1 = rms(duration=0.3, x)
+  x = r1
+  cb = compress(attack=snd_attack, release=snd_release, threshold=snd_thresh, ratio={if mb() or not con() then 1. else snd_ratio() end}, knee=6., x)
+  x = cb
+  x = hype_multiband(limit=false, wet={if mb() and con() then 1. else 0. end}, x, [
+    {frequency=120., attack=25., release=220., ratio=3., threshold=-20., gain=4.},
+    {frequency=4000., attack=12., release=160., ratio=2.5, threshold=-22., gain=5.},
+    {frequency=20000., attack=5., release=100., ratio=2., threshold=-26., gain=5.}])
+  # compressor off: about the same loudness as on (measured in the lab), so you compare the sound, not the volume
+  x = amplify(override=null(), {if con() then 1. else if mb() then lin_of_dB(3.4) else lin_of_dB(-3.8) end end}, x)
+  r2 = rms(duration=0.3, x)
+  x = r2
+  lm = limit(threshold={if p() then snd_ceiling() - 1. else snd_ceiling() end}, pre_gain=snd_drive, attack={if p() then 1. else 3. end}, release=120., x)
+  x = lm   # punch is brighter: 1 dB more room so the MP3 never clips
+  cs = compress(ratio=50., attack=0.5, release=60., knee=0., lookahead=4., threshold={snd_ceiling() - 0.3}, x)
+  x = cs   # brick-wall safety stage (looks 4 ms ahead): no peak gets over the ceiling
+  x = ladspa.fastlookaheadlimiter(input_gain=0., limit={snd_ceiling() - 0.2}, release_time=0.08, x)   # true look-ahead brickwall (swh-plugins): no peak ever goes over the ceiling
+  r3 = rms(duration=0.3, x)
+  if meter then
+    dyn_pre := r1.rms
+    dyn_mid := r2.rms
+    dyn_post := r3.rms
+    dyn_cg := cb.gain
+    dyn_lg := fun () -> lm.gain() + cs.gain()
+  end
+  if light then r3 else      # the TV pads chain always uses Classic (saves CPU)
+    # master_me gets r1 (after the EQ, measured): so the AGC's measurement also runs in master_me mode
+    # (before: r1 sat only in the Classic branch, which is not computed then -> the AGC saw a frozen level and boosted)
+    mi3 = rms(duration=3., r1)
+    mi = peak(duration=0.3, mi3)
+    # leveler max 5 dB (was 10): it has no look-ahead, so on a quiet intro it rose up to 10 dB and the beat drop came in
+    # too loud, then sank again over seconds (14 Nov). Studio's own AGC + intro lift do the evening-out.
+    mmx = ladspa.master_me(target={int_of_float(mm_target())}, leveler_speed={int_of_float(mm_lev())},
+            kneecomp_strength={int_of_float(mm_comp())}, kneecomp_tar_thresh=mm_kc_th, kneecomp_attack=mm_kc_att, kneecomp_release=mm_kc_rel,
+            low_strength={int_of_float(mm_lo_str())}, low_crossover=mm_lo_f, low_tar_thresh=mm_lo_th, low_attack=mm_lo_att, low_release=mm_lo_rel,
+            high_strength={int_of_float(mm_hi_str())}, high_crossover=mm_hi_f, high_tar_thresh=mm_hi_th, high_attack=mm_hi_att, high_release=mm_hi_rel,
+            limiter_strength={int_of_float(mm_lim())}, limiter_attack=mm_lim_att, limiter_release=mm_lim_rel,
+            brickwall_ceiling={snd_ceiling() - 0.2}, eq_highpass_freq=snd_hpf,
+            gate_bypass=true, dc_blocker=true, leveler_max=5., leveler_max__=5., leveler_brake_threshold=-20.,
+            kneecomp_knee=6., kneecomp_link=60, low_knee=12., low_link=70, high_knee=12., high_link=30,
+            makeup=1., limiter_tar_thresh=3., limiter_knee=3., brickwall_release=75., mi)
+    mmx = ladspa.fastlookaheadlimiter(input_gain=0., limit={snd_ceiling() - 0.2}, release_time=0.08, mmx)   # the same last safety as Classic
+    mo1 = rms(duration=0.3, mmx)
+    mo3 = rms(duration=3., mo1)
+    mmx = peak(duration=0.3, mo3)
+    if meter then
+      # meters (the plugin's own meters are not reachable from Liquidsoap), from before / after master_me:
+      # compressor = how much the loud moments (0.3 s) are squeezed against the 3 s average
+      # limiter    = how much the peaks are squeezed against the 0.3 s level
+      dyn_mm := fun () -> begin
+        ir = db_m(r1.rms()); il = db_m(mi3.rms()); ip = db_m(mi.peak())
+        orr = db_m(mo1.rms()); ol = db_m(mo3.rms()); op = db_m(mmx.peak())
+        (max(0., (ir - il) - (orr - ol)), max(0., (ip - ir) - (op - orr)))
+      end
+    end
+    switch(track_sensitive=false, [({snd_punch() > 0.25}, mmx), ({true}, r3)])   # only the one in use is computed
+  end
+end
+prog = mksafe(process(meter=true, s))
+
+# --- live on several channels (simulcast): Hype Radio's on-air sound (its internal 256k stream, already processed) replaces this
+#     channel's own music while "sim_on" is on; fades 1 s both ways. Off / Hype Radio's stream gone = the own music again.
+sim_on = interactive.bool("sim_on", false)
+hype = input.http(id="hype", "http://127.0.0.1:8000/rec.mp3", buffer=2., max=10.)
+s = switch(track_sensitive=false, transitions=[fun (a, b) -> add(normalize=false, [fade.in(duration=1., b), fade.out(duration=1., a)]), fun (a, b) -> add(normalize=false, [fade.in(duration=1., b), fade.out(duration=1., a)])],
+           [({sim_on()}, hype), ({true}, prog)])
+s = mksafe(s)
+lu = lufs(window=3., s)
+s = peak.stereo(id="meter", duration=0.08, lu)
+def db_(v) = if v < 0.00003 then -90. else dB_of_lin(v) end end
+def meter_level(_) =
+  let (l, r) = s.peak()
+  fa = dyn_pre()
+  a = db_(fa())
+  quiet = a < -45.
+  fcg = dyn_cg()
+  flg = dyn_lg()
+  fmm = dyn_mm()
+  let (mc, ml) = fmm()
+  mmode = snd_punch() > 0.25
+  comp = if quiet then 0. elsif mmode then mc elsif snd_comp() < 0.5 then 0. else max(0., 0. - fcg()) end
+  lim = if quiet then 0. elsif mmode then ml else max(0., 0. - flg()) end
+  "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a} #{mus_pk.peak()} 0. 0."
+end
+server.register(namespace="radio", "level", meter_level)
+server.register(namespace="live", "source", fun (_) -> if sim_on() and source.is_ready(hype) then "hype" else "automation" end)
+server.register(namespace="radio", "skip", fun (_) -> begin q.skip() "OK" end)
+server.register(namespace="radio", "cut", fun (_) -> begin cut_next := true q.skip() "OK" end)
+server.register(namespace="radio", "clear", fun (_) -> begin q.set_queue([]) "OK" end)
+
+interactive.persistent("/var/lib/hype/sound-@ID@.json")
+
+# internal 256k (for the HLS stream) + the public MP3 128k (https://stream.hyperadio.nl/@ID@.mp3)
+output.icecast(%mp3(bitrate=256, samplerate=44100, stereo=true), host="127.0.0.1", port=8000,
+  password=conf.icecast_source, mount="@ID@-rec.mp3", name="@NAME@ - internal", description="internal: 256k for the HLS stream", public=false, s)
+output.icecast(%mp3(bitrate=128, samplerate=44100, stereo=true), host="127.0.0.1", port=8000,
+  password=conf.icecast_source, mount="@ID@.mp3", name="@NAME@", description="@GENRE@", genre="@GENRE@",
+  url="https://www.hyperadio.nl", public=false, s)

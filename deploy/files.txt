@@ -1,6 +1,6 @@
 # repo path | live path | mode | services to restart when it changes ("-" = none; web pages reload by themselves)
 engine/engine.py|/opt/hype/engine.py|644|hype-engine
-engine/planner.py|/opt/hype/planner.py|644|hype-engine
+engine/planner.py|/opt/hype/planner.py|644|hype-engine,hype-channels
 engine/live.py|/opt/hype/live.py|644|hype-engine
 engine/guestsync.py|/opt/hype/guestsync.py|644|hype-engine
 engine/tickers.py|/opt/hype/tickers.py|644|hype-engine
@@ -89,3 +89,9 @@ web/panel/icon-192.png|/var/www/studio/panel/icon-192.png|644|-
 web/panel/icon-512.png|/var/www/studio/panel/icon-512.png|644|-
 web/panel/manifest.json|/var/www/studio/panel/manifest.json|644|-
 web/panel/apple-touch-icon.png|/var/www/studio/apple-touch-icon.png|644|-
+engine/chancfg.py|/opt/hype/chancfg.py|644|hype-engine,hype-channels
+engine/chan.py|/opt/hype/chan.py|755|hype-channels
+radio/channel.liq|/etc/hype/channel.liq|644|hype-channels
+tv/chan_hls.sh|/etc/hype/chan_hls.sh|755|hype-channels
+system/hype-channels.service|/etc/systemd/system/hype-channels.service|644|daemon-reload,hype-channels
+web/panel/channel.html|/var/www/studio/panel/channel.html|644|-

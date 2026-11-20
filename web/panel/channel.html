@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hype Studio · Channel</title>
+<link rel="icon" href="logo.png"><link rel="apple-touch-icon" href="/panel/apple-touch-icon.png"><link rel="manifest" href="/panel/manifest.json"><meta name="apple-mobile-web-app-title" content="Hype Studio"><meta name="theme-color" content="#061423">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--soft:#D3DEE8;--mut:#A9BCCD;--y:#FFE000;--b:#05A9C6;--g:#3DDC97;--r:#FF4D5E;--c:#05A9C6}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
+button{font-family:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.wrap{padding:10px 14px;display:flex;flex-direction:column;gap:12px;max-width:1300px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.lab{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.between{justify-content:space-between}
+.btn{cursor:pointer;border-radius:10px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);font-weight:800;font-size:12px;min-height:36px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--b)}.btn.on{background:var(--y);border-color:var(--y);color:#061423}.btn.red{background:var(--r);border-color:var(--r);color:#fff}.btn:disabled{opacity:.4;cursor:default}
+.muted{color:var(--mut);font-size:12.5px}
+.grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.head .dot{width:16px;height:16px;border-radius:50%;background:var(--c);box-shadow:0 0 14px var(--c)}
+.head h1{margin:0;font-size:24px;font-weight:900}.head .gen{color:var(--mut);font-size:13px;font-weight:600}
+.pill{font:800 11px Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:5px 10px;border:1px solid var(--line2);color:var(--mut)}
+.pill.air{background:#0E3B2A;border-color:#1F7A55;color:var(--g)}.pill.live{background:#3B0E15;border-color:#7A1F2B;color:#FF8A96}.pill.off{color:#7F96AB}
+.np{display:flex;flex-direction:column;gap:6px}
+.np .t{font-size:22px;font-weight:900;line-height:1.15}.np .a{font-size:15px;color:var(--soft);font-weight:700}
+.bar{height:6px;border-radius:4px;background:var(--card2);overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--c)}
+.times{display:flex;justify-content:space-between;font:700 12px 'JetBrains Mono',monospace;color:var(--mut)}
+.list{display:flex;flex-direction:column}
+.it{display:grid;grid-template-columns:70px minmax(0,1fr) 52px;gap:10px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--line)}
+.it:last-child{border-bottom:0}.it .tm{font:700 12px 'JetBrains Mono',monospace;color:var(--mut)}.it b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.it span{font-size:11.5px;color:var(--mut)}
+.it.j b{color:#B9A2FF}.it .ln{font:700 12px 'JetBrains Mono',monospace;color:var(--mut);text-align:right}
+.meter{display:flex;flex-direction:column;gap:4px}.meter .m{height:6px;border-radius:4px;background:linear-gradient(90deg,#2FBF7A,#3DDC97 70%,#FFE000 85%,#FF4D5E);position:relative;overflow:hidden}
+.meter .m i{position:absolute;top:0;bottom:0;right:0;background:var(--card2);transition:left .1s linear}
+.big{font:900 30px Inter,system-ui,sans-serif}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}.kv span{color:var(--mut)}.kv code{font:600 12px 'JetBrains Mono',monospace;color:var(--soft);word-break:break-all}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--deep)}
+.sw b{font-size:13.5px}.sw small{display:block;color:var(--mut);font-size:12px;font-weight:500;margin-top:2px}
+.err{background:#3B2A00;border:1px solid #6B5000;color:#FFE95C;border-radius:10px;padding:9px 12px;font-size:12.5px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line2);border-radius:12px;padding:10px 16px;font-weight:700;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}.toast.show{opacity:1}.toast.bad{border-color:var(--r)}
+.others{display:flex;gap:8px;flex-wrap:wrap}
+.oc{display:flex;align-items:center;gap:8px;border:1px solid var(--line2);background:var(--deep);border-radius:12px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--soft)}
+.oc i{width:9px;height:9px;border-radius:50%}.oc small{color:var(--mut);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="hhead"></header><script src="/panel/header.js?v=1795181000"></script>
+  <section class="card">
+    <div class="row between">
+      <div class="head"><i class="dot"></i><h1 id="cName">–</h1><span class="gen" id="cGenre"></span><span class="pill" id="cState">–</span></div>
+      <div class="row"><button class="btn" id="bSkip" title="Next item now">Skip</button><button class="btn" id="bOnOff">Switch on</button></div>
+    </div>
+    <div class="err" id="cErr" hidden></div>
+  </section>
+  <div class="grid">
+    <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+      <section class="card">
+        <span class="lab">Now on air</span>
+        <div class="np"><span class="t" id="nTitle">–</span><span class="a" id="nArtist"></span></div>
+        <div class="bar"><i id="nBar"></i></div><div class="times"><span id="nPos">0:00</span><span id="nLen">0:00</span></div>
+      </section>
+      <section class="card">
+        <div class="row between"><span class="lab">Next</span><a class="muted" href="/panel/plan.html" style="color:var(--b)">Planning for this channel →</a></div>
+        <div class="list" id="nList"><span class="muted">–</span></div>
+      </section>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+      <section class="card">
+        <span class="lab">Live from Hype Radio</span>
+        <div class="sw"><div><b>Hype Radio's sound now</b><small id="simTxt">This channel plays its own music.</small></div><button class="btn" id="bSim">Join now</button></div>
+        <div class="sw"><div><b>Join Hype Radio's live shows by itself</b><small>On = when you go LIVE on Hype Radio, this channel carries your show and goes back to its own music when you stop.</small></div><button class="btn" id="bJoin">Off</button></div>
+      </section>
+      <section class="card">
+        <span class="lab">Listeners</span>
+        <div class="row" style="gap:22px"><div><div class="big" id="lTot">0</div><span class="muted">now</span></div><div class="muted" id="lSplit">MP3 0 · app / website 0</div></div>
+        <div class="meter"><div class="m"><i id="mL" style="left:0"></i></div><div class="m"><i id="mR" style="left:0"></i></div></div>
+      </section>
+      <section class="card">
+        <span class="lab">Streams</span>
+        <div class="kv"><span>MP3</span><code id="uMp3"></code><span>HLS (app / website)</span><code id="uHls"></code><span>Now playing</span><code id="uNp"></code></div>
+        <span class="muted">Sound settings of this channel: Settings → Sound (with this channel chosen top left).</span>
+      </section>
+      <section class="card"><span class="lab">All channels</span><div class="others" id="others"></div></section>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const fmt = s => { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const toast = (t, bad) => { const e = $('#toast'); e.textContent = t; e.className = 'toast show' + (bad ? ' bad' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => e.className = 'toast', bad ? 5000 : 2500); };
+const CHID = () => (window.HYPE_CH ? window.HYPE_CH() : (localStorage.getItem('hypeCh') || 'main'));
+const dbPos = v => { const db = 20 * Math.log10(Math.max(v || 0, 1e-5)); return Math.max(0, Math.min(1, (db + 40) / 40)); };
+let S = null, ALL = [];
+function cmd(action, extra) {
+  return fetch('/api/channels/cmd', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(Object.assign({ch: CHID(), action}, extra || {}))})
+    .then(r => r.json()).then(d => { if (d.ok === false) toast(d.error || 'Not done', 1); load(); return d; }).catch(() => toast('No answer from the channels service', 1));
+}
+function load() {
+  return fetch('/api/channels', {cache: 'no-store'}).then(r => r.status === 401 ? (location.href = '/login?next=' + encodeURIComponent(location.pathname)) : r.json()).then(d => {
+    ALL = d.channels || []; S = ALL.find(x => x.id === CHID()) || null; paint();
+  }).catch(() => {});
+}
+function paint() {
+  if (!S) { $('#cName').textContent = 'Unknown channel'; return; }
+  document.documentElement.style.setProperty('--c', S.color);
+  $('#cName').textContent = S.name; $('#cGenre').textContent = S.genre || '';
+  const st = $('#cState');
+  st.className = 'pill ' + (!S.enabled ? 'off' : S.sim ? 'live' : S.running ? 'air' : '');
+  st.textContent = S.down ? 'service off' : !S.enabled ? 'off' : S.sim ? 'live from Hype Radio' : S.running ? 'on air' : 'starting …';
+  $('#bOnOff').textContent = S.enabled ? 'Switch off' : 'Switch on'; $('#bOnOff').classList.toggle('red', !!S.enabled);
+  $('#bSkip').disabled = !S.running || S.sim;
+  $('#cErr').hidden = !(S.error || S.down); $('#cErr').textContent = S.down ? 'The theme channels service is not running on the server.' : S.error || '';
+  const n = S.now || {};
+  $('#nTitle').textContent = S.sim ? 'Live from Hype Radio' : (n.title || (S.enabled ? '–' : 'This channel is off'));
+  $('#nArtist').textContent = S.sim ? '' : (n.artist || '');
+  $('#nList').innerHTML = (S.next || []).filter(Boolean).map(x => `<div class="it ${x.section && x.section !== 'music' ? 'j' : ''}"><span class="tm">${x.at ? new Date(x.at * 1000).toTimeString().slice(0, 8) : ''}</span><div><b>${esc((x.artist ? x.artist + ' – ' : '') + x.title)}</b><span>${esc((x.path || '').split('/').slice(1, -1).join(' / '))}</span></div><span class="ln">${fmt(x.len)}</span></div>`).join('')
+    || `<span class="muted">${S.enabled ? 'Nothing planned yet: give this channel a clock in Planning.' : 'Switch the channel on to start it.'}</span>`;
+  $('#bSim').textContent = S.sim ? 'Back to own music' : 'Join now'; $('#bSim').classList.toggle('on', !!S.sim); $('#bSim').disabled = !S.running;
+  $('#simTxt').textContent = S.sim ? 'This channel carries Hype Radio now (' + (S.main_live ? 'your live show' : 'Hype Radio\'s automation') + ').' : 'This channel plays its own music.' + (S.main_live ? ' Hype Radio is LIVE now.' : '');
+  $('#bJoin').textContent = S.join_live ? 'On' : 'Off'; $('#bJoin').classList.toggle('on', !!S.join_live); $('#bJoin').disabled = !S.enabled;
+  const L = S.listeners || {mp3: 0, hls: 0}; $('#lTot').textContent = (L.mp3 || 0) + (L.hls || 0); $('#lSplit').textContent = `MP3 ${L.mp3 || 0} · app / website ${L.hls || 0}`;
+  const base = 'https://stream.hyperadio.nl/';
+  $('#uMp3').textContent = base + S.id + '.mp3'; $('#uHls').textContent = base + S.id + '.m3u8'; $('#uNp').textContent = base + 'api/nowplaying/' + S.id;
+  $('#others').innerHTML = [{id: 'main', name: 'Hype Radio', color: '#05A9C6', enabled: true, running: true}, ...ALL].map(x => `<button class="oc" data-go="${x.id}"><i style="background:${x.color}"></i>${esc(x.name)}<small>${x.id === 'main' ? 'main' : !x.enabled ? 'off' : x.sim ? 'live' : 'on air'}</small></button>`).join('');
+  document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { localStorage.setItem('hypeCh', b.dataset.go); location.href = b.dataset.go === 'main' ? '/panel/' : '/panel/channel.html'; });
+}
+(function tick() {          // progress + level between the 2-second loads
+  if (S && S.now && S.now.started && !S.sim) { const pos = Date.now() / 1000 - S.now.started; $('#nPos').textContent = fmt(pos); $('#nLen').textContent = fmt(S.now.len); $('#nBar').style.width = Math.min(100, 100 * pos / Math.max(1, S.now.len)) + '%'; }
+  else { $('#nPos').textContent = '0:00'; $('#nLen').textContent = '0:00'; $('#nBar').style.width = '0'; }
+  const lv = (S && S.level) || [0, 0]; $('#mL').style.left = (dbPos(lv[0]) * 100) + '%'; $('#mR').style.left = (dbPos(lv[1]) * 100) + '%';
+  setTimeout(tick, 250);
+})();
+$('#bOnOff').onclick = () => { if (S.enabled && !confirm('Switch ' + S.name + ' off? Its stream stops until you switch it on again.')) return; cmd(S.enabled ? 'disable' : 'enable').then(() => toast(S && !S.enabled ? 'Switched on – it starts within half a minute' : 'Switched off')); };
+$('#bSkip').onclick = () => cmd('skip');
+$('#bSim').onclick = () => cmd(S.sim ? 'sim_off' : 'sim_on');
+$('#bJoin').onclick = () => cmd('join_live', {on: !S.join_live});
+load(); setInterval(() => { if (!document.hidden) load(); }, 2000);
+</script>
+</body>
+</html>

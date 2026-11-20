@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 os.environ["TZ"] = "Europe/Amsterdam"; time.tzset()   # all show times are Amsterdam time, whatever the server's zone
 import obsws_python as obs
-import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live, tickers, audstats, slideshow, hypeweb
+import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live, tickers, audstats, slideshow, hypeweb, chancfg
 
 ROOT = "/srv/hype"; DB = "/srv/hype-data/library.db"; WEB = "/var/www/studio"; WAVES = "/srv/hype-data/wave"
 CONF = json.load(open("/etc/hype/engine.json"))
@@ -34,7 +34,11 @@ def fold(t):
     """For searching: lower case, no accents (Álvaro = alvaro, Bésame = besame, Ñejo = nejo)."""
     import unicodedata
     return "".join(ch for ch in unicodedata.normalize("NFKD", str(t or "")) if not unicodedata.combining(ch)).lower()
+TL = threading.local()       # the theme channel a panel request is for (?ch=latina): set only for the planning / report paths below
+CH_PATHS = ("/playlists", "/playlist", "/clocks", "/schedule", "/events", "/preview_hour", "/history", "/history.csv",
+            "/rights.csv", "/rights_check", "/week")
 def dbc():
+    if getattr(TL, "ch", None): return chancfg.connect(TL.ch)       # a theme channel's own planning database (songs = the library)
     c = sqlite3.connect(DB, timeout=30)
     c.create_function("fold", 1, fold, deterministic=True)
     if not _DBI[0]:      # once per engine run: WAL (readers never wait for the indexer), as-run table + its indexes
@@ -57,8 +61,9 @@ def row_item(r, src="clock"):
     return d
 
 class Liq:
+    def __init__(self, port=1234): self.port = port          # 1234 = Hype Radio; a theme channel's radio engine has its own port
     def cmd(self, line):
-        with socket.create_connection(("127.0.0.1", 1234), timeout=5) as s:
+        with socket.create_connection(("127.0.0.1", self.port), timeout=5) as s:
             s.sendall((line + "\nquit\n").encode()); data = b""
             while True:
                 b = s.recv(4096)
@@ -2800,6 +2805,13 @@ def vt_on_air(c, path, it):
         dur = max(3.0, (it.get("cue_end") or it.get("duration") or 8) - (it.get("cue_start") or 0) - 0.5)
         threading.Timer(dur, lambda: E.now.get("path") == path and lower_cmd({"action": "hide"})).start()
 
+def chan_replan(ch):
+    try:
+        rq = urllib.request.Request("http://127.0.0.1:%d/cmd" % chancfg.API_PORT, data=json.dumps({"ch": ch, "action": "replan"}).encode(),
+                                    method="POST", headers={"Content-Type": "application/json"})
+        urllib.request.urlopen(rq, timeout=3).read()
+    except Exception: pass               # the channel is off: it plans from scratch when it starts anyway
+
 def lib_file(path):
     """A file in the library (under ROOT) - never an absolute path or ../ outside it."""
     full = os.path.normpath(os.path.join(ROOT, str(path or "")))
@@ -3309,8 +3321,11 @@ def history(qs, limit=2000):
     music = sum(1 for r in out if r["type"] == "music")
     return {"day": day, "items": out, "count": len(out), "songs": music}
 
+def ch_liq():
+    ch = getattr(TL, "ch", None); cfg = chancfg.get(ch) if ch else None
+    return Liq(int(cfg["telnet"])) if cfg else Liq()
 def get_settings():
-    c = dbc(); liq = Liq(); snd = {}
+    c = dbc(); liq = ch_liq(); snd = {}
     for v in SOUND_VARS:
         try: snd[v] = float(liq.cmd("var.get " + v).split()[-1])
         except Exception: snd[v] = None
@@ -3358,6 +3373,11 @@ def relay_title(it):
     threading.Thread(target=go, daemon=True).start()
 def set_settings(d):
     global MIX_OUT
+    if getattr(TL, "ch", None):        # a theme channel: only its own sound settings (the rest of Settings is Hype Radio's)
+        liq = ch_liq()
+        for k, v in (d.get("sound") or {}).items():
+            if k in SOUND_VARS: liq.cmd(f"var.set {k} = {float(v):.2f}")
+        return get_settings()
     c = dbc(); liq = Liq()
     if isinstance(d.get("relay"), dict): relay_save(d["relay"])
     for k in ("smart_pick", "hit_hour", "hour_preview"):
@@ -3436,7 +3456,36 @@ class H(BaseHTTPRequestHandler):
         if isinstance(body, (dict, list)): body = json.dumps(body).encode()
         self.send_response(code); self.send_header("Content-Type", ctype); self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
+    def ch_of(self, p):
+        """?ch=<theme channel> on a planning / report / sound path -> that channel (main = None)."""
+        ch = (parse_qs(urlparse(self.path).query).get("ch") or [""])[0]
+        if not ch or ch == "main" or not chancfg.valid(ch): return None
+        return ch if (p in CH_PATHS or p.startswith("/plan/") or p == "/settings") else None
     def do_GET(self):
+        p = urlparse(self.path).path.replace("/api", "", 1)
+        if p == "/channels": return self.chan_proxy("GET", "/status")
+        TL.ch = self.ch_of(p)
+        try: return self._do_GET()
+        finally: TL.ch = None
+    def do_POST(self):
+        p = urlparse(self.path).path.replace("/api", "", 1)
+        if p == "/channels/cmd":
+            n = int(self.headers.get("Content-Length", 0)); return self.chan_proxy("POST", "/cmd", self.rfile.read(n))
+        TL.ch = self.ch_of(p)
+        try: return self._do_POST()
+        finally: TL.ch = None
+    def chan_proxy(self, method, path, body=None):
+        """The theme channels' own process (hype-channels, 127.0.0.1:8100). Not running = every channel shows as off."""
+        try:
+            rq = urllib.request.Request("http://127.0.0.1:%d%s" % (chancfg.API_PORT, path), data=body, method=method, headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(rq, timeout=5) as r: return self.send(200, json.loads(r.read() or b"{}"))
+        except urllib.error.HTTPError as e:
+            try: return self.send(e.code, json.loads(e.read() or b"{}"))
+            except ValueError: return self.send(e.code, {"ok": False, "error": "channels: %s" % e})
+        except Exception as e:
+            if path == "/status": return self.send(200, {"channels": [dict(c, enabled=False, running=False, down=True) for c in chancfg.load()]})
+            return self.send(503, {"ok": False, "error": "the theme channels service is not running (%s)" % e})
+    def _do_GET(self):
         u = urlparse(self.path); qs = parse_qs(u.query); p = u.path.replace("/api", "", 1)
         try:
             if p == "/state": return self.send(200, E.state())
@@ -3603,7 +3652,7 @@ class H(BaseHTTPRequestHandler):
             self.send(404, {"error": "not found"})
         except Exception as e:
             log.warning("GET %s: %s", p, e); self.send(500, {"error": str(e)})
-    def do_POST(self):
+    def _do_POST(self):
         n = int(self.headers.get("Content-Length", 0))
         if urlparse(self.path).path in ("/api/upload/chunk", "/upload/chunk"):      # raw file piece, not JSON
             try: return self.send(200, up_chunk(parse_qs(urlparse(self.path).query), self.rfile, n))
@@ -3651,9 +3700,11 @@ class H(BaseHTTPRequestHandler):
                     elif a == "save_events": planner.api_save_events(c, d)
                     elif a == "save_padbanks": planner.api_save_padbanks(c, d)
                     elif a == "save_screen": planner.api_save_screen_rules(c, d)
-                    elif a == "save_ads": planner.api_save_ads(c, d); E.replan()
+                    elif a == "save_ads": planner.api_save_ads(c, d); (None if TL.ch else E.replan())
                     elif a != "replan": return self.send(404, {"error": "unknown"})
-                    if a in ("save_clock", "delete_clock", "set_schedule", "set_schedule_date", "replan", "delete_playlist", "save_playlist", "reset_playlist", "save_show_clocks"): E.replan()
+                    if a in ("save_clock", "delete_clock", "set_schedule", "set_schedule_date", "replan", "delete_playlist", "save_playlist", "reset_playlist", "save_show_clocks"):
+                        if TL.ch: chan_replan(TL.ch)           # a theme channel plans again in its own process – Hype Radio is not touched
+                        else: E.replan()
                 return self.send(200, res)
             except ValueError as e: return self.send(400, {"error": str(e)})
             except sqlite3.IntegrityError: return self.send(400, {"error": "that name is already used"})
