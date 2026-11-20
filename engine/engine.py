@@ -36,8 +36,9 @@ def fold(t):
     return "".join(ch for ch in unicodedata.normalize("NFKD", str(t or "")) if not unicodedata.combining(ch)).lower()
 TL = threading.local()       # the theme channel a panel request is for (?ch=latina): set only for the planning / report paths below
 CH_PATHS = ("/playlists", "/playlist", "/folders", "/padbanks", "/pads", "/clocks", "/schedule", "/events", "/preview_hour", "/history", "/history.csv",
-            "/rights.csv", "/rights_check", "/week")
+            "/rights.csv", "/rights_check", "/week", "/weekreport", "/audstats", "/aud24", "/audsongs", "/audtime")
 _STATION_COL = []
+audstats.CHF = lambda: getattr(TL, "ch", None) or ""     # History → Audience per station: a theme channel's own stats_<id>.db
 def dbc():
     if getattr(TL, "ch", None): return chancfg.connect(TL.ch)       # a theme channel's own planning database (songs = the library)
     c = sqlite3.connect(DB, timeout=30)
@@ -2489,16 +2490,17 @@ def to_replace(c, folder="", q=""):
             if kbps < 190: why.append("audio %d kbps" % kbps)
         if why: out[path] = (why, plays.get(path, 0))
     return out
-def lib_show(ch=None):
+def lib_show(ch=None, plan=False):
     """Which stations' songs a channel sees in the Library / Planning folders (Hype Radio = "main"). Default: Hype Radio only its own,
     a theme channel its own + Hype Radio's (e.g. LAT for Hype Latina)."""
     ch = ch if ch and chancfg.valid(ch) else "main"
     try: v = planner.get_setting(sqlite3.connect(DB, timeout=30), "lib_show_" + ch, None)
     except Exception: v = None
-    if not isinstance(v, list): v = ["main"] if ch == "main" else [ch, "main"]
+    # not set (Library → Stations): the Library follows the channel you're on (only its own songs); Planning also offers Hype Radio's folders
+    if not isinstance(v, list): v = ["main"] if ch == "main" else ([ch, "main"] if plan else [ch])
     return [x for x in v if x == "main" or chancfg.valid(x)] or ["main"]
-def station_sql(ch=None):
-    sts = ["" if x == "main" else x for x in lib_show(ch)]
+def station_sql(ch=None, plan=False):
+    sts = ["" if x == "main" else x for x in lib_show(ch, plan)]
     return "COALESCE(station, '') IN (%s)" % ",".join("'%s'" % x for x in sts)      # ids are [a-z0-9] only (chancfg.ID_RE)
 def library(qs):
     c = dbc(); q = (qs.get("q", [""])[0]).strip(); sec = qs.get("section", ["music"])[0]; folder = qs.get("folder", [""])[0]
@@ -3228,6 +3230,12 @@ def aud_sampler():
             except Exception: pass
             try: audstats.update(LISTEN.get("mp3keys") or set(), is_player)      # sessions for History → Audience
             except Exception as e: log.warning("audience sessions: %s", e)
+            for ch_ in chancfg.load():                                          # the theme channels: each its own sessions (stats_<id>.db)
+                if not ch_.get("enabled"): continue
+                TL.ch = ch_["id"]
+                try: audstats.update(mp3_devices("/" + ch_["mount"]) or set(), is_player)
+                except Exception as e: log.warning("audience sessions %s: %s", ch_["id"], e)
+                finally: TL.ch = None
             c = dbc(); c.execute("INSERT OR REPLACE INTO aud_samples VALUES(?,?,?,?)", (time.time(), r, pub["n"], tv))
             if time.time() - last_clean > 3600:
                 last_clean = time.time(); c.execute("DELETE FROM aud_samples WHERE t < ?", (time.time() - 14 * 86400,))
@@ -3245,6 +3253,12 @@ def stats_jobs_safe():
     with STATS_BUSY:
         try: stats_jobs()
         except Exception as e: log.warning("audience stats: %s", e)
+        for ch_ in chancfg.load():          # the theme channels: plays + 5-minute points in their own stats_<id>.db
+            if not os.path.exists(chancfg.db_path(ch_["id"])): continue
+            TL.ch = ch_["id"]
+            try: stats_jobs()
+            except Exception as e: log.warning("audience stats %s: %s", ch_["id"], e)
+            finally: TL.ch = None
 def stats_jobs():
     """Every 5 min: (1) each song that has ended -> one play row with the audience when listeners started to hear it and at
     its end (History → Audience → Songs); (2) the audience per 5 minutes (→ By time); (3) once: Hype Live's history."""
@@ -3260,7 +3274,7 @@ def stats_jobs():
     rs = audstats.heard("radio", t_from - 86400, now); vs = audstats.heard("tv", t_from - 86400, now)
     out = []
     for k, (st, ar, ti, path, ln) in enumerate(rows):
-        if st < t_from or not (path or "").startswith("music/") or "/RECORDINGS/" in "/" + (path or ""): continue     # mixes count too (20 Nov)
+        if st < t_from or not re.match(r"music(-[a-z0-9_]+)?/", path or "") or "/RECORDINGS/" in "/" + (path or ""): continue     # mixes count too (20 Nov); music-<channel>/ too
         end = starts[k + 1] if k + 1 < len(starts) else None
         if end is None or end + 60 > now: break                         # still playing / its end not heard by every player yet
         # cut off = not a real play: under 90 s AND under 80 % of the song (20 Nov: short songs that play to the end count too, from 30 s)
@@ -3283,7 +3297,8 @@ def stats_jobs():
             a[0] += 1; a[1] += rr; a[2] += tv or 0; a[3] = max(a[3], rr); a[4] = max(a[4], tv or 0)
         pts = [(t, round(a[1] / a[0], 2), round(a[2] / a[0], 2), a[3], a[4], "h") for t, a in sorted(acc.items())]
     audstats.add_aud5(pts)
-    # 3. Hype Live's history (13 months of plays, 400 days of audience) – once, before Studio's own numbers start
+    # 3. Hype Live's history (13 months of plays, 400 days of audience) – once, before Studio's own numbers start (Hype Radio only)
+    if getattr(TL, "ch", None): return
     try: st_ = json.load(open(HL_IMPORT))
     except Exception: st_ = {}
     if not st_.get("done") and now - st_.get("tried", 0) > 3600:
@@ -3361,6 +3376,15 @@ def get_settings():
     for v in SOUND_VARS:
         try: snd[v] = float(liq.cmd("var.get " + v).split()[-1])
         except Exception: snd[v] = None
+    out = _settings_main(c, snd)
+    if getattr(TL, "ch", None):        # a theme channel: what it has (Sound, Mixing, Rotation & planning) from its own database / radio engine
+        g = lambda k, dflt: planner.get_setting(c, k, dflt)
+        out.update({"channel": TL.ch, "sound": snd, "smart_pick": bool(g("smart_pick", True)), "hit_hour": bool(g("hit_hour", True)), "hour_preview": bool(g("hour_preview", True)),
+                "artist_sep_min": float(g("artist_sep_min", 75)), "title_sep_h": float(g("title_sep_h", 3)),
+                "strict_hold_before": float(g("strict_hold_before", 60)), "strict_hold_after": float(g("strict_hold_after", 60)),
+                "jingle_db": float(g("jingle_db", -3.0)), "sound_presets": g("sound_presets", {}) or {}, "sound_presets_hidden": g("sound_presets_hidden", []) or []})
+    return out
+def _settings_main(c, snd):
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
             "jingle_hide": bool(planner.get_setting(c, "jingle_hide", True)), "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
@@ -3405,10 +3429,21 @@ def relay_title(it):
     threading.Thread(target=go, daemon=True).start()
 def set_settings(d):
     global MIX_OUT
-    if getattr(TL, "ch", None):        # a theme channel: only its own sound settings (the rest of Settings is Hype Radio's)
-        liq = ch_liq()
+    if getattr(TL, "ch", None):        # a theme channel: its own sound, mixing, rotation + planning (in its own database / radio engine)
+        liq = ch_liq(); c = dbc()
         for k, v in (d.get("sound") or {}).items():
             if k in SOUND_VARS: liq.cmd(f"var.set {k} = {float(v):.2f}")
+        for k in ("smart_pick", "hit_hour", "hour_preview"):
+            if k in d: planner.set_setting(c, k, bool(d[k]))
+        for k, lo, hi in (("artist_sep_min", 0.0, 360.0), ("title_sep_h", 0.5, 48.0), ("strict_hold_before", 0.0, 240.0), ("strict_hold_after", 0.0, 240.0),
+                          ("jingle_db", -12.0, 3.0)):
+            if k in d: planner.set_setting(c, k, max(lo, min(hi, float(d[k]))))
+        if "sound_presets" in d and isinstance(d["sound_presets"], dict):
+            planner.set_setting(c, "sound_presets", {str(n)[:40]: {k: float(x) for k, x in v.items() if k in SOUND_VARS and isinstance(x, (int, float))}
+                                                     for n, v in list(d["sound_presets"].items())[:30] if isinstance(v, dict)})
+        if "sound_presets_hidden" in d and isinstance(d["sound_presets_hidden"], list):
+            planner.set_setting(c, "sound_presets_hidden", [str(n)[:40] for n in d["sound_presets_hidden"][:30]])
+        planner._HOLD.clear()
         return get_settings()
     c = dbc(); liq = Liq()
     if isinstance(d.get("relay"), dict): relay_save(d["relay"])
@@ -3568,7 +3603,7 @@ class H(BaseHTTPRequestHandler):
                     self.send_header("Content-Disposition", f'attachment; filename="hype-song-plays-{days}d.csv"'); self.send_header("Content-Length", str(len(body)))
                     self.end_headers(); self.wfile.write(body); return
                 if (qs.get("key") or [""])[0]: return self.send(200, {"plays": audstats.song_plays(qs["key"][0], days, by, t0, t1)})
-                try: imp = json.load(open(HL_IMPORT))
+                try: imp = json.load(open(HL_IMPORT)) if not getattr(TL, "ch", None) else {"done": True}
                 except Exception: imp = {}
                 return self.send(200, dict(audstats.songs(days, by, t0, t1), imported={k: imp.get(k) for k in ("done", "plays", "aud", "error")}))
             if p == "/aud24": return self.send(200, audstats.last24(5, (qs.get("by") or ["song"])[0]))
@@ -3583,6 +3618,13 @@ class H(BaseHTTPRequestHandler):
             if p == "/audience": return self.send(200, {"radio": listeners(), "tv": viewers(), "t": int(time.time())})
             if p in ("/nowplaying", "/nowplaying/hype_radio"): return self.send(200, nowplaying_api())
             if p == "/guard": return self.send(200, guard_status(full=True))
+            if p == "/level" and chancfg.valid((qs.get("ch") or [""])[0]):      # a theme channel's meters (Settings → Sound on that channel)
+                try:
+                    st = json.loads(urllib.request.urlopen("http://127.0.0.1:%d/status" % chancfg.API_PORT, timeout=2).read())
+                    x = next((y for y in st.get("channels", []) if y["id"] == qs["ch"][0]), {}); m = x.get("meter") or []
+                except Exception: m = []
+                f_ = lambda i: m[i] if len(m) > i else 0.0
+                return self.send(200, {"l": f_(0), "r": f_(1), "comp": f_(2), "lim": f_(3), "lufs": m[4] if len(m) > 4 else None, "agc": 0, "agc_state": "", "agc_on": False, "ch": None})
             if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"] + AGC["lift"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01, "ch": LEVEL.get("ch")})
             if p in ("/rights.csv", "/rights_check"):
                 return self.send(200, *rights_report(qs, p.endswith(".csv")))
@@ -3619,7 +3661,7 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, {"paths": paths})
             if p == "/clocks": return self.send(200, planner.api_clocks(dbc()))
             if p == "/schedule": return self.send(200, planner.api_schedule(dbc()))
-            if p == "/folders": return self.send(200, planner.api_folders(dbc(), station_sql(TL.ch)))
+            if p == "/folders": return self.send(200, planner.api_folders(dbc(), station_sql(TL.ch, plan=True)))
             if p == "/lib_show": return self.send(200, {"show": lib_show((qs.get("ch") or [""])[0]), "stations": [{"id": "main", "name": "Hype Radio", "color": "#05A9C6"}] + [{"id": x["id"], "name": x["name"], "color": x["color"], "logo": x.get("logo")} for x in chancfg.load()],
                                                        "roots": sorted(d for d in os.listdir(ROOT) if re.match(r"^(music|jingles)-[a-z][a-z0-9]{1,19}$", d))})
             if p == "/overlays": return self.send(200, planner.api_overlays(dbc()))
@@ -3681,7 +3723,7 @@ class H(BaseHTTPRequestHandler):
                                                             clock=int(qs["clock"][0]) if "clock" in qs else None))
             if p == "/graphics": return self.send(200, {"show": SHOW["title"], "show_image": show_name_image(SHOW["title"]), "show_v": show_image_v(SHOW["title"]), "start": SHOW["start"], "end": SHOW["end"], "temp": WEATHER["temp"], "code": WEATHER["code"]})
             if p == "/pads":
-                c = dbc(); rows = c.execute("SELECT path, title, folder, duration, has_video FROM items WHERE section='jingles' AND problem IS NULL ORDER BY folder, title").fetchall()
+                c = dbc(); rows = c.execute("SELECT path, title, folder, duration, has_video FROM items WHERE section='jingles' AND problem IS NULL AND " + station_sql(TL.ch, plan=True) + " ORDER BY folder, title").fetchall()
                 return self.send(200, [dict(zip(["path", "title", "folder", "duration", "has_video"], r)) for r in rows])
             self.send(404, {"error": "not found"})
         except Exception as e:
@@ -4149,14 +4191,14 @@ MP3_HITS = []     # (time, address, player) of every /radio.mp3 start (nginx mir
 MP3_HITS_FILE = "/var/lib/hype/mp3hits.json"
 try: MP3_HITS.extend(tuple(h) for h in json.load(open(MP3_HITS_FILE)) if time.time() - h[0] < 7 * 86400)
 except Exception: pass
-def mp3_devices():
+def mp3_devices(mount="/radio.mp3"):
     """MP3 listeners as devices: Icecast's listener list (player + connected seconds) matched to the start nginx reported
     (address + player + time). An unmatched connection still counts, as its own device."""
     try:
         if not ICE_ADMIN["auth"] or time.time() - ICE_ADMIN["t"] > 3600:
             x = open("/etc/icecast2/icecast.xml").read()
             ICE_ADMIN.update(t=time.time(), auth=base64.b64encode((re.search(r"<admin-user>([^<]+)", x).group(1) + ":" + re.search(r"<admin-password>([^<]+)", x).group(1)).encode()).decode())
-        r = urllib.request.Request("http://127.0.0.1:8000/admin/listclients?mount=/radio.mp3", headers={"Authorization": "Basic " + ICE_ADMIN["auth"]})
+        r = urllib.request.Request("http://127.0.0.1:8000/admin/listclients?mount=" + urllib.parse.quote(mount), headers={"Authorization": "Basic " + ICE_ADMIN["auth"]})
         x = urllib.request.urlopen(r, timeout=3).read().decode("utf-8", "replace")
         import html as _h
         out = set(); now = time.time()
@@ -4169,7 +4211,7 @@ def mp3_devices():
             try: start = now - float(g("Connected") or 0)
             except ValueError: start = now
             if ip and ip not in ("127.0.0.1", "::1"): out.add(ip + "|" + ua); continue     # a direct listener (port 8000)
-            hit = min((h for h in MP3_HITS if h[2] == ua and abs(h[0] - start) < 8), key=lambda h: abs(h[0] - start), default=None)
+            hit = min((h for h in MP3_HITS if h[2] == ua and abs(h[0] - start) < 8), key=lambda h: abs(h[0] - start), default=None) if mount == "/radio.mp3" else None
             out.add((hit[1] + "|" + ua) if hit else ("conn" + lid + "|" + ua))
         return out
     except Exception as e:
@@ -4219,7 +4261,8 @@ def week_report(qs):
     t0 = time.mktime(mon.timetuple()); t1 = time.mktime((mon + D.timedelta(days=7)).timetuple())
     c = dbc()
     rows = c.execute("SELECT started, path, artist, title, folder, mode, kind FROM asrun WHERE started>=? AND started<? ORDER BY started", (t0, t1)).fetchall()
-    music = [r for r in rows if (r[1] or "").startswith("music/") and "/MIXES/" not in (r[1] or "") and "/RECORDINGS/" not in (r[1] or "")]
+    chw = getattr(TL, "ch", None)
+    music = [r for r in rows if re.match(r"music(-[a-z0-9_]+)?/", r[1] or "") and "/MIXES/" not in (r[1] or "") and "/RECORDINGS/" not in (r[1] or "")]
     songs = C.Counter(r[1] for r in music); arts = C.Counter()
     for r in music:
         for a in re.split(r"\s+(?:x|X|&|feat\.?|ft\.?|,)\s+", r[2] or ""):
@@ -4228,7 +4271,7 @@ def week_report(qs):
     genre = lambda p: (p.split("/") + ["", ""])[1]
     genres = C.Counter(genre(r[1]) for r in music)
     vids = sum(1 for r in music if r[5] in ("clip", "pair"))
-    jingles = sum(1 for r in rows if (r[1] or "").startswith("jingles/"))
+    jingles = sum(1 for r in rows if re.match(r"jingles(-[a-z0-9_]+)?/", r[1] or ""))
     mixes = sum(1 for r in rows if "/MIXES/" in (r[1] or "") or "/RECORDINGS/" in (r[1] or ""))
     # rotation: active music (not archive / mixes / problem files)
     lib = [x[0] for x in c.execute("SELECT path FROM items WHERE section='music' AND problem IS NULL AND path NOT LIKE '%/MIXES/%' AND path NOT LIKE '%/RECORDINGS/%' AND path NOT LIKE '%ARC%/%' AND path NOT LIKE '%ARCHIVE%'")]
@@ -4243,14 +4286,24 @@ def week_report(qs):
     # stability: the guard's events of this week
     ev = []
     try:
-        for ln in open("/var/lib/hype/guard_events.jsonl"):
+        for ln in (open("/var/lib/hype/guard_events.jsonl") if not chw else ()):
             try: e = json.loads(ln)
             except ValueError: continue
             if t0 <= e.get("t", 0) < t1 and e.get("level") in ("bad", "repair", "warn"): ev.append(e)
     except OSError: pass
     # own streams: peak + unique devices per day (kept since 9 Nov 2026)
-    try: aud = json.load(open(AUD_DAYS))
+    try: aud = json.load(open(AUD_DAYS)) if not chw else {}
     except Exception: aud = {}
+    if chw:         # a theme channel: peak (5-minute points) + unique devices per day from its own audience file
+        try:
+            sc = audstats.db()
+            for i in range(7):
+                d0 = time.mktime((mon + D.timedelta(days=i)).timetuple()); d1 = d0 + 86400
+                pk = sc.execute("SELECT MAX(rmax) FROM aud5 WHERE t >= ? AND t < ?", (d0, d1)).fetchone()[0]
+                un = sc.execute("SELECT COUNT(DISTINCT dk) FROM sessions WHERE end >= ? AND start < ?", (d0, d1)).fetchone()[0]
+                if pk or un: aud[(mon + D.timedelta(days=i)).isoformat()] = {"radio": {"peak": int(pk or 0), "unique": max(int(un or 0), int(pk or 0))}}
+            sc.close()
+        except Exception as e: log.warning("week report audience %s: %s", chw, e)
     adays = [[(mon + D.timedelta(days=i)).isoformat(), aud.get((mon + D.timedelta(days=i)).isoformat(), {})] for i in range(7)]
     return {"week": mon.isocalendar()[1], "from": mon.isoformat(), "to": (mon + D.timedelta(days=6)).isoformat(), "w": w,
             "totals": {"songs": len(music), "unique_songs": len(songs), "videos": vids, "jingles": jingles, "mixes": mixes, "items": len(rows)},

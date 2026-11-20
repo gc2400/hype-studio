@@ -42,18 +42,20 @@ def item(c, path):
     return d
 
 
-def annotate(it):
+def annotate(it, mix_out=None, jingle_db=0.0):
     """The telnet line for one item: cue points, mix length, song gain (a simpler copy of Hype Radio's annotate)."""
+    MIX_OUT_ = MIX_OUT if mix_out is None else mix_out          # Settings → Mixing of this channel
     cs = it["cue_start"] or 0.0; dur = it["duration"] or it["cue_end"] or 0; ce = it["cue_end"] or dur
     cm = it["cue_mix"] if it["cue_mix"] and it["cue_mix"] > cs else ce
     if it["section"] in ("jingles", "ads"):
         cross = max(0.3, min(8.0, ce - cm)); fade = 0.0            # jingles play out to their END under the next song
     else:
         end_ = max(ce, dur or ce)
-        if not it["cues_edited"] and end_ - cm < MIX_OUT: cm = max(cs, end_ - MIX_OUT)
-        cross = max(0.3, min(6.0, MIX_OUT, end_ - cm)); fade = cross
+        if not it["cues_edited"] and end_ - cm < MIX_OUT_: cm = max(cs, end_ - MIX_OUT_)
+        cross = max(0.3, min(6.0, MIX_OUT_, end_ - cm)); fade = cross
     ce = cm + cross
     gain = 0.0 if it["lufs"] is None else max(-12.0, min(12.0, TARGET_LUFS - it["lufs"]))
+    if it["section"] in ("jingles", "ads"): gain += jingle_db
     if BAD.search(it["path"]): raise ValueError("file name with control characters")
     q = lambda v: BAD.sub(" ", str(v or "")).replace("\\", "/").replace('"', "'")
     meta = (f'liq_cue_in="{cs:.2f}",liq_cue_out="{ce:.2f}",liq_cross_duration="{cross:.2f}",liq_amplify="{gain:.2f} dB",'
@@ -122,9 +124,11 @@ class Channel:
         return [r[0] for r in c.execute("SELECT path FROM asrun ORDER BY started DESC LIMIT ?", (n,))]
 
     def pick(self, c, at):
-        rec = set(self.recent(c, 40)) | {p["path"] for p in self.plan}
+        # this channel's Settings → Rotation: same song / same artist again after … (defaults: 3 h / 75 min, as Hype Radio)
+        tsep = float(planner.get_setting(c, "title_sep_h", 3) or 3) * 3600; asep = float(planner.get_setting(c, "artist_sep_min", 75) or 0) * 60
+        rec = {r[0] for r in c.execute("SELECT path FROM asrun WHERE started > ?", (at - tsep,))} | {p["path"] for p in self.plan}
         arts = []
-        for (a,) in c.execute("SELECT artist FROM asrun ORDER BY started DESC LIMIT 12"): arts += akey(a)
+        for (a,) in c.execute("SELECT artist FROM asrun WHERE started > ?", (at - asep,)): arts += akey(a)
         for p in self.plan: arts += akey(p.get("artist"))
         held = planner.held_songs(c, at) if hasattr(planner, "held_songs") else set()
         def ok(p_):
@@ -192,7 +196,7 @@ class Channel:
                 self.refill(c)
                 if n == 0 and self.plan:
                     it = self.plan[0]
-                    try: self.tel("q.push " + annotate(it)); self.pushed = it["id"]; self.err = ""
+                    try: self.tel("q.push " + annotate(it, *self.mixcfg())); self.pushed = it["id"]; self.err = ""
                     except ValueError as e: log.warning("%s: %s – skipped", self.id, e); self.plan.pop(0)
                 elif n == 0 and not self.plan:
                     self.err = "Nothing to play: give this channel a clock in Planning (or put songs in its playlists)."
@@ -225,6 +229,18 @@ class Channel:
     def set_sim(self, on, auto=False):
         self.tel("var.set sim_on = %s" % ("true" if on else "false")); self.sim = bool(on); self.auto_sim = bool(on and auto)
         log.info("%s: live from Hype Radio %s", self.id, "ON" if on else "off")
+
+    def mixcfg(self):
+        """(mix length, jingles volume) from this channel's Settings → Mixing – read again every 30 s."""
+        m = getattr(self, "_mix", None)
+        if m and time.time() - m[0] < 30: return m[1]
+        mo, jd = MIX_OUT, -3.0
+        try: mo = max(0.3, min(6.0, float(self.tel("var.get mix_out", 1).split()[0])))
+        except (OSError, ValueError, IndexError): pass
+        try:
+            c = chancfg.connect(self.id); jd = float(planner.get_setting(c, "jingle_db", -3.0)); c.close()
+        except Exception: pass
+        self._mix = (time.time(), (mo, jd)); return (mo, jd)
 
     # ---------- settings (stored in the channel's own database) ----------
     DEF = {"idi": {"on": False, "every": 3, "folder": "", "duck": 0.35, "at": 0.5},
@@ -351,7 +367,7 @@ class Channel:
                 self.start_procs(); self.tick()
                 try:
                     v = self.tel("radio.level", 1).split()
-                    self.level = [float(x) for x in v[:2]] if len(v) >= 2 else None
+                    vals = [float(x) for x in v]; self.level = vals[:2] if len(vals) >= 2 else None; self.meter = vals
                 except (OSError, ValueError): self.level = None
                 if time.time() - last_aud >= 15:
                     last_aud = time.time(); self.count_listeners()
@@ -400,7 +416,7 @@ class Channel:
         return {"id": self.id, "name": self.cfg["name"], "color": self.cfg["color"], "logo": self.cfg.get("logo"), "genre": self.cfg.get("genre"), "enabled": True,
                 "running": bool(self.liq and self.liq.poll() is None), "hls": bool(self.hls and self.hls.poll() is None),
                 "now": brief(self.now), "next": [brief(p) for p in self.plan[:5]], "sim": self.sim, "listeners": self.listeners,
-                "level": self.level, "error": self.err, "mount": self.cfg["mount"], "join_live": bool(self.cfg.get("join_live")), "main_live": MAIN_LIVE["on"],
+                "level": self.level, "meter": getattr(self, "meter", None), "error": self.err, "mount": self.cfg["mount"], "join_live": bool(self.cfg.get("join_live")), "main_live": MAIN_LIVE["on"],
                 "pad": self.pad_now if self.pad_now and self.pad_now["until"] > time.time() else None, "queued": self.pushed,
                 "idi": self.setting("idi"), "voice": self.setting("voice")}
 

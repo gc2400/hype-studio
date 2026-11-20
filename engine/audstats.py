@@ -17,12 +17,29 @@ GAP = 90            # a device not seen for this long: its session has ended
 KEEP_DAYS = 400
 TVQ = {"v0": "TV 720p", "v1": "TV 1080p", "v2": "TV 480p", "v3": "TV 360p"}   # ladder.sh var_stream_map order
 LOCK = threading.Lock()
-LIVE = {}           # (kind, key) -> session
+LIVES = {}          # station ('' = Hype Radio, else a theme channel id) -> {(kind, key) -> session}
+# 20 Nov: per station. Every theme channel has its own audience file (stats_<id>.db) and its own running sessions; which one a
+# call is about = CHF() – the engine points it at its "which channel is this request / job for" (Hype Radio when empty).
+CHF = lambda: ""
+def _st():
+    st = CHF() or ""
+    return st if re.fullmatch(r"[a-z0-9_]{1,24}", st) else ""
+def _db_path(): st = _st(); return DB if not st else "/srv/hype-data/stats_%s.db" % st
+def _live_file(): st = _st(); return LIVE_FILE if not st else LIVE_FILE.replace(".json", "_%s.json" % st)
+def _live():
+    st = _st()
+    if st not in LIVES:
+        LIVES[st] = {}
+        try:
+            for k, v in json.load(open(_live_file())):
+                if time.time() - v["last"] <= GAP: LIVES[st][tuple(k)] = v
+        except Exception: pass
+    return LIVES[st]
 _geo = {"r": None, "m": 0}
 
 
 def db():
-    c = sqlite3.connect(DB, timeout=10)
+    c = sqlite3.connect(_db_path(), timeout=10)
     c.execute("""CREATE TABLE IF NOT EXISTS sessions(kind TEXT, start REAL, end REAL, stream TEXT, dev TEXT, app TEXT,
                  os TEXT, cc TEXT, city TEXT, dk TEXT)""")
     c.execute("CREATE INDEX IF NOT EXISTS s_end ON sessions(end)")
@@ -104,6 +121,10 @@ def hls_now(is_player, window=45):
         p = m.group(3); ua = re.findall(r'"([^"]*)"', ln); ua = ua[-1] if ua else ""
         if not p.endswith(".ts") or not is_player(ua): continue
         k = m.group(1) + "|" + ua
+        st = _st()
+        if st:                                                     # a theme channel: only its own HLS pieces (/ch/<id>/c….ts)
+            if p.startswith("/ch/%s/c" % st): out.setdefault(("radio", k), ("Radio HLS (app / website)", t))
+            continue
         if p.startswith("/tv/"):
             q = p.split("/")[2] if p.count("/") >= 3 else ""
             out.setdefault(("tv", k), (TVQ.get(q, "TV"), t))       # newest line first: the quality it plays NOW + when
@@ -114,7 +135,7 @@ def hls_now(is_player, window=45):
 
 def update(mp3_keys, is_player):
     """Called every 15 s by the engine with the MP3 listeners ("ip|ua" or "connN|ua"). Starts / ends sessions."""
-    now = time.time(); seen = hls_now(is_player)
+    now = time.time(); seen = hls_now(is_player); LIVE = _live(); LIVE_FILE_ = _live_file()
     for k in mp3_keys or ():
         seen[("radio", k)] = ("Radio MP3", now)
     ended = []
@@ -132,8 +153,8 @@ def update(mp3_keys, is_player):
         for sk in [k for k, s in LIVE.items() if now - s["last"] > GAP]:
             ended.append(LIVE.pop(sk))
         try:
-            with open(LIVE_FILE + ".tmp", "w") as f: json.dump([[list(k), v] for k, v in LIVE.items()], f)
-            os.chmod(LIVE_FILE + ".tmp", 0o600); os.replace(LIVE_FILE + ".tmp", LIVE_FILE)
+            with open(LIVE_FILE_ + ".tmp", "w") as f: json.dump([[list(k), v] for k, v in LIVE.items()], f)
+            os.chmod(LIVE_FILE_ + ".tmp", 0o600); os.replace(LIVE_FILE_ + ".tmp", LIVE_FILE_)
         except Exception: pass
     if ended:
         c = db()
@@ -147,7 +168,7 @@ LAG = {"Radio MP3": 4.0}
 def heard(kind, t0, t1):
     """The sessions (radio / tv) as (start, end) on the ON-AIR clock: when the moments they heard went on air."""
     c = db(); rows = c.execute("SELECT start, end, stream FROM sessions WHERE kind=? AND end >= ? AND start <= ?", (kind, t0 - 120, t1 + 120)).fetchall(); c.close()
-    with LOCK: rows += [(v["start"], v["last"], v["stream"]) for v in LIVE.values() if v["kind"] == kind and v["last"] >= t0 - 120]
+    with LOCK: rows += [(v["start"], v["last"], v["stream"]) for v in _live().values() if v["kind"] == kind and v["last"] >= t0 - 120]
     out = []
     for st, en, stream in rows:
         lag = LAG.get(stream, 15.0); out.append((st - lag, en - lag))
@@ -158,8 +179,7 @@ def count_at(sess, x):
 def load_live():
     """After an engine restart: the sessions that were running go on (if they were seen in the last 90 s)."""
     try:
-        for k, v in json.load(open(LIVE_FILE)):
-            if time.time() - v["last"] <= GAP: LIVE[tuple(k)] = v
+        _live()
     except Exception: pass
 
 
@@ -183,7 +203,7 @@ def report(days=1, kind="", t0=None, t1=None):
     t1 = min(t1 or now, now)
     c = db()
     rows = c.execute("SELECT kind, start, end, stream, dev, app, cc, city, dk FROM sessions WHERE end >= ? AND start < ?", (t0, t1)).fetchall(); c.close()
-    with LOCK: live = [dict(v) for v in LIVE.values()] if t1 >= now - 60 else []
+    with LOCK: live = [dict(v) for v in _live().values()] if t1 >= now - 60 else []
     rows = [dict(zip(("kind", "start", "end", "stream", "dev", "app", "cc", "city", "dk"), r)) for r in rows]
     rows += [dict(s, end=s["last"], live=True) for s in live]
     if kind in ("radio", "tv"): rows = [r for r in rows if r["kind"] == kind]
@@ -371,7 +391,7 @@ def bytime(view="today", f0=None, f1=None):
     dev = {k: n for k, n in c.execute("SELECT kind, COUNT(DISTINCT dk) FROM sessions WHERE end >= ? AND start < ? GROUP BY kind", (t0, t1))}
     c.close()
     with LOCK:
-        for s in LIVE.values():
+        for s in _live().values():
             if t1 > now - 60: dev.setdefault(s["kind"], 0)
     def pk(x):
         v, k = x

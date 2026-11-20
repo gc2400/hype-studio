@@ -6,124 +6,108 @@
 <title>Hype Studio · Channel</title>
 <link rel="icon" href="logo.png"><link rel="apple-touch-icon" href="/panel/apple-touch-icon.png"><link rel="manifest" href="/panel/manifest.json"><meta name="apple-mobile-web-app-title" content="Hype Studio"><meta name="theme-color" content="#061423">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/panel/onair.css?v=1795203000">
 <style>
-:root{--bg:#061423;--card:#0B2236;--card2:#0F2B44;--deep:#071A2B;--line:#17344F;--line2:#23496B;--txt:#F2F6FA;--soft:#D3DEE8;--mut:#A9BCCD;--y:#FFE000;--b:#05A9C6;--g:#3DDC97;--r:#FF4D5E;--p:#B9A2FF;--c:#05A9C6}
-*{box-sizing:border-box}[hidden]{display:none!important}
-html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
-button,input,select{font-family:inherit}
-.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
-.wrap{padding:10px 14px 30px;display:flex;flex-direction:column;gap:14px}
-.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
-.col{display:flex;flex-direction:column;gap:14px;min-width:0}
-@media (max-width:1250px){.cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.c3{grid-column:1 / -1}}
-@media (max-width:820px){.cols{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
-.ch{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:36px}
-.lab{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
-.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.btn{cursor:pointer;border-radius:10px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);font-weight:800;font-size:12px;min-height:36px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
-.btn:hover{border-color:var(--b)}.btn.on{background:var(--y);border-color:var(--y);color:#061423}.btn.red{background:#3B0E15;border-color:#7A1F2B;color:#FF8A96}.btn.red:hover{border-color:var(--r)}
-.btn.sm{min-height:30px;padding:0 10px;font-size:11.5px}.btn.ic{width:40px;padding:0}.btn:disabled{opacity:.4;cursor:default}
-.btn svg{width:18px;height:18px}
-select,input[type=text],input[type=search]{background:var(--deep);border:1px solid var(--line2);border-radius:10px;color:var(--txt);min-height:34px;padding:0 10px;font-size:13px;color-scheme:dark;min-width:0}
-.muted{color:var(--mut);font-size:12.5px}
-.badges{display:flex;gap:6px;align-items:center}
-.bd{font:800 11px Inter,system-ui,sans-serif;letter-spacing:.06em;border-radius:999px;padding:4px 10px;background:var(--card2);color:var(--mut)}
-.bd.air{background:var(--r);color:#fff}.bd.live{background:#7A1F2B;color:#fff}.bd.off{background:#1E3A56}
-.np{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center}
-.np .lg{width:64px;height:64px;border-radius:14px;background:var(--c) center/cover}
-.np .t{font-size:20px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.np .a{font-size:14px;color:var(--soft);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.np .rem{font:700 34px 'JetBrains Mono',monospace}
-.bar{height:6px;border-radius:4px;background:var(--card2);overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--c)}
-.meter{display:grid;grid-template-columns:14px 1fr;gap:4px 8px;align-items:center;font:700 10px Inter;color:var(--mut)}
-.meter .m{height:5px;border-radius:3px;background:linear-gradient(90deg,#2FBF7A,#3DDC97 70%,#FFE000 85%,#FF4D5E);position:relative;overflow:hidden}
-.meter .m i{position:absolute;top:0;bottom:0;right:0;background:var(--card2);transition:left .1s linear}
-.padnow{display:flex;align-items:center;gap:8px;background:#14102A;border:1px solid #3A2E66;border-radius:10px;padding:6px 10px;font-size:12.5px;font-weight:700;color:var(--p)}
-.list{display:flex;flex-direction:column}
-.it{display:grid;grid-template-columns:62px minmax(0,1fr) 44px auto;gap:10px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--line)}
-.it:last-child{border-bottom:0}.it .tm{font:700 12px 'JetBrains Mono',monospace;color:var(--mut)}
-.it b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.it span.sub{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
-.it.j b{color:var(--p)}.it.man .tm{color:var(--y)}.it .ln{font:700 12px 'JetBrains Mono',monospace;color:var(--mut);text-align:right}
-.it .acts{display:flex;gap:4px;opacity:0}.it:hover .acts{opacity:1}.it.q .acts{visibility:hidden}
-.it.q .tm{color:var(--g)}
-.banks{display:flex;gap:4px;flex-wrap:wrap}
-.pads{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.pad{cursor:pointer;min-height:64px;border-radius:12px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);font:800 12px Inter,system-ui,sans-serif;padding:8px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
-.pad:hover{border-color:var(--c)}.pad small{color:var(--mut);font:700 10.5px 'JetBrains Mono',monospace}.pad.miss{opacity:.4}.pad.empty{border-style:dashed;opacity:.35;cursor:default}
-.pad.playing{background:var(--c);color:#061423}.pad.playing small{color:#061423}
-.pedit .pe{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line);font-size:12.5px}
-.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--deep)}
-.sw b{font-size:13.5px}.sw small{display:block;color:var(--mut);font-size:12px;font-weight:500;margin-top:2px}
-.sw .row{flex-wrap:nowrap}.sw.st{flex-direction:column;align-items:stretch}.sw.st .row{justify-content:flex-end}
-@media (max-width:560px){.sw{flex-direction:column;align-items:stretch}.sw .row{flex-wrap:wrap}}
-.ltabs{display:flex;gap:4px}
-.lib{max-height:640px;overflow:auto}
-.lr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 6px;border-bottom:1px solid var(--line)}
-.lr b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lr span.sub{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
-.lr .acts{display:flex;gap:4px;opacity:0}.lr:hover .acts{opacity:1}
-@media (max-width:560px){.it{grid-template-columns:62px minmax(0,1fr) 40px}.it .acts{grid-column:2 / -1;opacity:1}.it.q .acts{display:none}}
-@media (hover:none){.lr .acts,.it .acts{opacity:1}}
-.err{background:#3B2A00;border:1px solid #6B5000;color:#FFE95C;border-radius:10px;padding:9px 12px;font-size:12.5px}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12.5px}.kv span{color:var(--mut)}.kv code{font:600 11.5px 'JetBrains Mono',monospace;color:var(--soft);word-break:break-all}
-.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line2);border-radius:12px;padding:10px 16px;font-weight:700;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}.toast.show{opacity:1}.toast.bad{border-color:var(--r)}
+/* only what the theme channel has extra – everything else is the On Air look (onair.css) */
+.np .art.lg{background:var(--c,#05A9C6) center/cover no-repeat;font-size:0}
+.dprog{height:6px;border-radius:4px;background:var(--deep);overflow:hidden}.dprog i{display:block;height:100%;width:0;background:var(--c,#05A9C6)}
+.li.man .tm.mono{color:var(--y)}.li.q{background:var(--card2);border-color:var(--line2)}.li.q .ic{color:var(--g)}
+.li.jg .tx b{color:#B9A2FF}
+.optrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.optrow b{font-size:13px}.optrow small{display:block;font-size:11.5px;color:var(--mut);font-weight:500;margin-top:2px;max-width:420px}
+.optrow .row{flex-wrap:wrap;gap:6px}
+.subbox select{min-height:30px;font-size:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12px}.kv span{color:var(--mut)}.kv code{font:600 11.5px 'JetBrains Mono',monospace;color:var(--soft);word-break:break-all}
+.cerr{background:#3B2A00;border:1px solid #6B5000;color:#FFE95C;border-radius:10px;padding:9px 12px;font-size:12.5px}
+.padnow{display:flex;align-items:center;gap:8px;background:var(--deep);border:1px solid var(--line2);border-radius:10px;padding:5px 6px 5px 10px;font-size:12px;font-weight:700;color:var(--y)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header id="hhead"></header><script src="/panel/header.js?v=1795202000"></script>
-  <div class="err" id="cErr" hidden></div>
+  <header id="hhead"></header><script src="/panel/header.js?v=1795203000"></script>
+  <div class="cerr" id="cErr" hidden></div>
   <div class="cols">
-    <div class="col">
-      <section class="card" aria-label="Player">
-        <div class="ch"><div class="badges"><span class="bd" id="bState">–</span><span class="bd" id="bName">–</span></div>
-          <button class="btn sm" id="bOnOff">Switch on</button></div>
-        <div class="np"><div class="lg" id="npLogo"></div><div style="min-width:0"><div class="t" id="nTitle">–</div><div class="a" id="nArtist"></div></div><div class="rem" id="nRem">-0:00</div></div>
-        <div class="bar"><i id="nBar"></i></div>
-        <div class="padnow" id="padNow" hidden><span>▶</span><span id="padNowT"></span><span style="flex:1"></span><button class="btn sm red" id="bPadStop2">Stop</button></div>
-        <div class="row">
-          <button class="btn ic" id="bSkip" title="Next item now" aria-label="Next"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5v14l9-7zM17 5h2v14h-2z"/></svg></button>
-          <button class="btn" id="bSim" title="Carry Hype Radio's sound now">Hype Radio live</button>
-          <span style="flex:1"></span><span class="mono muted" id="nPos"></span>
+    <!-- LEFT: player + playlist -->
+    <section class="col c1">
+      <div class="card hi" style="gap:8px;padding:12px" id="cPlayer">
+        <div class="row between" style="flex-wrap:nowrap;gap:5px">
+          <div class="row" style="gap:5px;overflow:hidden"><span class="chip" id="npOnair">–</span><span class="chip" id="npFolder" style="background:#2B2500;color:var(--y);overflow:hidden;text-overflow:ellipsis">–</span></div>
+          <button class="btn sm" id="bOnOff">Switch on</button>
         </div>
-        <div class="meter"><span>L</span><div class="m"><i id="mL" style="left:0"></i></div><span>R</span><div class="m"><i id="mR" style="left:0"></i></div></div>
-      </section>
-      <section class="card" aria-label="Playlist">
-        <div class="ch"><span class="lab">Playlist</span><span class="muted">from the hour plan</span></div>
-        <div class="list" id="nList"><span class="muted">–</span></div>
-        <span class="muted">Add from the library with NEXT or END. Yellow time = added by hand, green = already queued.</span>
-      </section>
-      <section class="card" aria-label="Live from Hype Radio">
+        <div class="np">
+          <div class="art lg" id="npArt" aria-hidden="true"></div>
+          <div style="min-width:0;flex:1;display:flex;flex-direction:column;gap:2px"><div class="t" id="npTitle">–</div><div class="a" id="npArtist"></div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none"><span class="mono big" id="tRem">-0:00</span></div>
+        </div>
+        <div class="dprog"><i id="nBar"></i></div>
+        <div class="padnow" id="padNow" hidden><span id="padNowT" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><button class="btn sm red" id="bPadStop2">Stop</button></div>
+        <div class="tp">
+          <button class="btn ib" id="bNext" aria-label="Next" title="Next item now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
+          <button class="btn" id="bSim" title="Carry Hype Radio's sound now (its live show)">HYPE RADIO LIVE</button>
+          <span class="mono muted" id="tEl" style="margin-left:auto;font-size:12px"></span>
+        </div>
+        <div class="meter" aria-label="On-air level (left and right)" role="img">
+          <div class="mrow"><span>L</span><div class="mb"><i id="mL"></i></div></div>
+          <div class="mrow"><span>R</span><div class="mb"><i id="mR"></i></div></div>
+          <span class="mono mdb" id="mDb">–∞</span>
+        </div>
+      </div>
+      <div class="card" style="padding:8px">
+        <div class="row between" style="padding:6px 6px 2px"><span class="lab">Playlist</span><span class="lab" id="logInfo" style="color:var(--b)"></span></div>
+        <div class="log ulist" id="log"></div>
+      </div>
+      <div class="card">
         <span class="lab">Live from Hype Radio</span>
-        <div class="sw"><div><b>Join Hype Radio's live shows by itself</b><small>On = when you go LIVE on Hype Radio, this channel carries your show and goes back to its own music when you stop.</small></div><button class="btn" id="bJoin">Off</button></div>
-      </section>
-    </div>
-    <div class="col">
-      <section class="card" aria-label="Pads">
-        <div class="ch"><span class="lab">Pads</span><div class="row"><button class="btn sm" id="bDuck" title="The music dips while a pad plays">Duck</button><button class="btn sm" id="bPadEdit">Edit</button><button class="btn sm red" id="bPadStop" title="Stop the pad">■</button></div></div>
-        <div class="banks" id="banks"></div>
-        <div class="pads" id="pads"></div>
-        <div class="row" id="padPages" hidden><button class="btn sm" id="pPrev">‹</button><span class="muted" id="pPage"></span><button class="btn sm" id="pNext">›</button></div>
-        <div class="pedit" id="pEdit" hidden></div>
-      </section>
-      <section class="card" aria-label="Over the intro">
+        <div class="optrow"><div><b>Join Hype Radio's live shows by itself</b><small>On = when you go LIVE on Hype Radio, this channel carries your show and goes back to its own music when you stop.</small></div><button class="btn sm" id="bJoin">OFF</button></div>
+      </div>
+    </section>
+
+    <!-- MIDDLE: pads, over the intro, streams -->
+    <section class="col c2">
+      <div class="card" id="cPads">
+        <div class="row between"><span class="lab">Pads</span><span class="row" style="gap:6px"><span class="muted" id="padSum" style="font-size:11px"></span><button class="btn sm ic" id="padGear" aria-expanded="false" aria-label="Pad settings" title="Duck, edit pads">⚙︎</button><button class="btn sm red ic" id="bPadStop" aria-label="Stop pads" title="Stop pads"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button></span></div>
+        <div class="subbox" id="padOpts" hidden><div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK: OFF</button><button class="btn sm" id="bPEdit" aria-pressed="false" title="Make banks, drag jingles from the library onto the pads">✎ EDIT</button></div></div>
+        <div class="banks" id="padBanks"></div>
+        <div class="row" id="padEditBar" hidden style="gap:6px;flex-wrap:wrap">
+          <input id="bankName" type="text" aria-label="Bank name" style="background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);min-height:32px;padding:0 8px;width:150px">
+          <button class="btn sm" id="bankNew">+ Bank</button><button class="btn sm red" id="bankDel">Delete bank</button>
+          <button class="btn sm yellow" id="padSave">Save pads</button>
+        </div>
+        <div class="grid4 pads" id="pads"></div>
+        <div class="padpg" id="padPg" hidden><button class="btn sm" id="pgPrev" aria-label="Previous page">◀</button><span id="pgTxt"></span><button class="btn sm" id="pgNext" aria-label="Next page">▶</button></div>
+      </div>
+      <div class="card">
         <span class="lab">Over the intro</span>
-        <div class="sw"><div><b>Listener voices</b><small>Voice messages for this channel from Hype Live (OK for air) play over the intro of a song; the music dips.</small></div>
-          <div class="row"><select id="vPer" aria-label="Voices per hour"><option value="1">1 / hour</option><option value="2">2 / hour</option><option value="3">3 / hour</option><option value="4">4 / hour</option></select><button class="btn" id="bVoice">On</button></div></div>
-        <div class="sw st"><div><b>ID over the intro</b><small>Every few songs an ID from the chosen jingles folder over the start of the song.</small></div>
-          <div class="row"><select id="iEvery" aria-label="Every"><option value="2">every 2</option><option value="3">every 3</option><option value="4">every 4</option><option value="5">every 5</option><option value="6">every 6</option></select><select id="iFolder" aria-label="Jingles folder" style="max-width:150px"></select><button class="btn" id="bIdi">Off</button></div></div>
-      </section>
-      <section class="card" aria-label="Streams">
-        <span class="lab">Streams · listeners <b id="lTot" style="color:var(--txt)">0</b> <span class="muted" id="lSplit"></span></span>
+        <div class="subbox">
+          <div class="optrow"><div><b>Listener voices</b><small>Voice messages for this channel from Hype Live (OK for air) play over the intro of a song; the music dips.</small></div>
+            <div class="row"><select id="vPer" aria-label="Voices per hour"><option value="1">1 / hour</option><option value="2">2 / hour</option><option value="3">3 / hour</option><option value="4">4 / hour</option></select><button class="btn sm" id="bVoice">OFF</button></div></div>
+        </div>
+        <div class="subbox">
+          <div class="optrow"><div><b>ID over the intro</b><small>Every few songs an ID from the chosen jingles folder over the start of the song.</small></div>
+            <div class="row"><select id="iEvery" aria-label="Every"><option value="2">every 2</option><option value="3">every 3</option><option value="4">every 4</option><option value="5">every 5</option><option value="6">every 6</option></select><select id="iFolder" aria-label="Jingles folder" style="max-width:160px"></select><button class="btn sm" id="bIdi">OFF</button></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row between"><span class="lab">Streams</span><span class="chip" id="lTot" title="Listeners now (MP3 + app / website)">0 listening</span></div>
         <div class="kv"><span>MP3</span><code id="uMp3"></code><span>HLS</span><code id="uHls"></code><span>Now playing</span><code id="uNp"></code></div>
-      </section>
-    </div>
-    <div class="col c3">
-      <section class="card" aria-label="Library">
-        <div class="ch"><span class="lab">Library</span><div class="ltabs"><button class="btn sm on" data-sec="music">Music</button><button class="btn sm" data-sec="jingles">Jingles</button></div></div>
-        <div class="row" style="flex-wrap:nowrap"><input type="search" id="lq" placeholder="Search artist or title…" style="flex:1"><select id="lf" aria-label="Folder" style="max-width:45%"></select></div>
-        <div class="lib" id="lib"><span class="muted">–</span></div>
-      </section>
-    </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: library -->
+    <section class="col c3">
+      <div class="card" id="cLib">
+        <div class="row between"><span class="lab">Library</span></div>
+        <label class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <span style="position:absolute;left:-9999px">Search the library</span>
+          <input id="q" type="search" placeholder="Search artist or title…" autocomplete="off">
+        </label>
+        <div class="seg" id="secs" role="tablist" aria-label="Section"></div>
+        <div class="wrapchips" id="folders"></div>
+        <div class="wrapchips" id="subfolders" hidden></div>
+        <div class="res" id="res"></div>
+      </div>
+    </section>
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -131,67 +115,77 @@ select,input[type=text],input[type=search]{background:var(--deep);border:1px sol
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const fmt = s => { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-const toast = (t, bad) => { const e = $('#toast'); e.textContent = t; e.className = 'toast show' + (bad ? ' bad' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => e.className = 'toast', bad ? 5000 : 2200); };
+function toast(t, err) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); e.style.borderColor = err ? 'var(--r)' : ''; clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('show'), err ? 5000 : 2200); }
 const CHID = () => (window.HYPE_CH ? window.HYPE_CH() : (localStorage.getItem('hypeCh') || 'main'));
 const dbPos = v => { const db = 20 * Math.log10(Math.max(v || 0, 1e-5)); return Math.max(0, Math.min(1, (db + 40) / 40)); };
 const authed = r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); } return r; };
-const get = p => fetch('/api/' + p, {cache: 'no-store'}).then(authed).then(r => r.json());
-const post = (p, d) => fetch('/api/' + p, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d || {})}).then(authed).then(r => r.json());
+const api = (p, d) => fetch('/api/' + p, d === undefined ? {cache: 'no-store'} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d)}).then(authed).then(r => r.json());
 const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} };
-let S = null, ALL = [];
+const badge = m => m === 'pair' ? ['PAIRED', 'b-pair'] : m === 'clip' ? ['CLIP', 'b-clip'] : (m || '').startsWith('jingle') ? ['JINGLE', 'b-jingle'] : ['AUDIO', 'b-audio'];
+const fold = p => (p || '').split('/').slice(1, -1).join(' / ');
+let S = null;
 function cmd(action, extra) {
-  return post('channels/cmd', Object.assign({ch: CHID(), action}, extra || {})).then(d => { if (d.ok === false) toast(d.error || 'Not done', 1); load(); return d; })
+  return api('channels/cmd', Object.assign({ch: CHID(), action}, extra || {})).then(d => { if (d.ok === false) toast(d.error || 'Not done', 1); load(); return d; })
     .catch(() => toast('No answer from the channels service', 1));
 }
-function load() { return get('channels').then(d => { ALL = d.channels || []; S = ALL.find(x => x.id === CHID()) || null; paint(); }).catch(() => {}); }
+function load() { return api('channels').then(d => { S = (d.channels || []).find(x => x.id === CHID()) || null; paint(); }).catch(() => {}); }
 
 // ---------- player + playlist ----------
-let lastList = '';
 function paint() {
-  if (!S) { $('#nTitle').textContent = 'Unknown channel'; return; }
+  if (!S) { $('#npTitle').textContent = 'Unknown channel'; return; }
   document.documentElement.style.setProperty('--c', S.color);
-  $('#npLogo').style.backgroundImage = S.logo ? `url(${S.logo})` : '';
-  $('#bName').textContent = S.name;
-  const st = $('#bState'); st.className = 'bd ' + (!S.enabled ? 'off' : S.sim ? 'live' : 'air');
-  st.textContent = S.down ? 'SERVICE OFF' : !S.enabled ? 'OFF' : S.sim ? '● LIVE FROM HYPE RADIO' : S.running ? '● ON AIR' : 'STARTING …';
-  $('#bOnOff').textContent = S.enabled ? 'Switch off' : 'Switch on'; $('#bOnOff').className = 'btn sm' + (S.enabled ? ' red' : ' on');
-  $('#cErr').hidden = !(S.error || S.down); $('#cErr').textContent = S.down ? 'The theme channels service is not running on the server.' : S.error || '';
+  $('#npArt').style.backgroundImage = S.logo ? `url(${S.logo})` : '';
+  const oa = $('#npOnair'), on = S.enabled && S.running && !S.down;
+  oa.textContent = S.down ? 'SERVICE OFF' : !S.enabled ? 'OFF' : S.sim ? '● LIVE FROM HYPE RADIO' : S.running ? '● ON AIR' : 'STARTING …';
+  oa.style.background = on ? 'var(--r)' : ''; oa.style.color = on ? '#1A0207' : '';
   const n = S.now || {};
-  $('#nTitle').textContent = S.sim ? 'Live from Hype Radio' : (n.title || (S.enabled ? '–' : 'This channel is off – switch it on'));
-  $('#nArtist').textContent = S.sim ? (S.main_live ? 'your live show' : 'Hype Radio') : (n.artist || '');
-  $('#bSim').classList.toggle('on', !!S.sim); $('#bSim').textContent = S.sim ? 'Back to own music' : 'Hype Radio live';
-  $('#bSkip').disabled = !S.running || S.sim; $('#bSim').disabled = !S.running;
-  $('#bJoin').textContent = S.join_live ? 'On' : 'Off'; $('#bJoin').classList.toggle('on', !!S.join_live); $('#bJoin').disabled = !S.enabled;
-  const pn = S.pad; $('#padNow').hidden = !pn; if (pn) $('#padNowT').textContent = (pn.kind === 'voice' ? 'Voice: ' : pn.kind === 'ID' ? 'ID: ' : 'Pad: ') + pn.title;
-  $$('#pads .pad').forEach(b => b.classList.toggle('playing', !!(pn && b.dataset.p === pn.path)));
-  const nx = (S.next || []).filter(Boolean);
-  const html = nx.map(x => `<div class="it ${x.section && x.section !== 'music' ? 'j' : ''} ${x.manual ? 'man' : ''} ${x.id === S.queued ? 'q' : ''}" data-id="${x.id}">
-      <span class="tm">${x.at ? new Date(x.at * 1000).toTimeString().slice(0, 8) : ''}</span>
-      <div style="min-width:0"><b>${esc((x.artist ? x.artist + ' – ' : '') + x.title)}</b><span class="sub">${esc((x.path || '').split('/').slice(1, -1).join(' / '))}</span></div>
-      <span class="ln">${fmt(x.len)}</span>
-      <span class="acts"><button class="btn sm" data-a="up" title="Up">↑</button><button class="btn sm" data-a="down" title="Down">↓</button><button class="btn sm red" data-a="remove" title="Take out">✕</button></span></div>`).join('')
-    || `<span class="muted">${S.enabled ? 'Nothing planned: give this channel a clock in Planning.' : 'Switch the channel on to start it.'}</span>`;
-  if (html !== lastList) { lastList = html; $('#nList').innerHTML = html; $$('#nList [data-a]').forEach(b => b.onclick = () => cmd(b.dataset.a, {id: b.closest('[data-id]').dataset.id})); }
-  const L = S.listeners || {mp3: 0, hls: 0}; $('#lTot').textContent = (L.mp3 || 0) + (L.hls || 0); $('#lSplit').textContent = `(MP3 ${L.mp3 || 0} · app / website ${L.hls || 0})`;
+  $('#npFolder').textContent = S.sim ? 'Hype Radio' : (fold(n.path) || S.name);
+  $('#bOnOff').textContent = S.enabled ? 'Switch off' : 'Switch on'; $('#bOnOff').className = 'btn sm' + (S.enabled ? ' red' : ' yellow');
+  $('#cErr').hidden = !(S.error || S.down); $('#cErr').textContent = S.down ? 'The theme channels service is not running on the server.' : S.error || '';
+  $('#npTitle').textContent = S.sim ? 'Live from Hype Radio' : (n.title || (S.enabled ? '–' : 'This channel is off – switch it on'));
+  $('#npArtist').textContent = S.sim ? (S.main_live ? 'your live show' : 'Hype Radio') : (n.artist || '');
+  $('#bSim').classList.toggle('yellow', !!S.sim); $('#bSim').textContent = S.sim ? 'BACK TO OWN MUSIC' : 'HYPE RADIO LIVE';
+  $('#bNext').disabled = !S.running || S.sim; $('#bSim').disabled = !S.running;
+  $('#bJoin').textContent = S.join_live ? 'ON' : 'OFF'; $('#bJoin').classList.toggle('on', !!S.join_live); $('#bJoin').disabled = !S.enabled;
+  const pn = S.pad; $('#padNow').hidden = !pn; if (pn) $('#padNowT').textContent = (pn.kind === 'voice' ? '▶ Listener voice: ' : pn.kind === 'ID' ? '▶ ID over intro: ' : '▶ Pad: ') + pn.title;
+  $$('#pads [data-pad]').forEach(b => { const p = (BANKS[bank] || {items: []}).items[+b.dataset.pad]; b.classList.toggle('playing', !!(pn && p && p.path === pn.path)); });
+  renderLog();
+  const L = S.listeners || {mp3: 0, hls: 0}, tot = (L.mp3 || 0) + (L.hls || 0);
+  $('#lTot').textContent = tot + ' listening'; $('#lTot').title = `MP3 ${L.mp3 || 0} · app / website ${L.hls || 0}`;
   const base = 'https://stream.hyperadio.nl/'; $('#uMp3').textContent = base + S.id + '.mp3'; $('#uHls').textContent = base + S.id + '.m3u8'; $('#uNp').textContent = base + 'api/nowplaying/' + S.id;
-  const sw = document.activeElement && document.activeElement.closest && document.activeElement.closest('.sw');
-  if (S.voice && S.idi && !sw) {
-    $('#bVoice').textContent = S.voice.on ? 'On' : 'Off'; $('#bVoice').classList.toggle('on', !!S.voice.on); $('#vPer').value = String(S.voice.per_hour);
-    $('#bIdi').textContent = S.idi.on ? 'On' : 'Off'; $('#bIdi').classList.toggle('on', !!S.idi.on); $('#iEvery').value = String(S.idi.every);
+  if (S.voice && S.idi && !(document.activeElement && document.activeElement.tagName === 'SELECT')) {
+    $('#bVoice').textContent = S.voice.on ? 'ON' : 'OFF'; $('#bVoice').classList.toggle('on', !!S.voice.on); $('#vPer').value = String(S.voice.per_hour);
+    $('#bIdi').textContent = S.idi.on ? 'ON' : 'OFF'; $('#bIdi').classList.toggle('on', !!S.idi.on); $('#iEvery').value = String(S.idi.every);
     if ($('#iFolder').value !== S.idi.folder) $('#iFolder').value = S.idi.folder;
   }
-  $$('.sw .btn, .sw select').forEach(x => x.disabled = !S.enabled);
+  ['#bVoice', '#vPer', '#bIdi', '#iEvery', '#iFolder'].forEach(x => $(x).disabled = !S.enabled);
+}
+function renderLog() {
+  const L = $('#log'), n = S.now || {}, nx = (S.next || []).filter(Boolean);
+  let html = '';
+  if (n.path && !S.sim) html += `<div class="li next" style="border-color:var(--r)"><span class="tm mono">${n.started ? new Date(n.started * 1000).toTimeString().slice(0, 5) : ''}</span><span class="ic" style="color:var(--r)">●</span><div class="tx"><b>${n.artist ? esc(n.artist) + ' – ' : ''}${esc(n.title)}</b><span>ON AIR · ${esc(fold(n.path))}</span></div><span class="du mono">${fmt(n.len)}</span></div>`;
+  nx.forEach((u, i) => {
+    const jg = u.section && u.section !== 'music', q = u.id === S.queued;
+    html += `<div class="li ${jg ? 'jg' : ''} ${u.manual ? 'man' : ''} ${q ? 'q' : ''}" data-id="${u.id}"><span class="tm mono">${u.at ? new Date(u.at * 1000).toTimeString().slice(0, 5) : ''}</span><span class="ic">${jg ? '◆' : '♪'}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(fold(u.path))}${q ? ' · queued' : ''}${u.manual ? ' · added by you' : ''}</span></div><span class="du mono">${fmt(u.len)}</span><span class="lacts">${q ? '' : `<button data-a="up" title="Earlier" aria-label="Move ${esc(u.title)} up" ${i === 0 || (i === 1 && nx[0].id === S.queued) ? 'disabled' : ''}>↑</button><button data-a="down" title="Later" aria-label="Move ${esc(u.title)} down" ${i === nx.length - 1 ? 'disabled' : ''}>↓</button><button class="rm" data-a="remove" title="Remove" aria-label="Remove ${esc(u.title)}">×</button>`}</span></div>`;
+  });
+  if (!html) html = `<span class="muted" style="padding:6px">${S.enabled ? (S.sim ? 'Carrying Hype Radio – its own music waits.' : 'Nothing planned: give this channel a clock in Planning.') : 'Switch the channel on to start it.'}</span>`;
+  $('#logInfo').textContent = nx.length ? nx.length + ' · ' + fmt(nx.reduce((a, u) => a + (u.len || 0), 0)) : '';
+  if (L.dataset.h === html) return; L.dataset.h = html; L.innerHTML = html;
+  L.querySelectorAll('[data-a]').forEach(b => b.onclick = e => { e.stopPropagation(); cmd(b.dataset.a, {id: b.closest('[data-id]').dataset.id}); });
+  L.querySelectorAll('.li[data-id]').forEach(el => el.addEventListener('click', e => { if (e.target.closest('.lacts')) return;     // phones: tap a row = its buttons
+    const on = !el.classList.contains('sel'); L.querySelectorAll('.li.sel').forEach(x => x.classList.remove('sel')); el.classList.toggle('sel', on); }));
 }
 (function tick() {
   if (S && S.now && S.now.started && !S.sim) { const pos = Date.now() / 1000 - S.now.started, len = S.now.len || 1;
-    $('#nPos').textContent = fmt(pos) + ' / ' + fmt(len); $('#nRem').textContent = '-' + fmt(len - pos); $('#nBar').style.width = Math.min(100, 100 * pos / len) + '%'; }
-  else { $('#nPos').textContent = ''; $('#nRem').textContent = S && S.sim ? 'LIVE' : '-0:00'; $('#nBar').style.width = '0'; }
+    $('#tEl').textContent = fmt(pos) + ' / ' + fmt(len); $('#tRem').textContent = '-' + fmt(len - pos); $('#nBar').style.width = Math.min(100, 100 * pos / len) + '%'; }
+  else { $('#tEl').textContent = ''; $('#tRem').textContent = S && S.sim ? 'LIVE' : '-0:00'; $('#nBar').style.width = '0'; }
   const lv = (S && S.level) || [0, 0]; $('#mL').style.left = (dbPos(lv[0]) * 100) + '%'; $('#mR').style.left = (dbPos(lv[1]) * 100) + '%';
+  const pk = Math.max(lv[0] || 0, lv[1] || 0); $('#mDb').textContent = pk > 1e-5 ? (20 * Math.log10(pk)).toFixed(1) : '–∞';
   setTimeout(tick, 250);
 })();
-$('#bOnOff').onclick = () => { const on = S.enabled; if (on && !confirm('Switch ' + S.name + ' off? Its stream stops until you switch it on again.')) return;
-  cmd(on ? 'disable' : 'enable').then(d => d && d.ok !== false && toast(on ? 'Switched off' : 'Switched on – it starts within half a minute')); };
-$('#bSkip').onclick = () => cmd('skip');
+$('#bOnOff').onclick = () => { const was = S.enabled; if (was && !confirm('Switch ' + S.name + ' off? Its stream stops until you switch it on again.')) return;
+  cmd(was ? 'disable' : 'enable').then(d => d && d.ok !== false && toast(was ? 'Switched off' : 'Switched on – it starts within half a minute')); };
+$('#bNext').onclick = () => cmd('skip');
 $('#bSim').onclick = () => cmd(S.sim ? 'sim_off' : 'sim_on');
 $('#bJoin').onclick = () => cmd('join_live', {on: !S.join_live});
 
@@ -199,58 +193,99 @@ $('#bJoin').onclick = () => cmd('join_live', {on: !S.join_live});
 const setIdi = v => cmd('set', {what: 'idi', value: v}), setVoice = v => cmd('set', {what: 'voice', value: v});
 $('#bVoice').onclick = () => setVoice({on: !S.voice.on}); $('#vPer').onchange = () => setVoice({per_hour: +$('#vPer').value});
 $('#bIdi').onclick = () => setIdi({on: !S.idi.on}); $('#iEvery').onchange = () => setIdi({every: +$('#iEvery').value}); $('#iFolder').onchange = () => setIdi({folder: $('#iFolder').value});
-get('folders').then(f => { const js = (f && f.jingles) || []; $('#iFolder').innerHTML = js.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join(''); if (S && S.idi) $('#iFolder').value = S.idi.folder; }).catch(() => {});
+api('folders').then(f => { const js = (f && f.jingles) || []; $('#iFolder').innerHTML = js.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join(''); if (S && S.idi) $('#iFolder').value = S.idi.folder; }).catch(() => {});
 
-// ---------- pads (this channel's own banks) ----------
-let BANKS = [], bank = +(ls('hypeChBank_' + CHID()) || 0), page = 0, PEDIT = false, JINGLES = [], DUCK = ls('hypeChDuck') !== '0';
-const PER = 12;
-function loadPads() { return get('padbanks').then(b => { BANKS = Array.isArray(b) ? b : []; if (bank >= BANKS.length) bank = 0; renderPads(); }).catch(() => {}); }
+// ---------- pads: this channel's own banks, the On Air pads ----------
+let BANKS = [], bank = +(ls('hypeChBank_' + CHID()) || 0), PEDIT = false, DUCK = ls('hypeChDuck') !== '0', LIB = null;
+const PADC = ['#8C2A3A', '#B4651E', '#9C7A12', '#1E7A4A', '#1E6B7A', '#2A4FA0', '#5A3A8C', '#8C3A6B'];
+const PADS_PER_PAGE = 12, PGS = {};
+function loadPads() { return api('padbanks').then(b => { BANKS = Array.isArray(b) ? b : []; if (bank >= BANKS.length) bank = 0; renderPads(); }).catch(() => {}); }
+function padPage(n) {
+  const pages = Math.max(1, Math.ceil(n / PADS_PER_PAGE)), k = String(bank);
+  PGS[k] = Math.min(PGS[k] || 0, pages - 1);
+  const show = !PEDIT && pages > 1; $('#padPg').hidden = !show;
+  if (show) { $('#pgTxt').textContent = (PGS[k] + 1) + ' / ' + pages; $('#pgPrev').disabled = PGS[k] === 0; $('#pgNext').disabled = PGS[k] >= pages - 1; }
+  return [PGS[k] * PADS_PER_PAGE, (PGS[k] + 1) * PADS_PER_PAGE];
+}
+$('#pgPrev').onclick = () => { PGS[String(bank)] = Math.max(0, (PGS[String(bank)] || 0) - 1); renderPads(); };
+$('#pgNext').onclick = () => { PGS[String(bank)] = (PGS[String(bank)] || 0) + 1; renderPads(); };
 function renderPads() {
-  $('#bDuck').classList.toggle('on', DUCK);
-  $('#banks').innerHTML = BANKS.map((b, i) => `<button class="btn sm ${i === bank ? 'on' : ''}" data-b="${i}">${esc(b.name)}</button>`).join('') || '<span class="muted">No pads yet – press Edit.</span>';
-  $$('#banks [data-b]').forEach(x => x.onclick = () => { bank = +x.dataset.b; page = 0; ls('hypeChBank_' + CHID(), bank); renderPads(); });
-  const items = (BANKS[bank] || {items: []}).items, pages = Math.max(1, Math.ceil(items.length / PER)); page = Math.min(page, pages - 1);
-  const sl = items.slice(page * PER, page * PER + PER);
-  $('#pads').innerHTML = sl.map(p => `<button class="pad ${p.missing ? 'miss' : ''}" data-p="${esc(p.path)}" title="${esc(p.path)}"><span>${esc(p.label)}</span><small>${p.duration ? fmt(p.duration) : ''}</small></button>`).join('')
-    + Array(Math.max(0, PER - sl.length)).fill('<span class="pad empty"></span>').join('');
-  $$('#pads [data-p]').forEach(b => b.onclick = () => cmd('pad', {path: b.dataset.p, duck: DUCK ? 0.35 : null}));
-  $('#padPages').hidden = pages < 2; $('#pPage').textContent = (page + 1) + ' / ' + pages;
-  renderEdit();
+  $('#bDuck').textContent = 'DUCK: ' + (DUCK ? 'ON' : 'OFF'); $('#bDuck').classList.toggle('on', DUCK); $('#bDuck').setAttribute('aria-pressed', DUCK);
+  $('#bPEdit').classList.toggle('on', PEDIT); $('#bPEdit').setAttribute('aria-pressed', PEDIT);
+  $('#padSum').textContent = DUCK ? 'duck' : '';
+  $('#padBanks').innerHTML = BANKS.map((b, i) => `<button class="btn sm ${i === bank ? 'on' : ''}" data-bank="${i}">${esc(b.name.replace(/^[^A-Za-z0-9]+\s*/u, ''))}</button>`).join('');
+  $$('#padBanks [data-bank]').forEach(b => b.onclick = () => { bank = +b.dataset.bank; ls('hypeChBank_' + CHID(), bank); renderPads(); });
+  const B = BANKS[bank] || {items: []}; $('#bankName').value = B.name || ''; $('#pads').classList.toggle('edit', PEDIT); $('#padEditBar').hidden = !PEDIT;
+  const pg = padPage(B.items.length);
+  $('#pads').innerHTML = B.items.map((p, i) => (!PEDIT && (i < pg[0] || i >= pg[1])) ? '' : `<button class="btn pad ${p.missing ? 'missing' : ''}" style="background:${p.color || PADC[i % 8]};border-color:${p.color || PADC[i % 8]}" data-pad="${i}" draggable="${PEDIT}">${esc((p.label || '').replace(/^HYPE\s+\w+\s*[-–]\s*/i, '').replace(/^[^A-Za-z0-9]+\s*/u, ''))}<small>${fmt(p.duration)}</small>${PEDIT ? `<span class="rm" data-rmpad="${i}" aria-label="Remove">×</span>` : ''}</button>`).join('')
+    + (PEDIT ? '<button class="padadd" id="padDrop" title="Drop a jingle from the library">drop here</button>' : '') || '<span class="muted">' + (BANKS.length ? 'This bank is empty. Press ⚙︎ → ✎ EDIT and drag jingles from the library onto it.' : 'No pads yet. Press ⚙︎ → ✎ EDIT → + Bank, then drag jingles from the library onto it.') + '</span>';
+  $$('#pads [data-pad]').forEach(b => {
+    const p = B.items[+b.dataset.pad];
+    b.onclick = e => {
+      if (PEDIT) { if (e.target.dataset.rmpad) { B.items.splice(+e.target.dataset.rmpad, 1); renderPads(); } return; }
+      b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit');
+      cmd('pad', {path: p.path, duck: DUCK ? 0.35 : null});
+    };
+    b.ondragstart = e => e.dataTransfer.setData('text/plain', 'pad:' + b.dataset.pad);
+    b.ondragover = e => { if (PEDIT) e.preventDefault(); };
+    b.ondrop = e => { e.preventDefault(); e.stopPropagation(); padDrop(e.dataTransfer.getData('text/plain'), +b.dataset.pad); };
+  });
+  const pd = $('#padDrop');
+  if (pd) { pd.ondragover = e => { e.preventDefault(); pd.classList.add('over'); }; pd.ondragleave = () => pd.classList.remove('over');
+    pd.ondrop = e => { e.preventDefault(); pd.classList.remove('over'); padDrop(e.dataTransfer.getData('text/plain') || '', B.items.length); };
+    pd.onclick = () => toast('Drag a jingle from the library (right) onto the pads'); }
+  if (S) paint();
 }
-$('#pPrev').onclick = () => { page = Math.max(0, page - 1); renderPads(); }; $('#pNext').onclick = () => { page++; renderPads(); };
+function padDrop(d, pos) {
+  const B = BANKS[bank]; if (!B) return toast('Make a bank first (+ Bank)', 1);
+  if (d.startsWith('pad:')) { const it = B.items.splice(+d.slice(4), 1)[0]; B.items.splice(Math.min(pos, B.items.length), 0, it); return renderPads(); }
+  if (d.startsWith('lib:')) { const path = d.slice(4), it = (LIB && LIB.items.find(x => x.path === path)) || {};
+    B.items.splice(pos, 0, {path, label: it.title || path.split('/').pop(), duration: it.duration, has_video: it.has_video}); renderPads(); }
+}
+$('#padGear').onclick = () => { const o = $('#padOpts').hidden; $('#padOpts').hidden = !o; $('#padGear').setAttribute('aria-expanded', o); };
 $('#bDuck').onclick = () => { DUCK = !DUCK; ls('hypeChDuck', DUCK ? '1' : '0'); renderPads(); };
+$('#bPEdit').onclick = () => { if (PEDIT) return $('#padSave').click(); PEDIT = true; renderPads(); };
 $('#bPadStop').onclick = $('#bPadStop2').onclick = () => cmd('pad_stop');
-$('#bPadEdit').onclick = () => { PEDIT = !PEDIT; $('#pEdit').hidden = !PEDIT; $('#bPadEdit').classList.toggle('on', PEDIT);
-  if (PEDIT && !JINGLES.length) get('pads').then(j => { JINGLES = Array.isArray(j) ? j : []; renderEdit(); }); else renderEdit(); };
-function savePads() { return post('plan/save_padbanks', {banks: BANKS.map(b => ({id: b.id, name: b.name, items: b.items.map(i => ({path: i.path, label: i.label}))}))}).then(loadPads); }
-function renderEdit() {
-  if (!PEDIT) return; const b = BANKS[bank];
-  $('#pEdit').innerHTML = `<div class="row"><input type="text" id="peName" value="${esc(b ? b.name : '')}" placeholder="Bank name" style="flex:1" ${b ? '' : 'disabled'}><button class="btn sm" id="peNew">+ Bank</button>${b ? '<button class="btn sm red" id="peDel">Delete bank</button>' : ''}</div>
-    ${b ? b.items.map((p, i) => `<div class="pe"><span>${esc(p.label)} <span class="muted">${esc(p.path.split('/').slice(1, -1).join(' / '))}</span></span><button class="btn sm red" data-rm="${i}">✕</button></div>`).join('') : ''}
-    ${b ? `<div class="row" style="margin-top:6px"><select id="peAdd" style="flex:1"><option value="">+ add a jingle …</option>${JINGLES.map(j => `<option value="${esc(j.path)}">${esc((j.folder ? j.folder + ' · ' : '') + (j.title || j.path.split('/').pop()))}</option>`).join('')}</select></div>` : ''}`;
-  const nm = $('#peName'); if (nm && b) nm.onchange = () => { b.name = nm.value.trim() || b.name; savePads(); };
-  $('#peNew').onclick = () => { BANKS.push({name: 'Bank ' + (BANKS.length + 1), items: []}); bank = BANKS.length - 1; savePads(); };
-  const del = $('#peDel'); if (del) del.onclick = () => { if (!confirm('Delete bank ' + b.name + '?')) return; BANKS.splice(bank, 1); bank = 0; savePads(); };
-  $$('#pEdit [data-rm]').forEach(x => x.onclick = () => { b.items.splice(+x.dataset.rm, 1); savePads(); });
-  const ad = $('#peAdd'); if (ad) ad.onchange = () => { const j = JINGLES.find(x => x.path === ad.value); if (!j) return; b.items.push({path: j.path, label: j.title || j.path.split('/').pop()}); savePads(); };
-}
+$('#bankName').onchange = () => { const B = BANKS[bank]; if (B) B.name = $('#bankName').value.trim() || B.name; };
+$('#bankNew').onclick = () => { BANKS.push({name: 'Bank ' + (BANKS.length + 1), items: []}); bank = BANKS.length - 1; renderPads(); };
+$('#bankDel').onclick = () => { const B = BANKS[bank]; if (!B || !confirm('Delete bank ' + B.name + '?')) return; BANKS.splice(bank, 1); bank = 0; renderPads(); };
+$('#padSave').onclick = () => api('plan/save_padbanks', {banks: BANKS.map(b => ({id: b.id, name: b.name, items: b.items.map(i => ({path: i.path, label: i.label, color: i.color}))}))})
+  .then(r => { if (r && r.error) return toast(r.error, 1); PEDIT = false; toast('Pads saved'); loadPads(); });
 
-// ---------- library ----------
-let SEC = 'music', LT = null;
+// ---------- library (this channel's stations; Library → Stations decides which ones) ----------
+let SEC = 'music', GENRE = '', FOLDER = '', SEL = null, LT = null;
+const SECS = [['music', 'Music'], ['mixes', 'Mixes'], ['jingles', 'Jingles']];
 function lib() {
-  const f = $('#lf').value, q = $('#lq').value.trim();
-  get(`library?section=${SEC}&limit=200&folder=${encodeURIComponent(f)}&q=${encodeURIComponent(q)}`).then(d => {
-    const fs = d.folders || [];
-    $('#lf').innerHTML = '<option value="">All folders</option>' + fs.filter(Boolean).map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join(''); $('#lf').value = f;
-    $('#lib').innerHTML = (d.items || []).filter(x => !x.problem).map(x => `<div class="lr" data-p="${esc(x.path)}"><div style="min-width:0"><b>${esc((x.artist ? x.artist + ' – ' : '') + (x.title || x.path.split('/').pop()))}</b><span class="sub">${esc(x.folder || '')} · ${fmt(x.duration)}</span></div>
-      <span class="acts"><button class="btn sm" data-a="next" title="Plays after the queued one">NEXT</button><button class="btn sm" data-a="end" title="At the end of the playlist">END</button>${SEC === 'jingles' ? '<button class="btn sm" data-a="over" title="Now over the music (it dips)">OVER</button>' : ''}</span></div>`).join('')
-      || '<span class="muted">Nothing found.</span>';
-    $$('#lib [data-a]').forEach(b => b.onclick = () => { const p = b.closest('[data-p]').dataset.p, a = b.dataset.a;
-      if (a === 'over') cmd('pad', {path: p, duck: 0.35}); else cmd('insert', {path: p, where: a}).then(r => r && r.ok !== false && toast(a === 'next' ? 'Plays next' : 'Added at the end')); });
+  api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&limit=200').then(d => {
+    LIB = d;
+    $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="${k === SEC ? 'on' : ''}" data-sec="${k}" role="tab" aria-selected="${k === SEC}">${n}<span>${(d.counts || {})[k] ?? ''}</span></button>`).join('');
+    $$('#secs [data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
+    const all = d.all_folders || d.folders || [];
+    const genres = [...new Set(all.map(f => (f || '').split('/')[0]).filter(Boolean))];
+    $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g ? esc(g) : 'All'}</button>`).join('');
+    $$('#folders [data-g]').forEach(b => b.onclick = () => { GENRE = b.dataset.g; FOLDER = ''; lib(); });
+    const one = genres.length === 1 ? genres[0] : '', G = GENRE || one; $('#folders').hidden = !!one;
+    const subs = G ? [...new Set(all.filter(f => f.startsWith(G + '/')).map(f => f.split('/').slice(0, 2).join('/')))] : [];
+    $('#subfolders').hidden = !subs.length;
+    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(1).join('/')) : (one ? 'All' : 'All ' + esc(G))}</button>`).join('');
+    $$('#subfolders [data-f]').forEach(b => b.onclick = () => { FOLDER = b.dataset.f; lib(); });
+    $('#res').innerHTML = (d.items || []).map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
+      return `<div class="ri ${SEL === it.path ? 'sel' : ''}" draggable="true" data-p="${esc(it.path)}"><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${it.problem ? `<span style="color:#FF8A97">⚠ ${esc(it.problem)}</span>` : `${esc(it.folder)} · ${fmt(it.duration)}`}</span></div>${it.problem ? '' : `<div class="acts">
+        <button class="btn" data-act="next" aria-label="Play next" title="Play next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
+        <button class="btn" data-act="end" aria-label="Add to the end" title="Add to the end of the playlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+        ${SEC === 'jingles' ? '<button class="btn overb" data-act="over" title="Play it NOW over the music (the music dips under it) – an ID over an intro">OVER</button>' : ''}</div>`}</div>`; }).join('') || '<span class="muted">Nothing found.</span>';
+    $$('#res .ri').forEach(el => {
+      el.onclick = e => { const b = e.target.closest('[data-act]');
+        if (!b) { SEL = el.dataset.p; $$('#res .ri').forEach(r => r.classList.toggle('sel', r === el)); return; }
+        e.stopPropagation(); const a = b.dataset.act, it = d.items.find(x => x.path === el.dataset.p);
+        if (a === 'over') cmd('pad', {path: it.path, duck: 0.35}).then(r => r && r.ok !== false && toast('Over the music: ' + (it.title || it.path.split('/').pop())));
+        else cmd('insert', {path: it.path, where: a}).then(r => r && r.ok !== false && toast(a === 'next' ? 'Plays next' : 'Added to the end'));
+      };
+      el.ondragstart = e => e.dataTransfer.setData('text/plain', 'lib:' + el.dataset.p);
+    });
   }).catch(() => {});
 }
-$$('[data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; $$('[data-sec]').forEach(x => x.classList.toggle('on', x === b)); $('#lf').value = ''; lib(); });
-$('#lq').oninput = () => { clearTimeout(LT); LT = setTimeout(lib, 250); }; $('#lf').onchange = lib;
+$('#q').oninput = () => { clearTimeout(LT); LT = setTimeout(lib, 250); };
 
 load(); loadPads(); lib();
 setInterval(() => { if (!document.hidden) load(); }, 2000);

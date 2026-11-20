@@ -407,6 +407,17 @@ function render() {
 }
 // ---------- sections + find ----------
 let SEC = 'sound'; try { SEC = localStorage.getItem('hypeSetSec') || 'sound'; } catch (e) {}
+// a theme channel (header channel switch): only its own Sound, Mixing (mix length, jingles volume) and Rotation & planning
+const SCH = (() => { try { return window.HYPE_CH ? window.HYPE_CH() : (localStorage.getItem('hypeCh') || 'main'); } catch (e) { return 'main'; } })();
+if (SCH !== 'main') {
+  // (hidden, not removed: the rest of this page still fills them in)
+  ['voices', 'tv', 'tickers', 'live', 'guard'].forEach(k => $$(`[data-sec="${k}"]`).forEach(x => x.classList.add('chx')));
+  ['smart_mix', 'jingle_fade', 'pad_duck', 'id_intro', 'id_intro_max', 'id_intro_db', 'id_intro_gap', 'mix_max', 'av_lag'].forEach(id => { const e = document.getElementById(id), r = e && e.closest('.sl, .opt'); if (r) r.classList.add('chx'); });
+  document.head.insertAdjacentHTML('beforeend', '<style>.chx{display:none!important}</style>');
+  const nm = 'Hype ' + SCH.charAt(0).toUpperCase() + SCH.slice(1), lb = document.querySelector('[data-sec="sound"] .lab');
+  if (lb) lb.textContent = 'Sound · ' + nm + ' only · changes are live';
+  if (!['sound', 'mixing', 'rotation'].includes(SEC)) SEC = 'sound';
+}
 // ---------- alarm & Hype Live ----------
 function gRender(g) {
   const c = g.conf || {}, hb = g.heartbeat || {}, pr = g.problems || [];

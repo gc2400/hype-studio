@@ -15,6 +15,7 @@ radio/radio.liq|/etc/hype/radio.liq|644|hype-radio
 tv/ladder.sh|/etc/hype/ladder.sh|755|hype-ladder
 tv/sway.conf|/etc/hype/sway.conf|644|-
 tv/radio_hls.sh|/etc/hype/radio_hls.sh|755|hype-radio-hls
+web/panel/onair.css|/var/www/studio/panel/onair.css|644|-
 web/panel/index.html|/var/www/studio/panel/index.html|644|-
 web/panel/cuewave.js|/var/www/studio/panel/cuewave.js|644|-
 web/panel/cue.js|/var/www/studio/panel/cue.js|644|-

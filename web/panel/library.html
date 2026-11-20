@@ -489,7 +489,8 @@ function step(dir) { const L = visible(), i = SEL ? L.findIndex(x => x.path === 
 $('#bSave').hidden = true; $('#bSaveNext').textContent = 'Next ▶'; $('#bSaveNext').title = 'Next song (Enter) – everything saves by itself';
 $('#bSave').onclick = save; $('#bSaveNext').onclick = () => (dirty ? save() : Promise.resolve(true)).then(ok => ok && step(1));
 $('#bAuto').onclick = () => { if (!SEL) return; clearTimeout(saveT); dirty = false; api('cmd/reset_cues', {path: SEL.path}).then(() => toast('Automatic cue points – measured again in a minute')); };
-$('#bNextUp').onclick = () => api('cmd/insert', {path: SEL.path, pos: 0}).then(() => toast('Plays next on air'));
+$('#bNextUp').onclick = () => { const ch = window.HYPE_CH ? window.HYPE_CH() : 'main';     // a theme channel: into that channel's playlist
+  (ch === 'main' ? api('cmd/insert', {path: SEL.path, pos: 0}) : api('channels/cmd', {ch, action: 'insert', path: SEL.path, where: 'next'})).then(r => r && r.ok === false ? toast(r.error || 'Not done') : toast('Plays next on air')); };
 $('#ovSel').onchange = () => { const v = $('#ovSel').value; api('cmd/set_overlay', v === 'rule' || v === 'none' ? {path: SEL.path, mode: v} : {path: SEL.path, mode: 'song', jingle: v}).then(() => { SEL.overlay_mode = v === 'rule' || v === 'none' ? v : 'song'; SEL.overlay_path = v; toast('Saved'); }); };
 let qT; $('#q').oninput = () => { clearTimeout(qT); qT = setTimeout(lib, 200); };
 $('#onlyNew').onclick = () => { AUTOC = AUTOC ? 0 : 1; lib(); };

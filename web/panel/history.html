@@ -146,6 +146,7 @@ th .sub{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-
   </section>
 </div>
 <script>
+const STN = () => { const c = window.HYPE_CH ? window.HYPE_CH() : 'main'; return c === 'main' ? 'Hype Radio TV' : 'Hype ' + c.charAt(0).toUpperCase() + c.slice(1); };   // reports per station
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const fmt = s => Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0');
@@ -223,9 +224,9 @@ $('#wPdf').onclick = () => pdf('weekCard', 'Hype station report ' + (WD ? WD.fro
 const today_ = () => new Date().toISOString().slice(0, 10);
 $$('[data-pdf]').forEach(b => b.onclick = () => {
   const c = b.dataset.pdf;
-  if (c === 'songCard') pdf(c, 'Hype song report ' + today_(), 'Hype Radio TV – song report · ' + (SD ? 'last ' + SD + ' days' : $('#sFrom').value + ' – ' + $('#sTo').value) + ' · ' + (SB === 'artist' ? 'by artist' : 'by song'));
-  if (c === 'audCard') pdf(c, 'Hype audience ' + today_(), 'Hype Radio TV – audience · ' + (AV === 'who' ? 'listeners & viewers · ' + ({1: 'today', 7: 'last 7 days', 30: 'last 30 days'}[AD] || ($('#aFrom').value + ' – ' + $('#aTo').value)) : 'trends · ' + ({today: 'today', yesterday: 'yesterday', avg7: 'average day, 7 days', avg30: 'average day, 30 days', own: 'average day, ' + $('#tFrom').value + ' – ' + $('#tTo').value}[TW])));
-  if (c === 'dayCard') pdf(c, 'Hype playback history ' + $('#day').value, 'Hype Radio TV – playback history · ' + $('#day').value);
+  if (c === 'songCard') pdf(c, 'Hype song report ' + today_(), STN() + ' – song report · ' + (SD ? 'last ' + SD + ' days' : $('#sFrom').value + ' – ' + $('#sTo').value) + ' · ' + (SB === 'artist' ? 'by artist' : 'by song'));
+  if (c === 'audCard') pdf(c, 'Hype audience ' + today_(), STN() + ' – audience · ' + (AV === 'who' ? 'listeners & viewers · ' + ({1: 'today', 7: 'last 7 days', 30: 'last 30 days'}[AD] || ($('#aFrom').value + ' – ' + $('#aTo').value)) : 'trends · ' + ({today: 'today', yesterday: 'yesterday', avg7: 'average day, 7 days', avg30: 'average day, 30 days', own: 'average day, ' + $('#tFrom').value + ' – ' + $('#tTo').value}[TW])));
+  if (c === 'dayCard') pdf(c, 'Hype playback history ' + $('#day').value, STN() + ' – playback history · ' + $('#day').value);
 });
 $('#wPrev').onclick = () => { W++; wLoad(); }; $('#wNext').onclick = () => { if (W > 0) { W--; wLoad(); } };
 // ---- Audience: who listens / watches on our own streams (sessions: device, app, country, how long) ----
