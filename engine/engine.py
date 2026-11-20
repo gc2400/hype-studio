@@ -35,7 +35,7 @@ def fold(t):
     import unicodedata
     return "".join(ch for ch in unicodedata.normalize("NFKD", str(t or "")) if not unicodedata.combining(ch)).lower()
 TL = threading.local()       # the theme channel a panel request is for (?ch=latina): set only for the planning / report paths below
-CH_PATHS = ("/playlists", "/playlist", "/folders", "/padbanks", "/pads", "/clocks", "/schedule", "/events", "/preview_hour", "/history", "/history.csv",
+CH_PATHS = ("/playlists", "/playlist", "/folders", "/padbanks", "/pads", "/clocks", "/shows", "/schedule", "/events", "/preview_hour", "/history", "/history.csv",
             "/rights.csv", "/rights_check", "/week", "/weekreport", "/audstats", "/aud24", "/audsongs", "/audtime")
 _STATION_COL = []
 audstats.CHF = lambda: getattr(TL, "ch", None) or ""     # History → Audience per station: a theme channel's own stats_<id>.db
