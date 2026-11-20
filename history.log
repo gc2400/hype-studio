@@ -455,3 +455,4 @@
 2026-11-20T19:53:35 ok c6144db1 Theme channels: reports + audience per station, Settings per channel (sound, mixing, rotation), Library follows the channel, channel panel in the On Air look (shared onair.css)
 2026-11-20T20:03:34 ok 6ae0962f Theme channels: own pads (no Hype Radio banks), On Air library card (search, sort, Stations, 3 folder levels), Planning without Hype Radio shows / On screen / ads / sweepers / recordings
 2026-11-20T20:05:23 ok a6ea58df Theme channels: Planning's show list from the channel's own database (no Hype Radio shows)
+2026-11-20T20:19:44 ok f2a4bb18 Theme channels: station skins like the website (Latina sunset, Ambiente deep blue) on every page; no 'You are working on' bar
