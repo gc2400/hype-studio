@@ -1,16 +1,17 @@
 {
- "time": "2026-11-20T21:40:31",
+ "time": "2026-11-20T21:53:35",
  "result": "ok",
- "commit": "cde4b14c6252201ef0757ae3aa701381b39ecccf",
- "subject": "Theme channels: ID over soft intros exactly like Hype Radio (soft intro only, song->song, max per hour, minutes apart, own level, voice-length check, music back when the voice ends)",
+ "commit": "c122e706400a4dddad195e0e5327dde4a20cf3f7",
+ "subject": "Theme channels: listeners counted exactly like Hype Radio (devices, MP3 starts per stream, HLS per device, no bots, peak + unique today); channels in the streams popup",
  "log": [
-  "21:39:46 update c5762454 \u2192 cde4b14c \u00b7 2 file(s): engine/chan.py, web/panel/channel.html",
-  "21:39:46 restart hype-channels",
-  "21:40:31 installed OK \u00b7 restarted: hype-channels"
+  "21:52:50 update cde4b14c \u2192 c122e706 \u00b7 5 file(s): engine/chan.py, engine/engine.py, system/nginx-hype.conf, web/panel/channel.html, web/panel/header.js",
+  "21:52:50 restart hype-channels",
+  "21:52:50 restart hype-engine",
+  "21:53:35 installed OK \u00b7 restarted: hype-channels, hype-engine, nginx-reload"
  ],
  "guard": {
   "song": "Caribang Radio 001 \u2013 Hosted by Essovilla",
-  "listeners": 3,
+  "listeners": 2,
   "obs": true,
   "seg_age": 0.8,
   "problems": [],
