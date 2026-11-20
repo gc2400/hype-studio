@@ -1,19 +1,18 @@
 {
- "time": "2026-11-20T04:02:07",
+ "time": "2026-11-20T08:50:08",
  "result": "ok",
- "commit": "9199befd7628798a4848eb79f82025c14edfe0e5",
- "subject": "[night] Radio: mixer channel meters; voice tracking dips",
+ "commit": "aa743dfd489348808e892e5678ead69ef5aad492",
+ "subject": "Audience numbers counted fresh every 4 s (was 10) for the header dots",
  "log": [
-  "04:00:36 update 8ff4988a \u2192 9199befd \u00b7 1 file(s): radio/radio.liq",
-  "04:01:22 lab: PASS (6/6 good readings)",
-  "04:01:22 restart hype-radio",
-  "04:02:07 installed OK \u00b7 restarted: hype-radio"
+  "08:49:23 update 9199befd \u2192 aa743dfd \u00b7 2 file(s): engine/engine.py, web/panel/header.js",
+  "08:49:23 restart hype-engine",
+  "08:50:08 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "EMMAW \u2013 Ninja",
-  "listeners": 2,
+  "song": "Jetten x Jo Gekketsz \u2013 Pariba 4 Life",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
