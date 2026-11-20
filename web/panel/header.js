@@ -235,7 +235,8 @@ html{scrollbar-gutter:stable}
     put('#stRadio', d.radio && d.radio.current, 'listeners'); put('#stTv', d.tv && d.tv.current, 'viewers');
     h.querySelector('#stRadio').title = 'Radio: ' + (d.radio ? d.radio.current + ' listening now' : '–'); h.querySelector('#stTv').title = 'TV: ' + (d.tv ? d.tv.current + ' watching now' : '–');
   }).catch(() => {}); }
-  audLoad(); setInterval(audLoad, 15000);
+  audLoad(); setInterval(() => { if (!document.hidden) audLoad(); }, 5000);   // every 5 s (was 15), and at once when you come back to the tab
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) audLoad(); });
   // ---- REC: start at once, stop with a second click (so it never stops by accident) ----
   const rb = h.querySelector('#hRec'); let REC = null, recAsk = 0;
   const fmtT = s => { s = Math.max(0, Math.floor(s)); const hh = Math.floor(s / 3600), mm = Math.floor(s % 3600 / 60), ss = s % 60; return (hh ? hh + ':' + String(mm).padStart(2, '0') : mm) + ':' + String(ss).padStart(2, '0'); };
