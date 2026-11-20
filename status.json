@@ -1,17 +1,17 @@
 {
- "time": "2026-11-20T08:53:18",
+ "time": "2026-11-20T08:55:24",
  "result": "ok",
- "commit": "9731e630a1ac7870a366590a9ab504b996374e67",
- "subject": "Mixer: everything Hype Studio plays is called Studio, your studio input Live",
+ "commit": "5353e6c83c5963ec98a42b34873e4f210414adf8",
+ "subject": "Library jingles: OVER button \u2013 play an ID now over the music (ducked), e.g. over an intro while live",
  "log": [
-  "08:53:18 update f50507ed \u2192 9731e630 \u00b7 1 file(s): web/panel/index.html",
-  "08:53:18 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "08:55:24 update 9731e630 \u2192 5353e6c8 \u00b7 1 file(s): web/panel/index.html",
+  "08:55:24 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Be\u00e9le \u2013 top diesel",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
