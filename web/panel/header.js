@@ -32,7 +32,7 @@ html{scrollbar-gutter:stable}
 #hhead .chmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:90;min-width:250px;background:#0B2236;border:1px solid #23496B;border-radius:14px;padding:6px;box-shadow:0 18px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:2px}
 #hhead .chmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;color:#F2F6FA;font:700 14px Inter,system-ui,sans-serif;padding:10px;border-radius:10px;cursor:pointer}
 #hhead .chmenu button:hover{background:#0F2B44}#hhead .chmenu button.cur{background:#143049}#hhead .chmenu .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .chmenu small{margin-left:auto;color:#7F96AB;font-weight:700;font-size:11px}
-#hhead.ch-theme .hctl,#hhead.ch-theme #hLive,#hhead.ch-theme #hRec,#hhead.ch-theme #stRadio,#hhead.ch-theme #stTv,#hhead.ch-theme .hnav a[data-k=voice],#hhead.ch-theme .hnav a[data-k=studio],#hhead.ch-theme .hnav a[data-k=hypelive]{display:none!important}
+#hhead.ch-theme .hctl,#hhead.ch-theme #hLive,#hhead.ch-theme #hRec,#hhead.ch-theme .hnav a[data-k=voice],#hhead.ch-theme .hnav a[data-k=studio],#hhead.ch-theme .hnav a[data-k=hypelive]{display:none!important}
 /* station skins = the website's colours (Hype Latina / Hype Ambiente): calm, dark – the accent shows which channel you're on */
 html[data-station=latina]{--bg:#0F0A0C;--card:#1D1518;--card2:#261B1F;--deep:#170F12;--line:#3A252C;--line2:#4A3038;--mut:#C9B8BD;--soft:#DCCDD1;--b:#FFB23F;--b2:#FF6A2B;--c:#FFB23F}
 html[data-station=ambiente]{--bg:#070D1A;--card:#0F1A30;--card2:#15233F;--deep:#0B1426;--line:#23395F;--line2:#2D4774;--mut:#A9C6E6;--soft:#C9DBEF;--b:#4FC3F0;--b2:#1E5BC6;--c:#4FC3F0}
@@ -81,6 +81,8 @@ html[data-station] .card.hi{border-color:var(--line2)}
 #hhead #stRadio,#hhead #stTv{display:inline-block;width:18px;height:18px;padding:0;border-radius:50%;font-size:0;background:#55697D;border:0;margin:0}
 #hhead #stRadio[data-n],#hhead #stTv[data-n],#hhead #stLog[data-n]{width:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font:800 11px/18px Inter,system-ui,sans-serif;color:#061423;text-align:center;box-sizing:border-box}
 #hhead #stRadio.bad[data-n],#hhead #stTv.bad[data-n],#hhead #stLog.bad[data-n]{color:#fff}
+#hhead .stch{display:inline-block;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font:800 11px/18px Inter,system-ui,sans-serif;color:#fff;text-align:center;box-sizing:border-box;margin:0}
+#hhead .stch.off{background:#55697D!important;box-shadow:none!important;color:transparent;width:18px;padding:0}#hhead .stch.bad{background:#FF4D5E!important;color:#fff}
 #hhead #stLog{display:inline-block;width:18px;height:18px;padding:0;border-radius:50%;font-size:0;border:0;margin:0;background:#3DDC97;box-shadow:0 0 6px rgba(61,220,151,.5)}
 #hhead #stLog.warn{background:#FFB547;box-shadow:0 0 6px rgba(255,181,71,.6)}#hhead #stLog.bad{background:#FF4D5E;box-shadow:0 0 6px rgba(255,77,94,.6)}
 #hhead #hBox{width:400px;max-height:72vh;overflow:auto}
@@ -143,7 +145,7 @@ html[data-station] .card.hi{border-color:var(--line2)}
   h.innerHTML = `<div class="hb"><img src="/panel/logo.png" alt="Hype radio tv"><button class="chsw" id="chSw" aria-haspopup="menu" aria-expanded="false" title="The channel you work on"><i class="cd" style="background:#05A9C6"></i><span id="chName">Hype Radio</span><span class="car">▾</span></button><div class="show" id="show" hidden>Hype Studio</div><div class="chmenu" id="chMenu" role="menu" hidden></div></div>
     <div class="hctl"><span class="modes" role="group" aria-label="Programming"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button></span>
       <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
-    <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span><span class="chip" id="stLog">● LOG</span></button><a class="chip" id="stClock" href="/panel/plan.html" title="The hour plan that plays now – click: Planning">–</a><span id="clock">${hNow()}</span>
+    <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span><span id="stChs" style="display:contents"></span><span class="chip" id="stLog">● LOG</span></button><a class="chip" id="stClock" href="/panel/plan.html" title="The hour plan that plays now – click: Planning">–</a><span id="clock">${hNow()}</span>
       <div class="hpop" id="hBox" role="dialog" aria-label="Status and log" hidden><div class="htabs" role="tablist"><button data-ht="s" role="tab">Streams</button><button data-ht="l" role="tab">Log</button></div><div id="hPop"></div><div id="hLogPop" hidden></div></div></div>
     <div class="hact">
       <button class="hlive" id="hLive" title="GO LIVE: your studio mix goes on air (click twice)"><b>GO LIVE</b><span class="t" id="hLiveT"></span></button>
@@ -244,7 +246,7 @@ html[data-station] .card.hi{border-color:var(--line2)}
   function popOpen(o, t) { box.hidden = !o; dots.setAttribute('aria-expanded', o); clearInterval(popT); if (o) boxTab(t || TAB); }
   h.querySelectorAll('[data-ht]').forEach(b => b.onclick = e => { e.stopPropagation(); boxTab(b.dataset.ht); });
   // a click on the dots: the log when something new happened there, else the streams
-  dots.onclick = e => { e.stopPropagation(); const t = e.target.closest('#stLog') ? 'l' : e.target.closest('#stRadio,#stTv') ? 's' : (h.querySelector('#stLog').dataset.n ? 'l' : 's');   // the 3rd dot opens the Log
+  dots.onclick = e => { e.stopPropagation(); const t = e.target.closest('#stLog') ? 'l' : e.target.closest('#stRadio,#stTv,.stch') ? 's' : (h.querySelector('#stLog').dataset.n ? 'l' : 's');   // the 3rd dot opens the Log
     if (!box.hidden && TAB === t) return popOpen(false); popOpen(true, t); };
   document.addEventListener('click', e => { if (!box.hidden && !box.contains(e.target)) popOpen(false); });
   addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) { popOpen(false); dots.focus(); } });
@@ -286,6 +288,14 @@ html[data-station] .card.hi{border-color:var(--line2)}
     put('#stRadio', d.radio && d.radio.current, 'listeners'); put('#stTv', d.tv && d.tv.current, 'viewers');
     h.querySelector('#stRadio').title = 'Radio: ' + (d.radio ? d.radio.current + ' listening now' : '–'); h.querySelector('#stTv').title = 'TV: ' + (d.tv ? d.tv.current + ' watching now' : '–');
   }).catch(() => {}); }
+  // the theme channels (Hype Latina, Hype Ambiente …): a dot each, in the station colour, with its listeners right now (MP3 + app / website);
+  // grey = switched off, red = switched on but its radio engine is not running
+  function chDots() { fetch('/api/channels', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(d => { if (!d || !d.channels) return;
+    const box_ = h.querySelector('#stChs');
+    const html = d.channels.map(c => { const n = ((c.listeners || {}).mp3 || 0) + ((c.listeners || {}).hls || 0), st = !c.enabled ? 'off' : (!c.running || c.down) ? 'bad' : '';
+      return `<span class="chip stch ${st}" data-ch="${c.id}" style="background:${c.color};box-shadow:0 0 6px ${c.color}80" title="${c.name}: ${!c.enabled ? 'off' : st ? 'not running' : n + ' listening now'}">${c.enabled && !st ? n : st === 'bad' ? '!' : ''}</span>`; }).join('');
+    if (box_.dataset.h !== html) { box_.dataset.h = html; box_.innerHTML = html; } }).catch(() => {}); }
+  chDots(); setInterval(() => { if (!document.hidden) chDots(); }, 5000);
   audLoad(); setInterval(() => { if (!document.hidden) audLoad(); }, 5000);   // every 5 s (was 15), and at once when you come back to the tab
   document.addEventListener('visibilitychange', () => { if (!document.hidden) audLoad(); });
   // ---- REC: start at once, stop with a second click (so it never stops by accident) ----
