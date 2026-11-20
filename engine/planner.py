@@ -301,7 +301,7 @@ class ClockRunner:
             self.st[cid] = [r[0], r[1], bool(r[2])] if r else [0, 0, True]
         return self.st[cid]
     def next(self, c, at, ok, pick_jingle):
-        key = runner_key(at)
+        key = runner_key(at, c)
         if self.force_cid and getattr(self, "force_until", 0) and at >= self.force_until: self.force_cid = None   # "run now" ends with the hour
         cid = self.force_cid or clock_for(c, at)
         if cid is None: return None
@@ -598,12 +598,25 @@ def song_overlay_path(c, overlay_path):
 
 # ---------------- shows (from hyperadio.nl) + fixed times ----------------
 WEEK = []   # [{day 0=Mon, start "HH:MM", end "HH:MM", title}] – filled by the engine from the website
-def week_of(c):
-    """Hype Radio's show schedule (from hyperadio.nl). A theme channel (its database has the library attached as "lib") has no shows (yet)."""
+_SWEEK = {}
+def station_of(c):
+    """'' = Hype Radio, else the theme channel whose database this is (chan_<id>.db)."""
     try:
-        if any(r[1] == "lib" for r in c.execute("PRAGMA database_list")): return []
-    except Exception: pass
-    return WEEK
+        f = next((r[2] for r in c.execute("PRAGMA database_list") if r[1] == "main"), "") or ""
+        m = re.search(r"chan_([a-z0-9_]+)\.db$", f)
+        return m.group(1) if m else ""
+    except Exception: return ""
+def week_of(c):
+    """The show schedule: Hype Radio's (from hyperadio.nl), or a theme channel's own (website: Shows → Station schedules,
+    /var/lib/hype/week_<id>.json, written by the engine every hour). [] = no shows: its non-stop hour plan plays."""
+    sid = station_of(c)
+    if not sid: return WEEK
+    f = "/var/lib/hype/week_%s.json" % sid
+    try:
+        m = os.path.getmtime(f)
+        if _SWEEK.get(sid, (None,))[0] != m: _SWEEK[sid] = (m, json.load(open(f)))
+        return _SWEEK[sid][1]
+    except Exception: return []
 
 def init_shows(c):
     c.executescript("""
@@ -644,11 +657,15 @@ def special_at(t):
 def show_at(t, c=None):
     """The website show on air at time t (handles 23:00–00:00 style ends); a special for that date wins.
     c = a theme channel's database: no Hype Radio shows there."""
-    if c is not None and week_of(c) is not WEEK: return None
-    sp = special_at(t)
-    if sp: return sp
+    wk = WEEK
+    if c is not None:
+        wk = week_of(c)
+        if wk is not WEEK: wk = wk or []            # a theme channel: only its own shows (Hype Radio's specials are not its)
+    if wk is WEEK:
+        sp = special_at(t)
+        if sp: return sp
     lt = time.localtime(t); m = lt.tm_hour * 60 + lt.tm_min
-    for s in WEEK:
+    for s in wk:
         if s["day"] != lt.tm_wday: continue
         a, b = mins(s["start"]), mins(s["end"]) or 1440
         if b <= a: b = 1440
@@ -669,9 +686,9 @@ def repeated_hour(t):
     a, b = time.localtime(t), time.localtime(t - 3600)
     return a.tm_hour == b.tm_hour and a.tm_yday == b.tm_yday
 
-def runner_key(t):
+def runner_key(t, c=None):
     """A new clock run starts every hour and at every show change (e.g. 20:30). (The repeated hour when the clocks go back counts as its own hour.)"""
-    lt = time.localtime(t); s = show_at(t)
+    lt = time.localtime(t); s = show_at(t, c)
     return (lt.tm_yday, lt.tm_hour + (100 if repeated_hour(t) else 0), s["title"] if s else None, s["start"] if s else None)
 
 def api_shows(c):

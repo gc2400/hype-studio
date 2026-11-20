@@ -2929,7 +2929,10 @@ def show_image_v(title):
     except OSError: return 0
 SHOW_TITLES = {}
 def load_week():
-    """The week schedule from hyperadio.nl -> planner.WEEK (day, start, end, title)."""
+    """The week schedule from hyperadio.nl -> planner.WEEK (day, start, end, title); the theme channels' weeks too."""
+    for c_ in chancfg.load():
+        try: load_station_week(c_["id"])
+        except Exception as e: log.warning("week schedule %s: %s", c_["id"], e)
     with urllib.request.urlopen("https://www.hyperadio.nl/wp-json/proradio/v1/schedule", timeout=15) as r: d = json.loads(r.read())
     order = {"monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6}
     week = []
@@ -2947,6 +2950,31 @@ def load_week():
         planner.WEEK[:] = week; log.info("week schedule: %d show slots", len(week))
         try: jdump(week, "/var/lib/hype/week.json")
         except Exception: pass
+
+def load_station_week(sid):
+    """A theme channel's shows (website: Shows → Station schedules, Hype Core 0.2.0): ?station=<id> -> /var/lib/hype/week_<id>.json,
+    which planner.py reads (also in hype-channels). Only an answer that is REALLY marked for this station counts: an older
+    website ignores ?station and returns Hype Radio's week – then the channel has no shows (its non-stop hour plan plays)."""
+    with urllib.request.urlopen("https://www.hyperadio.nl/wp-json/proradio/v1/schedule?station=" + sid, timeout=15) as r: d = json.loads(r.read())
+    order = {"monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6}
+    week = []
+    if d.get("station") == sid:
+        for day in d.get("posts", []):
+            if day.get("station") not in (None, sid): continue
+            di = order.get((day.get("post_name") or day.get("post_title") or "").lower())
+            if di is None: continue
+            for sh in day.get("shows") or []:
+                shid = (sh.get("show_id") or [None])[0]
+                if not shid: continue
+                if shid not in SHOW_TITLES:
+                    with urllib.request.urlopen(f"https://www.hyperadio.nl/wp-json/wp/v2/shows/{shid}", timeout=15) as r2:
+                        import html; SHOW_TITLES[shid] = html.unescape(json.loads(r2.read())["title"]["rendered"]).strip()
+                week.append({"day": di, "start": sh["show_time"], "end": sh["show_time_end"], "title": SHOW_TITLES[shid]})
+    f = "/var/lib/hype/week_%s.json" % sid
+    try: old = json.load(open(f))
+    except Exception: old = None
+    if old != week:
+        jdump(week, f); log.info("week schedule %s: %d show slots", sid, len(week))
 
 try: planner.WEEK[:] = json.load(open("/var/lib/hype/week.json"))   # known right at start (show jingles plan right after a restart)
 except Exception: pass
@@ -3239,6 +3267,8 @@ def aud_sampler():
                 try: audstats.update(set(CHL.get(ch_["id"], {}).get("mp3keys") or []), is_player)
                 except Exception as e: log.warning("audience sessions %s: %s", ch_["id"], e)
                 finally: TL.ch = None
+            if time.time() - CH_COV["t"] > 60:                                  # covers for the theme channels' songs too (website / apps art)
+                CH_COV["t"] = time.time(); threading.Thread(target=ch_covers, daemon=True).start()
             try: os.makedirs("/run/hype", exist_ok=True); jdump(chl_out, "/run/hype/ch_listeners.json")      # hype-channels reads them (dots, now playing, its samples)
             except Exception: pass
             c = dbc(); c.execute("INSERT OR REPLACE INTO aud_samples VALUES(?,?,?,?)", (time.time(), r, pub["n"], tv))
@@ -4409,6 +4439,19 @@ def _listeners():
     d = {"current": now_n, "mp3": len(mp3s), "hls": len(hls), "peak_today": st["peak"], "peak_time": st["peak_t"],
          "unique_today": max(len(u), st["peak"]), "counts": "devices"}
     LISTEN.update(t=time.time(), d=d); return d
+CH_COV = {"t": 0}
+def ch_covers():
+    """The theme channels' songs (last played + next) get a cover lookup in the shared cover store, like Hype Radio's do
+    (cover_url queues the ones it does not have yet; the channel's now-playing feed then shows them)."""
+    try:
+        st = json.loads(urllib.request.urlopen("http://127.0.0.1:%d/status" % chancfg.API_PORT, timeout=3).read()).get("channels", [])
+    except Exception: return
+    for x in st:
+        if not x.get("enabled"): continue
+        songs = [(y.get("artist"), y.get("title")) for y in [x.get("now")] + (x.get("next") or []) + (x.get("history") or []) if y and (y.get("path") or "").startswith("music")]
+        for a, t_ in songs:
+            try: cover_url(a, t_)
+            except Exception: pass
 CHL = {}          # theme channel id -> its listeners, counted exactly like Hype Radio's (listeners() above)
 def ch_listeners(cfg):
     """A theme channel's listeners as DEVICES – the same rules as Hype Radio: MP3 from Icecast's listener list matched to
