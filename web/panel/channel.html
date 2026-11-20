@@ -100,8 +100,8 @@
             <div class="row"><select id="vPer" aria-label="Voices per hour"><option value="1">1 / hour</option><option value="2">2 / hour</option><option value="3">3 / hour</option><option value="4">4 / hour</option></select><button class="btn sm" id="bVoice">OFF</button></div></div>
         </div>
         <div class="subbox">
-          <div class="optrow"><div><b>ID over the intro</b><small>Every few songs an ID from the chosen jingles folder over the start of the song.</small></div>
-            <div class="row"><select id="iEvery" aria-label="Every"><option value="2">every 2</option><option value="3">every 3</option><option value="4">every 4</option><option value="5">every 5</option><option value="6">every 6</option></select><select id="iFolder" aria-label="Jingles folder" style="max-width:160px"></select><button class="btn sm" id="bIdi">OFF</button></div></div>
+          <div class="optrow"><div><b>ID over soft intros</b><small>As on Hype Radio: between two songs (never right after a jingle or liner), an ID plays over the start of the next song when its intro is soft long enough; the intro dips under the voice.</small></div>
+            <div class="row"><select id="iMax" aria-label="Max per hour"><option value="1">max 1 / hour</option><option value="2">max 2 / hour</option><option value="3">max 3 / hour</option><option value="4">max 4 / hour</option><option value="5">max 5 / hour</option><option value="6">max 6 / hour</option><option value="8">max 8 / hour</option><option value="10">max 10 / hour</option></select><select id="iGap" aria-label="Minutes apart"><option value="0">0 min apart</option><option value="5">5 min apart</option><option value="10">10 min apart</option><option value="15">15 min apart</option><option value="20">20 min apart</option><option value="30">30 min apart</option><option value="45">45 min apart</option><option value="60">60 min apart</option></select><select id="iDb" aria-label="Level"><option value="-15">level -15 dB</option><option value="-12">level -12 dB</option><option value="-10">level -10 dB</option><option value="-8">level -8 dB</option><option value="-6">level -6 dB</option><option value="-4">level -4 dB</option><option value="-2">level -2 dB</option><option value="0">level 0 dB</option><option value="2">level +2 dB</option><option value="4">level +4 dB</option><option value="6">level +6 dB</option></select><select id="iFolder" aria-label="IDs folder" style="max-width:160px"></select><button class="btn sm" id="bIdi">OFF</button></div></div>
         </div>
       </div>
       <div class="card">
@@ -158,10 +158,10 @@ function paint() {
   const base = 'https://stream.hyperadio.nl/'; $('#uMp3').textContent = base + S.id + '.mp3'; $('#uHls').textContent = base + S.id + '.m3u8'; $('#uNp').textContent = base + 'api/nowplaying/' + S.id;
   if (S.voice && S.idi && !(document.activeElement && document.activeElement.tagName === 'SELECT')) {
     $('#bVoice').textContent = S.voice.on ? 'ON' : 'OFF'; $('#bVoice').classList.toggle('on', !!S.voice.on); $('#vPer').value = String(S.voice.per_hour);
-    $('#bIdi').textContent = S.idi.on ? 'ON' : 'OFF'; $('#bIdi').classList.toggle('on', !!S.idi.on); $('#iEvery').value = String(S.idi.every);
+    $('#bIdi').textContent = S.idi.on ? 'ON' : 'OFF'; $('#bIdi').classList.toggle('on', !!S.idi.on); $('#iMax').value = String(S.idi.max); $('#iGap').value = String(S.idi.gap); $('#iDb').value = String(Math.round(S.idi.db));
     if ($('#iFolder').value !== S.idi.folder) $('#iFolder').value = S.idi.folder;
   }
-  ['#bVoice', '#vPer', '#bIdi', '#iEvery', '#iFolder'].forEach(x => $(x).disabled = !S.enabled);
+  ['#bVoice', '#vPer', '#bIdi', '#iMax', '#iGap', '#iDb', '#iFolder'].forEach(x => $(x).disabled = !S.enabled);
 }
 function renderLog() {
   const L = $('#log'), n = S.now || {}, nx = (S.next || []).filter(Boolean);
@@ -195,7 +195,7 @@ $('#bJoin').onclick = () => cmd('join_live', {on: !S.join_live});
 // ---------- over the intro ----------
 const setIdi = v => cmd('set', {what: 'idi', value: v}), setVoice = v => cmd('set', {what: 'voice', value: v});
 $('#bVoice').onclick = () => setVoice({on: !S.voice.on}); $('#vPer').onchange = () => setVoice({per_hour: +$('#vPer').value});
-$('#bIdi').onclick = () => setIdi({on: !S.idi.on}); $('#iEvery').onchange = () => setIdi({every: +$('#iEvery').value}); $('#iFolder').onchange = () => setIdi({folder: $('#iFolder').value});
+$('#bIdi').onclick = () => setIdi({on: !S.idi.on}); $('#iMax').onchange = () => setIdi({max: +$('#iMax').value}); $('#iGap').onchange = () => setIdi({gap: +$('#iGap').value}); $('#iDb').onchange = () => setIdi({db: +$('#iDb').value}); $('#iFolder').onchange = () => setIdi({folder: $('#iFolder').value});
 api('folders').then(f => { const js = (f && f.jingles) || []; $('#iFolder').innerHTML = js.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join(''); if (S && S.idi) $('#iFolder').value = S.idi.folder; }).catch(() => {});
 
 // ---------- pads: this channel's own banks, the On Air pads ----------

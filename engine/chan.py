@@ -68,6 +68,17 @@ def annotate(it, mix_out=None, jingle_db=0.0, smart=True, nxt=None):
     return f"annotate:{meta}:{os.path.join(ROOT, it['path'])}"
 
 
+def duck_len(it):
+    """How long the music stays down under a ducked pad / ID: until its voice ends (the smart mix point), as on Hype Radio."""
+    cs = it.get("cue_start") or 0
+    try: sm = smartmix.smart_mix(dict(it, section="jingles"))
+    except Exception: sm = None
+    if sm: return max(0.5, sm[0] - cs)
+    cm = it.get("cue_mix")
+    if cm and cm > cs: return cm - cs
+    return max(0.5, (it.get("cue_end") or it.get("duration") or 5) - cs)
+
+
 def akey(a):
     o = [x.strip().lower() for x in re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|vs\.?|&|en|,)\s+|,", a or "", flags=re.I) if x.strip()]
     return [x for x in o if x not in ("club hype", "hype radio", "hype radio tv", "hype")] or o
@@ -218,7 +229,7 @@ class Channel:
             c = chancfg.connect(self.id)
             try:
                 if not it: it = item(c, d.get("hype_path") or "") or {"path": d.get("hype_path"), "artist": d.get("artist"), "title": d.get("title"), "section": "music", "folder": ""}
-                it["started"] = time.time(); self.now = it
+                it["started"] = time.time(); self.prev = self.now; self.now = it
                 c.execute("INSERT INTO asrun(started, path, artist, title, folder, mode, kind) VALUES(?,?,?,?,?,?,?)",
                           (it["started"], it["path"], it.get("artist"), it.get("title"), it.get("folder"), "audio", it.get("section")))
                 if self.runner.snap:
@@ -252,14 +263,16 @@ class Channel:
         self._mix = (time.time(), (mo, jd, sm_on)); return (mo, jd, sm_on)
 
     # ---------- settings (stored in the channel's own database) ----------
-    DEF = {"idi": {"on": False, "every": 3, "folder": "", "duck": 0.35, "at": 0.5},
+    # ID over soft intros – the same rules and settings as Hype Radio's (Settings → Mixing there): max per hour, minutes apart,
+    # the ID's own level; it starts 0.4 s into the song and the intro dips to 50 % under the voice
+    DEF = {"idi": {"on": False, "max": 3, "gap": 15, "db": -4.0, "folder": "", "duck": 0.5, "at": 0.4},
            "voice": {"on": True, "per_hour": 2, "max_plays": 3, "duck": 0.3}}
     def setting(self, k):
         c = chancfg.connect(self.id)
         try: v = planner.get_setting(c, "ch_" + k, None)
         finally: c.close()
         out = dict(self.DEF[k]); out.update(v if isinstance(v, dict) else {})
-        if k == "idi" and not out["folder"]: out["folder"] = self.id.upper()       # its own jingles (jingles-<id>/…)
+        if k == "idi" and (not out["folder"] or out["folder"] == self.id.upper()): out["folder"] = self.id.upper() + "/IDS"   # its own IDs (jingles-<id>/IDS)
         return out
     def set_setting(self, k, v):
         cur = self.setting(k); cur.update({x: v[x] for x in v if x in self.DEF[k]})
@@ -280,24 +293,24 @@ class Channel:
                 except OSError: return
                 time.sleep(secs / 5)
         threading.Thread(target=run, daemon=True).start()
-    def fire(self, path, duck=None, kind="pad"):
+    def fire(self, path, duck=None, kind="pad", gain_db=0.0):
         c = chancfg.connect(self.id)
         try: it = item(c, path)
         finally: c.close()
         if not it: raise ValueError("not in the library (or a problem file)")
-        gain = 0.0 if it["lufs"] is None else max(-12.0, min(12.0, TARGET_LUFS - it["lufs"]))
+        gain = (0.0 if it["lufs"] is None else max(-12.0, min(12.0, TARGET_LUFS - it["lufs"]))) + gain_db
         cs = it["cue_start"] or 0.0; ce = it["cue_end"] or it["duration"] or 0
         self.tel(f'pads.push annotate:liq_cue_in="{cs:.2f}",liq_cue_out="{ce:.2f}",liq_amplify="{gain:.2f} dB":{os.path.join(ROOT, it["path"])}')
         ln = max(1.0, ce - cs); self.pad_now = {"path": path, "title": it["title"] or os.path.basename(path), "kind": kind, "until": time.time() + ln}
         if duck:
             self.glide(float(duck)); t0 = time.time(); self.duck_t = t0
-            threading.Timer(max(0.5, ln - 0.4), lambda: self.duck_t == t0 and self.glide(1.0)).start()
+            threading.Timer(duck_len(it), lambda: self.duck_t == t0 and self.glide(1.0)).start()     # music back when the voice ends
         log.info("%s: %s %s%s", self.id, kind, os.path.basename(path), " (ducked)" if duck else "")
     def pad_stop(self):
         try: self.tel("pads.stop")
         finally: self.duck_t = None; self.glide(1.0); self.pad_now = None
 
-    def voice_pick(self, c):
+    def voice_pick(self, c, max_len=None):
         st = {}
         try: st = json.load(open("/var/lib/hype/voice.json"))
         except (OSError, ValueError): pass
@@ -315,7 +328,8 @@ class Channel:
             if v.get("station") != self.id or not v.get("air") or not p_ or now - v.get("received", now) > 14 * 86400: continue
             n = len(plays.get(p_, []))
             if n >= cfg["max_plays"] or who(v) in recent_who: continue
-            if not c.execute("SELECT 1 FROM items WHERE path=? AND problem IS NULL", (p_,)).fetchone(): continue
+            r_ = c.execute("SELECT COALESCE(cue_end, duration, 0) - COALESCE(cue_start, 0) FROM items WHERE path=? AND problem IS NULL", (p_,)).fetchone()
+            if not r_ or (max_len and (r_[0] or 0) + 0.4 + 1.0 > max_len): continue          # it has to fit in the soft intro
             key = (n, -v.get("received", 0))
             if best is None or key < best[0]: best = (key, p_)
         if not best: return None
@@ -325,22 +339,47 @@ class Channel:
         return best[1]
 
     def over_intro(self, it):
-        """A song starts: a listener voice (from Hype Live, for this channel) or every N songs an ID over its intro."""
+        """A song starts: a listener voice or an ID over its soft intro – Hype Radio's rules (engine.py pick_voice_intro /
+        pick_intro_id): only song -> song (never right after a jingle / ID / liner), never on a mix or a song set to "no sweeper",
+        only when the intro is soft for 2.5 s+ and the voice ends 1 s before the song is at full level; IDs: max N per hour,
+        M minutes apart, the one that rested longest (never the same within 20 min), at their own level."""
         if it.get("section") != "music": return
-        self.songs_since_id += 1
+        prev = getattr(self, "prev", None) or {}
+        if prev.get("section") != "music": return
+        if any((x.get("folder") or "").upper().startswith(("MIXES", "RECORDINGS")) for x in (it, prev)): return
+        now = time.time()
+        if now - getattr(self, "ov_last", 0) < 180: return
+        nl = smartmix.intro_len(it)
+        if not nl or nl < 2.5: return
         c = chancfg.connect(self.id)
         try:
-            vc = self.setting("voice"); p_ = self.voice_pick(c) if vc["on"] else None; kind, duck = "voice", vc["duck"]
-            if not p_:
-                ic = self.setting("idi")
-                if not ic["on"] or self.songs_since_id < max(1, int(ic["every"])): return
-                p_ = planner.resolve_jingle(c, ic["folder"]); kind, duck = "ID", ic["duck"]
-                if not p_: return
-                self.songs_since_id = 0
-            at = (self.setting("idi")["at"] if kind == "ID" else 0.5)
+            r = c.execute("SELECT overlay_mode FROM items WHERE path=?", (it["path"],)).fetchone()
+            if r and r[0] in ("none", "song"): return
+            vc, ic = self.setting("voice"), self.setting("idi")
+            p_, kind, duck, at, gdb = None, None, None, 0.4, 0.0
+            if vc["on"]:
+                p_ = self.voice_pick(c, max_len=nl); kind, duck = "voice", ic["duck"]
+            if not p_ and ic["on"]:
+                self.idi_times = [t for t in getattr(self, "idi_times", []) if now - t < 3600]
+                if len(self.idi_times) >= int(ic["max"]) or (self.idi_times and now - self.idi_times[-1] < float(ic["gap"]) * 60): return
+                used = getattr(self, "idi_used", {}); best = None
+                for (jp,) in c.execute("SELECT path FROM items WHERE section='jingles' AND folder=? AND problem IS NULL", (ic["folder"],)).fetchall():
+                    ji = item(c, jp)
+                    if not ji or duck_len(ji) + float(ic["at"]) + 1.0 > nl: continue
+                    la = c.execute("SELECT MAX(started) FROM asrun WHERE path=? OR over=?", (jp, "ID: " + (ji.get("title") or ""))).fetchone()[0] or 0
+                    rested = max(la, used.get(jp, 0))
+                    if now - rested < 20 * 60: continue
+                    if best is None or rested < best[0]: best = (rested, jp, ji.get("title") or os.path.basename(jp))
+                if not best: return
+                p_, kind, duck, at, gdb = best[1], "ID", ic["duck"], float(ic["at"]), float(ic["db"])
+                self.idi_times.append(now); used[p_] = now; self.idi_used = used
+            if not p_: return
+            self.ov_last = now
+            t_ = c.execute("SELECT title FROM items WHERE path=?", (p_,)).fetchone()
+            c.execute("UPDATE asrun SET over=? WHERE id=(SELECT max(id) FROM asrun WHERE path=?)", (("Voice" if kind == "voice" else "ID") + ": " + ((t_ or [""])[0] or os.path.basename(p_)), it["path"])); c.commit()
         finally: c.close()
         def go():
-            try: self.fire(p_, duck, kind)
+            try: self.fire(p_, duck, kind, gdb)
             except Exception as e: log.warning("%s: %s over the intro: %s", self.id, kind, e)
         threading.Timer(at, go).start()
 
