@@ -7,7 +7,7 @@
   // Planning, Library (playlists), Reports (history / rights) and Settings → Sound then use that channel's own data: every /api call
   // for those paths gets ?ch=<id> (the engine ignores it everywhere else). Panel = the channel's own page (channel.html).
   let CH = 'main'; try { CH = localStorage.getItem('hypeCh') || 'main'; } catch (e) {}
-  const CH_PATHS = /^\/(playlists|playlist|folders|library|clocks|schedule|events|preview_hour|history|history\.csv|rights\.csv|rights_check|week|settings)$|^\/plan\//;
+  const CH_PATHS = /^\/(playlists|playlist|folders|padbanks|pads|listener_pads|library|clocks|schedule|events|preview_hour|history|history\.csv|rights\.csv|rights_check|week|settings)$|^\/plan\//;
   if (CH !== 'main' && !window.__chFetch) {
     window.__chFetch = true; const F = window.fetch.bind(window);
     window.fetch = (u, o) => { try { if (typeof u === 'string' && u.includes('api/')) { const x = new URL(u, location.href), pth = x.pathname.replace(/^\/api/, '');
@@ -31,6 +31,7 @@ html{scrollbar-gutter:stable}
 #hhead .chmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:90;min-width:250px;background:#0B2236;border:1px solid #23496B;border-radius:14px;padding:6px;box-shadow:0 18px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:2px}
 #hhead .chmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;color:#F2F6FA;font:700 14px Inter,system-ui,sans-serif;padding:10px;border-radius:10px;cursor:pointer}
 #hhead .chmenu button:hover{background:#0F2B44}#hhead .chmenu button.cur{background:#143049}#hhead .chmenu .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .chmenu small{margin-left:auto;color:#7F96AB;font-weight:700;font-size:11px}
+#hhead.ch-theme .hctl,#hhead.ch-theme #hLive,#hhead.ch-theme #hRec,#hhead.ch-theme #stRadio,#hhead.ch-theme #stTv,#hhead.ch-theme .hnav a[data-k=voice],#hhead.ch-theme .hnav a[data-k=studio],#hhead.ch-theme .hnav a[data-k=hypelive]{display:none!important}
 #hchbar{display:flex;align-items:center;gap:10px;justify-content:center;font:800 12px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;color:#061423}
 #hhead .show{font-size:17px;font-weight:900;white-space:nowrap}
 #hhead .hctl{display:flex;align-items:center;gap:6px;flex:none}
@@ -138,13 +139,15 @@ html{scrollbar-gutter:stable}
     </div>
     <span class="sp"></span>
     <button class="menu" id="hMenu" aria-label="Pages" aria-expanded="false">☰</button>
-    <nav class="hnav" aria-label="Pages">${P.map(([u, t, k], i) => `<a href="${u}" class="${k === cur ? 'cur' : ''}" ${k === cur ? 'aria-current="page"' : ''} title="${t} (Alt+${i + 1})">${t}</a>`).join('')}<span class="sep"></span><a class="out" href="/logout" title="Log out" aria-label="Log out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span class="lo"> Log out</span></a></nav>`;
+    <nav class="hnav" aria-label="Pages">${P.map(([u, t, k], i) => `<a href="${u}" data-k="${k}" class="${k === cur ? 'cur' : ''}" ${k === cur ? 'aria-current="page"' : ''} title="${t} (Alt+${i + 1})">${t}</a>`).join('')}<span class="sep"></span><a class="out" href="/logout" title="Log out" aria-label="Log out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span class="lo"> Log out</span></a></nav>`;
   // page changes: show the header exactly as it was (dots, numbers, AUTO/MANUAL, mode, GO LIVE, REC) until fresh data comes in
   const SNAP = () => [['A', h.querySelector('#' + A)], ['M', h.querySelector('#' + M)], ...[...h.querySelectorAll('.modes [data-mode]')].map(b => ['m_' + b.dataset.mode, b]),
     ...['stRadio', 'stTv', 'stLog', 'hLive', 'hLiveT', 'hRec', 'hRecT'].map(i => [i, h.querySelector('#' + i)])].filter(x => x[1]);
   try { const o = JSON.parse(sessionStorage.getItem('hypeHdr') || 'null'); if (o) SNAP().forEach(([k, el]) => { const v = o[k]; if (v) { el.className = v[0]; el.innerHTML = v[1]; } }); } catch (e) {}
   const snapSave = () => { try { const o = {}; SNAP().forEach(([k, el]) => { o[k] = [el.className, el.innerHTML]; }); sessionStorage.setItem('hypeHdr', JSON.stringify(o)); } catch (e) {} };
   setInterval(snapSave, 1000); addEventListener('pagehide', snapSave);
+  // a theme channel: what only Hype Radio has goes away (AUTO/MANUAL, ON AIR/DJ/LIVE, GO LIVE, REC, the radio / TV dots, Voice, Broadcast, Hype Live)
+  if (CH !== 'main') h.classList.add('ch-theme');
   // ---- channel switch ----
   const chSw = h.querySelector('#chSw'), chMenu = h.querySelector('#chMenu'); let CHS = [{id: 'main', name: 'Hype Radio', color: '#05A9C6', enabled: true, running: true}];
   function chPaint() {

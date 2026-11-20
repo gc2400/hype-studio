@@ -117,6 +117,14 @@ s = source.on_metadata(s, notify)
 mus_pk = peak(duration=0.1, s)
 s = mus_pk
 
+# --- pads: jingles / IDs / listener voices over the music (the playout ducks the music with duck_lvl while they play) ---
+vol_pads = interactive.float("vol_pads", min=0., max=1.6, description="Pads fader", 1.)
+padq = request.queue(id="pads")
+pads = amplify(vol_pads, drop_metadata(amplify(override="liq_amplify", 1., padq)))
+pads_pk = peak(duration=0.1, pads)
+pads = pads_pk
+s = add(normalize=false, [s, pads])
+
 # --- broadcast processing: warm bass, light compression, loud but clean limiter ---
 # Sound presets on ONE chain (switching chains is not possible here): snd_punch 0 = classic (the sliders), 1 = "Hype Punch":
 # no rumble, punch at 100 Hz instead of deep sub, vocal presence + air, 3-band compression (the bass can't push the vocals down);
@@ -245,13 +253,14 @@ def meter_level(_) =
   mmode = snd_punch() > 0.25
   comp = if quiet then 0. elsif mmode then mc elsif snd_comp() < 0.5 then 0. else max(0., 0. - fcg()) end
   lim = if quiet then 0. elsif mmode then ml else max(0., 0. - flg()) end
-  "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a} #{mus_pk.peak()} 0. 0."
+  "#{l} #{r} #{comp} #{lim} #{lu.lufs()} #{a} #{mus_pk.peak()} #{pads_pk.peak()} 0."
 end
 server.register(namespace="radio", "level", meter_level)
 server.register(namespace="live", "source", fun (_) -> if sim_on() and source.is_ready(hype) then "hype" else "automation" end)
 server.register(namespace="radio", "skip", fun (_) -> begin q.skip() "OK" end)
 server.register(namespace="radio", "cut", fun (_) -> begin cut_next := true q.skip() "OK" end)
 server.register(namespace="radio", "clear", fun (_) -> begin q.set_queue([]) "OK" end)
+server.register(namespace="pads", "stop", fun (_) -> begin padq.set_queue([]) padq.skip() "OK" end)
 
 interactive.persistent("/var/lib/hype/sound-@ID@.json")
 

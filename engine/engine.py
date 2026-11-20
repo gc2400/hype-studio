@@ -35,7 +35,7 @@ def fold(t):
     import unicodedata
     return "".join(ch for ch in unicodedata.normalize("NFKD", str(t or "")) if not unicodedata.combining(ch)).lower()
 TL = threading.local()       # the theme channel a panel request is for (?ch=latina): set only for the planning / report paths below
-CH_PATHS = ("/playlists", "/playlist", "/folders", "/clocks", "/schedule", "/events", "/preview_hour", "/history", "/history.csv",
+CH_PATHS = ("/playlists", "/playlist", "/folders", "/padbanks", "/pads", "/clocks", "/schedule", "/events", "/preview_hour", "/history", "/history.csv",
             "/rights.csv", "/rights_check", "/week")
 _STATION_COL = []
 def dbc():
@@ -3650,7 +3650,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/lower": return self.send(200, dict(LOWER, scene=E.tv.scene, live_layer=getattr(E.tv, "ll_on", True)))
             if p == "/settings": return self.send(200, get_settings())
             if p == "/autorec": return self.send(200, autorec_status())
-            if p == "/listener_pads": return self.send(200, listener_pads())
+            if p == "/listener_pads": return self.send(200, listener_pads((qs.get("ch") or [""])[0] if chancfg.valid((qs.get("ch") or [""])[0]) else ""))
             if p == "/padbanks":
                 b = planner.api_padbanks(dbc()); played = {v.get("path"): v.get("played") for v in voice_state().values()}
                 for bk in b:
@@ -4576,7 +4576,7 @@ def voice_pick(c, at, max_len=None):
     best = None
     for v in st.values():
         p = v.get("path")
-        if not v.get("air") or not p or p in planned or any(x[1] == p for x in VOICE_TAKEN): continue
+        if not v.get("air") or not p or p in planned or any(x[1] == p for x in VOICE_TAKEN) or v.get("station"): continue
         if now - v.get("received", now) > VOICE_DAYS * 86400: continue
         n = len(pl.get(p, []))
         if n >= VOICE_AIR["max_plays"] or voice_who(v) in near: continue
@@ -4692,13 +4692,14 @@ def media_thumb(f):
                        capture_output=True, timeout=30)
         return dst if os.path.exists(dst) else None
     except Exception: return None
-def listener_pads():
+def listener_pads(qch=""):
     """The LISTENERS pads: listener voices, photos and videos, newest first. A pad leaves after N days (Settings) unless ★ pinned;
     × takes it off at once. The files themselves stay (jingles/VOICE, branding/media)."""
     c = dbc(); keep = float(planner.get_setting(c, "listener_keep_days", 7)) * 86400; now = time.time(); out = []
     plays = voice_plays()
     for v in voice_state().values():
         if not v.get("path") or not v.get("acked") or v.get("hidden"): continue
+        if (v.get("station") or "") != (qch or ""): continue           # Hype Radio's listener pads vs a theme channel's
         when = v.get("received") or 0
         if not v.get("pinned") and now - when > keep: continue
         r = c.execute("SELECT duration, problem FROM items WHERE path=?", (v["path"],)).fetchone()
@@ -5063,12 +5064,14 @@ def voice_apply(d, fetch, ack):
         name = re.sub(r"[^\w .'-]", "", str(it.get("name") or "Listener"), flags=re.U).strip()[:30] or "Listener"
         city = re.sub(r"[^\w .'-]", "", str(it.get("city") or ""), flags=re.U).strip()[:30]
         src = os.path.join("/tmp", "voice_" + vid); fn = f"Voice - {name}{' (' + city + ')' if city else ''} {vid}.mp3"
-        tmp = os.path.join(VOICE_DIR, "." + fn)
+        sta = str(it.get("station") or "").strip().lower(); sta = sta if sta not in ("", "radio", "main", "hype_radio") and chancfg.valid(sta) else ""
+        vdir = os.path.join(ROOT, "jingles-" + sta, "VOICE") if sta else VOICE_DIR      # a theme channel's voice: its own jingles-<id>/VOICE
+        os.makedirs(vdir, exist_ok=True); tmp = os.path.join(vdir, "." + fn)
         try:
             with fetch(vid, it) as r, open(src, "wb") as f: f.write(r.read(30_000_000))
             p_ = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vn", "-af", "highpass=f=80", "-ar", "44100", "-ac", "2", "-b:a", "192k", "-f", "mp3", tmp], timeout=120)
             if p_.returncode != 0: raise RuntimeError("ffmpeg could not read it")
-            os.replace(tmp, os.path.join(VOICE_DIR, fn))
+            os.replace(tmp, os.path.join(vdir, fn))
         except Exception as e:      # one bad message never blocks the others (or their acks)
             VOICE_FAIL[vid] = time.time(); log.warning("voice: %s failed (%s) – tried again in 1 h", vid, e)
             try: os.remove(tmp)
@@ -5077,7 +5080,7 @@ def voice_apply(d, fetch, ack):
         finally:
             try: os.remove(src)
             except FileNotFoundError: pass
-        st[vid] = {"path": os.path.relpath(os.path.join(VOICE_DIR, fn), ROOT), "name": name, "city": city, "source": it.get("source"),
+        st[vid] = {"path": os.path.relpath(os.path.join(vdir, fn), ROOT), "station": sta, "name": name, "city": city, "source": it.get("source"),
                    "received": voice_when(it.get("received")), "acked": False, "in_bank": False, "air": bool(it.get("air"))}
         changed = True; log.info("voice: downloaded %s (%s)", vid, name)
     # Hype Live still lists one we already have and acked (e.g. the ack went to the old website during the move to Hetzner): ack again
