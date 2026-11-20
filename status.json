@@ -1,19 +1,19 @@
 {
- "time": "2026-11-20T21:53:35",
+ "time": "2026-11-20T21:55:24",
  "result": "ok",
- "commit": "c122e706400a4dddad195e0e5327dde4a20cf3f7",
- "subject": "Theme channels: listeners counted exactly like Hype Radio (devices, MP3 starts per stream, HLS per device, no bots, peak + unique today); channels in the streams popup",
+ "commit": "93ea092e7ebe3a65afc52d3a0929435c22ece2f7",
+ "subject": "Theme channels: Hype Radio's AGC (agcloop.py, the same code: evens out songs, lifts quiet intros) per channel; its meter in Settings \u2192 Sound",
  "log": [
-  "21:52:50 update cde4b14c \u2192 c122e706 \u00b7 5 file(s): engine/chan.py, engine/engine.py, system/nginx-hype.conf, web/panel/channel.html, web/panel/header.js",
-  "21:52:50 restart hype-channels",
-  "21:52:50 restart hype-engine",
-  "21:53:35 installed OK \u00b7 restarted: hype-channels, hype-engine, nginx-reload"
+  "21:54:39 update c122e706 \u2192 93ea092e \u00b7 3 file(s): engine/agcloop.py, engine/chan.py, engine/engine.py",
+  "21:54:39 restart hype-channels",
+  "21:54:39 restart hype-engine",
+  "21:55:24 installed OK \u00b7 restarted: hype-channels, hype-engine"
  ],
  "guard": {
   "song": "Caribang Radio 001 \u2013 Hosted by Essovilla",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },

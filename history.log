@@ -465,3 +465,4 @@
 2026-11-20T21:33:35 ok c5762454 Header: a dot per theme channel (station colour + listeners), Hype Radio's radio / TV dots on every page incl. the theme channels
 2026-11-20T21:40:31 ok cde4b14c Theme channels: ID over soft intros exactly like Hype Radio (soft intro only, song->song, max per hour, minutes apart, own level, voice-length check, music back when the voice ends)
 2026-11-20T21:53:35 ok c122e706 Theme channels: listeners counted exactly like Hype Radio (devices, MP3 starts per stream, HLS per device, no bots, peak + unique today); channels in the streams popup
+2026-11-20T21:55:24 ok 93ea092e Theme channels: Hype Radio's AGC (agcloop.py, the same code: evens out songs, lifts quiet intros) per channel; its meter in Settings → Sound
