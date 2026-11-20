@@ -1,7 +1,7 @@
 /* Hype Studio – one header for every page. Computer: logo · AUTO/MANUAL · modes · radio/tv · clock ……… pages (right).
    Phone: logo · radio/tv · clock · ☰ (pages) / second row: the buttons. Keys: Alt+1 … Alt+8 */
 (function () {
-  const P = [[CH !== 'main' ? '/panel/channel.html' : '/panel/', 'Panel', 'onair'], ['/panel/library.html', 'Library', 'library'], ['/panel/plan.html', 'Planning', 'plan'], ['/panel/voice.html', 'Voice', 'voice'],
+  const P = [[(() => { try { return (localStorage.getItem('hypeCh') || 'main') !== 'main'; } catch (e) { return false; } })() ? '/panel/channel.html' : '/panel/', 'Panel', 'onair'], ['/panel/library.html', 'Library', 'library'], ['/panel/plan.html', 'Planning', 'plan'], ['/panel/voice.html', 'Voice', 'voice'],
              ['/panel/history.html', 'Reports', 'history'], ['/panel/studio.html', 'Broadcast', 'studio'], ['/panel/hypelive.html', 'Hype Live', 'hypelive'], ['/panel/settings.html', 'Settings', 'settings'], ['/', 'Status', 'status']];
   // ---- the channel you work on: Hype Radio ("main") or a theme channel (Hype Ambiente, Hype Latina …) ----
   // Planning, Library (playlists), Reports (history / rights) and Settings → Sound then use that channel's own data: every /api call
