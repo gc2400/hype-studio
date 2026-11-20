@@ -74,7 +74,9 @@ def take_smart(c, songs, ok, fit):
     """Smart pick: the song that rested longest (artist/title separation via ok), not the same song as yesterday around this time.
     A song that never played counts as 'rested longest', so new songs came all after each other: now at most one per NEW_GAP."""
     H = history(c); at = CTX.get("at") or time.time(); y0 = at - 86400
-    cand = [p_ for p_ in songs if ok(p_)] or songs[:]
+    # no song fits every rule (e.g. the artist rule in a small folder full of "X x Y" songs): relax only what the caller allows
+    # (ok.fallback: the theme channels keep "not the same song within N hours / not already planned"), never everything at once
+    cand = [p_ for p_ in songs if ok(p_)] or [p_ for p_ in songs if getattr(ok, "fallback", lambda _: True)(p_)] or songs[:]
     for p_ in [p_ for p_, t_ in NEW_PICKS.items() if H["last"].get(p_) or t_ < time.time() - 7200]: NEW_PICKS.pop(p_, None)
     if any(5 < abs(t_ - at) < NEW_GAP for t_ in NEW_PICKS.values()):      # (the same slot planned again = not "another" new song)
         old = [p_ for p_ in cand if H["last"].get(p_)]

@@ -151,6 +151,7 @@ class Channel:
             if p_ in rec or p_ in held: return False
             a = c.execute("SELECT artist FROM items WHERE path=?", (p_,)).fetchone()
             return not (a and set(akey(a[0])) & set(arts))
+        ok.fallback = lambda p_: p_ not in rec and p_ not in held        # artist rule relaxed first, the song rule never
         def pj(c_, folder):
             rows = [x[0] for x in c_.execute("SELECT path FROM items WHERE section IN ('jingles','ads') AND problem IS NULL AND (folder=? OR folder LIKE ?)", (folder, folder + "/%"))]
             rows = [x for x in rows if x not in rec] or rows
