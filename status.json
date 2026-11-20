@@ -1,18 +1,18 @@
 {
- "time": "2026-11-20T20:41:36",
+ "time": "2026-11-20T21:20:14",
  "result": "ok",
- "commit": "ba7318c43dc9d49b0b6522ffae4ee0ab7a853820",
- "subject": "Theme channels: now-playing feed like Hype Radio's (song_history = recently played, covers, durations, songs only)",
+ "commit": "b6289ae39b12f3a5cf029767bb06b4f183d3b379",
+ "subject": "Theme channels: skip songs whose file was moved / deleted after planning; stuck watchdog (silent long past the song's end -> clear the queue, go on)",
  "log": [
-  "20:40:51 update e120bae6 \u2192 ba7318c4 \u00b7 1 file(s): engine/chan.py",
-  "20:40:51 restart hype-channels",
-  "20:41:36 installed OK \u00b7 restarted: hype-channels"
+  "21:19:29 update ba7318c4 \u2192 b6289ae3 \u00b7 1 file(s): engine/chan.py",
+  "21:19:29 restart hype-channels",
+  "21:20:14 installed OK \u00b7 restarted: hype-channels"
  ],
  "guard": {
-  "song": "B'jay x Jeon x Light Skin Rasta Man \u2013 Jamaica",
+  "song": "Caribang Radio 001 \u2013 Hosted by Essovilla",
   "listeners": 3,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
