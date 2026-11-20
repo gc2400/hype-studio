@@ -1,17 +1,17 @@
 {
- "time": "2026-11-20T10:03:32",
+ "time": "2026-11-20T11:17:15",
  "result": "ok",
- "commit": "13db463d630a633a6238fd6854a054b1d259a4ce",
- "subject": "Pads (and media): 12 per page (3 rows of 4), the rest behind the next-page button",
+ "commit": "82a2161914d25c30cc9860fc15e282140fd50bcd",
+ "subject": "Hype Studio app icon (iPhone home screen / Android): logo + STUDIO, app name Hype Studio",
  "log": [
-  "10:03:31 update 1a79fc09 \u2192 13db463d \u00b7 1 file(s): web/panel/index.html",
-  "10:03:32 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "11:17:15 update 13db463d \u2192 82a21619 \u00b7 15 file(s): web/panel/apple-touch-icon.png, web/panel/browser.html, web/panel/help.html, web/panel/history.html, web/panel/hypelive.html, web/panel/icon-192.png, web/panel/icon-512.png, web/panel/index.html, web/panel/library.html, web/panel/manifest.json, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/panel/voice.html, web/status/index.html",
+  "11:17:15 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Shenseea x Asake \u2013 Playtime",
-  "listeners": 3,
+  "song": "Rauw Alejandro \u2013 Macacoa 2000  (From Grand Theft Auto VI The Album)",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
