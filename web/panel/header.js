@@ -33,17 +33,17 @@ html{scrollbar-gutter:stable}
 #hhead .chmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;color:#F2F6FA;font:700 14px Inter,system-ui,sans-serif;padding:10px;border-radius:10px;cursor:pointer}
 #hhead .chmenu button:hover{background:#0F2B44}#hhead .chmenu button.cur{background:#143049}#hhead .chmenu .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .chmenu small{margin-left:auto;color:#7F96AB;font-weight:700;font-size:11px}
 #hhead.ch-theme .hctl,#hhead.ch-theme #hLive,#hhead.ch-theme #hRec,#hhead.ch-theme #stRadio,#hhead.ch-theme #stTv,#hhead.ch-theme .hnav a[data-k=voice],#hhead.ch-theme .hnav a[data-k=studio],#hhead.ch-theme .hnav a[data-k=hypelive]{display:none!important}
-/* station skins (like the website's): a theme channel's own colours on every page – the colours tell you which channel you're on */
-html[data-station=latina]{--bg:#1A0714;--card:#2A0B20;--card2:#3A1029;--deep:#13040E;--line:#4A1634;--line2:#6E2249;--b:#FF6A2B;--b2:#D9147A;--mut:#D7AFC2;--soft:#F1D3E0;--c:#FF6A2B}
-html[data-station=ambiente]{--bg:#041230;--card:#0A1F4C;--card2:#0F2B63;--deep:#06173A;--line:#163872;--line2:#224C94;--b:#4FC3F0;--b2:#1E5BC6;--mut:#A9C3E6;--soft:#D3E3F7;--c:#4FC3F0}
+/* station skins = the website's colours (Hype Latina / Hype Ambiente): calm, dark – the accent shows which channel you're on */
+html[data-station=latina]{--bg:#0F0A0C;--card:#1D1518;--card2:#261B1F;--deep:#170F12;--line:#3A252C;--line2:#4A3038;--mut:#C9B8BD;--soft:#DCCDD1;--b:#FFB23F;--b2:#FF6A2B;--c:#FFB23F}
+html[data-station=ambiente]{--bg:#070D1A;--card:#0F1A30;--card2:#15233F;--deep:#0B1426;--line:#23395F;--line2:#2D4774;--mut:#A9C6E6;--soft:#C9DBEF;--b:#4FC3F0;--b2:#1E5BC6;--c:#4FC3F0}
 html[data-station] body{min-height:100vh}
-html[data-station=latina] #hhead{background:rgba(26,7,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid #4A1634}html[data-station=latina] #hhead .chmenu,html[data-station=latina] #hhead .hpop{background:#2A0B20;border-color:#6E2249}
-html[data-station=ambiente] #hhead{background:rgba(4,18,48,.92);backdrop-filter:blur(8px);border-bottom:1px solid #163872}html[data-station=ambiente] #hhead .chmenu,html[data-station=ambiente] #hhead .hpop{background:#0A1F4C;border-color:#224C94}
-html[data-station=latina] body{background:radial-gradient(1200px 600px at 85% -10%,rgba(255,106,43,.22),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(217,20,122,.20),transparent 60%),var(--bg);background-attachment:fixed}
-html[data-station=ambiente] body{background:radial-gradient(1200px 600px at 85% -10%,rgba(79,195,240,.18),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(30,91,198,.30),transparent 60%),var(--bg);background-attachment:fixed}
-html[data-station=latina] .btn.on,html[data-station=latina] .tab.on{background:linear-gradient(90deg,#FFB23F,#FF6A2B 55%,#D9147A);border-color:#FF6A2B;color:#1A0714}
-html[data-station=ambiente] .btn.on,html[data-station=ambiente] .tab.on{background:linear-gradient(90deg,#4FC3F0,#1E5BC6);border-color:#4FC3F0;color:#041230}
-html[data-station=latina] .card,html[data-station=ambiente] .card{background:color-mix(in srgb,var(--card) 92%,transparent)}
+html[data-station=latina] #hhead{background:#170F12;border-bottom:1px solid #3A252C}html[data-station=latina] #hhead .chmenu,html[data-station=latina] #hhead .hpop{background:#1D1518;border-color:#3A252C}
+html[data-station=ambiente] #hhead{background:#0B1426;border-bottom:1px solid #23395F}html[data-station=ambiente] #hhead .chmenu,html[data-station=ambiente] #hhead .hpop{background:#0F1A30;border-color:#23395F}
+html[data-station=latina] .btn.on,html[data-station=latina] .tab.on{background:#FFB23F;border-color:#FFB23F;color:#0F0A0C}
+html[data-station=ambiente] .btn.on,html[data-station=ambiente] .tab.on{background:#4FC3F0;border-color:#4FC3F0;color:#070D1A}
+html[data-station=latina] .lab{color:#FFB23F}html[data-station=ambiente] .lab{color:#4FC3F0}
+html[data-station=latina] .dprog i{background:linear-gradient(90deg,#FF8A2B,#FF6A2B,#D9147A,#8A0D4D)}html[data-station=ambiente] .dprog i{background:linear-gradient(90deg,#4FC3F0,#1E5BC6)}
+html[data-station] .card.hi{border-color:var(--line2)}
 #hchbar{display:flex;align-items:center;gap:10px;justify-content:center;font:800 12px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;color:#061423}
 #hhead .show{font-size:17px;font-weight:900;white-space:nowrap}
 #hhead .hctl{display:flex;align-items:center;gap:6px;flex:none}
