@@ -7,6 +7,7 @@
   // Planning, Library (playlists), Reports (history / rights) and Settings → Sound then use that channel's own data: every /api call
   // for those paths gets ?ch=<id> (the engine ignores it everywhere else). Panel = the channel's own page (channel.html).
   let CH = 'main'; try { CH = localStorage.getItem('hypeCh') || 'main'; } catch (e) {}
+  if (CH !== 'main') { document.documentElement.dataset.station = CH; const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = CH === 'latina' ? '#1A0714' : CH === 'ambiente' ? '#041230' : tc.content; }
   const CH_PATHS = /^\/(playlists|playlist|folders|padbanks|pads|listener_pads|library|clocks|shows|schedule|events|preview_hour|history|history\.csv|rights\.csv|rights_check|week|weekreport|level|audstats|aud24|audsongs|audtime|settings)$|^\/plan\//;
   if (CH !== 'main' && !window.__chFetch) {
     window.__chFetch = true; const F = window.fetch.bind(window);
@@ -32,6 +33,17 @@ html{scrollbar-gutter:stable}
 #hhead .chmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;color:#F2F6FA;font:700 14px Inter,system-ui,sans-serif;padding:10px;border-radius:10px;cursor:pointer}
 #hhead .chmenu button:hover{background:#0F2B44}#hhead .chmenu button.cur{background:#143049}#hhead .chmenu .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .chmenu small{margin-left:auto;color:#7F96AB;font-weight:700;font-size:11px}
 #hhead.ch-theme .hctl,#hhead.ch-theme #hLive,#hhead.ch-theme #hRec,#hhead.ch-theme #stRadio,#hhead.ch-theme #stTv,#hhead.ch-theme .hnav a[data-k=voice],#hhead.ch-theme .hnav a[data-k=studio],#hhead.ch-theme .hnav a[data-k=hypelive]{display:none!important}
+/* station skins (like the website's): a theme channel's own colours on every page – the colours tell you which channel you're on */
+html[data-station=latina]{--bg:#1A0714;--card:#2A0B20;--card2:#3A1029;--deep:#13040E;--line:#4A1634;--line2:#6E2249;--b:#FF6A2B;--b2:#D9147A;--mut:#D7AFC2;--soft:#F1D3E0;--c:#FF6A2B}
+html[data-station=ambiente]{--bg:#041230;--card:#0A1F4C;--card2:#0F2B63;--deep:#06173A;--line:#163872;--line2:#224C94;--b:#4FC3F0;--b2:#1E5BC6;--mut:#A9C3E6;--soft:#D3E3F7;--c:#4FC3F0}
+html[data-station] body{min-height:100vh}
+html[data-station=latina] #hhead{background:rgba(26,7,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid #4A1634}html[data-station=latina] #hhead .chmenu,html[data-station=latina] #hhead .hpop{background:#2A0B20;border-color:#6E2249}
+html[data-station=ambiente] #hhead{background:rgba(4,18,48,.92);backdrop-filter:blur(8px);border-bottom:1px solid #163872}html[data-station=ambiente] #hhead .chmenu,html[data-station=ambiente] #hhead .hpop{background:#0A1F4C;border-color:#224C94}
+html[data-station=latina] body{background:radial-gradient(1200px 600px at 85% -10%,rgba(255,106,43,.22),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(217,20,122,.20),transparent 60%),var(--bg);background-attachment:fixed}
+html[data-station=ambiente] body{background:radial-gradient(1200px 600px at 85% -10%,rgba(79,195,240,.18),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(30,91,198,.30),transparent 60%),var(--bg);background-attachment:fixed}
+html[data-station=latina] .btn.on,html[data-station=latina] .tab.on{background:linear-gradient(90deg,#FFB23F,#FF6A2B 55%,#D9147A);border-color:#FF6A2B;color:#1A0714}
+html[data-station=ambiente] .btn.on,html[data-station=ambiente] .tab.on{background:linear-gradient(90deg,#4FC3F0,#1E5BC6);border-color:#4FC3F0;color:#041230}
+html[data-station=latina] .card,html[data-station=ambiente] .card{background:color-mix(in srgb,var(--card) 92%,transparent)}
 #hchbar{display:flex;align-items:center;gap:10px;justify-content:center;font:800 12px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;color:#061423}
 #hhead .show{font-size:17px;font-weight:900;white-space:nowrap}
 #hhead .hctl{display:flex;align-items:center;gap:6px;flex:none}
@@ -153,11 +165,6 @@ html{scrollbar-gutter:stable}
   function chPaint() {
     const c = CHS.find(x => x.id === CH) || CHS[0];
     const cd = chSw.querySelector('.cd'); cd.style.background = c.logo ? `center/cover url(${c.logo})` : c.color; cd.classList.toggle('lg', !!c.logo); h.querySelector('#chName').textContent = c.name;
-    let bar = document.getElementById('hchbar');
-    if (CH !== 'main') {
-      if (!bar) { bar = document.createElement('div'); bar.id = 'hchbar'; h.after(bar); }
-      bar.style.background = c.color; bar.textContent = 'You are working on ' + c.name + (c.enabled ? '' : ' (off)') + ' – Hype Radio is not affected';
-    } else if (bar) bar.remove();
     chMenu.innerHTML = CHS.map(x => `<button role="menuitemradio" aria-checked="${x.id === CH}" class="${x.id === CH ? 'cur' : ''}" data-ch="${x.id}"><i class="cd${x.logo ? ' lg' : ''}" style="background:${x.logo ? `center/cover url(${x.logo})` : x.color}"></i>${x.name}<small>${x.id === 'main' ? 'main' : x.down ? 'service off' : !x.enabled ? 'off' : x.running ? 'on air' : 'starting'}</small></button>`).join('');
     chMenu.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => {
       const to = b.dataset.ch; try { localStorage.setItem('hypeCh', to); } catch (e) {}
