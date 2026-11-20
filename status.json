@@ -1,17 +1,19 @@
 {
- "time": "2026-11-20T19:18:17",
+ "time": "2026-11-20T19:42:35",
  "result": "ok",
- "commit": "ff11c467dc175b6f450deb9615b675604f53ee2c",
- "subject": "Header: fix \u2013 the Panel link read the channel before it was set (the header and the panel did not load)",
+ "commit": "992fcb84f001aef03ed48b55566840e49354f229",
+ "subject": "Theme channels: own On Air panel (player, playlist edit, pads, library, ID over intro, listener voices per channel); header hides Hype Radio-only parts",
  "log": [
-  "19:18:17 update 921cc024 \u2192 ff11c467 \u00b7 1 file(s): web/panel/header.js",
-  "19:18:17 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:41:49 update ff11c467 \u2192 992fcb84 \u00b7 5 file(s): engine/chan.py, engine/engine.py, radio/channel.liq, web/panel/channel.html, web/panel/header.js",
+  "19:41:49 restart hype-channels",
+  "19:41:49 restart hype-engine",
+  "19:42:34 installed OK \u00b7 restarted: hype-channels, hype-engine"
  ],
  "guard": {
-  "song": "Myke Towers x Westcol x Ovy On The Drums \u2013 W Sound 23 '5 Estrellas'",
-  "listeners": 3,
+  "song": "IDALY X EMMS \u2013 AMAZIN'",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },

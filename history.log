@@ -451,3 +451,4 @@
 2026-11-20T19:01:17 rolled-back 07cd0c7a Theme channels Hype Ambiente + Hype Latina (audio): hype-channels service, own library roots, channel switch, channel page – channels start switched off; Hype Radio's radio engine unchanged
 2026-11-20T19:13:07 ok 921cc024 nginx: theme channel regex locations in quotes (nginx needs them for {1,19}) – tested with nginx -t on the server
 2026-11-20T19:18:17 ok ff11c467 Header: fix – the Panel link read the channel before it was set (the header and the panel did not load)
+2026-11-20T19:42:35 ok 992fcb84 Theme channels: own On Air panel (player, playlist edit, pads, library, ID over intro, listener voices per channel); header hides Hype Radio-only parts
