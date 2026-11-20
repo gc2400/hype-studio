@@ -3382,7 +3382,7 @@ def get_settings():
         out.update({"channel": TL.ch, "sound": snd, "smart_pick": bool(g("smart_pick", True)), "hit_hour": bool(g("hit_hour", True)), "hour_preview": bool(g("hour_preview", True)),
                 "artist_sep_min": float(g("artist_sep_min", 75)), "title_sep_h": float(g("title_sep_h", 3)),
                 "strict_hold_before": float(g("strict_hold_before", 60)), "strict_hold_after": float(g("strict_hold_after", 60)),
-                "jingle_db": float(g("jingle_db", -3.0)), "sound_presets": g("sound_presets", {}) or {}, "sound_presets_hidden": g("sound_presets_hidden", []) or []})
+                "jingle_db": float(g("jingle_db", -3.0)), "smart_mix": bool(g("smart_mix", True)), "mix_max": float(g("mix_max", 5.0)), "sound_presets": g("sound_presets", {}) or {}, "sound_presets_hidden": g("sound_presets_hidden", []) or []})
     return out
 def _settings_main(c, snd):
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
@@ -3433,9 +3433,9 @@ def set_settings(d):
         liq = ch_liq(); c = dbc()
         for k, v in (d.get("sound") or {}).items():
             if k in SOUND_VARS: liq.cmd(f"var.set {k} = {float(v):.2f}")
-        for k in ("smart_pick", "hit_hour", "hour_preview"):
+        for k in ("smart_pick", "hit_hour", "hour_preview", "smart_mix"):
             if k in d: planner.set_setting(c, k, bool(d[k]))
-        for k, lo, hi in (("artist_sep_min", 0.0, 360.0), ("title_sep_h", 0.5, 48.0), ("strict_hold_before", 0.0, 240.0), ("strict_hold_after", 0.0, 240.0),
+        for k, lo, hi in (("mix_max", 0.5, 8.0), ("artist_sep_min", 0.0, 360.0), ("title_sep_h", 0.5, 48.0), ("strict_hold_before", 0.0, 240.0), ("strict_hold_after", 0.0, 240.0),
                           ("jingle_db", -12.0, 3.0)):
             if k in d: planner.set_setting(c, k, max(lo, min(hi, float(d[k]))))
         if "sound_presets" in d and isinstance(d["sound_presets"], dict):

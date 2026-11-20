@@ -62,8 +62,25 @@
       </div>
     </section>
 
-    <!-- MIDDLE: pads, over the intro, streams -->
+    <!-- MIDDLE: library (next to the player, as on On Air) -->
     <section class="col c2">
+      <div class="card" id="cLib">
+        <div class="row between"><span class="lab">Library</span><div class="row" style="gap:6px"><button class="btn sm" id="libFind" aria-label="Search" title="Search ( / )"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button><button class="btn sm" id="libSort" title="A–Z or newest uploads first">A–Z</button><button class="btn sm" id="bStations" aria-expanded="false" title="Which stations' songs this library shows (this channel only)">◎ Stations</button></div></div>
+        <div class="wrapchips" id="stRow" hidden></div>
+        <label class="search" id="libSearch" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <span style="position:absolute;left:-9999px">Search the library</span>
+          <input id="q" type="search" placeholder="Search artist or title…  ( / )" autocomplete="off">
+        </label>
+        <div class="seg" id="secs" role="tablist" aria-label="Section"></div>
+        <div class="wrapchips" id="folders"></div>
+        <div class="wrapchips" id="subfolders" hidden></div>
+        <div class="wrapchips" id="subfolders2" hidden></div>
+        <div class="res" id="res"></div>
+      </div>
+    </section>
+    <!-- RIGHT: pads, over the intro, streams -->
+    <section class="col c3">
       <div class="card" id="cPads">
         <div class="row between"><span class="lab">Pads</span><span class="row" style="gap:6px"><span class="muted" id="padSum" style="font-size:11px"></span><button class="btn sm ic" id="padGear" aria-expanded="false" aria-label="Pad settings" title="Duck, edit pads">⚙︎</button><button class="btn sm red ic" id="bPadStop" aria-label="Stop pads" title="Stop pads"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button></span></div>
         <div class="subbox" id="padOpts" hidden><div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" id="bDuck" aria-pressed="false" title="When on, the music dips while a pad plays">DUCK: OFF</button><button class="btn sm" id="bPEdit" aria-pressed="false" title="Make banks, drag jingles from the library onto the pads">✎ EDIT</button></div></div>
@@ -93,23 +110,6 @@
       </div>
     </section>
 
-    <!-- RIGHT: library -->
-    <section class="col c3">
-      <div class="card" id="cLib">
-        <div class="row between"><span class="lab">Library</span><div class="row" style="gap:6px"><button class="btn sm" id="libFind" aria-label="Search" title="Search ( / )"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button><button class="btn sm" id="libSort" title="A–Z or newest uploads first">A–Z</button><button class="btn sm" id="bStations" aria-expanded="false" title="Which stations' songs this library shows (this channel only)">◎ Stations</button></div></div>
-        <div class="wrapchips" id="stRow" hidden></div>
-        <label class="search" id="libSearch" hidden>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-          <span style="position:absolute;left:-9999px">Search the library</span>
-          <input id="q" type="search" placeholder="Search artist or title…  ( / )" autocomplete="off">
-        </label>
-        <div class="seg" id="secs" role="tablist" aria-label="Section"></div>
-        <div class="wrapchips" id="folders"></div>
-        <div class="wrapchips" id="subfolders" hidden></div>
-        <div class="wrapchips" id="subfolders2" hidden></div>
-        <div class="res" id="res"></div>
-      </div>
-    </section>
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -165,7 +165,7 @@ function paint() {
 }
 function renderLog() {
   const L = $('#log'), n = S.now || {}, nx = (S.next || []).filter(Boolean);
-  let html = '';
+  let html = (S.history || []).filter(h => !(n.started && Math.abs(h.started - n.started) < 2)).slice(0, 2).reverse().map(h => `<div class="li played"><span class="tm mono">${new Date(h.started * 1000).toTimeString().slice(0, 5)}</span><span class="ic">✓</span><div class="tx"><b>${h.artist ? esc(h.artist) + ' – ' : ''}${esc(h.title)}</b><span>${esc(fold(h.path))}</span></div></div>`).join('');
   if (n.path && !S.sim) html += `<div class="li next" style="border-color:var(--r)"><span class="tm mono">${n.started ? new Date(n.started * 1000).toTimeString().slice(0, 5) : ''}</span><span class="ic" style="color:var(--r)">●</span><div class="tx"><b>${n.artist ? esc(n.artist) + ' – ' : ''}${esc(n.title)}</b><span>ON AIR · ${esc(fold(n.path))}</span></div><span class="du mono">${fmt(n.len)}</span></div>`;
   nx.forEach((u, i) => {
     const jg = u.section && u.section !== 'music', q = u.id === S.queued;

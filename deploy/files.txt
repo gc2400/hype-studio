@@ -92,6 +92,7 @@ web/panel/manifest.json|/var/www/studio/panel/manifest.json|644|-
 web/panel/apple-touch-icon.png|/var/www/studio/apple-touch-icon.png|644|-
 engine/chancfg.py|/opt/hype/chancfg.py|644|hype-engine,hype-channels
 engine/chan.py|/opt/hype/chan.py|755|hype-channels
+engine/smartmix.py|/opt/hype/smartmix.py|644|hype-channels
 radio/channel.liq|/etc/hype/channel.liq|644|hype-channels
 tv/chan_hls.sh|/etc/hype/chan_hls.sh|755|hype-channels
 system/hype-channels.service|/etc/systemd/system/hype-channels.service|644|daemon-reload,hype-channels

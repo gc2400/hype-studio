@@ -19,7 +19,7 @@ import os, sys, re, json, time, uuid, socket, random, signal, logging, threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import planner, chancfg
+import planner, chancfg, smartmix
 
 ROOT = "/srv/hype"
 TEMPLATE = "/etc/hype/channel.liq"
@@ -42,12 +42,17 @@ def item(c, path):
     return d
 
 
-def annotate(it, mix_out=None, jingle_db=0.0):
+def annotate(it, mix_out=None, jingle_db=0.0, smart=True, nxt=None):
     """The telnet line for one item: cue points, mix length, song gain (a simpler copy of Hype Radio's annotate)."""
     MIX_OUT_ = MIX_OUT if mix_out is None else mix_out          # Settings → Mixing of this channel
     cs = it["cue_start"] or 0.0; dur = it["duration"] or it["cue_end"] or 0; ce = it["cue_end"] or dur
     cm = it["cue_mix"] if it["cue_mix"] and it["cue_mix"] > cs else ce
-    if it["section"] in ("jingles", "ads"):
+    sm = None
+    if smart:                                                     # Hype Radio's smart mix (smartmix.py), from the loudness map
+        try: sm = smartmix.smart_mix(it, nxt)
+        except Exception as e: log.warning("smart mix %s: %s", it.get("path"), e)
+    if sm: cm, cross, fade = sm
+    elif it["section"] in ("jingles", "ads"):
         cross = max(0.3, min(8.0, ce - cm)); fade = 0.0            # jingles play out to their END under the next song
     else:
         end_ = max(ce, dur or ce)
@@ -196,7 +201,8 @@ class Channel:
                 self.refill(c)
                 if n == 0 and self.plan:
                     it = self.plan[0]
-                    try: self.tel("q.push " + annotate(it, *self.mixcfg())); self.pushed = it["id"]; self.err = ""
+                    mo, jd, sm_on = self.mixcfg()
+                    try: self.tel("q.push " + annotate(it, mo, jd, sm_on, self.plan[1] if len(self.plan) > 1 else None)); self.pushed = it["id"]; self.err = ""
                     except ValueError as e: log.warning("%s: %s – skipped", self.id, e); self.plan.pop(0)
                 elif n == 0 and not self.plan:
                     self.err = "Nothing to play: give this channel a clock in Planning (or put songs in its playlists)."
@@ -234,13 +240,14 @@ class Channel:
         """(mix length, jingles volume) from this channel's Settings → Mixing – read again every 30 s."""
         m = getattr(self, "_mix", None)
         if m and time.time() - m[0] < 30: return m[1]
-        mo, jd = MIX_OUT, -3.0
+        mo, jd, sm_on = MIX_OUT, -3.0, True
         try: mo = max(0.3, min(6.0, float(self.tel("var.get mix_out", 1).split()[0])))
         except (OSError, ValueError, IndexError): pass
         try:
-            c = chancfg.connect(self.id); jd = float(planner.get_setting(c, "jingle_db", -3.0)); c.close()
+            c = chancfg.connect(self.id); jd = float(planner.get_setting(c, "jingle_db", -3.0)); sm_on = bool(planner.get_setting(c, "smart_mix", True))
+            smartmix.MIX_MAX = float(planner.get_setting(c, "mix_max", 5.0)); c.close()
         except Exception: pass
-        self._mix = (time.time(), (mo, jd)); return (mo, jd)
+        self._mix = (time.time(), (mo, jd, sm_on)); return (mo, jd, sm_on)
 
     # ---------- settings (stored in the channel's own database) ----------
     DEF = {"idi": {"on": False, "every": 3, "folder": "", "duck": 0.35, "at": 0.5},
@@ -418,7 +425,15 @@ class Channel:
                 "now": brief(self.now), "next": [brief(p) for p in self.plan[:5]], "sim": self.sim, "listeners": self.listeners,
                 "level": self.level, "meter": getattr(self, "meter", None), "error": self.err, "mount": self.cfg["mount"], "join_live": bool(self.cfg.get("join_live")), "main_live": MAIN_LIVE["on"],
                 "pad": self.pad_now if self.pad_now and self.pad_now["until"] > time.time() else None, "queued": self.pushed,
-                "idi": self.setting("idi"), "voice": self.setting("voice")}
+                "idi": self.setting("idi"), "voice": self.setting("voice"), "history": self.last_played()}
+
+    def last_played(self, n=3):
+        """The last songs (as on Hype Radio's playlist: the 2 before the one on air)."""
+        try:
+            c = chancfg.connect(self.id)
+            rows = c.execute("SELECT started, artist, title, path FROM asrun ORDER BY started DESC LIMIT ?", (n,)).fetchall(); c.close()
+            return [{"started": r[0], "artist": r[1] or "", "title": r[2] or os.path.basename(r[3] or ""), "path": r[3]} for r in rows]
+        except Exception: return []
 
 
 MAIN_LIVE = {"on": False}
