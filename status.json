@@ -1,17 +1,20 @@
 {
- "time": "2026-11-20T11:17:15",
- "result": "ok",
- "commit": "82a2161914d25c30cc9860fc15e282140fd50bcd",
- "subject": "Hype Studio app icon (iPhone home screen / Android): logo + STUDIO, app name Hype Studio",
+ "time": "2026-11-20T19:01:17",
+ "result": "rolled-back",
+ "commit": "07cd0c7aabd9203b22e7c8006d74761f0d81eadd",
+ "subject": "Theme channels Hype Ambiente + Hype Latina (audio): hype-channels service, own library roots, channel switch, channel page \u2013 channels start switched off; Hype Radio's radio engine unchanged",
  "log": [
-  "11:17:15 update 13db463d \u2192 82a21619 \u00b7 15 file(s): web/panel/apple-touch-icon.png, web/panel/browser.html, web/panel/help.html, web/panel/history.html, web/panel/hypelive.html, web/panel/icon-192.png, web/panel/icon-512.png, web/panel/index.html, web/panel/library.html, web/panel/manifest.json, web/panel/plan.html, web/panel/settings.html, web/panel/studio.html, web/panel/voice.html, web/status/index.html",
-  "11:17:15 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "19:01:16 update 82a21619 \u2192 07cd0c7a \u00b7 16 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/indexer.py, engine/planner.py, radio/channel.liq, system/hype-channels.service, system/nginx-hype.conf, tv/chan_hls.sh, web/panel/ch-ambiente-1024.png, web/panel/ch-ambiente.png, web/panel/ch-latina-1024.png, web/panel/ch-latina.png, web/panel/channel.html, web/panel/header.js, web/panel/library.html",
+  "19:01:16 PROBLEM during install: nginx -t failed: 1:16 [emerg] 3730699#3730699: pcre2_compile() failed: missing closing parenthesis in \"^/([a-z][a-z0-9]\" in /etc/nginx/sites-enabled/hype:101\nnginx: configuration file /etc/nginx/nginx.conf test failed \u2192 rolling back",
+  "19:01:17 restart hype-channels",
+  "19:01:17 restart hype-indexer",
+  "19:01:17 restart hype-engine"
  ],
  "guard": {
-  "song": "Rauw Alejandro \u2013 Macacoa 2000  (From Grand Theft Auto VI The Album)",
+  "song": "Sarz x Asake x Wizkid x Skillibeng \u2013 Getting Paid",
   "listeners": 4,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 2.0,
   "problems": [],
   "ok": true
  },

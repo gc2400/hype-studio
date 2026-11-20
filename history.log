@@ -448,3 +448,4 @@
 2026-11-20T09:13:23 ok 1a79fc09 Scenes on a phone: CAM 1-4, PIP, MEDIA, SLIDESHOW and the settings button on one line, settings on the right; gear icons as text (not the iPhone emoji)
 2026-11-20T10:03:32 ok 13db463d Pads (and media): 12 per page (3 rows of 4), the rest behind the next-page button
 2026-11-20T11:17:15 ok 82a21619 Hype Studio app icon (iPhone home screen / Android): logo + STUDIO, app name Hype Studio
+2026-11-20T19:01:17 rolled-back 07cd0c7a Theme channels Hype Ambiente + Hype Latina (audio): hype-channels service, own library roots, channel switch, channel page – channels start switched off; Hype Radio's radio engine unchanged
