@@ -1,18 +1,18 @@
 {
- "time": "2026-11-20T09:04:22",
+ "time": "2026-11-20T09:06:12",
  "result": "ok",
- "commit": "76bed550940ef43f261d51e3b69d9558ce7933a1",
- "subject": "Audience per song: counted per device with its own stream delay (MP3 ~4 s, HLS ~15 s; HLS sessions end at their last piece), so the plus / minus lands on the right song; mixes count too",
+ "commit": "57080d592bec248f0d2d253fb5473960cf9bf8a1",
+ "subject": "Audience per song: short songs that play (almost) to the end count too (from 30 s); only cut-off plays are left out",
  "log": [
-  "09:03:37 update 5353e6c8 \u2192 76bed550 \u00b7 2 file(s): engine/audstats.py, engine/engine.py",
-  "09:03:37 restart hype-engine",
-  "09:04:22 installed OK \u00b7 restarted: hype-engine"
+  "09:05:26 update 76bed550 \u2192 57080d59 \u00b7 1 file(s): engine/engine.py",
+  "09:05:26 restart hype-engine",
+  "09:06:11 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Shaggy x Aidonia x Akon \u2013 Boom Body (Shaz Remix)",
+  "song": " \u2013 Hype SWP Wake Up 1",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },

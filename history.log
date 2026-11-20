@@ -444,3 +444,4 @@
 2026-11-20T08:53:18 ok 9731e630 Mixer: everything Hype Studio plays is called Studio, your studio input Live
 2026-11-20T08:55:24 ok 5353e6c8 Library jingles: OVER button – play an ID now over the music (ducked), e.g. over an intro while live
 2026-11-20T09:04:22 ok 76bed550 Audience per song: counted per device with its own stream delay (MP3 ~4 s, HLS ~15 s; HLS sessions end at their last piece), so the plus / minus lands on the right song; mixes count too
+2026-11-20T09:06:12 ok 57080d59 Audience per song: short songs that play (almost) to the end count too (from 30 s); only cut-off plays are left out
