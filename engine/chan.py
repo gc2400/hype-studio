@@ -376,6 +376,18 @@ class Channel:
                     v = self.tel("radio.level", 1).split()
                     vals = [float(x) for x in v]; self.level = vals[:2] if len(vals) >= 2 else None; self.meter = vals
                 except (OSError, ValueError): self.level = None
+                # watchdog: the sound chain went NaN ("not a number" – the stream is then silent, 20 Nov Hype Latina) ->
+                # restart this channel's radio engine; its playlist stays and goes on with the next item
+                if self.level and any(x != x for x in self.level):
+                    self.nan_n = getattr(self, "nan_n", 0) + 1
+                    if self.nan_n >= 3:
+                        log.warning("%s: sound broke (NaN) during %s – radio engine restarted", self.id, (self.now or {}).get("path"))
+                        self.err = "The sound broke at %s and the radio engine restarted by itself." % time.strftime("%H:%M")
+                        self.nan_n = 0; self.liq.terminate()
+                        try: self.liq.wait(8)
+                        except subprocess.TimeoutExpired: self.liq.kill()
+                        self.liq_fail -= 1          # not a crash: no slow-down
+                else: self.nan_n = 0
                 if time.time() - last_aud >= 15:
                     last_aud = time.time(); self.count_listeners()
                 if self.cfg.get("join_live"):            # "join Hype Radio's live shows by itself": on while Hype Radio's studio is on air
