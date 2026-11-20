@@ -3207,19 +3207,21 @@ def stats_jobs():
     now = time.time(); c = dbc()
     # 1. plays
     _, last = audstats.own_since("plays"); t_from = max(last or 0, now - 14 * 86400) + 1
-    rows = c.execute("""SELECT a.started, a.artist, a.title, a.path FROM asrun a LEFT JOIN items i ON i.path = a.path
-                        WHERE a.started >= ? ORDER BY a.started""", (t_from - 86400,)).fetchall()
+    rows = c.execute("""SELECT a.started, a.artist, a.title, a.path, COALESCE(i.cue_mix, i.cue_end, i.duration, 0) - COALESCE(i.cue_start, 0)
+                        FROM asrun a LEFT JOIN items i ON i.path = a.path WHERE a.started >= ? ORDER BY a.started""", (t_from - 86400,)).fetchall()
     starts = [r[0] for r in rows]
     smp = c.execute("SELECT t, r, p, tv FROM aud_samples WHERE t >= ? ORDER BY t", (t_from - 120,)).fetchall()
     # 20 Nov: per device – who heard the start and who heard the end, each with its own stream's delay (MP3 ~4 s, HLS ~15 s),
     # so a listener who leaves lands on the song he left on (not on the next one, as with the 15 s total + one fixed delay)
     rs = audstats.heard("radio", t_from - 86400, now); vs = audstats.heard("tv", t_from - 86400, now)
     out = []
-    for k, (st, ar, ti, path) in enumerate(rows):
+    for k, (st, ar, ti, path, ln) in enumerate(rows):
         if st < t_from or not (path or "").startswith("music/") or "/RECORDINGS/" in "/" + (path or ""): continue     # mixes count too (20 Nov)
         end = starts[k + 1] if k + 1 < len(starts) else None
         if end is None or end + 60 > now: break                         # still playing / its end not heard by every player yet
-        if end - st < 90: continue                                       # cut off: not a real play
+        # cut off = not a real play: under 90 s AND under 80 % of the song (20 Nov: short songs that play to the end count too, from 30 s)
+        if end - st < 30 or (end - st < 90 and end - st < 0.8 * (ln or 0)): continue
+        if end - st < 90 and not ln: continue
         a0 = aud_at(smp, st + AUD_LAG); a1 = aud_at(smp, end + AUD_LAG)
         if not a0 or not a1: continue                                    # the engine was not counting then
         p0 = aud_at(smp, st + AUD_LAG, pub=True) or 0; p1 = aud_at(smp, end + AUD_LAG, pub=True) or 0       # Streamerr (public relay): only its total
