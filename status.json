@@ -1,19 +1,18 @@
 {
- "time": "2026-11-20T21:55:24",
+ "time": "2026-11-20T21:58:15",
  "result": "ok",
- "commit": "93ea092e7ebe3a65afc52d3a0929435c22ece2f7",
- "subject": "Theme channels: Hype Radio's AGC (agcloop.py, the same code: evens out songs, lifts quiet intros) per channel; its meter in Settings \u2192 Sound",
+ "commit": "128979397f448f960e21cd2e3597b3c5e6cf9032",
+ "subject": "Theme channels: a restarted radio engine never keeps the music dipped (duck_lvl back to 1)",
  "log": [
-  "21:54:39 update c122e706 \u2192 93ea092e \u00b7 3 file(s): engine/agcloop.py, engine/chan.py, engine/engine.py",
-  "21:54:39 restart hype-channels",
-  "21:54:39 restart hype-engine",
-  "21:55:24 installed OK \u00b7 restarted: hype-channels, hype-engine"
+  "21:57:29 update 93ea092e \u2192 12897939 \u00b7 1 file(s): engine/chan.py",
+  "21:57:29 restart hype-channels",
+  "21:58:15 installed OK \u00b7 restarted: hype-channels"
  ],
  "guard": {
   "song": "Caribang Radio 001 \u2013 Hosted by Essovilla",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
