@@ -1,0 +1,16 @@
+[Unit]
+Description=Hype theme channels (Hype Ambiente, Hype Latina …): their radio engines, HLS and playout – separate from Hype Radio
+After=icecast2.service hype-radio.service
+[Service]
+ExecStartPre=/bin/mkdir -p -m 755 /run/hype-ch
+Environment=HOME=/root
+Environment=XDG_RUNTIME_DIR=/run/hype
+ExecStart=/usr/bin/python3 /opt/hype/chan.py
+Restart=always
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=20
+# a theme channel never takes the CPU from Hype Radio / the TV
+Nice=3
+[Install]
+WantedBy=multi-user.target

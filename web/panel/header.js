@@ -1,10 +1,23 @@
 /* Hype Studio – one header for every page. Computer: logo · AUTO/MANUAL · modes · radio/tv · clock ……… pages (right).
    Phone: logo · radio/tv · clock · ☰ (pages) / second row: the buttons. Keys: Alt+1 … Alt+8 */
 (function () {
-  const P = [['/panel/', 'Panel', 'onair'], ['/panel/library.html', 'Library', 'library'], ['/panel/plan.html', 'Planning', 'plan'], ['/panel/voice.html', 'Voice', 'voice'],
+  const P = [[CH !== 'main' ? '/panel/channel.html' : '/panel/', 'Panel', 'onair'], ['/panel/library.html', 'Library', 'library'], ['/panel/plan.html', 'Planning', 'plan'], ['/panel/voice.html', 'Voice', 'voice'],
              ['/panel/history.html', 'Reports', 'history'], ['/panel/studio.html', 'Broadcast', 'studio'], ['/panel/hypelive.html', 'Hype Live', 'hypelive'], ['/panel/settings.html', 'Settings', 'settings'], ['/', 'Status', 'status']];
-  const f = location.pathname.split('/').pop().replace('.html', '') || 'index';
-  const cur = !location.pathname.startsWith('/panel') ? 'status' : f === 'index' ? 'onair' : f === 'help' ? 'settings' : f, home = cur === 'onair';
+  // ---- the channel you work on: Hype Radio ("main") or a theme channel (Hype Ambiente, Hype Latina …) ----
+  // Planning, Library (playlists), Reports (history / rights) and Settings → Sound then use that channel's own data: every /api call
+  // for those paths gets ?ch=<id> (the engine ignores it everywhere else). Panel = the channel's own page (channel.html).
+  let CH = 'main'; try { CH = localStorage.getItem('hypeCh') || 'main'; } catch (e) {}
+  const CH_PATHS = /^\/(playlists|playlist|folders|library|clocks|schedule|events|preview_hour|history|history\.csv|rights\.csv|rights_check|week|settings)$|^\/plan\//;
+  if (CH !== 'main' && !window.__chFetch) {
+    window.__chFetch = true; const F = window.fetch.bind(window);
+    window.fetch = (u, o) => { try { if (typeof u === 'string' && u.includes('api/')) { const x = new URL(u, location.href), pth = x.pathname.replace(/^\/api/, '');
+      if (CH_PATHS.test(pth) && !x.searchParams.has('ch')) { x.searchParams.set('ch', CH); u = x.pathname + x.search; } } } catch (e) {} return F(u, o); };
+  }
+  const f0 = location.pathname.split('/').pop().replace('.html', '') || 'index';
+  if (CH !== 'main' && f0 === 'index' && location.pathname.startsWith('/panel')) { location.replace('/panel/channel.html'); return; }
+  if (CH === 'main' && f0 === 'channel') { location.replace('/panel/'); return; }
+  const f = f0;
+  const cur = !location.pathname.startsWith('/panel') ? 'status' : f === 'index' || f === 'channel' ? 'onair' : f === 'help' ? 'settings' : f, home = cur === 'onair' && f !== 'channel';
   const hSkew = () => { try { return +localStorage.getItem('hypeSkew') || 0; } catch (e) { return 0; } };   // server-time offset kept between pages, so the clock never restarts
   const hNow = () => new Date(Date.now() - hSkew() * 1000).toTimeString().slice(0, 8);
   const A = home ? 'bAuto' : 'hAuto', M = home ? 'bManual' : 'hManual';     // On Air binds its own buttons
@@ -12,7 +25,13 @@
   st.textContent = `
 html{scrollbar-gutter:stable}
 #hhead{position:sticky;top:0;z-index:60;background:#061423;box-sizing:border-box;width:100%;padding:10px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;font-family:Inter,system-ui,sans-serif;color:#F2F6FA;border-bottom:1px solid #102A42}
-#hhead .hb{display:flex;align-items:center;gap:10px;flex:none}#hhead .hb img{width:40px;height:40px}
+#hhead .hb{display:flex;align-items:center;gap:10px;flex:none;position:relative}#hhead .hb img{width:40px;height:40px}
+#hhead .chsw{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:1px solid transparent;background:transparent;color:#F2F6FA;border-radius:10px;padding:4px 8px;font:900 17px Inter,system-ui,sans-serif;white-space:nowrap}
+#hhead .chsw:hover,#hhead .chsw[aria-expanded=true]{background:#0F2B44;border-color:#23496B}#hhead .chsw .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .cd.lg{width:24px!important;height:24px!important}#hhead .chsw .car{font-size:11px;color:#A9BCCD}
+#hhead .chmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:90;min-width:250px;background:#0B2236;border:1px solid #23496B;border-radius:14px;padding:6px;box-shadow:0 18px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:2px}
+#hhead .chmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;color:#F2F6FA;font:700 14px Inter,system-ui,sans-serif;padding:10px;border-radius:10px;cursor:pointer}
+#hhead .chmenu button:hover{background:#0F2B44}#hhead .chmenu button.cur{background:#143049}#hhead .chmenu .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .chmenu small{margin-left:auto;color:#7F96AB;font-weight:700;font-size:11px}
+#hchbar{display:flex;align-items:center;gap:10px;justify-content:center;font:800 12px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;color:#061423}
 #hhead .show{font-size:17px;font-weight:900;white-space:nowrap}
 #hhead .hctl{display:flex;align-items:center;gap:6px;flex:none}
 #hhead .btn{cursor:pointer;border-radius:10px;border:1px solid #23496B;background:#0F2B44;color:#F2F6FA;font:700 11px Inter,system-ui,sans-serif;min-height:32px;padding:0 10px}
@@ -72,6 +91,7 @@ html{scrollbar-gutter:stable}
 #hhead a:focus-visible,#hhead .btn:focus-visible,#hhead .menu:focus-visible{outline:2px solid #05A9C6;outline-offset:1px}
 #hhead .menu{display:none;cursor:pointer;border:1px solid #23496B;background:#0F2B44;color:#F2F6FA;border-radius:10px;width:44px;height:40px;font-size:20px;line-height:1}
 @media (max-width:1180px){#hhead .hnav a{padding:9px 9px;font-size:12px}#hhead .show{display:none}}
+@media (max-width:1180px){#hhead .chsw{font-size:14px;padding:4px 6px}}@media (max-width:600px){#hhead #chName{display:none}#hhead .chmenu{min-width:220px}}
 @media (max-width:900px){
   #hhead{flex-wrap:wrap;gap:8px;padding:8px 12px}
   #hhead .hb{order:1}#hhead .hst{order:2}#hhead .hact{order:2}#hhead .sp{order:3}#hhead .menu{display:block;order:4}
@@ -107,7 +127,7 @@ html{scrollbar-gutter:stable}
   document.head.appendChild(st);
   const h = document.getElementById('hhead'); if (!h) return;
   document.body.insertBefore(h, document.body.firstChild);
-  h.innerHTML = `<div class="hb"><img src="/panel/logo.png" alt="Hype radio tv"><div class="show" id="show">Hype Studio</div></div>
+  h.innerHTML = `<div class="hb"><img src="/panel/logo.png" alt="Hype radio tv"><button class="chsw" id="chSw" aria-haspopup="menu" aria-expanded="false" title="The channel you work on"><i class="cd" style="background:#05A9C6"></i><span id="chName">Hype Radio</span><span class="car">▾</span></button><div class="show" id="show" hidden>Hype Studio</div><div class="chmenu" id="chMenu" role="menu" hidden></div></div>
     <div class="hctl"><span class="modes" role="group" aria-label="Programming"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button></span>
       <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
     <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span><span class="chip" id="stLog">● LOG</span></button><a class="chip" id="stClock" href="/panel/plan.html" title="The hour plan that plays now – click: Planning">–</a><span id="clock">${hNow()}</span>
@@ -125,6 +145,27 @@ html{scrollbar-gutter:stable}
   try { const o = JSON.parse(sessionStorage.getItem('hypeHdr') || 'null'); if (o) SNAP().forEach(([k, el]) => { const v = o[k]; if (v) { el.className = v[0]; el.innerHTML = v[1]; } }); } catch (e) {}
   const snapSave = () => { try { const o = {}; SNAP().forEach(([k, el]) => { o[k] = [el.className, el.innerHTML]; }); sessionStorage.setItem('hypeHdr', JSON.stringify(o)); } catch (e) {} };
   setInterval(snapSave, 1000); addEventListener('pagehide', snapSave);
+  // ---- channel switch ----
+  const chSw = h.querySelector('#chSw'), chMenu = h.querySelector('#chMenu'); let CHS = [{id: 'main', name: 'Hype Radio', color: '#05A9C6', enabled: true, running: true}];
+  function chPaint() {
+    const c = CHS.find(x => x.id === CH) || CHS[0];
+    const cd = chSw.querySelector('.cd'); cd.style.background = c.logo ? `center/cover url(${c.logo})` : c.color; cd.classList.toggle('lg', !!c.logo); h.querySelector('#chName').textContent = c.name;
+    let bar = document.getElementById('hchbar');
+    if (CH !== 'main') {
+      if (!bar) { bar = document.createElement('div'); bar.id = 'hchbar'; h.after(bar); }
+      bar.style.background = c.color; bar.textContent = 'You are working on ' + c.name + (c.enabled ? '' : ' (off)') + ' – Hype Radio is not affected';
+    } else if (bar) bar.remove();
+    chMenu.innerHTML = CHS.map(x => `<button role="menuitemradio" aria-checked="${x.id === CH}" class="${x.id === CH ? 'cur' : ''}" data-ch="${x.id}"><i class="cd${x.logo ? ' lg' : ''}" style="background:${x.logo ? `center/cover url(${x.logo})` : x.color}"></i>${x.name}<small>${x.id === 'main' ? 'main' : x.down ? 'service off' : !x.enabled ? 'off' : x.running ? 'on air' : 'starting'}</small></button>`).join('');
+    chMenu.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => {
+      const to = b.dataset.ch; try { localStorage.setItem('hypeCh', to); } catch (e) {}
+      const page = location.pathname.split('/').pop() || 'index.html';
+      location.href = (to === 'main' && page === 'channel.html') ? '/panel/' : (to !== 'main' && (page === '' || page === 'index.html' || location.pathname === '/panel/')) ? '/panel/channel.html' : location.pathname + location.search; });
+  }
+  chSw.onclick = e => { e.stopPropagation(); const o = chMenu.hidden; chMenu.hidden = !o; chSw.setAttribute('aria-expanded', o); };
+  document.addEventListener('click', e => { if (!chMenu.hidden && !chMenu.contains(e.target)) { chMenu.hidden = true; chSw.setAttribute('aria-expanded', false); } });
+  const chLoad = () => fetch('/api/channels', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(d => { if (d && d.channels) { CHS = [CHS[0], ...d.channels]; if (!CHS.some(x => x.id === CH)) { CH = 'main'; try { localStorage.setItem('hypeCh', 'main'); } catch (e) {} } chPaint(); } }).catch(() => {});
+  chPaint(); chLoad(); setInterval(() => { if (!document.hidden) chLoad(); }, 30000);
+  window.HYPE_CH = () => CH;
   h.querySelector('#hMenu').onclick = () => { const o = h.classList.toggle('open'); h.querySelector('#hMenu').setAttribute('aria-expanded', o); };
   // do the page links fit next to the rest? if not (they would wrap to a second line): the ☰ menu
   const nav = h.querySelector('.hnav'), hb = h.querySelector('.hb');

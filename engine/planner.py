@@ -25,8 +25,9 @@ def init(c):
                           ("playlists", "chart_web", "INT DEFAULT 1"), ("playlists", "rotate", "INT DEFAULT 0"), ("playlists", "strict", "INT DEFAULT 0"), ("playlist_sources", "amount", "INT DEFAULT 1"), ("clocks", "resume", "INT DEFAULT 0")]:
         if col not in [r[1] for r in c.execute(f"PRAGMA table_info({tbl})")]:
             c.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {typ}")
-            if col == "chart":   # the Hype Top 10 becomes the first chart
-                c.execute("UPDATE playlists SET chart=1 WHERE name LIKE '%TOP%10%' AND COALESCE(strict,0)=1")
+            if col == "chart": new_chart = True
+    if locals().get("new_chart"):   # the Hype Top 10 becomes the first chart (after all columns exist: a new database has no 'strict' yet)
+        c.execute("UPDATE playlists SET chart=1 WHERE name LIKE '%TOP%10%' AND COALESCE(strict,0)=1")
     c.commit()
 
 def get_setting(c, key, default=None):
@@ -416,7 +417,7 @@ def api_playlists(c):
 
 def chart_positions(c, pid):
     """A chart counts down: the first song in the list is the highest number, the last song is #1. Jingles get no number."""
-    songs = [p for p in playlist_songs(c, pid) if p.startswith("music/")]
+    songs = [p for p in playlist_songs(c, pid) if re.match(r"music(-[a-z0-9]+)?/", p)]     # (a theme channel's music-latina/… too)
     return [(p, len(songs) - i) for i, p in enumerate(songs)]
 def chart_key(artist, title):
     import unicodedata
@@ -517,11 +518,12 @@ def api_set_schedule(c, d):
         c.execute("INSERT OR REPLACE INTO schedule VALUES(?,?,?,?)", (int(cell["day"]), int(cell["hour"]), cell.get("clock_id"), cell.get("show", "")))
     c.commit()
 
-def api_folders(c):
-    music = [r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section='music' AND folder<>'' ORDER BY folder")]
+def api_folders(c, where="1=1"):
+    """where: which stations' songs (engine.station_sql) – Hype Radio sees its own, a theme channel its own + Hype Radio's."""
+    music = [r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section='music' AND folder<>'' AND " + where + " ORDER BY folder")]
     all_levels = sorted({"/".join(f.split("/")[:i]) for f in music for i in range(1, len(f.split("/")) + 1)})
-    jingles = [r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section='jingles' AND folder<>'' ORDER BY folder")]
-    counts = dict(c.execute("SELECT folder, COUNT(*) FROM items WHERE section='music' GROUP BY folder").fetchall())
+    jingles = [r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section='jingles' AND folder<>'' AND " + where + " ORDER BY folder")]
+    counts = dict(c.execute("SELECT folder, COUNT(*) FROM items WHERE section='music' AND " + where + " GROUP BY folder").fetchall())
     cnt = {f: sum(n for k, n in counts.items() if k == f or k.startswith(f + "/")) for f in all_levels}
     return dict(music=all_levels, counts=cnt, jingles=jingles)
 
@@ -572,7 +574,7 @@ def resolve_jingle(c, ref, avoid=()):
         s_ = show_at(time.time())
         r_ = resolve_jingle(c, show_folder(c, time.time(), s_), avoid) if s_ else None
         return r_ or resolve_jingle(c, "SWEEPERS", avoid)
-    if ref.startswith("jingles/"):
+    if re.match(r"jingles(-[a-z0-9]+)?/", ref):            # one jingle file (also a theme channel's jingles-latina/…)
         return ref if c.execute("SELECT 1 FROM items WHERE path=? AND problem IS NULL", (ref,)).fetchone() else None
     rows = [r[0] for r in c.execute("SELECT path FROM items WHERE section='jingles' AND problem IS NULL AND (folder=? OR folder LIKE ?)", (ref, ref + "/%"))]
     fresh = [p for p in rows if p not in avoid] or rows
@@ -733,6 +735,9 @@ def preview_hour(c, day=None, hour=None, clock=None, at=None):
     finally: CTX["preview"] = False
 def _preview_hour(c, day=None, hour=None, clock=None, at=None):
     mem = sqlite3.connect(":memory:"); c.backup(mem)
+    try:                                   # a theme channel's database: the songs come from the attached library (chancfg)
+        import chancfg; chancfg.attach_like(c, mem)
+    except ImportError: pass
     now = time.time(); start = (int(now) // 3600 + 1) * 3600
     if at: start = int(at)
     elif day is not None and hour is not None:
