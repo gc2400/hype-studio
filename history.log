@@ -474,3 +474,4 @@
 2026-11-20T23:07:40 ok 3444d60b Theme channels: shows per station from the website (?station=, only when the answer is really for that station), cover lookups for their songs
 2026-11-20T23:13:34 ok c01ba06a Library: rename / delete / move also for the theme channels' files (music-<id>, jingles-<id>); their own databases follow a rename
 2026-11-20T23:17:26 ok e3c07fd3 Theme channels: a song already sent to the radio engine is never sent again (Kustumber twice after the 23:06 handover)
+2026-11-20T23:22:19 ok 04d4980d Theme channels: one HLS encoder per channel – the handover took over the radio engine but started a second HLS encoder each time (jumbled app / website stream)

@@ -1,18 +1,18 @@
 {
- "time": "2026-11-20T23:17:26",
+ "time": "2026-11-20T23:22:19",
  "result": "ok",
- "commit": "e3c07fd310597217e9d71cc63e7da82b347573b3",
- "subject": "Theme channels: a song already sent to the radio engine is never sent again (Kustumber twice after the 23:06 handover)",
+ "commit": "04d4980d891616e869294a46efb7e4dde9546d2f",
+ "subject": "Theme channels: one HLS encoder per channel \u2013 the handover took over the radio engine but started a second HLS encoder each time (jumbled app / website stream)",
  "log": [
-  "23:16:41 update c01ba06a \u2192 e3c07fd3 \u00b7 1 file(s): engine/chan.py",
-  "23:16:41 restart hype-channels",
-  "23:17:26 installed OK \u00b7 restarted: hype-channels"
+  "23:21:34 update e3c07fd3 \u2192 04d4980d \u00b7 1 file(s): engine/chan.py",
+  "23:21:34 restart hype-channels",
+  "23:22:19 installed OK \u00b7 restarted: hype-channels"
  ],
  "guard": {
-  "song": "D-opss x Megamaster x K-Liber \u2013 Trill",
+  "song": "Maisak x Jay Wheeler \u2013 Casi Algo",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
