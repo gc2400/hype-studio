@@ -1,17 +1,19 @@
 {
- "time": "2026-11-20T20:22:50",
+ "time": "2026-11-20T20:29:45",
  "result": "ok",
- "commit": "6a3efda81a142d52ddb6842520094bc5a93462a0",
- "subject": "Theme channels: the website's calm station colours (Latina #0F0A0C / #FFB23F, Ambiente #070D1A / #4FC3F0)",
+ "commit": "6cc02f67d6db2a40b32c22f671e5a9f7f243b2a0",
+ "subject": "Theme channels: Hype Radio's smart mix (shared smartmix.py, per channel on/off), library in the middle, the last 2 played songs in the playlist",
  "log": [
-  "20:22:50 update f2a4bb18 \u2192 6a3efda8 \u00b7 1 file(s): web/panel/header.js",
-  "20:22:50 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:28:59 update 6a3efda8 \u2192 6cc02f67 \u00b7 5 file(s): engine/chan.py, engine/engine.py, engine/smartmix.py, web/panel/channel.html, web/panel/settings.html",
+  "20:28:59 restart hype-channels",
+  "20:29:00 restart hype-engine",
+  "20:29:45 installed OK \u00b7 restarted: hype-channels, hype-engine"
  ],
  "guard": {
-  "song": "Jeon \u2013 Nabe",
+  "song": "Ayra Starr x Theodora \u2013 Ms. Paper",
   "listeners": 5,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
