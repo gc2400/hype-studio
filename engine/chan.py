@@ -19,7 +19,7 @@ import os, sys, re, json, time, uuid, socket, random, signal, logging, threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import planner, chancfg, smartmix
+import planner, chancfg, smartmix, agcloop
 
 ROOT = "/srv/hype"
 TEMPLATE = "/etc/hype/channel.liq"
@@ -408,8 +408,19 @@ class Channel:
             for p in self.plan: p["at"] = t; t += self.len_of(p)
 
     # ---------- the loop ----------
+    def agc_now(self):
+        """The song on air for the AGC (with its loudness map, for the intro lift); None = hold (live from Hype Radio / nothing)."""
+        n = self.now
+        if not n or self.sim or not n.get("path"): return None
+        if "lmap" not in n:
+            try: n["lmap"] = smartmix.lm_info(n["path"])[0]
+            except Exception: n["lmap"] = None
+        return n
+
     def run(self):
         log.info("%s: on", self.id); last_aud = 0
+        self.agc = {"db": 0.0, "lift": 0.0, "level": None, "strength": 0.7, "t": 0}
+        threading.Thread(target=agcloop.agc_loop, args=(int(self.cfg["telnet"]), self.agc, self.agc_now, lambda: not self.stop_ev.is_set()), daemon=True).start()
         while not self.stop_ev.is_set():
             try:
                 self.start_procs(); self.tick()
@@ -502,7 +513,8 @@ class Channel:
                 "now": brief(self.now), "next": [brief(p) for p in self.plan[:5]], "sim": self.sim, "listeners": self.listeners,
                 "level": self.level, "meter": getattr(self, "meter", None), "error": self.err, "mount": self.cfg["mount"], "join_live": bool(self.cfg.get("join_live")), "main_live": MAIN_LIVE["on"],
                 "pad": self.pad_now if self.pad_now and self.pad_now["until"] > time.time() else None, "queued": self.pushed,
-                "idi": self.setting("idi"), "voice": self.setting("voice"), "history": self.last_played()}
+                "idi": self.setting("idi"), "voice": self.setting("voice"), "history": self.last_played(),
+                "agc": {k: round(v, 1) if isinstance(v, float) else v for k, v in (getattr(self, "agc", None) or {}).items()}}
 
     def nowplaying(self):
         """The same answer as Hype Radio's /api/nowplaying/hype_radio (AzuraCast style): now playing, next, the last 10 songs

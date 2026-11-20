@@ -3642,7 +3642,8 @@ class H(BaseHTTPRequestHandler):
                     x = next((y for y in st.get("channels", []) if y["id"] == qs["ch"][0]), {}); m = x.get("meter") or []
                 except Exception: m = []
                 f_ = lambda i: m[i] if len(m) > i else 0.0
-                return self.send(200, {"l": f_(0), "r": f_(1), "comp": f_(2), "lim": f_(3), "lufs": m[4] if len(m) > 4 else None, "agc": 0, "agc_state": "", "agc_on": False, "ch": None})
+                return self.send(200, {"l": f_(0), "r": f_(1), "comp": f_(2), "lim": f_(3), "lufs": m[4] if len(m) > 4 else None, "agc": round(((x.get("agc") or {}).get("db") or 0) + ((x.get("agc") or {}).get("lift") or 0), 1),
+                                       "agc_state": (x.get("agc") or {}).get("state", ""), "agc_on": ((x.get("agc") or {}).get("strength") or 0) > 0.01, "ch": None})
             if p == "/level": LEVEL["asked"] = time.time(); return self.send(200, {"l": LEVEL["l"], "r": LEVEL["r"], "comp": LEVEL.get("comp", 0), "lim": LEVEL.get("lim", 0), "lufs": LEVEL.get("lufs"), "agc": round(AGC["db"] + AGC["lift"], 1), "agc_state": AGC.get("state", ""), "agc_on": AGC["strength"] > 0.01, "ch": LEVEL.get("ch")})
             if p in ("/rights.csv", "/rights_check"):
                 return self.send(200, *rights_report(qs, p.endswith(".csv")))
