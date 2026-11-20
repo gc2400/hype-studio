@@ -454,3 +454,4 @@
 2026-11-20T19:42:35 ok 992fcb84 Theme channels: own On Air panel (player, playlist edit, pads, library, ID over intro, listener voices per channel); header hides Hype Radio-only parts
 2026-11-20T19:53:35 ok c6144db1 Theme channels: reports + audience per station, Settings per channel (sound, mixing, rotation), Library follows the channel, channel panel in the On Air look (shared onair.css)
 2026-11-20T20:03:34 ok 6ae0962f Theme channels: own pads (no Hype Radio banks), On Air library card (search, sort, Stations, 3 folder levels), Planning without Hype Radio shows / On screen / ads / sweepers / recordings
+2026-11-20T20:05:23 ok a6ea58df Theme channels: Planning's show list from the channel's own database (no Hype Radio shows)

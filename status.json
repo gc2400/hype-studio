@@ -1,19 +1,18 @@
 {
- "time": "2026-11-20T20:03:34",
+ "time": "2026-11-20T20:05:23",
  "result": "ok",
- "commit": "6ae0962f0a769614d6056e21d106c3a6a433a5e0",
- "subject": "Theme channels: own pads (no Hype Radio banks), On Air library card (search, sort, Stations, 3 folder levels), Planning without Hype Radio shows / On screen / ads / sweepers / recordings",
+ "commit": "a6ea58df1b46546fb348590d6d2c0dbec1049949",
+ "subject": "Theme channels: Planning's show list from the channel's own database (no Hype Radio shows)",
  "log": [
-  "20:02:49 update c6144db1 \u2192 6ae0962f \u00b7 4 file(s): engine/chancfg.py, engine/planner.py, web/panel/channel.html, web/panel/plan.html",
-  "20:02:49 restart hype-channels",
-  "20:02:49 restart hype-engine",
-  "20:03:34 installed OK \u00b7 restarted: hype-engine, hype-channels"
+  "20:04:38 update 6ae0962f \u2192 a6ea58df \u00b7 2 file(s): engine/engine.py, web/panel/header.js",
+  "20:04:38 restart hype-engine",
+  "20:05:23 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Daddy Yankee x Bizarrap \u2013 Pa\u2019 Qu\u00e9 Llorar",
+  "song": "Jeon \u2013 Mama Wa' (The Blue Wave)",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
