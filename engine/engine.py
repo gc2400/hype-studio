@@ -35,11 +35,17 @@ def fold(t):
     import unicodedata
     return "".join(ch for ch in unicodedata.normalize("NFKD", str(t or "")) if not unicodedata.combining(ch)).lower()
 TL = threading.local()       # the theme channel a panel request is for (?ch=latina): set only for the planning / report paths below
-CH_PATHS = ("/playlists", "/playlist", "/clocks", "/schedule", "/events", "/preview_hour", "/history", "/history.csv",
+CH_PATHS = ("/playlists", "/playlist", "/folders", "/clocks", "/schedule", "/events", "/preview_hour", "/history", "/history.csv",
             "/rights.csv", "/rights_check", "/week")
+_STATION_COL = []
 def dbc():
     if getattr(TL, "ch", None): return chancfg.connect(TL.ch)       # a theme channel's own planning database (songs = the library)
     c = sqlite3.connect(DB, timeout=30)
+    if not _STATION_COL:            # items.station ('' = Hype Radio, else a theme channel) – the indexer adds it too; whoever is first
+        try:
+            if "station" not in [r[1] for r in c.execute("PRAGMA table_info(items)")]: c.execute("ALTER TABLE items ADD COLUMN station TEXT DEFAULT ''"); c.commit()
+            _STATION_COL.append(1)
+        except sqlite3.OperationalError: pass
     c.create_function("fold", 1, fold, deterministic=True)
     if not _DBI[0]:      # once per engine run: WAL (readers never wait for the indexer), as-run table + its indexes
         try: c.execute("PRAGMA journal_mode=WAL")
@@ -1512,7 +1518,7 @@ class Engine:
         now = time.time(); av = self.avoid(); rec = self.picker.recent
         paths = {p for t, p, a in rec} | av["paths"]
         arts = {a for t, p, aa in rec if now - t < ARTIST_SEP for a in aa} | av["artists"] | set(artist_key(self.now.get("artist") or ""))
-        theme = " AND ".join("folder NOT LIKE '%s%%'" % c["id"].upper() for c in chancfg.load()) or "1=1"   # never a theme channel's own folder (AMBIENTE/…, LATINA/…)
+        theme = "COALESCE(station, '') = ''"      # never a theme channel's own songs (music-latina/…, music-ambiente/…)
         for q, args in (("folder=?", (self.now.get("folder"),)), (theme, ())):
             rows = c.execute(f"SELECT {COLS} FROM items WHERE section='music' AND problem IS NULL AND folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%' AND {q}", args).fetchall()
             cand = [row_item(r, "clock") for r in rows if r[0] not in paths and not (set(artist_key(r[1])) & arts)]
@@ -2483,14 +2489,27 @@ def to_replace(c, folder="", q=""):
             if kbps < 190: why.append("audio %d kbps" % kbps)
         if why: out[path] = (why, plays.get(path, 0))
     return out
+def lib_show(ch=None):
+    """Which stations' songs a channel sees in the Library / Planning folders (Hype Radio = "main"). Default: Hype Radio only its own,
+    a theme channel its own + Hype Radio's (e.g. LAT for Hype Latina)."""
+    ch = ch if ch and chancfg.valid(ch) else "main"
+    try: v = planner.get_setting(sqlite3.connect(DB, timeout=30), "lib_show_" + ch, None)
+    except Exception: v = None
+    if not isinstance(v, list): v = ["main"] if ch == "main" else [ch, "main"]
+    return [x for x in v if x == "main" or chancfg.valid(x)] or ["main"]
+def station_sql(ch=None):
+    sts = ["" if x == "main" else x for x in lib_show(ch)]
+    return "COALESCE(station, '') IN (%s)" % ",".join("'%s'" % x for x in sts)      # ids are [a-z0-9] only (chancfg.ID_RE)
 def library(qs):
     c = dbc(); q = (qs.get("q", [""])[0]).strip(); sec = qs.get("section", ["music"])[0]; folder = qs.get("folder", [""])[0]
+    chq = (qs.get("ch") or [""])[0]
     fix = qs.get("fix", ["0"])[0] == "1" and sec == "music"
     FIX = to_replace(c, folder, q) if fix else None
     sql = "SELECT path, artist, title, folder, mode, clip_path, clip_suggest, clip_score, duration, has_video, problem, overlay_mode, overlay_path, cue_start, cue_mix, cue_end, cues_edited, added_at, COALESCE(mix_set, 0), COALESCE(cue_check, 0) FROM items WHERE section=?"
     mixes = sec == "mixes"; recs = sec == "recordings"
     if recs: sec = "music"; sql += " AND folder LIKE 'RECORDINGS%'"           # recordings (REC / GO LIVE / auto): a Library tab of their own
     elif sec in ("music", "mixes"): sec = "music"; sql += (" AND folder LIKE 'MIXES%'" if mixes else " AND folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%'")
+    if sec in ("music", "jingles"): sql += " AND " + station_sql(chq)      # theme channels: only the stations this channel shows
     args = [sec]; sort = qs.get("sort", ["az"])[0]; recent = int(qs.get("recent", ["0"])[0] or 0)
     if recent: sql += " AND added_at > ?"; args.append(time.time() - recent * 86400)   # uploaded in the last N days
     if folder: sql += " AND (folder=? OR folder LIKE ?)"; args += [folder, folder + "/%"]
@@ -2513,10 +2532,22 @@ def library(qs):
     for r in c.execute(sql, args):
         d = dict(zip(k, r)); d["last"] = last.get(d["path"]); out.append(d)
         if fix: d["fix"], d["plays90"] = FIX.get(d["path"], ([], 0))
-    folders = [r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section=? ORDER BY folder", (sec,))]
+    folders = [r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section=? AND " + (station_sql(chq) if sec in ("music", "jingles") else "1=1") + " ORDER BY folder", (sec,))]
     if recs: folders = [f for f in folders if (f or "").upper().startswith("RECORDINGS")]
     elif sec == "music": folders = [f for f in folders if (f or "").upper().startswith("MIXES") == mixes and not (f or "").upper().startswith("RECORDINGS")]
-    all_folders = folders
+    all_folders = list(folders)
+    if sec in ("music", "jingles") and not mixes and not recs:      # a theme channel's folders on disk (also still empty) – for Upload
+        vis = set(lib_show(chq))
+        for cfg in chancfg.load():
+            base = os.path.join(ROOT, "%s-%s" % (sec, cfg["id"]))
+            if cfg["id"] not in vis or not os.path.isdir(base): continue
+            for dp, dn, _ in os.walk(base):
+                dn[:] = [x for x in dn if not x.startswith(".")]
+                rel = os.path.relpath(dp, base); depth = 0 if rel == "." else rel.count(os.sep) + 1
+                if depth > 3: dn[:] = []; continue
+                f = cfg["id"].upper() + ("" if rel == "." else "/" + rel.replace(os.sep, "/"))
+                if f not in all_folders: all_folders.append(f)
+        all_folders.sort()
     counts = dict(c.execute("SELECT section, COUNT(*) FROM items GROUP BY section").fetchall())
     counts["mixes"] = c.execute("SELECT COUNT(*) FROM items WHERE section='music' AND folder LIKE 'MIXES%'").fetchone()[0]
     counts["recordings"] = c.execute("SELECT COUNT(*) FROM items WHERE section='music' AND folder LIKE 'RECORDINGS%'").fetchone()[0]
@@ -2528,7 +2559,7 @@ def library(qs):
         fx = FIX if FIX is not None else to_replace(c); fixn = {"total": len(fx)}
         for why, _n in fx.values():
             for w in why: k_ = "no video" if w == "no video" else "low video" if w.endswith("p video") else "low audio" if w.startswith("audio") else "check cues"; fixn[k_] = fixn.get(k_, 0) + 1
-    return {"fixn": fixn, "problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "counts": counts, "total": total, "offset": off}
+    return {"fixn": fixn, "problems": c.execute(psql, (sec,)).fetchone()[0], "items": out, "folders": folders, "all_folders": all_folders, "station_roots": {x["id"].upper(): x["id"] for x in chancfg.load()}, "counts": counts, "total": total, "offset": off}
 
 # ---------- upload from the Library page (WinSCP stays the main way; this is for a phone / someone without server access) ----------
 UP_DIR = "/srv/hype-data/uploads"; UP_SECTIONS = ("music", "clips", "jingles", "ads")
@@ -2543,7 +2574,7 @@ def up_check(qs):
         if total <= 0 or total > 600 * 1024 ** 2: raise ValueError("take too big")
         os.makedirs(VT_IN, exist_ok=True); return uid, VT_IN, name, total
     media = folder == "branding/media" or (len(parts) == 4 and parts[:2] == ["branding", "slideshow"] and parts[2] in ("photos", "videos"))   # media pads / a slideshow
-    if (parts[0] not in UP_SECTIONS and not media) or ".." in parts or folder.startswith("."): raise ValueError("choose a library folder")
+    if (parts[0] not in UP_SECTIONS and not re.match(r"^(music|jingles)-[a-z][a-z0-9]{1,19}$", parts[0]) and not media) or ".." in parts or folder.startswith("."): raise ValueError("choose a library folder")
     d = os.path.join(ROOT, folder)
     if not os.path.isdir(d): raise ValueError("folder not found")
     name = os.path.basename(qs.get("name", [""])[0]).replace("\x00", "").strip()
@@ -3314,7 +3345,7 @@ def history(qs, limit=2000):
         end = rows[k_ - 1][0] if k_ > 0 else (c.execute("SELECT MIN(started) FROM asrun WHERE started > ?", (st,)).fetchone() or [None])[0]
         a0 = aud_at(smp, st + AUD_LAG); a1 = aud_at(smp, (end if end else time.time()) + AUD_LAG) if (end or time.time() - st > 20) else None
         aud = {"r0": a0[0], "r1": a1[0], "v0": a0[1], "v1": a1[1], "live": end is None} if a0 and a1 else None
-        sec = sec or ("jingles" if (path or "").startswith("jingles/") else "ads" if (path or "").startswith("ads/") else "music")
+        sec = sec or ("jingles" if re.match(r"jingles(-[a-z0-9]+)?/", path or "") else "ads" if (path or "").startswith("ads/") else "music")
         if typ and sec != typ: continue
         if q and q not in f"{ar} {ti} {fo}".lower(): continue
         out.append({"t": st, "time": time.strftime("%H:%M:%S", time.localtime(st)), "artist": ar or "", "title": ti or "", "folder": fo or "",
@@ -3588,7 +3619,9 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, {"paths": paths})
             if p == "/clocks": return self.send(200, planner.api_clocks(dbc()))
             if p == "/schedule": return self.send(200, planner.api_schedule(dbc()))
-            if p == "/folders": return self.send(200, planner.api_folders(dbc()))
+            if p == "/folders": return self.send(200, planner.api_folders(dbc(), station_sql(TL.ch)))
+            if p == "/lib_show": return self.send(200, {"show": lib_show((qs.get("ch") or [""])[0]), "stations": [{"id": "main", "name": "Hype Radio", "color": "#05A9C6"}] + [{"id": x["id"], "name": x["name"], "color": x["color"], "logo": x.get("logo")} for x in chancfg.load()],
+                                                       "roots": sorted(d for d in os.listdir(ROOT) if re.match(r"^(music|jingles)-[a-z][a-z0-9]{1,19}$", d))})
             if p == "/overlays": return self.send(200, planner.api_overlays(dbc()))
             if p == "/overlay_songs":   # songs with their own intro sweeper (set per song in the Library) - or "never"
                 c = dbc(); rows = c.execute("""SELECT i.path, i.artist, i.title, i.folder, i.overlay_mode, i.overlay_path, j.title, j.folder FROM items i
@@ -3777,6 +3810,11 @@ class H(BaseHTTPRequestHandler):
         if p == "/recap_send":      # the weekly recap to Hype Live now (w = 0 this week so far, 1 last week)
             try: wk, a = recap_send(int(d.get("w", 1))); return self.send(200, {"week": wk, "answer": a[:80]})
             except Exception as e: return self.send(500, {"error": str(e)})
+        if p == "/lib_show":        # Library: which stations' songs this channel sees
+            ch = str(d.get("ch") or "main"); ch = ch if chancfg.valid(ch) else "main"
+            show = [x for x in (d.get("show") or []) if x == "main" or chancfg.valid(x)] or ["main"]
+            c = sqlite3.connect(DB, timeout=30); planner.set_setting(c, "lib_show_" + ch, show)
+            return self.send(200, {"ok": True, "show": lib_show(ch)})
         if p == "/settings":
             try: return self.send(200, set_settings(d))
             except Exception as e: log.warning("settings: %s", e); return self.send(500, {"error": str(e)})

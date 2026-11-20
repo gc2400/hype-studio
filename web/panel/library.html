@@ -163,6 +163,7 @@ dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
         <div class="tbr">
         <button class="btn sm" id="bProb" hidden title="Files with a problem (e.g. an upload that did not finish) first, with the reason">⚠</button>
         <button class="btn sm" id="bUpload" title="Upload files into a library folder (for big batches WinSCP stays quicker)" aria-label="Upload">⬆<span class="bl"> Upload</span></button>
+        <button class="btn sm" id="bStations" aria-expanded="false" title="Which stations' songs this library shows (per channel)" aria-label="Stations">◎<span class="bl"> Stations</span></button>
         <button class="btn sm" id="bFilter" aria-expanded="false" title="Type, cue points, recently uploaded, sort" aria-label="Filter">⚙<span class="bl"> Filter</span></button>
         </div>
       </div>
@@ -517,6 +518,19 @@ document.addEventListener('keydown', e => {
 window.addEventListener('pagehide', () => { if (dirty && SEL && CUE) fetch('../api/cmd/set_cues', {method: 'POST', keepalive: true, headers: {'Content-Type': 'application/json'}, body: JSON.stringify({path: SEL.path, cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, mix_auto: !!CUE.auto})}); });
 api('pads').then(p => { PADS = p; }); lib();
 
+// ---------- stations: which channels' songs this library shows (Hype Radio: only its own by default; a theme channel: its own + Hype Radio's) ----------
+(() => {
+  const b = $('#bStations'), row = document.createElement('div'); row.id = 'stRow'; row.hidden = true;
+  row.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0 2px;font-size:12.5px;color:#A9BCCD';
+  b.closest('.srow').after(row);
+  const ch = (window.HYPE_CH && window.HYPE_CH()) || 'main';
+  const paint = d => { row.innerHTML = '<span>Show songs of:</span>' + d.stations.map(x => `<button class="btn sm ${d.show.includes(x.id) ? 'on' : ''}" data-st="${x.id}" aria-pressed="${d.show.includes(x.id)}"><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${x.color}"></i> ${esc(x.name)}</button>`).join('') + '<span>(only for this channel – the others keep their own choice)</span>';
+    row.querySelectorAll('[data-st]').forEach(x => x.onclick = () => { const id = x.dataset.st, show = d.show.includes(id) ? d.show.filter(y => y !== id) : [...d.show, id];
+      if (!show.length) return toast('Keep at least one');
+      fetch('../api/lib_show', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ch, show})}).then(r => r.json()).then(r => { d.show = r.show; paint(d); lib(); }); }); };
+  b.onclick = () => { row.hidden = !row.hidden; b.setAttribute('aria-expanded', !row.hidden); if (!row.hidden) api('lib_show?ch=' + ch).then(paint); };
+})();
+
 // ---------- upload (resumable, 8 MB pieces) ----------
 const UP_CHUNK = 8 * 1024 * 1024, UPQ = []; let upBusy = false;
 const UP_SECS = [['music', 'Music', 'music'], ['mixes', 'Mixes', 'music'], ['clips', 'Clips', 'clips'], ['jingles', 'Jingles', 'jingles'], ['ads', 'Ads', 'ads'], ['recordings', 'Recordings', 'music']];
@@ -525,7 +539,9 @@ function upFolders() { const k = $('#upSec').value, real = UP_SECS.find(x => x[0
   api('library?section=' + k + '&q=' + encodeURIComponent('\u2400none\u2400')).then(d => {
     const fs = (d.all_folders || d.folders || []).filter(Boolean);
     const want = (SEC === k) ? (FOLDER || GENRE) : '';
-    $('#upFolder').innerHTML = fs.length ? fs.map(f => `<option value="${esc(real + '/' + f)}" ${f === want ? 'selected' : ''}>${esc(f)}</option>`).join('') : '<option value="">(no folders yet – make one with WinSCP)</option>'; }); }
+    const SR = d.station_roots || {};        // LATINA/BACHATA → music-latina/BACHATA (a theme channel's own library root)
+    const dest = f => { const top = f.split('/')[0]; return SR[top] && (real === 'music' || real === 'jingles') ? real + '-' + SR[top] + f.slice(top.length) : real + '/' + f; };
+    $('#upFolder').innerHTML = fs.length ? fs.map(f => `<option value="${esc(dest(f))}" ${f === want ? 'selected' : ''}>${esc(f)}</option>`).join('') : '<option value="">(no folders yet – make one with WinSCP)</option>'; }); }
 $('#bUpload').onclick = () => { $('#upSec').innerHTML = UP_SECS.map(([k, n]) => `<option value="${k}" ${k === SEC ? 'selected' : ''}>${n}</option>`).join(''); upFolders(); $('#upDlg').showModal(); };
 $('#upSec').onchange = upFolders; $('#upClose').onclick = () => $('#upDlg').close();
 $('#upFiles').onchange = e => { upAdd([...e.target.files]); e.target.value = ''; };

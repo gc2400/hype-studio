@@ -9,6 +9,21 @@ WEB = os.environ.get("HYPE_WEB", "/var/www/studio")
 AUDIO_EXT = {".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus", ".wma"}
 VIDEO_EXT = {".mp4", ".mov", ".mkv", ".m4v", ".webm", ".avi", ".mpg", ".mpeg", ".ts"}
 SECTIONS = ("music", "clips", "jingles", "ads")
+# Theme channels (Hype Latina, Hype Ambiente …) have their own library roots next to Hype Radio's: music-latina/, jingles-latina/ …
+# Their songs are section music / jingles with station "latina" and the folder LATINA/<…> (so they never mix with Hype Radio's folders).
+STATION_RE = __import__("re").compile(r"^(music|jingles)-([a-z][a-z0-9]{1,19})$")
+def sections():
+    out = list(SECTIONS)
+    try: out += sorted(d for d in os.listdir(ROOT) if STATION_RE.match(d) and os.path.isdir(os.path.join(ROOT, d)))
+    except OSError: pass
+    return out
+def split_path(rel):
+    """path -> (section, folder, genre, station)."""
+    parts = rel.split("/"); m = STATION_RE.match(parts[0]); inner = parts[1:-1]
+    if m:
+        sec, st = m.group(1), m.group(2)
+        return sec, "/".join([st.upper()] + inner), (inner[0] if inner else st.upper()), st
+    return parts[0], "/".join(inner), (inner[0] if inner else ""), ""
 
 def db():
     os.makedirs(os.path.dirname(DB), exist_ok=True)
@@ -26,6 +41,7 @@ def db():
     if "fp" not in cols: c.execute("ALTER TABLE items ADD COLUMN fp TEXT")
     if "genre" not in cols: c.execute("ALTER TABLE items ADD COLUMN genre TEXT")
     if "kf" not in cols: c.execute("ALTER TABLE items ADD COLUMN kf TEXT")
+    if "station" not in cols: c.execute("ALTER TABLE items ADD COLUMN station TEXT DEFAULT ''")   # '' = Hype Radio, else a theme channel
     if "lmap" not in cols: c.execute("ALTER TABLE items ADD COLUMN lmap TEXT")   # loudness map: the loudest moment of every 0.5 s (for the AGC intro lift)
     if "align" not in cols: c.execute("ALTER TABLE items ADD COLUMN align TEXT")   # clip only: where its song starts in the video, found by comparing the sound
     if "fine" not in cols: c.execute("ALTER TABLE items ADD COLUMN fine TEXT")   # the same loudness measure every 0.1 s, for the first and last seconds (exact mix moments)
@@ -247,19 +263,17 @@ def truncated(path, size):
 def index_file(c, path, st):
     rel = os.path.relpath(path, ROOT)
     parts = rel.split(os.sep)
-    section = parts[0]
-    folder = "/".join(parts[1:-1])
-    genre = parts[1] if len(parts) > 2 else ""
+    section, folder, genre, station = split_path(rel.replace(os.sep, "/"))
     fn = parts[-1]
     ext = os.path.splitext(fn)[1].lower()
     row = dict(path=rel, section=section, folder=folder, filename=fn, size=st.st_size, mtime=st.st_mtime,
                artist="", title="", duration=None, has_video=0, has_audio=0, width=None, height=None,
                lufs=None, peak=None, lmap=None, fine=None, cue_start=None, cue_intro=None, cue_mix=None, cue_end=None,
-               mode=None, problem=None, indexed_at=time.time(), tv_path=None, genre=genre, cues_edited=0, align=None)
+               mode=None, problem=None, indexed_at=time.time(), tv_path=None, genre=genre, cues_edited=0, align=None, station=station)
     fp = fingerprint(path, st.st_size); row["fp"] = fp
     if not c.execute("SELECT 1 FROM items WHERE path=?", (rel,)).fetchone() and follow_move(c, rel, fp):
-        c.execute("UPDATE items SET section=?, folder=?, genre=?, filename=?, size=?, mtime=? WHERE path=?",
-                  (section, folder, genre, fn, st.st_size, st.st_mtime, rel))
+        c.execute("UPDATE items SET section=?, folder=?, genre=?, filename=?, size=?, mtime=?, station=? WHERE path=?",
+                  (section, folder, genre, fn, st.st_size, st.st_mtime, station, rel))
         return
     info = probe(path)
     if not info:
@@ -423,7 +437,7 @@ def tidy_on(c):
 def scan(full=False):
     c = db()
     seen = set(); n_new = 0
-    for sec in SECTIONS:
+    for sec in sections():
         base = os.path.join(ROOT, sec)
         for dp, dn, fns in os.walk(base):
             for fn in fns:
@@ -450,10 +464,10 @@ def scan(full=False):
                 except Exception as e:      # one bad file never stops the scan (and everything after it)
                     print("index error:", repr(rel), repr(e), flush=True); SCAN_FAIL[rel] = (st.st_size, st.st_mtime)
                     try:
-                        c.rollback(); parts = rel.split(os.sep)
-                        c.execute("""INSERT INTO items(path, section, folder, filename, size, mtime, problem, indexed_at) VALUES(?,?,?,?,?,?,?,?)
+                        c.rollback(); parts = rel.split(os.sep); sp_ = split_path(rel.replace(os.sep, "/"))
+                        c.execute("""INSERT INTO items(path, section, folder, filename, size, mtime, problem, indexed_at, station) VALUES(?,?,?,?,?,?,?,?,?)
                                      ON CONFLICT(path) DO UPDATE SET size=excluded.size, mtime=excluded.mtime, problem=excluded.problem, indexed_at=excluded.indexed_at""",
-                                  (rel, parts[0], "/".join(parts[1:-1]), parts[-1], st.st_size, st.st_mtime, ("could not be read (%s) – upload it again" % str(e).encode("utf-8", "replace").decode())[:200], time.time()))
+                                  (rel, sp_[0], sp_[1], parts[-1], st.st_size, st.st_mtime, ("could not be read (%s) – upload it again" % str(e).encode("utf-8", "replace").decode())[:200], time.time(), sp_[3]))
                         c.commit()
                     except Exception as e2: print("index error (not stored):", repr(rel), repr(e2), flush=True); c.rollback()
     # fingerprints for rows indexed before fingerprints existed
@@ -480,10 +494,10 @@ def scan(full=False):
             print("merged:", g, "->", twin[0], flush=True)
         c.execute("DELETE FROM items WHERE path=?", (g,))
     # folder/genre always follow the path (e.g. after folders were moved into a genre folder)
-    for p_, f_, g_ in c.execute("SELECT path, folder, genre FROM items").fetchall():
-        parts = p_.split("/"); nf = "/".join(parts[1:-1]); ng = parts[1] if len(parts) > 2 else ""
-        if nf != f_ or (ng != (g_ or "")):
-            c.execute("UPDATE items SET folder=?, genre=? WHERE path=?", (nf, ng, p_))
+    for p_, f_, g_, s_ in c.execute("SELECT path, folder, genre, COALESCE(station, '') FROM items").fetchall():
+        _, nf, ng, ns = split_path(p_)
+        if nf != f_ or (ng != (g_ or "")) or ns != s_:
+            c.execute("UPDATE items SET folder=?, genre=?, station=? WHERE path=?", (nf, ng, ns, p_))
     suggest_pairs(c); c.commit()
     report(c)
     make_tv_copies(c)

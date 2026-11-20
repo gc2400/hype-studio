@@ -7,7 +7,7 @@
   // Planning, Library (playlists), Reports (history / rights) and Settings → Sound then use that channel's own data: every /api call
   // for those paths gets ?ch=<id> (the engine ignores it everywhere else). Panel = the channel's own page (channel.html).
   let CH = 'main'; try { CH = localStorage.getItem('hypeCh') || 'main'; } catch (e) {}
-  const CH_PATHS = /^\/(playlists|playlist|clocks|schedule|events|preview_hour|history|history\.csv|rights\.csv|rights_check|week|settings)$|^\/plan\//;
+  const CH_PATHS = /^\/(playlists|playlist|folders|library|clocks|schedule|events|preview_hour|history|history\.csv|rights\.csv|rights_check|week|settings)$|^\/plan\//;
   if (CH !== 'main' && !window.__chFetch) {
     window.__chFetch = true; const F = window.fetch.bind(window);
     window.fetch = (u, o) => { try { if (typeof u === 'string' && u.includes('api/')) { const x = new URL(u, location.href), pth = x.pathname.replace(/^\/api/, '');
