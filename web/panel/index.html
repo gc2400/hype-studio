@@ -967,7 +967,7 @@ function renderPads() {
         if (PEDIT) { B.items.push({path: r.path, label: r.path.split('/').pop().replace(/\.[^.]+$/, '')}); renderPads(); } else loadPads(); }); }; }
 }
 // pads in pages of 4 rows (16): ◀ ▶ under the pads; while editing all pads show (drag anywhere)
-const PADS_PER_PAGE = 16, PGS = {};
+const PADS_PER_PAGE = 12, PGS = {};     // 3 rows of 4, the rest on the next page
 function padPage(n) {
   const pages = Math.max(1, Math.ceil(n / PADS_PER_PAGE)), k = String(bank);
   PGS[k] = Math.min(PGS[k] || 0, pages - 1);
