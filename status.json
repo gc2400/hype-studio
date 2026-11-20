@@ -1,17 +1,17 @@
 {
- "time": "2026-11-20T19:42:35",
+ "time": "2026-11-20T19:53:35",
  "result": "ok",
- "commit": "992fcb84f001aef03ed48b55566840e49354f229",
- "subject": "Theme channels: own On Air panel (player, playlist edit, pads, library, ID over intro, listener voices per channel); header hides Hype Radio-only parts",
+ "commit": "c6144db1e0d1e73cb1a3e7afedd9f0ab9fa69db6",
+ "subject": "Theme channels: reports + audience per station, Settings per channel (sound, mixing, rotation), Library follows the channel, channel panel in the On Air look (shared onair.css)",
  "log": [
-  "19:41:49 update ff11c467 \u2192 992fcb84 \u00b7 5 file(s): engine/chan.py, engine/engine.py, radio/channel.liq, web/panel/channel.html, web/panel/header.js",
-  "19:41:49 restart hype-channels",
-  "19:41:49 restart hype-engine",
-  "19:42:34 installed OK \u00b7 restarted: hype-channels, hype-engine"
+  "19:52:50 update 992fcb84 \u2192 c6144db1 \u00b7 10 file(s): engine/audstats.py, engine/chan.py, engine/engine.py, web/panel/channel.html, web/panel/header.js, web/panel/history.html, web/panel/index.html, web/panel/library.html, web/panel/onair.css, web/panel/settings.html",
+  "19:52:50 restart hype-channels",
+  "19:52:50 restart hype-engine",
+  "19:53:35 installed OK \u00b7 restarted: hype-engine, hype-channels"
  ],
  "guard": {
-  "song": "IDALY X EMMS \u2013 AMAZIN'",
-  "listeners": 4,
+  "song": "JMANI x Adje x JZyNo x Lucky Jones \u2013 LIKE 2 DANCE",
+  "listeners": 2,
   "obs": true,
   "seg_age": 0.2,
   "problems": [],
