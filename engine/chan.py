@@ -173,9 +173,13 @@ class Channel:
         t = time.time()
         if self.now: t = max(t, self.now["started"] + self.len_of(self.now))
         for p in self.plan: t += self.len_of(p)
-        while len(self.plan) < 5:
+        tries = 0
+        while len(self.plan) < 5 and tries < 12:
+            tries += 1
             it = self.pick(c, t)
             if not it: break
+            last = self.plan[-1] if self.plan else self.now
+            if it.get("section") != "music" and last and last.get("section") != "music": continue      # never two jingles in a row
             it["at"] = t; self.plan.append(it); t += self.len_of(it)
 
     @staticmethod
@@ -199,6 +203,10 @@ class Channel:
             its = [x for x in (item(c, p_) for p_ in paths if p_) if x]
             keep = 1 if (n_queued and self.plan) else 0                 # the item already queued in the radio engine stays first
             self.plan[keep:keep] = its
+            # a fixed jingle / liner takes the place of the hour plan's next jingle: never two jingles back to back
+            k = keep + len(its)
+            if its and all(x.get("section") != "music" for x in its):
+                while k < len(self.plan) and self.plan[k].get("section") != "music": self.plan.pop(k)
             c.execute("INSERT OR IGNORE INTO events_done(event_id, day) VALUES(?,?)", (e["id"], e["day"])); c.commit()
             log.info("%s: fixed time %s (%d items)", self.id, e.get("at"), len(its))
 
