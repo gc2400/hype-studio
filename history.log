@@ -460,3 +460,4 @@
 2026-11-20T20:29:45 ok 6cc02f67 Theme channels: Hype Radio's smart mix (shared smartmix.py, per channel on/off), library in the middle, the last 2 played songs in the playlist
 2026-11-20T20:30:49 ok dc9962fc Theme channel MP3s through the MP3 gate (start in ~1 s, like radio.mp3)
 2026-11-20T20:38:45 ok e120bae6 Theme channels: NaN watchdog – the radio engine restarts by itself when the sound chain breaks (Latina went silent 20 Nov)
+2026-11-20T20:41:36 ok ba7318c4 Theme channels: now-playing feed like Hype Radio's (song_history = recently played, covers, durations, songs only)
