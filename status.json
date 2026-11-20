@@ -1,18 +1,17 @@
 {
- "time": "2026-11-20T21:20:14",
+ "time": "2026-11-20T21:33:35",
  "result": "ok",
- "commit": "b6289ae39b12f3a5cf029767bb06b4f183d3b379",
- "subject": "Theme channels: skip songs whose file was moved / deleted after planning; stuck watchdog (silent long past the song's end -> clear the queue, go on)",
+ "commit": "c5762454964b669514bdcb8a36861c65ccfa348f",
+ "subject": "Header: a dot per theme channel (station colour + listeners), Hype Radio's radio / TV dots on every page incl. the theme channels",
  "log": [
-  "21:19:29 update ba7318c4 \u2192 b6289ae3 \u00b7 1 file(s): engine/chan.py",
-  "21:19:29 restart hype-channels",
-  "21:20:14 installed OK \u00b7 restarted: hype-channels"
+  "21:33:35 update b6289ae3 \u2192 c5762454 \u00b7 1 file(s): web/panel/header.js",
+  "21:33:35 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Caribang Radio 001 \u2013 Hosted by Essovilla",
-  "listeners": 3,
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },

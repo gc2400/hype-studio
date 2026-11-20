@@ -462,3 +462,4 @@
 2026-11-20T20:38:45 ok e120bae6 Theme channels: NaN watchdog – the radio engine restarts by itself when the sound chain breaks (Latina went silent 20 Nov)
 2026-11-20T20:41:36 ok ba7318c4 Theme channels: now-playing feed like Hype Radio's (song_history = recently played, covers, durations, songs only)
 2026-11-20T21:20:14 ok b6289ae3 Theme channels: skip songs whose file was moved / deleted after planning; stuck watchdog (silent long past the song's end -> clear the queue, go on)
+2026-11-20T21:33:35 ok c5762454 Header: a dot per theme channel (station colour + listeners), Hype Radio's radio / TV dots on every page incl. the theme channels
