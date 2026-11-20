@@ -456,6 +456,15 @@ class Channel:
         self.stop_procs(); log.info("%s: off", self.id)
 
     def count_listeners(self):
+        """Listeners: counted by Hype Studio's engine exactly like Hype Radio's (devices, MP3 + HLS once, no bots / our own
+        readers, peak + unique today) every 15 s -> /run/hype/ch_listeners.json. Only when that is missing: our own rough count."""
+        try:
+            d = json.load(open("/run/hype/ch_listeners.json")).get(self.id)
+            if d and time.time() - d.get("t", 0) < 60:
+                self.listeners = {"current": d["current"], "mp3": d["mp3"], "hls": d["hls"], "peak_today": d.get("peak_today"), "unique_today": d.get("unique_today")}
+                c = chancfg.connect(self.id); c.execute("INSERT OR REPLACE INTO aud_samples VALUES(?,?,?,?)", (time.time(), d["current"], 0, 0)); c.commit(); c.close()
+                return
+        except Exception: pass
         mp3 = 0
         try:
             st = json.load(urllib.request.urlopen("http://127.0.0.1:8000/status-json.xsl", timeout=3))
@@ -530,7 +539,7 @@ class Channel:
                                 "remaining": round(max(0, dur - el)), "playlist": n.get("folder") or "", "streamer": "", "is_request": False,
                                 "song": song(n.get("artist"), n.get("title"), n.get("folder")), "type": "song"},
                 "playing_next": {"song": song(nxt.get("artist"), nxt.get("title"), nxt.get("folder"))} if nxt else None,
-                "song_history": hist, "listeners": {"current": (L.get("mp3") or 0) + (L.get("hls") or 0)}, "is_online": bool(self.liq and self.liq.poll() is None),
+                "song_history": hist, "listeners": {"current": L.get("current", (L.get("mp3") or 0) + (L.get("hls") or 0))}, "is_online": bool(self.liq and self.liq.poll() is None),
                 "hype": {"source": "hype-studio", "station": self.id}}
 
     def last_played(self, n=3):

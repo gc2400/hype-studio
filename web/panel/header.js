@@ -206,6 +206,12 @@ html[data-station] .card.hi{border-color:var(--line2)}
       <div class="r"><span>Own streams now (MP3 + HLS)</span><b class="big">${d.own ? d.own.current : '–'}</b></div>
       <div class="r"><span>· MP3 / HLS · peak today</span><b>${d.own ? d.own.mp3 + ' / ' + d.own.hls + ' · ' + d.own.peak_today : '–'}</b></div>
       <div class="r"><span>Public radio (Streamerr) now</span><b class="big">${p.ok ? p.listeners : '–'}</b></div>
+      ${(d.channels || []).map(c => { const o = c.own || {}; return `<h4 style="color:${esc(c.color)}">${esc(c.name)}</h4>
+      <div class="r"><span>Playout</span>${!c.enabled ? '<b style="color:#8FA3B8">● switched off</b>' : c.sim ? '<b class="ok">● live from Hype Radio</b>' : yes(c.running, 'on air', 'not running')}</div>
+      ${c.enabled ? `<div class="r"><span>Stream (MP3 ${c.kbps || '–'}k · HLS)</span>${yes(c.stream && c.hls, 'live', c.stream ? 'HLS down' : 'down')}</div>
+      <div class="r"><span>Own streams now (MP3 + HLS)</span><b class="big">${o.current ?? '–'}</b></div>
+      <div class="r"><span>· MP3 / HLS · peak today</span><b>${o.current != null ? o.mp3 + ' / ' + o.hls + ' · ' + o.peak_today : '–'}</b></div>
+      ${c.now ? `<div class="r"><span>Now</span><b>${esc(c.now)}</b></div>` : ''}` : ''}`; }).join('')}
       <h4>TV</h4>
       <div class="r"><span>OBS streaming</span>${yes(t.obs, 'yes', 'no')}</div>
       <div class="r"><span>TV stream (HLS)</span>${t.seg_age == null ? '<b class="bad">● no pieces</b>' : yes(t.seg_age < 8, 'live · ' + t.seg_age + ' s', 'late · ' + t.seg_age + ' s')}</div>
@@ -292,7 +298,7 @@ html[data-station] .card.hi{border-color:var(--line2)}
   // grey = switched off, red = switched on but its radio engine is not running
   function chDots() { fetch('/api/channels', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(d => { if (!d || !d.channels) return;
     const box_ = h.querySelector('#stChs');
-    const html = d.channels.map(c => { const n = ((c.listeners || {}).mp3 || 0) + ((c.listeners || {}).hls || 0), st = !c.enabled ? 'off' : (!c.running || c.down) ? 'bad' : '';
+    const html = d.channels.map(c => { const L_ = c.listeners || {}, n = L_.current ?? ((L_.mp3 || 0) + (L_.hls || 0)), st = !c.enabled ? 'off' : (!c.running || c.down) ? 'bad' : '';
       return `<span class="chip stch ${st}" data-ch="${c.id}" style="background:${c.color};box-shadow:0 0 6px ${c.color}80" title="${c.name}: ${!c.enabled ? 'off' : st ? 'not running' : n + ' listening now'}">${c.enabled && !st ? n : st === 'bad' ? '!' : ''}</span>`; }).join('');
     if (box_.dataset.h !== html) { box_.dataset.h = html; box_.innerHTML = html; } }).catch(() => {}); }
   chDots(); setInterval(() => { if (!document.hidden) chDots(); }, 5000);

@@ -153,8 +153,8 @@ function paint() {
   const pn = S.pad; $('#padNow').hidden = !pn; if (pn) $('#padNowT').textContent = (pn.kind === 'voice' ? '▶ Listener voice: ' : pn.kind === 'ID' ? '▶ ID over intro: ' : '▶ Pad: ') + pn.title;
   $$('#pads [data-pad]').forEach(b => { const p = (BANKS[bank] || {items: []}).items[+b.dataset.pad]; b.classList.toggle('playing', !!(pn && p && p.path === pn.path)); });
   renderLog();
-  const L = S.listeners || {mp3: 0, hls: 0}, tot = (L.mp3 || 0) + (L.hls || 0);
-  $('#lTot').textContent = tot + ' listening'; $('#lTot').title = `MP3 ${L.mp3 || 0} · app / website ${L.hls || 0}`;
+  const L = S.listeners || {mp3: 0, hls: 0}, tot = L.current ?? ((L.mp3 || 0) + (L.hls || 0));
+  $('#lTot').textContent = tot + ' listening'; $('#lTot').title = `MP3 ${L.mp3 || 0} · app / website ${L.hls || 0}` + (L.peak_today != null ? ` · peak today ${L.peak_today} · unique today ${L.unique_today}` : '');
   const base = 'https://stream.hyperadio.nl/'; $('#uMp3').textContent = base + S.id + '.mp3'; $('#uHls').textContent = base + S.id + '.m3u8'; $('#uNp').textContent = base + 'api/nowplaying/' + S.id;
   if (S.voice && S.idi && !(document.activeElement && document.activeElement.tagName === 'SELECT')) {
     $('#bVoice').textContent = S.voice.on ? 'ON' : 'OFF'; $('#bVoice').classList.toggle('on', !!S.voice.on); $('#vPer').value = String(S.voice.per_hour);

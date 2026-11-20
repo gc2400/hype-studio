@@ -3230,12 +3230,17 @@ def aud_sampler():
             except Exception: pass
             try: audstats.update(LISTEN.get("mp3keys") or set(), is_player)      # sessions for History → Audience
             except Exception as e: log.warning("audience sessions: %s", e)
+            chl_out = {}
             for ch_ in chancfg.load():                                          # the theme channels: each its own sessions (stats_<id>.db)
                 if not ch_.get("enabled"): continue
+                try: chl_out[ch_["id"]] = {k: v for k, v in ch_listeners(ch_).items() if k != "mp3keys"}
+                except Exception as e: log.warning("listeners %s: %s", ch_["id"], e)
                 TL.ch = ch_["id"]
-                try: audstats.update(mp3_devices("/" + ch_["mount"]) or set(), is_player)
+                try: audstats.update(set(CHL.get(ch_["id"], {}).get("mp3keys") or []), is_player)
                 except Exception as e: log.warning("audience sessions %s: %s", ch_["id"], e)
                 finally: TL.ch = None
+            try: os.makedirs("/run/hype", exist_ok=True); jdump(chl_out, "/run/hype/ch_listeners.json")      # hype-channels reads them (dots, now playing, its samples)
+            except Exception: pass
             c = dbc(); c.execute("INSERT OR REPLACE INTO aud_samples VALUES(?,?,?,?)", (time.time(), r, pub["n"], tv))
             if time.time() - last_clean > 3600:
                 last_clean = time.time(); c.execute("DELETE FROM aud_samples WHERE t < ?", (time.time() - 14 * 86400,))
@@ -3574,7 +3579,20 @@ class H(BaseHTTPRequestHandler):
                     if v: m["listener"] = {k: v.get(k) for k in ("name", "city", "source", "caption", "added")}
                 fl.sort(key=lambda m: (0, -(m["listener"].get("added") or 0)) if m.get("listener") else (1, 0))
                 return self.send(200, {"files": fl, "scenes": MEDIA_SCENES})
-            if p == "/streams": return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners(), own_tv=viewers()))
+            if p == "/streams":
+                chs = []
+                try:
+                    st_ = json.loads(urllib.request.urlopen("http://127.0.0.1:%d/status" % chancfg.API_PORT, timeout=2).read()).get("channels", [])
+                    ice = json.loads(urllib.request.urlopen("http://127.0.0.1:8000/status-json.xsl", timeout=2).read())["icestats"].get("source") or []
+                    ice = ice if isinstance(ice, list) else [ice]
+                    for x in st_:
+                        m_ = next((y for y in ice if str(y.get("listenurl", "")).endswith("/" + x.get("mount", "-"))), None)
+                        chs.append({"id": x["id"], "name": x["name"], "color": x["color"], "enabled": x.get("enabled"), "running": x.get("running"), "sim": x.get("sim"),
+                                    "stream": bool(m_), "kbps": int(m_.get("bitrate", 0) or 0) if m_ else 0, "hls": x.get("hls"),
+                                    "now": ((x.get("now") or {}).get("artist", "") + " – " + (x.get("now") or {}).get("title", "")) if x.get("now") else "",
+                                    "own": {k: v for k, v in CHL.get(x["id"], {}).items() if k != "mp3keys"}, "error": x.get("error")})
+                except Exception: pass
+                return self.send(200, dict(streams_status(E), guard=guard_status(), own=listeners(), own_tv=viewers(), channels=chs))
             if p == "/smartmix":     # the cue editor: where smart mix puts MIX for these START / END
                 c = dbc(); r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (qs["path"][0],)).fetchone()
                 if not r: return self.send(404, {"error": "not found"})
@@ -3583,7 +3601,7 @@ class H(BaseHTTPRequestHandler):
                 sm = smart_mix(it); LM_CACHE[it["path"]] = (lm, L, mset)
                 return self.send(200, {"mix": round(sm[0], 1) if sm else None, "overlap": round(sm[1], 1) if sm else None, "intro": intro_len(it), "smart": SMART_MIX})
             if p == "/mp3hit":       # nginx mirrors every /radio.mp3 start here (address + player), for unique MP3 listeners
-                MP3_HITS.append((time.time(), self.headers.get("X-Real-IP", ""), self.headers.get("X-UA", "")))
+                MP3_HITS.append((time.time(), self.headers.get("X-Real-IP", ""), self.headers.get("X-UA", ""), (self.headers.get("X-Mount", "") or "/radio.mp3").split("?")[0]))
                 del MP3_HITS[:-2000]
                 return self.send(200, {"ok": True})
             if p == "/version":      # the installed commit (pages offer a reload when it changes)
@@ -4211,7 +4229,7 @@ def mp3_devices(mount="/radio.mp3"):
             try: start = now - float(g("Connected") or 0)
             except ValueError: start = now
             if ip and ip not in ("127.0.0.1", "::1"): out.add(ip + "|" + ua); continue     # a direct listener (port 8000)
-            hit = min((h for h in MP3_HITS if h[2] == ua and abs(h[0] - start) < 8), key=lambda h: abs(h[0] - start), default=None) if mount == "/radio.mp3" else None
+            hit = min((h for h in MP3_HITS if h[2] == ua and abs(h[0] - start) < 8 and (h[3] if len(h) > 3 else "/radio.mp3") == mount), key=lambda h: abs(h[0] - start), default=None)
             out.add((hit[1] + "|" + ua) if hit else ("conn" + lid + "|" + ua))
         return out
     except Exception as e:
@@ -4390,6 +4408,35 @@ def _listeners():
     d = {"current": now_n, "mp3": len(mp3s), "hls": len(hls), "peak_today": st["peak"], "peak_time": st["peak_t"],
          "unique_today": max(len(u), st["peak"]), "counts": "devices"}
     LISTEN.update(t=time.time(), d=d); return d
+CHL = {}          # theme channel id -> its listeners, counted exactly like Hype Radio's (listeners() above)
+def ch_listeners(cfg):
+    """A theme channel's listeners as DEVICES – the same rules as Hype Radio: MP3 from Icecast's listener list matched to
+    nginx's starts (address + player), HLS from its own pieces (/ch/<id>/c….ts), test tools / bots and our own readers left
+    out, someone on MP3 and HLS together counted once; peak today and unique today (only daily codes are stored)."""
+    cid = cfg["id"]; mp3s = mp3_devices("/" + cfg["mount"])
+    if mp3s is None:
+        mp3s = set()
+        try:
+            ice = json.loads(urllib.request.urlopen("http://127.0.0.1:8000/status-json.xsl", timeout=3).read())["icestats"].get("source") or []
+            ice = ice if isinstance(ice, list) else [ice]
+            n = sum(int(x.get("listeners", 0)) for x in ice if str(x.get("listenurl", "")).endswith("/" + cfg["mount"]))
+            mp3s = {f"conn{i}|" for i in range(n)}
+        except Exception: pass
+    hls = log_devices("/var/log/nginx/stream.access.log", lambda ln: (" /ch/%s/c" % cid) in ln and ".ts " in ln, 30)
+    devs = mp3s | hls; now_n = len(devs); day = time.strftime("%Y-%m-%d"); f = "/var/lib/hype/listeners_%s.json" % cid
+    try: st = json.load(open(f))
+    except Exception: st = {}
+    if st.get("day") != day: st = {"day": day, "peak": 0, "peak_t": 0, "uniq": []}
+    if now_n > st["peak"]: st["peak"], st["peak_t"] = now_n, int(time.time())
+    u = set(st.get("uniq", []))
+    for k in devs:
+        if not k.startswith("conn"): u.add(hashlib.sha1((day + k).encode()).hexdigest()[:12])
+    st["uniq"] = sorted(u)
+    try: jdump(st, f)
+    except Exception: pass
+    d = {"current": now_n, "mp3": len(mp3s), "hls": len(hls), "peak_today": st["peak"], "peak_time": st["peak_t"], "unique_today": max(len(u), st["peak"]),
+         "counts": "devices", "t": int(time.time()), "mp3keys": sorted(mp3s)}
+    CHL[cid] = d; return d
 def nowplaying_api():
     """AzuraCast-style /api/nowplaying/hype_radio, so Hype Live (and others) only need a different link."""
     n = E.now or {}; t = time.time()
