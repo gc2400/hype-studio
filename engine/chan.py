@@ -113,7 +113,7 @@ class Channel:
             env = dict(os.environ, HOME="/root", XDG_RUNTIME_DIR="/run/hype")
             self.liq = subprocess.Popen(["nice", "-n", "2", "liquidsoap", self.liq_file()], env=env,
                                         stdout=subprocess.DEVNULL, stderr=open("/var/log/hype/ch-%s.err" % self.id, "a"))
-            self.pushed = None
+            self.pushed = None; self.fresh = True
         if not self.hls or self.hls.poll() is not None:
             if self.hls is not None: self.hls_fail += 1
             self.hls = subprocess.Popen(["nice", "-n", "5", HLS_SH, self.id], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -427,6 +427,8 @@ class Channel:
                 try:
                     v = self.tel("radio.level", 1).split()
                     vals = [float(x) for x in v]; self.level = vals[:2] if len(vals) >= 2 else None; self.meter = vals
+                    if getattr(self, "fresh", False):          # a (re)started radio engine never starts with the music dipped (a pad was ducking when it stopped)
+                        self.tel("var.set duck_lvl = 1.0", 1); self.fresh = False
                 except (OSError, ValueError): self.level = None
                 # watchdog: the sound chain went NaN ("not a number" – the stream is then silent, 20 Nov Hype Latina) ->
                 # restart this channel's radio engine; its playlist stays and goes on with the next item
