@@ -1512,7 +1512,8 @@ class Engine:
         now = time.time(); av = self.avoid(); rec = self.picker.recent
         paths = {p for t, p, a in rec} | av["paths"]
         arts = {a for t, p, aa in rec if now - t < ARTIST_SEP for a in aa} | av["artists"] | set(artist_key(self.now.get("artist") or ""))
-        for q, args in (("folder=?", (self.now.get("folder"),)), ("1=1", ())):
+        theme = " AND ".join("folder NOT LIKE '%s%%'" % c["id"].upper() for c in chancfg.load()) or "1=1"   # never a theme channel's own folder (AMBIENTE/…, LATINA/…)
+        for q, args in (("folder=?", (self.now.get("folder"),)), (theme, ())):
             rows = c.execute(f"SELECT {COLS} FROM items WHERE section='music' AND problem IS NULL AND folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%' AND {q}", args).fetchall()
             cand = [row_item(r, "clock") for r in rows if r[0] not in paths and not (set(artist_key(r[1])) & arts)]
             if cand: return min(cand, key=lambda i: planner.fit_score(plain_len(i), gap))   # cue length: no loudness maps for every song (runs under LOCK, just before :00)

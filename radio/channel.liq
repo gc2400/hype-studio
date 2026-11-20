@@ -226,7 +226,7 @@ prog = mksafe(process(meter=true, s))
 # --- live on several channels (simulcast): Hype Radio's on-air sound (its internal 256k stream, already processed) replaces this
 #     channel's own music while "sim_on" is on; fades 1 s both ways. Off / Hype Radio's stream gone = the own music again.
 sim_on = interactive.bool("sim_on", false)
-hype = input.http(id="hype", "http://127.0.0.1:8000/rec.mp3", buffer=2., max=10.)
+hype = input.http(id="hype", "http://127.0.0.1:8000/rec.mp3")
 s = switch(track_sensitive=false, transitions=[fun (a, b) -> add(normalize=false, [fade.in(duration=1., b), fade.out(duration=1., a)]), fun (a, b) -> add(normalize=false, [fade.in(duration=1., b), fade.out(duration=1., a)])],
            [({sim_on()}, hype), ({true}, prog)])
 s = mksafe(s)

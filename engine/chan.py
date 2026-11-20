@@ -276,7 +276,7 @@ class Channel:
             if not x: return None
             return {"artist": x.get("artist") or "", "title": x.get("title") or os.path.basename(x.get("path") or ""), "path": x.get("path"),
                     "section": x.get("section"), "started": x.get("started"), "at": x.get("at"), "len": round(self.len_of(x))}
-        return {"id": self.id, "name": self.cfg["name"], "color": self.cfg["color"], "genre": self.cfg.get("genre"), "enabled": True,
+        return {"id": self.id, "name": self.cfg["name"], "color": self.cfg["color"], "logo": self.cfg.get("logo"), "genre": self.cfg.get("genre"), "enabled": True,
                 "running": bool(self.liq and self.liq.poll() is None), "hls": bool(self.hls and self.hls.poll() is None),
                 "now": brief(self.now), "next": [brief(p) for p in self.plan[:5]], "sim": self.sim, "listeners": self.listeners,
                 "level": self.level, "error": self.err, "mount": self.cfg["mount"], "join_live": bool(self.cfg.get("join_live")), "main_live": MAIN_LIVE["on"]}
@@ -321,13 +321,13 @@ class H(BaseHTTPRequestHandler):
         if p == "/status":
             out = []
             for c in chancfg.load():
-                out.append(CH[c["id"]].status() if c["id"] in CH else {"id": c["id"], "name": c["name"], "color": c["color"], "genre": c.get("genre"),
+                out.append(CH[c["id"]].status() if c["id"] in CH else {"id": c["id"], "name": c["name"], "color": c["color"], "logo": c.get("logo"), "genre": c.get("genre"),
                                                                          "enabled": False, "running": False, "mount": c["mount"]})
             return self.send(200, {"channels": out})
         m = re.match(r"^/nowplaying/([a-z0-9]+)$", p)
         if m and m.group(1) in CH:
             s = CH[m.group(1)].status(); n = s["now"] or {}
-            return self.send(200, {"station": {"name": s["name"], "listen_url": "https://stream.hyperadio.nl/" + s["mount"], "hls_url": "https://stream.hyperadio.nl/%s.m3u8" % s["id"]},
+            return self.send(200, {"station": {"name": s["name"], "listen_url": "https://stream.hyperadio.nl/" + s["mount"], "hls_url": "https://stream.hyperadio.nl/%s.m3u8" % s["id"], "logo": "https://stream.hyperadio.nl/logo/%s.png" % s["id"]},
                                    "now_playing": {"song": {"artist": n.get("artist", ""), "title": n.get("title", "")}, "played_at": int(n.get("started") or 0)},
                                    "playing_next": {"song": {"artist": (s["next"][0] or {}).get("artist", ""), "title": (s["next"][0] or {}).get("title", "")}} if s["next"] else None,
                                    "listeners": {"current": s["listeners"]["mp3"] + s["listeners"]["hls"]}, "live": {"is_live": s["sim"]}})

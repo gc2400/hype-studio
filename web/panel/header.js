@@ -27,7 +27,7 @@ html{scrollbar-gutter:stable}
 #hhead{position:sticky;top:0;z-index:60;background:#061423;box-sizing:border-box;width:100%;padding:10px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;font-family:Inter,system-ui,sans-serif;color:#F2F6FA;border-bottom:1px solid #102A42}
 #hhead .hb{display:flex;align-items:center;gap:10px;flex:none;position:relative}#hhead .hb img{width:40px;height:40px}
 #hhead .chsw{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:1px solid transparent;background:transparent;color:#F2F6FA;border-radius:10px;padding:4px 8px;font:900 17px Inter,system-ui,sans-serif;white-space:nowrap}
-#hhead .chsw:hover,#hhead .chsw[aria-expanded=true]{background:#0F2B44;border-color:#23496B}#hhead .chsw .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .chsw .car{font-size:11px;color:#A9BCCD}
+#hhead .chsw:hover,#hhead .chsw[aria-expanded=true]{background:#0F2B44;border-color:#23496B}#hhead .chsw .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .cd.lg{width:24px!important;height:24px!important}#hhead .chsw .car{font-size:11px;color:#A9BCCD}
 #hhead .chmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:90;min-width:250px;background:#0B2236;border:1px solid #23496B;border-radius:14px;padding:6px;box-shadow:0 18px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:2px}
 #hhead .chmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;color:#F2F6FA;font:700 14px Inter,system-ui,sans-serif;padding:10px;border-radius:10px;cursor:pointer}
 #hhead .chmenu button:hover{background:#0F2B44}#hhead .chmenu button.cur{background:#143049}#hhead .chmenu .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .chmenu small{margin-left:auto;color:#7F96AB;font-weight:700;font-size:11px}
@@ -149,13 +149,13 @@ html{scrollbar-gutter:stable}
   const chSw = h.querySelector('#chSw'), chMenu = h.querySelector('#chMenu'); let CHS = [{id: 'main', name: 'Hype Radio', color: '#05A9C6', enabled: true, running: true}];
   function chPaint() {
     const c = CHS.find(x => x.id === CH) || CHS[0];
-    chSw.querySelector('.cd').style.background = c.color; h.querySelector('#chName').textContent = c.name;
+    const cd = chSw.querySelector('.cd'); cd.style.background = c.logo ? `center/cover url(${c.logo})` : c.color; cd.classList.toggle('lg', !!c.logo); h.querySelector('#chName').textContent = c.name;
     let bar = document.getElementById('hchbar');
     if (CH !== 'main') {
       if (!bar) { bar = document.createElement('div'); bar.id = 'hchbar'; h.after(bar); }
       bar.style.background = c.color; bar.textContent = 'You are working on ' + c.name + (c.enabled ? '' : ' (off)') + ' – Hype Radio is not affected';
     } else if (bar) bar.remove();
-    chMenu.innerHTML = CHS.map(x => `<button role="menuitemradio" aria-checked="${x.id === CH}" class="${x.id === CH ? 'cur' : ''}" data-ch="${x.id}"><i class="cd" style="background:${x.color}"></i>${x.name}<small>${x.id === 'main' ? 'main' : x.down ? 'service off' : !x.enabled ? 'off' : x.running ? 'on air' : 'starting'}</small></button>`).join('');
+    chMenu.innerHTML = CHS.map(x => `<button role="menuitemradio" aria-checked="${x.id === CH}" class="${x.id === CH ? 'cur' : ''}" data-ch="${x.id}"><i class="cd${x.logo ? ' lg' : ''}" style="background:${x.logo ? `center/cover url(${x.logo})` : x.color}"></i>${x.name}<small>${x.id === 'main' ? 'main' : x.down ? 'service off' : !x.enabled ? 'off' : x.running ? 'on air' : 'starting'}</small></button>`).join('');
     chMenu.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => {
       const to = b.dataset.ch; try { localStorage.setItem('hypeCh', to); } catch (e) {}
       const page = location.pathname.split('/').pop() || 'index.html';

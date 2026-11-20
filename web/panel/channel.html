@@ -52,7 +52,7 @@ button{font-family:inherit}
   <header id="hhead"></header><script src="/panel/header.js?v=1795181000"></script>
   <section class="card">
     <div class="row between">
-      <div class="head"><i class="dot"></i><h1 id="cName">–</h1><span class="gen" id="cGenre"></span><span class="pill" id="cState">–</span></div>
+      <div class="head"><img id="cLogo" alt="" style="width:56px;height:56px" hidden><i class="dot" id="cDot"></i><h1 id="cName">–</h1><span class="gen" id="cGenre"></span><span class="pill" id="cState">–</span></div>
       <div class="row"><button class="btn" id="bSkip" title="Next item now">Skip</button><button class="btn" id="bOnOff">Switch on</button></div>
     </div>
     <div class="err" id="cErr" hidden></div>
@@ -110,6 +110,7 @@ function load() {
 function paint() {
   if (!S) { $('#cName').textContent = 'Unknown channel'; return; }
   document.documentElement.style.setProperty('--c', S.color);
+  if (S.logo) { $('#cLogo').src = S.logo; $('#cLogo').hidden = false; $('#cDot').hidden = true; }
   $('#cName').textContent = S.name; $('#cGenre').textContent = S.genre || '';
   const st = $('#cState');
   st.className = 'pill ' + (!S.enabled ? 'off' : S.sim ? 'live' : S.running ? 'air' : '');
@@ -128,7 +129,7 @@ function paint() {
   const L = S.listeners || {mp3: 0, hls: 0}; $('#lTot').textContent = (L.mp3 || 0) + (L.hls || 0); $('#lSplit').textContent = `MP3 ${L.mp3 || 0} · app / website ${L.hls || 0}`;
   const base = 'https://stream.hyperadio.nl/';
   $('#uMp3').textContent = base + S.id + '.mp3'; $('#uHls').textContent = base + S.id + '.m3u8'; $('#uNp').textContent = base + 'api/nowplaying/' + S.id;
-  $('#others').innerHTML = [{id: 'main', name: 'Hype Radio', color: '#05A9C6', enabled: true, running: true}, ...ALL].map(x => `<button class="oc" data-go="${x.id}"><i style="background:${x.color}"></i>${esc(x.name)}<small>${x.id === 'main' ? 'main' : !x.enabled ? 'off' : x.sim ? 'live' : 'on air'}</small></button>`).join('');
+  $('#others').innerHTML = [{id: 'main', name: 'Hype Radio', color: '#05A9C6', enabled: true, running: true}, ...ALL].map(x => `<button class="oc" data-go="${x.id}"><i style="background:${x.logo ? `center/cover url(${x.logo})` : x.color};${x.logo ? 'width:20px;height:20px' : ''}"></i>${esc(x.name)}<small>${x.id === 'main' ? 'main' : !x.enabled ? 'off' : x.sim ? 'live' : 'on air'}</small></button>`).join('');
   document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { localStorage.setItem('hypeCh', b.dataset.go); location.href = b.dataset.go === 'main' ? '/panel/' : '/panel/channel.html'; });
 }
 (function tick() {          // progress + level between the 2-second loads

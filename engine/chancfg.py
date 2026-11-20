@@ -15,9 +15,9 @@ LIB = "/srv/hype-data/library.db"
 DATA = "/srv/hype-data"
 API_PORT = 8100            # hype-channels' own small API (status / commands), 127.0.0.1 only
 DEFAULT = [
-    {"id": "ambiente", "name": "Hype Ambiente", "color": "#FF9F43", "enabled": False, "telnet": 1301,
+    {"id": "ambiente", "name": "Hype Ambiente", "color": "#1F5BC4", "enabled": False, "telnet": 1301,
      "genre": "Papiamentu · Kombina · Tumba"},
-    {"id": "latina", "name": "Hype Latina", "color": "#FF4D8D", "enabled": False, "telnet": 1302,
+    {"id": "latina", "name": "Hype Latina", "color": "#FF6B2C", "enabled": False, "telnet": 1302,
      "genre": "Reggaeton · Latin · Dembow"},
 ]
 ID_RE = re.compile(r"^[a-z][a-z0-9]{1,19}$")
@@ -36,6 +36,7 @@ def load():
     for i, c in enumerate(chs):
         c.setdefault("telnet", 1301 + i); c.setdefault("color", "#05A9C6"); c.setdefault("name", "Hype " + c["id"].title())
         c.setdefault("enabled", False); c.setdefault("genre", ""); c.setdefault("join_live", False)
+        c["logo"] = "/panel/ch-%s.png" % c["id"]
         c["mount"] = c["id"] + ".mp3"; c["rec_mount"] = c["id"] + "-rec.mp3"; c["hls_dir"] = "/dev/shm/ch-" + c["id"]
     return chs
 
