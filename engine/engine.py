@@ -3211,15 +3211,21 @@ def stats_jobs():
                         WHERE a.started >= ? ORDER BY a.started""", (t_from - 86400,)).fetchall()
     starts = [r[0] for r in rows]
     smp = c.execute("SELECT t, r, p, tv FROM aud_samples WHERE t >= ? ORDER BY t", (t_from - 120,)).fetchall()
+    # 20 Nov: per device – who heard the start and who heard the end, each with its own stream's delay (MP3 ~4 s, HLS ~15 s),
+    # so a listener who leaves lands on the song he left on (not on the next one, as with the 15 s total + one fixed delay)
+    rs = audstats.heard("radio", t_from - 86400, now); vs = audstats.heard("tv", t_from - 86400, now)
     out = []
     for k, (st, ar, ti, path) in enumerate(rows):
-        if st < t_from or not (path or "").startswith("music/") or "/MIXES/" in "/" + (path or "") or "/RECORDINGS/" in "/" + (path or ""): continue
+        if st < t_from or not (path or "").startswith("music/") or "/RECORDINGS/" in "/" + (path or ""): continue     # mixes count too (20 Nov)
         end = starts[k + 1] if k + 1 < len(starts) else None
-        if end is None or end + AUD_LAG + 30 > now: break               # still playing / its end not measured yet
+        if end is None or end + 60 > now: break                         # still playing / its end not heard by every player yet
         if end - st < 90: continue                                       # cut off: not a real play
         a0 = aud_at(smp, st + AUD_LAG); a1 = aud_at(smp, end + AUD_LAG)
-        if not a0 or not a1: continue
-        out.append((st, end, ar or "", ti or "", path, a0[0], a1[0], a0[1], a1[1], None, "h"))
+        if not a0 or not a1: continue                                    # the engine was not counting then
+        p0 = aud_at(smp, st + AUD_LAG, pub=True) or 0; p1 = aud_at(smp, end + AUD_LAG, pub=True) or 0       # Streamerr (public relay): only its total
+        r0 = audstats.count_at(rs, st + 3) + p0; r1 = audstats.count_at(rs, end - 3) + p1
+        v0 = audstats.count_at(vs, st + 3); v1 = audstats.count_at(vs, end - 3)
+        out.append((st, end, ar or "", ti or "", path, r0, r1, v0, v1, None, "h"))
     audstats.add_plays(out)
     # 2. 5-minute points
     _, last5 = audstats.own_since("aud5"); b = int(max((last5 or 0) + 300, (now - 14 * 86400) // 300 * 300)); cut = int(now // 300 * 300)
@@ -3268,13 +3274,14 @@ def stats_jobs():
             st_["error"] = str(e)[:200]; log.info("Hype Live history import not possible yet: %s", e)
         jdump(st_, HL_IMPORT)
 
-def aud_at(samples, t):
-    """(radio total, tv) of the sample closest to t (within 40 s), or None."""
+def aud_at(samples, t, pub=False):
+    """(radio total, tv) of the sample closest to t (within 40 s), or None. pub=True: only the Streamerr (public relay) count."""
     import bisect
     if not samples: return None
     i = bisect.bisect_left(samples, (t,))
     best = min((samples[j] for j in (i - 1, i) if 0 <= j < len(samples)), key=lambda x: abs(x[0] - t))
     if abs(best[0] - t) > 40: return None
+    if pub: return best[2] or 0
     return ((best[1] or 0) + (best[2] or 0), best[3] or 0)
 
 def history(qs, limit=2000):

@@ -106,9 +106,9 @@ def hls_now(is_player, window=45):
         k = m.group(1) + "|" + ua
         if p.startswith("/tv/"):
             q = p.split("/")[2] if p.count("/") >= 3 else ""
-            out.setdefault(("tv", k), TVQ.get(q, "TV"))       # newest line first: the quality it plays NOW
+            out.setdefault(("tv", k), (TVQ.get(q, "TV"), t))       # newest line first: the quality it plays NOW + when
         elif re.match(r"^/r\d+\.ts", p):
-            out.setdefault(("radio", k), "Radio HLS (iPhone / website)")
+            out.setdefault(("radio", k), ("Radio HLS (iPhone / website)", t))
     return out
 
 
@@ -116,18 +116,18 @@ def update(mp3_keys, is_player):
     """Called every 15 s by the engine with the MP3 listeners ("ip|ua" or "connN|ua"). Starts / ends sessions."""
     now = time.time(); seen = hls_now(is_player)
     for k in mp3_keys or ():
-        seen[("radio", k)] = "Radio MP3"
+        seen[("radio", k)] = ("Radio MP3", now)
     ended = []
     with LOCK:
-        for sk, stream in seen.items():
-            s = LIVE.get(sk)
+        for sk, (stream, seen_t) in seen.items():
+            s = LIVE.get(sk); seen_t = min(now, seen_t)     # HLS: the time of its newest piece (not "now": it may have stopped 40 s ago)
             if s and now - s["last"] <= GAP:
-                s["last"] = now; s["stream"] = stream
+                s["last"] = max(s["last"], seen_t); s["stream"] = stream
             else:
                 if s: ended.append(s)
                 ip, _, ua = sk[1].partition("|")
                 dev, app = device(ua); cc, city = geo("" if ip.startswith("conn") else ip)
-                LIVE[sk] = {"kind": sk[0], "start": now, "last": now, "stream": stream, "dev": dev, "app": app, "cc": cc, "city": city,
+                LIVE[sk] = {"kind": sk[0], "start": seen_t, "last": seen_t, "stream": stream, "dev": dev, "app": app, "cc": cc, "city": city,
                             "dk": hashlib.sha1((time.strftime("%Y-%m-%d") + sk[1]).encode()).hexdigest()[:12]}
         for sk in [k for k, s in LIVE.items() if now - s["last"] > GAP]:
             ended.append(LIVE.pop(sk))
@@ -141,6 +141,19 @@ def update(mp3_keys, is_player):
                       [(s["kind"], s["start"], s["last"], s["stream"], s["dev"], s["app"], "", s["cc"], s["city"], s["dk"]) for s in ended])
         c.commit(); c.close()
 
+
+# a listener hears the radio / sees the TV this long after it goes on air (player buffers): MP3 ~4 s, HLS pieces of 2 s ~15 s
+LAG = {"Radio MP3": 4.0}
+def heard(kind, t0, t1):
+    """The sessions (radio / tv) as (start, end) on the ON-AIR clock: when the moments they heard went on air."""
+    c = db(); rows = c.execute("SELECT start, end, stream FROM sessions WHERE kind=? AND end >= ? AND start <= ?", (kind, t0 - 120, t1 + 120)).fetchall(); c.close()
+    with LOCK: rows += [(v["start"], v["last"], v["stream"]) for v in LIVE.values() if v["kind"] == kind and v["last"] >= t0 - 120]
+    out = []
+    for st, en, stream in rows:
+        lag = LAG.get(stream, 15.0); out.append((st - lag, en - lag))
+    return out
+def count_at(sess, x):
+    return sum(1 for a, b in sess if a <= x <= b)
 
 def load_live():
     """After an engine restart: the sessions that were running go on (if they were seen in the last 90 s)."""
