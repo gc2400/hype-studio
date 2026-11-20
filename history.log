@@ -469,3 +469,4 @@
 2026-11-20T21:58:15 ok 12897939 Theme channels: a restarted radio engine never keeps the music dipped (duck_lvl back to 1)
 2026-11-20T22:17:26 ok ae413323 Theme channels: never two jingles / liners back to back (a fixed-time liner replaces the hour plan's next jingle)
 2026-11-20T22:27:26 ok 000a3120 Planner: the 'rested longest' history per database – the theme channels shared one cache, so songs repeated
+2026-11-20T22:31:18 ok 5eacee7b Song picking: when no song fits every rule, only the artist rule is relaxed – never 'same song within 3 h / already planned' (theme channels repeated songs)

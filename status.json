@@ -1,19 +1,19 @@
 {
- "time": "2026-11-20T22:27:26",
+ "time": "2026-11-20T22:31:18",
  "result": "ok",
- "commit": "000a312082ad7ec93ef40ee3e1f15556983cabb5",
- "subject": "Planner: the 'rested longest' history per database \u2013 the theme channels shared one cache, so songs repeated",
+ "commit": "5eacee7b8b505b49ead19f76f31e51ab89e75f5d",
+ "subject": "Song picking: when no song fits every rule, only the artist rule is relaxed \u2013 never 'same song within 3 h / already planned' (theme channels repeated songs)",
  "log": [
-  "22:26:41 update ae413323 \u2192 000a3120 \u00b7 1 file(s): engine/planner.py",
-  "22:26:41 restart hype-channels",
-  "22:26:41 restart hype-engine",
-  "22:27:26 installed OK \u00b7 restarted: hype-engine, hype-channels"
+  "22:30:32 update 000a3120 \u2192 5eacee7b \u00b7 2 file(s): engine/chan.py, engine/planner.py",
+  "22:30:32 restart hype-channels",
+  "22:30:33 restart hype-engine",
+  "22:31:18 installed OK \u00b7 restarted: hype-channels, hype-engine"
  ],
  "guard": {
   "song": " \u2013 MENASA | PLAYAJERO | VOL 1 | GROOT KNIP | SHATTA | DANCEHALL | LATIN | AFRO",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
