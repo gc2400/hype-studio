@@ -292,7 +292,9 @@ class Channel:
                 self.refill(c)
                 while n == 0 and self.plan and not os.path.exists(os.path.join(ROOT, self.plan[0]["path"])):    # moved / deleted since it was planned
                     log.warning("%s: %s is gone – skipped", self.id, self.plan[0]["path"]); self.plan.pop(0); self.refill(c)
-                if n == 0 and self.plan:
+                if n == 0 and self.plan and self.pushed and self.plan[0].get("id") == self.pushed:
+                    pass        # already in the radio engine (it pre-loads the next song, so its queue looks empty): never twice
+                elif n == 0 and self.plan:
                     it = self.plan[0]
                     mo, jd, sm_on = self.mixcfg()
                     try: self.tel("q.push " + annotate(it, mo, jd, sm_on, self.plan[1] if len(self.plan) > 1 else None)); self.pushed = it["id"]; self.err = ""
