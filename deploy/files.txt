@@ -84,3 +84,8 @@ engine/hypeweb.py|/opt/hype/hypeweb.py|644|hype-engine
 system/hype-radio.service.d/sinks.conf|/etc/systemd/system/hype-radio.service.d/sinks.conf|644|daemon-reload
 web/panel/no-cover.png|/var/www/studio/panel/no-cover.png|644|-
 web/panel/preview-off.jpg|/var/www/studio/panel/preview-off.jpg|644|-
+web/panel/apple-touch-icon.png|/var/www/studio/panel/apple-touch-icon.png|644|-
+web/panel/icon-192.png|/var/www/studio/panel/icon-192.png|644|-
+web/panel/icon-512.png|/var/www/studio/panel/icon-512.png|644|-
+web/panel/manifest.json|/var/www/studio/panel/manifest.json|644|-
+web/panel/apple-touch-icon.png|/var/www/studio/apple-touch-icon.png|644|-
