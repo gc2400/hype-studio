@@ -84,6 +84,37 @@ def akey(a):
     return [x for x in o if x not in ("club hype", "hype radio", "hype radio tv", "hype")] or o
 
 
+class Adopted:
+    """A radio engine / HLS process started by an earlier hype-channels (it keeps running over an update of this service)."""
+    def __init__(self, pid): self.pid = pid; self.returncode = None
+    def poll(self):
+        try:
+            st = open("/proc/%d/stat" % self.pid).read().split(")")[-1].split()[0]
+            if st != "Z": return None
+        except OSError: pass
+        self.returncode = 0; return 0
+    def terminate(self):
+        try: os.kill(self.pid, signal.SIGTERM)
+        except OSError: pass
+    def kill(self):
+        try: os.kill(self.pid, signal.SIGKILL)
+        except OSError: pass
+    def wait(self, t=None):
+        end = time.time() + (t or 1e9)
+        while self.poll() is None:
+            if time.time() > end: raise subprocess.TimeoutExpired("adopted", t)
+            time.sleep(0.2)
+        return 0
+
+
+def pids_of(pattern):
+    try: return [int(x) for x in subprocess.run(["pgrep", "-f", pattern], capture_output=True, text=True).stdout.split()]
+    except Exception: return []
+
+
+HANDOVER = {"on": False}     # hype-channels is being updated: leave the radio engines running, save the plan
+
+
 class Channel:
     def __init__(self, cfg):
         self.cfg = cfg; self.id = cfg["id"]; self.lock = threading.RLock()
@@ -94,13 +125,48 @@ class Channel:
         self.songs_since_id = 0; self.pad_now = None; self.duck_t = None
 
     # ---------- the processes ----------
-    def liq_file(self):
-        os.makedirs(RUN, exist_ok=True)
+    def liq_text(self):
         t = open(TEMPLATE).read()
         q = lambda v: str(v).replace('"', "'").replace("\\", "/")
         for k, v in (("@ID@", self.id), ("@NAME@", q(self.cfg["name"])), ("@GENRE@", q(self.cfg.get("genre") or "")),
                      ("@TELNET@", int(self.cfg["telnet"])), ("@API@", chancfg.API_PORT)):
             t = t.replace(k, str(v))
+        return t
+
+    def adopt(self):
+        """Started after an update of hype-channels: take over the radio engine + HLS that kept running (no break on air),
+        unless channel.liq itself changed (then the new one starts). Plan, song on air and ID-rules state come back too."""
+        p = os.path.join(RUN, self.id + ".liq")
+        lp = pids_of("liquidsoap %s" % p); hp = pids_of("chan_hls.sh %s" % self.id)
+        try: same = open(p).read() == self.liq_text()
+        except OSError: same = False
+        if lp and same:
+            self.liq = Adopted(lp[0]); log.info("%s: radio engine kept running (pid %d)", self.id, lp[0])
+            if hp: self.hls = Adopted(hp[0])
+            try:
+                st = json.load(open(os.path.join(RUN, self.id + ".state.json")))
+                if time.time() - st.get("t", 0) < 300:
+                    self.plan = st.get("plan") or []; self.now = st.get("now"); self.prev = st.get("prev"); self.pushed = st.get("pushed")
+                    self.idi_times = st.get("idi_times") or []; self.idi_used = st.get("idi_used") or {}; self.ov_last = st.get("ov_last") or 0
+            except Exception: pass
+        else:
+            for pid in lp + hp:                       # the radio engine itself changed (channel.liq): a clean new start
+                try: os.kill(pid, signal.SIGTERM)
+                except OSError: pass
+            if lp: log.info("%s: channel.liq changed – radio engine restarted", self.id); time.sleep(2)
+
+    def save_state(self):
+        try:
+            st = {"t": time.time(), "plan": self.plan, "now": self.now, "prev": getattr(self, "prev", None), "pushed": self.pushed,
+                  "idi_times": getattr(self, "idi_times", []), "idi_used": getattr(self, "idi_used", {}), "ov_last": getattr(self, "ov_last", 0)}
+            f = os.path.join(RUN, self.id + ".state.json")
+            with open(f + ".tmp", "w") as fh: json.dump(st, fh, default=str)
+            os.replace(f + ".tmp", f)
+        except Exception as e: log.warning("%s: state: %s", self.id, e)
+
+    def liq_file(self):
+        os.makedirs(RUN, exist_ok=True)
+        t = self.liq_text()
         p = os.path.join(RUN, self.id + ".liq")
         with open(p + ".tmp", "w") as f: f.write(t)
         os.replace(p + ".tmp", p); return p
@@ -203,6 +269,11 @@ class Channel:
                 paths = [planner.take_from_playlist(c, pid, "start" if i == 0 else "continue", lambda x: True) for i in range(k)]
             its = [x for x in (item(c, p_) for p_ in paths if p_) if x]
             keep = 1 if (n_queued and self.plan) else 0                 # the item already queued in the radio engine stays first
+            before = self.plan[keep - 1] if keep else self.now
+            if its and all(x.get("section") != "music" for x in its) and before and before.get("section") != "music":
+                # an ID / jingle is already queued (or on air): the liner comes right after the next song instead
+                nxt = next((i for i in range(keep, len(self.plan)) if self.plan[i].get("section") == "music"), None)
+                keep = nxt + 1 if nxt is not None else len(self.plan)
             self.plan[keep:keep] = its
             # a fixed jingle / liner takes the place of the hour plan's next jingle: never two jingles back to back
             k = keep + len(its)
@@ -428,6 +499,8 @@ class Channel:
 
     def run(self):
         log.info("%s: on", self.id); last_aud = 0
+        try: self.adopt()
+        except Exception as e: log.warning("%s: adopt: %s", self.id, e)
         self.agc = {"db": 0.0, "lift": 0.0, "level": None, "strength": 0.7, "t": 0}
         threading.Thread(target=agcloop.agc_loop, args=(int(self.cfg["telnet"]), self.agc, self.agc_now, lambda: not self.stop_ev.is_set()), daemon=True).start()
         while not self.stop_ev.is_set():
@@ -475,6 +548,7 @@ class Channel:
             except Exception as e:
                 log.warning("%s: %s", self.id, e); time.sleep(2)
             self.stop_ev.wait(1)
+        if HANDOVER["on"]: self.save_state(); log.info("%s: handed over (radio engine keeps playing)", self.id); return
         self.stop_procs(); log.info("%s: off", self.id)
 
     def count_listeners(self):
@@ -524,7 +598,7 @@ class Channel:
                 "now": brief(self.now), "next": [brief(p) for p in self.plan[:5]], "sim": self.sim, "listeners": self.listeners,
                 "level": self.level, "meter": getattr(self, "meter", None), "error": self.err, "mount": self.cfg["mount"], "join_live": bool(self.cfg.get("join_live")), "main_live": MAIN_LIVE["on"],
                 "pad": self.pad_now if self.pad_now and self.pad_now["until"] > time.time() else None, "queued": self.pushed,
-                "idi": self.setting("idi"), "voice": self.setting("voice"), "history": self.last_played(),
+                "idi": self.setting("idi"), "voice": self.setting("voice"), "history": self.last_played(), "fire": self.fire_now(),
                 "agc": {k: round(v, 1) if isinstance(v, float) else v for k, v in (getattr(self, "agc", None) or {}).items()}}
 
     def nowplaying(self):
@@ -564,6 +638,15 @@ class Channel:
                 "playing_next": {"song": song(nxt.get("artist"), nxt.get("title"), nxt.get("folder"))} if nxt else None,
                 "song_history": hist, "listeners": {"current": L.get("current", (L.get("mp3") or 0) + (L.get("hls") or 0))}, "is_online": bool(self.liq and self.liq.poll() is None),
                 "hype": {"source": "hype-studio", "station": self.id}}
+
+    def fire_now(self):
+        """🔥 votes for the song on air (Hype Live's sync, per station) – None when there is no count for this song."""
+        try:
+            f = json.load(open("/run/hype/ch_fire.json")).get(self.id) or {}
+            n = self.now or {}
+            if f.get("t") and n.get("started") and abs(float(f["t"]) - n["started"]) < 30: return int(f.get("n") or 0)
+        except Exception: pass
+        return None
 
     def last_played(self, n=3):
         """The last songs (as on Hype Radio's playlist: the 2 before the one on air)."""
@@ -664,6 +747,7 @@ def main():
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     threading.Thread(target=main_live_watch, daemon=True).start()
     def bye(*_):
+        HANDOVER["on"] = True          # stopped by systemd (an update / restart): the radio engines keep playing (KillMode=process)
         for ch in CH.values(): ch.stop_ev.set()
         for ch in CH.values():
             if ch.thread: ch.thread.join(12)

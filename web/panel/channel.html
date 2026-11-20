@@ -31,7 +31,7 @@
     <section class="col c1">
       <div class="card hi" style="gap:8px;padding:12px" id="cPlayer">
         <div class="row between" style="flex-wrap:nowrap;gap:5px">
-          <div class="row" style="gap:5px;overflow:hidden"><span class="chip" id="npOnair">–</span><span class="chip" id="npFolder" style="background:#2B2500;color:var(--y);overflow:hidden;text-overflow:ellipsis">–</span></div>
+          <div class="row" style="gap:5px;overflow:hidden"><span class="chip" id="npOnair">–</span><span class="chip" id="npFolder" style="background:#2B2500;color:var(--y);overflow:hidden;text-overflow:ellipsis">–</span><span class="chip" id="npFire" hidden title="🔥 votes for this song (Hype Live, per station)" style="background:#3A1A00;color:#FFB54D;white-space:nowrap"></span></div>
           <button class="btn sm" id="bOnOff">Switch on</button>
         </div>
         <div class="np">
@@ -142,6 +142,7 @@ function paint() {
   oa.textContent = S.down ? 'SERVICE OFF' : !S.enabled ? 'OFF' : S.sim ? '● LIVE FROM HYPE RADIO' : S.running ? '● ON AIR' : 'STARTING …';
   oa.style.background = on ? 'var(--r)' : ''; oa.style.color = on ? '#1A0207' : '';
   const n = S.now || {};
+  $('#npFire').hidden = S.fire == null || S.sim; if (S.fire != null) $('#npFire').textContent = '🔥 ' + S.fire;
   $('#npFolder').textContent = S.sim ? 'Hype Radio' : (fold(n.path) || S.name);
   $('#bOnOff').textContent = S.enabled ? 'Switch off' : 'Switch on'; $('#bOnOff').className = 'btn sm' + (S.enabled ? ' red' : ' yellow');
   $('#cErr').hidden = !(S.error || S.down); $('#cErr').textContent = S.down ? 'The theme channels service is not running on the server.' : S.error || '';

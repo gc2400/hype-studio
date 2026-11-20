@@ -8,7 +8,9 @@ Environment=XDG_RUNTIME_DIR=/run/hype
 ExecStart=/usr/bin/python3 /opt/hype/chan.py
 Restart=always
 RestartSec=5
-KillMode=mixed
+# an update / restart of this service never stops what is on air: the radio engines + HLS keep running and the new
+# hype-channels takes them over (chan.py adopt). Switching a channel off in the panel still stops them.
+KillMode=process
 TimeoutStopSec=20
 # a theme channel never takes the CPU from Hype Radio / the TV
 Nice=3

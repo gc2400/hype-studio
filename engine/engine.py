@@ -5131,6 +5131,18 @@ def hl_sync_loop():
                 except Exception as e: ok["media"] = False; log.warning("sync media: %s", e)
             MEDIA_LINK.update(t=time.time(), ok=True, error="")
             if isinstance(d.get("fire_now"), dict): FIRE_NOW.clear(); FIRE_NOW.update(d["fire_now"])
+            if isinstance(d.get("stations"), dict):      # 🔥 per theme channel (Hype Live 2.53): votes per play + the song on air
+                chf = {}
+                for sid, sd in d["stations"].items():
+                    if not isinstance(sd, dict) or not chancfg.valid(sid): continue
+                    chf[sid] = sd.get("fire_now") if isinstance(sd.get("fire_now"), dict) else None
+                    if sd.get("fire"):
+                        TL.ch = sid
+                        try: audstats.set_fire(sd["fire"])          # the channel's own stats_<id>.db (Reports → Audience → Songs)
+                        except Exception as e: log.warning("sync fire %s: %s", sid, e)
+                        finally: TL.ch = None
+                try: os.makedirs("/run/hype", exist_ok=True); jdump(dict(chf, t=time.time()), "/run/hype/ch_fire.json")
+                except Exception: pass
             if d.get("fire"):          # 🔥 votes per play (Hype Live keeps the votes; Studio's song report shows them per play)
                 try: audstats.set_fire(d["fire"])
                 except Exception as e: log.warning("sync fire: %s", e)
