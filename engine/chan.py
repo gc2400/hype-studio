@@ -199,6 +199,8 @@ class Channel:
             try:
                 self.fixed(c, n)
                 self.refill(c)
+                while n == 0 and self.plan and not os.path.exists(os.path.join(ROOT, self.plan[0]["path"])):    # moved / deleted since it was planned
+                    log.warning("%s: %s is gone – skipped", self.id, self.plan[0]["path"]); self.plan.pop(0); self.refill(c)
                 if n == 0 and self.plan:
                     it = self.plan[0]
                     mo, jd, sm_on = self.mixcfg()
@@ -388,6 +390,21 @@ class Channel:
                         except subprocess.TimeoutExpired: self.liq.kill()
                         self.liq_fail -= 1          # not a crash: no slow-down
                 else: self.nan_n = 0
+                # watchdog 2: stuck – the song on air should have ended long ago and it is silent (e.g. the queued file was
+                # moved / deleted after it was queued: the radio engine keeps retrying it) -> clear the queue, go on with the next
+                nw = self.now or {}
+                if (not self.sim and nw.get("started") and time.time() - nw["started"] > self.len_of(nw) + 20
+                        and self.level and max(self.level) < 0.001):
+                    self.stuck_n = getattr(self, "stuck_n", 0) + 1
+                    if self.stuck_n >= 5:
+                        log.warning("%s: stuck after %s – queue cleared, going on", self.id, nw.get("path"))
+                        self.stuck_n = 0
+                        try: self.tel("q.flush_and_skip")
+                        except OSError: pass
+                        with self.lock:
+                            if self.plan and self.pushed == self.plan[0]["id"]: self.plan.pop(0)
+                            self.pushed = None; self.now = dict(nw, started=time.time())
+                else: self.stuck_n = 0
                 if time.time() - last_aud >= 15:
                     last_aud = time.time(); self.count_listeners()
                 if self.cfg.get("join_live"):            # "join Hype Radio's live shows by itself": on while Hype Radio's studio is on air
