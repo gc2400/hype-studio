@@ -96,21 +96,24 @@
     <!-- RIGHT: library -->
     <section class="col c3">
       <div class="card" id="cLib">
-        <div class="row between"><span class="lab">Library</span></div>
-        <label class="search">
+        <div class="row between"><span class="lab">Library</span><div class="row" style="gap:6px"><button class="btn sm" id="libFind" aria-label="Search" title="Search ( / )"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button><button class="btn sm" id="libSort" title="A–Z or newest uploads first">A–Z</button><button class="btn sm" id="bStations" aria-expanded="false" title="Which stations' songs this library shows (this channel only)">◎ Stations</button></div></div>
+        <div class="wrapchips" id="stRow" hidden></div>
+        <label class="search" id="libSearch" hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
           <span style="position:absolute;left:-9999px">Search the library</span>
-          <input id="q" type="search" placeholder="Search artist or title…" autocomplete="off">
+          <input id="q" type="search" placeholder="Search artist or title…  ( / )" autocomplete="off">
         </label>
         <div class="seg" id="secs" role="tablist" aria-label="Section"></div>
         <div class="wrapchips" id="folders"></div>
         <div class="wrapchips" id="subfolders" hidden></div>
+        <div class="wrapchips" id="subfolders2" hidden></div>
         <div class="res" id="res"></div>
       </div>
     </section>
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<script src="/panel/cue.js"></script>
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -252,40 +255,68 @@ $('#bankDel').onclick = () => { const B = BANKS[bank]; if (!B || !confirm('Delet
 $('#padSave').onclick = () => api('plan/save_padbanks', {banks: BANKS.map(b => ({id: b.id, name: b.name, items: b.items.map(i => ({path: i.path, label: i.label, color: i.color}))}))})
   .then(r => { if (r && r.error) return toast(r.error, 1); PEDIT = false; toast('Pads saved'); loadPads(); });
 
-// ---------- library (this channel's stations; Library → Stations decides which ones) ----------
-let SEC = 'music', GENRE = '', FOLDER = '', SEL = null, LT = null;
+// ---------- library: the On Air library card, for this channel (its stations: ◎ Stations) ----------
+let SEC = 'music', LSORT = ls('hypeLibSort') || 'az', P1 = '', P2 = '', P3 = '', SEL = null, LT = null, LIBN = 300, LIBKEY = '';
 const SECS = [['music', 'Music'], ['mixes', 'Mixes'], ['jingles', 'Jingles']];
+const FOLDER = () => P3 || P2 || P1;
+function libMore() { if (!LIB || !LIB.total || LIB.items.length >= LIB.total || lib.busy) return; LIBN += 300; lib.more = true; lib(); }
+$('#res').addEventListener('scroll', () => { const r = $('#res'); if (r.scrollTop + r.clientHeight > r.scrollHeight - 400) libMore(); });
+function chips(el, list, cur, cls, allTxt, set) {
+  el.hidden = !list.length; if (!list.length) return;
+  el.innerHTML = ['', ...list].map(f => `<button class="btn sm ${f === cur ? cls : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').pop()) : allTxt}</button>`).join('');
+  el.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { set(b.dataset.f); lib(); });
+}
 function lib() {
-  api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER || GENRE) + '&q=' + encodeURIComponent($('#q').value) + '&limit=200').then(d => {
-    LIB = d;
+  const key = [SEC, FOLDER(), $('#q').value, LSORT].join('|'); if (key !== LIBKEY && !lib.more) { LIBKEY = key; LIBN = 300; }
+  $('#libSort').textContent = LSORT === 'new' ? 'Newest' : 'A–Z';
+  const keepTop = lib.more ? $('#res').scrollTop : null; lib.more = false; lib.busy = true;
+  api('library?section=' + SEC + '&folder=' + encodeURIComponent(FOLDER()) + '&q=' + encodeURIComponent($('#q').value) + '&sort=' + LSORT + '&limit=' + LIBN).then(d => {
+    lib.busy = false; LIB = d; if (keepTop != null) setTimeout(() => { $('#res').scrollTop = keepTop; }, 0);
     $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="${k === SEC ? 'on' : ''}" data-sec="${k}" role="tab" aria-selected="${k === SEC}">${n}<span>${(d.counts || {})[k] ?? ''}</span></button>`).join('');
-    $$('#secs [data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
-    const all = d.all_folders || d.folders || [];
-    const genres = [...new Set(all.map(f => (f || '').split('/')[0]).filter(Boolean))];
-    $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g ? esc(g) : 'All'}</button>`).join('');
-    $$('#folders [data-g]').forEach(b => b.onclick = () => { GENRE = b.dataset.g; FOLDER = ''; lib(); });
-    const one = genres.length === 1 ? genres[0] : '', G = GENRE || one; $('#folders').hidden = !!one;
-    const subs = G ? [...new Set(all.filter(f => f.startsWith(G + '/')).map(f => f.split('/').slice(0, 2).join('/')))] : [];
-    $('#subfolders').hidden = !subs.length;
-    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(1).join('/')) : (one ? 'All' : 'All ' + esc(G))}</button>`).join('');
-    $$('#subfolders [data-f]').forEach(b => b.onclick = () => { FOLDER = b.dataset.f; lib(); });
+    $$('#secs [data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; P1 = P2 = P3 = ''; lib(); });
+    // folders, 3 levels deep. One top folder only (like LATINA/…): skip it, its subfolders are the first row
+    const all = (d.all_folders || d.folders || []).filter(Boolean);
+    const tops = [...new Set(all.map(f => f.split('/')[0]))], one = tops.length === 1 ? tops[0] : '';
+    const kids = (base, depth) => [...new Set(all.filter(f => f.startsWith(base + '/')).map(f => f.split('/').slice(0, depth).join('/')))].filter(f => f.split('/').length === depth);
+    const L1 = one ? kids(one, 2) : tops, b1 = one ? 2 : 1;
+    if (!L1.length) { $('#folders').hidden = true; } else chips($('#folders'), L1, P1, 'on', 'All', v => { P1 = v; P2 = P3 = ''; });
+    const L2 = P1 ? kids(P1, b1 + 1) : [];
+    chips($('#subfolders'), L2, P2, 'yellow', 'All ' + esc((P1 || '').split('/').pop()), v => { P2 = v; P3 = ''; });
+    const L3 = P2 ? kids(P2, b1 + 2) : [];
+    chips($('#subfolders2'), L3, P3, 'yellow', 'All ' + esc((P2 || '').split('/').pop()), v => { P3 = v; });
     $('#res').innerHTML = (d.items || []).map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
-      return `<div class="ri ${SEL === it.path ? 'sel' : ''}" draggable="true" data-p="${esc(it.path)}"><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${it.problem ? `<span style="color:#FF8A97">⚠ ${esc(it.problem)}</span>` : `${esc(it.folder)} · ${fmt(it.duration)}`}</span></div>${it.problem ? '' : `<div class="acts">
+      return `<div class="ri ${SEL === it.path ? 'sel' : ''}" draggable="true" data-p="${esc(it.path)}"><span class="chip ${bc}">${bt}</span><div class="tx"><b>${esc(it.artist ? it.artist + ' – ' : '')}${esc(it.title || it.path.split('/').pop())}</b><span>${it.problem ? `<span style="color:#FF8A97">⚠ ${esc(it.problem)}</span> · ${esc(it.path.split('/').pop())}` : `${esc(it.folder)} · ${fmt(it.duration)} · ${it.last ? 'played ' + ago(it.last) : 'not played yet'}`}</span></div>${it.problem ? '' : `<div class="acts">
         <button class="btn" data-act="next" aria-label="Play next" title="Play next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
         <button class="btn" data-act="end" aria-label="Add to the end" title="Add to the end of the playlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
-        ${SEC === 'jingles' ? '<button class="btn overb" data-act="over" title="Play it NOW over the music (the music dips under it) – an ID over an intro">OVER</button>' : ''}</div>`}</div>`; }).join('') || '<span class="muted">Nothing found.</span>';
+        ${SEC === 'jingles' ? '<button class="btn overb" data-act="over" title="Play it NOW over the music (the music dips under it) – an ID over an intro">OVER</button>' : ''}
+        <button class="btn cueb" data-act="pfl" data-cueurl="${esc(window.HypeCue ? HypeCue.url(it.path) : '')}" title="Listen on your cue output (not on air)">CUE</button></div>`}</div>`; }).join('') || '<span class="muted">' + (SEC === 'music' && !$('#q').value && !FOLDER() ? 'No songs for this channel yet – upload them in Library (they go into its own folders), or press ◎ Stations to also show Hype Radio\'s songs.' : 'Nothing found.') + '</span>';
     $$('#res .ri').forEach(el => {
       el.onclick = e => { const b = e.target.closest('[data-act]');
         if (!b) { SEL = el.dataset.p; $$('#res .ri').forEach(r => r.classList.toggle('sel', r === el)); return; }
         e.stopPropagation(); const a = b.dataset.act, it = d.items.find(x => x.path === el.dataset.p);
         if (a === 'over') cmd('pad', {path: it.path, duck: 0.35}).then(r => r && r.ok !== false && toast('Over the music: ' + (it.title || it.path.split('/').pop())));
+        else if (a === 'pfl') { if (window.HypeCue) HypeCue.play(b.dataset.cueurl, (it.artist ? it.artist + ' – ' : '') + (it.title || ''), it.cue_start || 0, it.cue_end || 0); }
         else cmd('insert', {path: it.path, where: a}).then(r => r && r.ok !== false && toast(a === 'next' ? 'Plays next' : 'Added to the end'));
       };
       el.ondragstart = e => e.dataTransfer.setData('text/plain', 'lib:' + el.dataset.p);
     });
-  }).catch(() => {});
+  }).catch(() => { lib.busy = false; });
 }
+const ago = t => { const s = Date.now() / 1000 - t; return s < 3600 ? Math.max(1, Math.round(s / 60)) + ' min ago' : s < 86400 ? Math.round(s / 3600) + ' h ago' : Math.round(s / 86400) + ' d ago'; };
 $('#q').oninput = () => { clearTimeout(LT); LT = setTimeout(lib, 250); };
+$('#libFind').onclick = () => { const b = $('#libSearch'); b.hidden = !b.hidden; if (!b.hidden) $('#q').focus(); else if ($('#q').value) { $('#q').value = ''; lib(); } $('#libFind').classList.toggle('on', !b.hidden); };
+$('#q').addEventListener('keydown', e => { if (e.key === 'Escape') { $('#q').value = ''; lib(); $('#libSearch').hidden = true; $('#libFind').classList.remove('on'); } });
+$('#libSort').onclick = () => { LSORT = LSORT === 'new' ? 'az' : 'new'; ls('hypeLibSort', LSORT); lib(); };
+document.addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); $('#libSearch').hidden = false; $('#libFind').classList.add('on'); $('#q').focus(); } });
+// ◎ Stations: which stations' songs this channel's library shows (the same switch as on the Library page)
+(() => {
+  const b = $('#bStations'), row = $('#stRow');
+  const paint = d => { row.innerHTML = '<span class="muted">Show songs of:</span>' + d.stations.map(x => `<button class="btn sm ${d.show.includes(x.id) ? 'on' : ''}" data-st="${x.id}" aria-pressed="${d.show.includes(x.id)}"><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${x.color}"></i> ${esc(x.name)}</button>`).join('');
+    row.querySelectorAll('[data-st]').forEach(x => x.onclick = () => { const id = x.dataset.st, show = d.show.includes(id) ? d.show.filter(y => y !== id) : [...d.show, id];
+      if (!show.length) return toast('Keep at least one', 1);
+      api('lib_show', {ch: CHID(), show}).then(r => { d.show = r.show; paint(d); P1 = P2 = P3 = ''; lib(); }); }); };
+  b.onclick = () => { row.hidden = !row.hidden; b.classList.toggle('on', !row.hidden); b.setAttribute('aria-expanded', !row.hidden); if (!row.hidden) api('lib_show?ch=' + CHID()).then(paint); };
+})();
 
 load(); loadPads(); lib();
 setInterval(() => { if (!document.hidden) load(); }, 2000);

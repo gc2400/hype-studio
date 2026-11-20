@@ -347,7 +347,7 @@ class ClockRunner:
             pid = int(ref) if kind == "playlist" else folder_playlist_id(c, ref)
             left = (at // 3600 + 1) * 3600 - at
             try:                                       # a show that ends on the half hour (Top 10 → Fresh Out 20:30): aim for its end
-                s_ = show_at(at)
+                s_ = show_at(at, c)
                 if s_:
                     lt_ = time.localtime(at); e_ = mins(s_["end"]) or 1440
                     end_ = time.mktime((lt_.tm_year, lt_.tm_mon, lt_.tm_mday, 0, 0, 0, 0, 0, -1)) + e_ * 60
@@ -360,7 +360,7 @@ class ClockRunner:
                 r_ = c.execute("SELECT shuffle, strict FROM playlists WHERE id=?", (pid,)).fetchone()
                 self.fixed = bool(r_ and (r_[1] or not r_[0])); self.fixed_pid = pid
         elif kind == "showjingle":                         # sweeper of the show on air (jingles/SHOWS/<show>), else the fallback folder
-            s_ = show_at(at)
+            s_ = show_at(at, c)
             path = (pick_jingle(c, show_folder(c, at, s_)) if s_ else None) or pick_jingle(c, ref or "SWEEPERS")
         elif kind == "song":
             path = ref
@@ -571,7 +571,7 @@ def api_save_overlays(c, d):
 def resolve_jingle(c, ref, avoid=()):
     """ref = a jingle file (jingles/...), a jingles folder name, or #SHOW (sweepers of the show on air)."""
     if ref == "#SHOW":
-        s_ = show_at(time.time())
+        s_ = show_at(time.time(), c)
         r_ = resolve_jingle(c, show_folder(c, time.time(), s_), avoid) if s_ else None
         return r_ or resolve_jingle(c, "SWEEPERS", avoid)
     if re.match(r"jingles(-[a-z0-9]+)?/", ref):            # one jingle file (also a theme channel's jingles-latina/…)
@@ -590,6 +590,12 @@ def song_overlay_path(c, overlay_path):
 
 # ---------------- shows (from hyperadio.nl) + fixed times ----------------
 WEEK = []   # [{day 0=Mon, start "HH:MM", end "HH:MM", title}] – filled by the engine from the website
+def week_of(c):
+    """Hype Radio's show schedule (from hyperadio.nl). A theme channel (its database has the library attached as "lib") has no shows (yet)."""
+    try:
+        if any(r[1] == "lib" for r in c.execute("PRAGMA database_list")): return []
+    except Exception: pass
+    return WEEK
 
 def init_shows(c):
     c.executescript("""
@@ -627,8 +633,10 @@ def special_at(t):
         except (KeyError, ValueError, TypeError): continue
     return None
 
-def show_at(t):
-    """The website show on air at time t (handles 23:00–00:00 style ends); a special for that date wins."""
+def show_at(t, c=None):
+    """The website show on air at time t (handles 23:00–00:00 style ends); a special for that date wins.
+    c = a theme channel's database: no Hype Radio shows there."""
+    if c is not None and week_of(c) is not WEEK: return None
     sp = special_at(t)
     if sp: return sp
     lt = time.localtime(t); m = lt.tm_hour * 60 + lt.tm_min
@@ -642,7 +650,7 @@ def show_at(t):
 _old_clock_for = clock_for
 def clock_for(c, t):
     """1) the clock chosen for the website show at that time, 2) the hour grid, 3) the first clock."""
-    s = show_at(t)
+    s = show_at(t, c)
     if s:
         r = c.execute("SELECT clock_id FROM show_clocks WHERE title=?", (s["title"],)).fetchone()
         if r and r[0] and c.execute("SELECT 1 FROM clocks WHERE id=?", (r[0],)).fetchone(): return r[0]
@@ -661,14 +669,14 @@ def runner_key(t):
 def api_shows(c):
     sc = dict(c.execute("SELECT title, clock_id FROM show_clocks").fetchall())
     titles = []
-    for s in WEEK:
+    for s in week_of(c):
         if s["title"] not in titles: titles.append(s["title"])
     days = "Mon Tue Wed Thu Fri Sat Sun".split()
     out = []
     for t in titles:
-        when = [f'{days[s["day"]]} {s["start"]}–{s["end"]}' for s in WEEK if s["title"] == t]
+        when = [f'{days[s["day"]]} {s["start"]}–{s["end"]}' for s in week_of(c) if s["title"] == t]
         out.append(dict(title=t, clock_id=sc.get(t), when=when))
-    return dict(shows=out, week=WEEK)
+    return dict(shows=out, week=week_of(c))
 
 def api_save_show_clocks(c, d):
     for title, cid in d.get("map", {}).items():
@@ -1030,7 +1038,7 @@ def _clock_of(c, t):
     """(clock id, 'date' | 'show' | 'grid') for time t – the same choice clock_for makes."""
     dc = _date_clock(c, t)
     if dc: return dc, "date"
-    s = show_at(t)
+    s = show_at(t, c)
     if s:
         r = c.execute("SELECT clock_id FROM show_clocks WHERE title=?", (s["title"],)).fetchone()
         if r and r[0] and c.execute("SELECT 1 FROM clocks WHERE id=?", (r[0],)).fetchone(): return r[0], "show"
@@ -1050,17 +1058,17 @@ def api_week(c, w=0):
             cid, via = _clock_of(c, t)
             r = c.execute("SELECT clock_id FROM schedule WHERE day=? AND hour=?", (d, h)).fetchone()
             sc_ = None
-            if s_ := show_at(t):
+            if s_ := show_at(t, c):
                 r2 = c.execute("SELECT clock_id FROM show_clocks WHERE title=?", (s_["title"],)).fetchone(); sc_ = r2[0] if r2 else None
             h30 = None
-            s30 = show_at(t + 1800)
+            s30 = show_at(t + 1800, c)
             if s30 and s30["start"].endswith(":30") and int(s30["start"][:2]) == h:     # a show that starts on the half hour (Fresh Out 20:30)
                 c30, v30 = _clock_of(c, t + 1800)
                 r3 = c.execute("SELECT clock_id FROM show_clocks WHERE title=?", (s30["title"],)).fetchone()
                 h30 = dict(clock_id=c30, via=v30, show=s30["title"], show_clock=r3[0] if r3 else None)
             hrs.append(dict(h=h, clock_id=cid, via=via, grid=r[0] if r else None, show_clock=sc_, h30=h30))
         days.append(dict(date=time.strftime("%Y-%m-%d", time.localtime(t0)), hours=hrs,
-                         shows=[dict(start=s["start"], end=s["end"], title=s["title"]) for s in WEEK if s["day"] == d]))
+                         shows=[dict(start=s["start"], end=s["end"], title=s["title"]) for s in week_of(c) if s["day"] == d]))
     clocks = {}
     for cid, name, color in c.execute("SELECT id, name, color FROM clocks"):
         mix = [r for k, r, a in c.execute("SELECT kind, ref, amount FROM clock_slots WHERE clock_id=? ORDER BY pos", (cid,)) if k == "folder" and (r or "").upper().startswith("MIXES/")]

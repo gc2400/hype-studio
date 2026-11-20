@@ -80,9 +80,10 @@ def connect(ch):
         try: c.execute("PRAGMA journal_mode=WAL")
         except sqlite3.OperationalError: pass
         planner.init(c)
-        for f in ("init_overlays", "init_shows", "init_pads", "init_ads", "init_screen"):
+        for f in ("init_overlays", "init_shows", "init_ads", "init_screen"):
             try: getattr(planner, f)(c)
             except Exception: pass
+        init_pads(c, ch)
         c.execute("""CREATE TABLE IF NOT EXISTS asrun(id INTEGER PRIMARY KEY, started REAL, path TEXT, artist TEXT,
                      title TEXT, folder TEXT, mode TEXT, clip TEXT, scene TEXT, kind TEXT, over TEXT)""")
         c.execute("CREATE INDEX IF NOT EXISTS asrun_started ON asrun(started)")
@@ -90,6 +91,21 @@ def connect(ch):
         c.execute("CREATE TABLE IF NOT EXISTS aud_samples(t REAL PRIMARY KEY, r INT, p INT, tv INT)")
         c.commit(); _INIT.add(ch)
     return c
+
+
+def init_pads(c, ch):
+    """A theme channel's own pad banks: only its own jingles folders (jingles-<id>/…), never Hype Radio's shows.
+    20 Nov: the first version copied all of Hype Radio's banks – cleared once (nothing was set up on the channels yet)."""
+    import planner
+    c.executescript("""CREATE TABLE IF NOT EXISTS pad_banks(id INTEGER PRIMARY KEY, name TEXT, pos INT);
+                       CREATE TABLE IF NOT EXISTS pad_items(bank_id INT, pos INT, path TEXT, label TEXT, color TEXT);""")
+    if planner.get_setting(c, "ch_pads_v2", False): return
+    c.execute("DELETE FROM pad_items"); c.execute("DELETE FROM pad_banks")
+    for i, (f,) in enumerate(c.execute("SELECT DISTINCT folder FROM items WHERE section='jingles' AND problem IS NULL AND station=? ORDER BY folder", (ch,)).fetchall()):
+        bid = c.execute("INSERT INTO pad_banks(name, pos) VALUES(?,?)", (f.split("/")[-1], i)).lastrowid
+        for j, (p_,) in enumerate(c.execute("SELECT path FROM items WHERE section='jingles' AND folder=? AND problem IS NULL AND station=? ORDER BY title", (f, ch)).fetchall()):
+            c.execute("INSERT INTO pad_items VALUES(?,?,?,?,?)", (bid, j, p_, None, None))
+    planner.set_setting(c, "ch_pads_v2", True); c.commit()
 
 
 def attach_like(src, dst):

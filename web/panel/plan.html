@@ -467,6 +467,11 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script>
+// a theme channel: no Hype Radio shows, TV screen rules, ads, intro sweepers or show recordings – only its hour plans, schedule, playlists, fixed times
+(() => { let ch = 'main'; try { ch = window.HYPE_CH ? window.HYPE_CH() : (localStorage.getItem('hypeCh') || 'main'); } catch (e) {} if (ch === 'main') return;
+  ['os', 'rc', 'ad', 'ov'].forEach(k => { const t = document.querySelector('.tab[data-tab="' + k + '"]'); if (t) t.remove(); });
+  const sh = document.querySelector('.tab[data-tab="sh"]'); if (sh) sh.textContent = 'Hour plans'; })();
+
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const authed = r => { if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('login'); } return r; };
