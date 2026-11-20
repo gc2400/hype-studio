@@ -441,3 +441,4 @@
 2026-11-20T04:02:07 ok 9199befd [night] Radio: mixer channel meters; voice tracking dips
 2026-11-20T08:50:08 ok aa743dfd Audience numbers counted fresh every 4 s (was 10) for the header dots
 2026-11-20T08:52:14 ok f50507ed Mixer: the studio input is called Live
+2026-11-20T08:53:18 ok 9731e630 Mixer: everything Hype Studio plays is called Studio, your studio input Live
