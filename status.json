@@ -1,17 +1,17 @@
 {
- "time": "2026-11-20T20:19:44",
+ "time": "2026-11-20T20:22:50",
  "result": "ok",
- "commit": "f2a4bb185674b3393ce5e8b52cb59ec386414269",
- "subject": "Theme channels: station skins like the website (Latina sunset, Ambiente deep blue) on every page; no 'You are working on' bar",
+ "commit": "6a3efda81a142d52ddb6842520094bc5a93462a0",
+ "subject": "Theme channels: the website's calm station colours (Latina #0F0A0C / #FFB23F, Ambiente #070D1A / #4FC3F0)",
  "log": [
-  "20:19:44 update a6ea58df \u2192 f2a4bb18 \u00b7 1 file(s): web/panel/header.js",
-  "20:19:44 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "20:22:50 update f2a4bb18 \u2192 6a3efda8 \u00b7 1 file(s): web/panel/header.js",
+  "20:22:50 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Shenseea x Asake \u2013 Playtime",
-  "listeners": 3,
+  "song": "Jeon \u2013 Nabe",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
