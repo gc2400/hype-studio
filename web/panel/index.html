@@ -132,7 +132,7 @@ body.dj .auxbtn,body.dj.is-auto .auxbtn{display:inline-flex}body.dj .auxbtn butt
 #padBanks [data-bank="-2"]:hover{background:#0A3A2A}#padBanks [data-bank="-2"].on{background:#3DDC97;color:#061423}#padBanks [data-bank="-2"].on b{background:#061423!important;color:#3DDC97!important}
 /* the same hover buttons as the Library page: small square, dark, thin line, coloured line on hover */
 .ri .acts > button{width:34px;height:34px;min-height:0;min-width:0;padding:0;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--soft);box-shadow:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
-.ri .acts > button svg{width:17px;height:17px}.ri .acts > button:hover{color:var(--b);border-color:var(--b);background:var(--deep)}.ri .acts > button[data-act="end"]:hover{color:var(--y);border-color:var(--y)}
+.ri .acts > button.overb{width:auto;padding:0 9px;font:900 11px Inter,system-ui,sans-serif;letter-spacing:.04em;color:var(--y)}.ri .acts > button.overb:hover{color:#061423;background:var(--y);border-color:var(--y)}.ri .acts > button svg{width:17px;height:17px}.ri .acts > button:hover{color:var(--b);border-color:var(--b);background:var(--deep)}.ri .acts > button[data-act="end"]:hover{color:var(--y);border-color:var(--y)}
 .ri .acts svg{width:18px;height:18px}
 dialog#cueDlg{box-sizing:border-box;background:var(--card);color:var(--txt);border:1px solid var(--line2);border-radius:16px;padding:14px 16px;width:min(900px,calc(100vw - 16px));max-width:calc(100vw - 16px);max-height:94vh;overflow-x:hidden;overflow-y:auto}
 #cueDlg *{box-sizing:border-box;min-width:0}   /* nothing in the song settings may be wider than the phone */
@@ -1245,6 +1245,7 @@ function lib() {
         <button class="btn" data-act="next" aria-label="Play next" title="Play next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z" fill="currentColor"/></svg></button>
         <button class="btn" data-act="end" aria-label="Add to the end" title="Add to the end (Up next / AUX)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 11h11M4 16h7M18 13v8M14 17h8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
         ${auxBtns('act')}
+        ${SEC === 'jingles' ? '<button class="btn overb" data-act="over" title="Play it NOW over the music (the music dips under it) – an ID over an intro">OVER</button>' : ''}
         <button class="btn cueb" data-act="pfl" data-cueurl="${esc(HypeCue.url(it.path))}" title="Listen on your cue output (not on air)">CUE</button>
         <button class="btn" data-act="cue" aria-label="Cue points and settings" title="Cue points, video preview, sweeper"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.5" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="10" cy="17" r="2.5" stroke="currentColor" stroke-width="2" fill="none"/></svg></button></div>`}</div>`; }).join('') || '<span class="muted" style="padding:8px">Nothing found.</span>';
     $('#res').querySelectorAll('.ri').forEach(el => {
@@ -1257,6 +1258,7 @@ function lib() {
         if (a === 'end') (man ? auxCmd('aux_add', {aux: AUX, path: it.path}) : cmd('insert', {path: it.path, pos: S.upcoming.length})).then(() => toast(man ? 'Added to the end of AUX ' + AUX : 'Added to the end of Up next'));
         if (a === 'aux') auxCmd('aux_add', {aux: b.dataset.aux, path: it.path}).then(() => toast('Added to AUX ' + b.dataset.aux + (MODE === 'dj' ? (b.dataset.aux === '1' ? ' (deck A)' : ' (deck B)') : '')));
         if (a === 'cue') openCueDlg(it);
+        if (a === 'over') cmd('pad', {path: it.path, duck: true, loop: false, video: false}).then(() => toast('Over the music: ' + (it.title || it.path.split('/').pop())));
         if (a === 'pfl') HypeCue.play(b.dataset.cueurl, (it.artist ? it.artist + ' – ' : '') + (it.title || ''), it.cue_start || 0, it.cue_end || 0);
       };
       el.ondragstart = e => e.dataTransfer.setData('text/plain', 'lib:' + el.dataset.p);
