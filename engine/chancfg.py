@@ -15,9 +15,9 @@ LIB = "/srv/hype-data/library.db"
 DATA = "/srv/hype-data"
 API_PORT = 8100            # hype-channels' own small API (status / commands), 127.0.0.1 only
 DEFAULT = [
-    {"id": "ambiente", "name": "Hype Ambiente", "color": "#1F5BC4", "enabled": False, "telnet": 1301,
+    {"id": "ambiente", "name": "Hype Ambiente", "color": "#1E5BC6", "enabled": False, "telnet": 1301,
      "genre": "Papiamentu · Kombina · Tumba"},
-    {"id": "latina", "name": "Hype Latina", "color": "#FF6B2C", "enabled": False, "telnet": 1302,
+    {"id": "latina", "name": "Hype Latina", "color": "#FF6A2B", "enabled": False, "telnet": 1302,
      "genre": "Reggaeton · Latin · Dembow"},
 ]
 ID_RE = re.compile(r"^[a-z][a-z0-9]{1,19}$")
