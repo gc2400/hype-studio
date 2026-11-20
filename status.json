@@ -1,17 +1,17 @@
 {
- "time": "2026-11-20T09:13:23",
+ "time": "2026-11-20T10:03:32",
  "result": "ok",
- "commit": "1a79fc09524fca47470623d1480c23b44fa0a0db",
- "subject": "Scenes on a phone: CAM 1-4, PIP, MEDIA, SLIDESHOW and the settings button on one line, settings on the right; gear icons as text (not the iPhone emoji)",
+ "commit": "13db463d630a633a6238fd6854a054b1d259a4ce",
+ "subject": "Pads (and media): 12 per page (3 rows of 4), the rest behind the next-page button",
  "log": [
-  "09:13:23 update 57080d59 \u2192 1a79fc09 \u00b7 1 file(s): web/panel/index.html",
-  "09:13:23 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "10:03:31 update 1a79fc09 \u2192 13db463d \u00b7 1 file(s): web/panel/index.html",
+  "10:03:32 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Dongo x Jeon \u2013 Marido Y Mujer",
+  "song": "Shenseea x Asake \u2013 Playtime",
   "listeners": 3,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
