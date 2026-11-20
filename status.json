@@ -1,17 +1,18 @@
 {
- "time": "2026-11-20T08:55:24",
+ "time": "2026-11-20T09:04:22",
  "result": "ok",
- "commit": "5353e6c83c5963ec98a42b34873e4f210414adf8",
- "subject": "Library jingles: OVER button \u2013 play an ID now over the music (ducked), e.g. over an intro while live",
+ "commit": "76bed550940ef43f261d51e3b69d9558ce7933a1",
+ "subject": "Audience per song: counted per device with its own stream delay (MP3 ~4 s, HLS ~15 s; HLS sessions end at their last piece), so the plus / minus lands on the right song; mixes count too",
  "log": [
-  "08:55:24 update 9731e630 \u2192 5353e6c8 \u00b7 1 file(s): web/panel/index.html",
-  "08:55:24 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "09:03:37 update 5353e6c8 \u2192 76bed550 \u00b7 2 file(s): engine/audstats.py, engine/engine.py",
+  "09:03:37 restart hype-engine",
+  "09:04:22 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "Be\u00e9le \u2013 top diesel",
+  "song": "Shaggy x Aidonia x Akon \u2013 Boom Body (Shaz Remix)",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
