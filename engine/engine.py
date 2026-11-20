@@ -4083,9 +4083,9 @@ VIEW = {"t": 0, "d": None}; VSTATS_FILE = "/var/lib/hype/viewers.json"
 VIEW_LOCK = threading.Lock(); LISTEN_LOCK = threading.Lock()   # one request at a time recounts (public /nowplaying: many at once)
 def viewers():
     """TV viewers on Hype Studio's own video stream (all players: website, app, TV apps, VLC …): now, peak today, unique today."""
-    if VIEW["d"] and time.time() - VIEW["t"] < 10: return VIEW["d"]
+    if VIEW["d"] and time.time() - VIEW["t"] < 4: return VIEW["d"]
     with VIEW_LOCK:
-        if VIEW["d"] and time.time() - VIEW["t"] < 10: return VIEW["d"]     # another request just counted
+        if VIEW["d"] and time.time() - VIEW["t"] < 4: return VIEW["d"]     # another request just counted
         return _viewers()
 def _viewers():
     ips = tv_viewer_ips(); now_n = len(ips); day = time.strftime("%Y-%m-%d")
@@ -4209,9 +4209,9 @@ def hls_radio_ips(window=30):
 def listeners():
     """Radio listeners on Hype Studio's own streams as DEVICES (address + player; MP3 and HLS together, no double count):
     now, peak today, unique today (only daily codes are stored, no addresses)."""
-    if LISTEN["d"] and time.time() - LISTEN["t"] < 10: return LISTEN["d"]
+    if LISTEN["d"] and time.time() - LISTEN["t"] < 4: return LISTEN["d"]
     with LISTEN_LOCK:
-        if LISTEN["d"] and time.time() - LISTEN["t"] < 10: return LISTEN["d"]
+        if LISTEN["d"] and time.time() - LISTEN["t"] < 4: return LISTEN["d"]
         return _listeners()
 def _listeners():
     mp3s = mp3_devices()
