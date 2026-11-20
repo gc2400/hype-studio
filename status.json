@@ -1,18 +1,19 @@
 {
- "time": "2026-11-20T22:17:26",
+ "time": "2026-11-20T22:27:26",
  "result": "ok",
- "commit": "ae4133235e8dfade7b62c4e9f402fe4013672e13",
- "subject": "Theme channels: never two jingles / liners back to back (a fixed-time liner replaces the hour plan's next jingle)",
+ "commit": "000a312082ad7ec93ef40ee3e1f15556983cabb5",
+ "subject": "Planner: the 'rested longest' history per database \u2013 the theme channels shared one cache, so songs repeated",
  "log": [
-  "22:16:41 update 12897939 \u2192 ae413323 \u00b7 1 file(s): engine/chan.py",
-  "22:16:41 restart hype-channels",
-  "22:17:26 installed OK \u00b7 restarted: hype-channels"
+  "22:26:41 update ae413323 \u2192 000a3120 \u00b7 1 file(s): engine/planner.py",
+  "22:26:41 restart hype-channels",
+  "22:26:41 restart hype-engine",
+  "22:27:26 installed OK \u00b7 restarted: hype-engine, hype-channels"
  ],
  "guard": {
   "song": " \u2013 MENASA | PLAYAJERO | VOL 1 | GROOT KNIP | SHATTA | DANCEHALL | LATIN | AFRO",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },

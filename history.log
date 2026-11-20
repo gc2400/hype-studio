@@ -468,3 +468,4 @@
 2026-11-20T21:55:24 ok 93ea092e Theme channels: Hype Radio's AGC (agcloop.py, the same code: evens out songs, lifts quiet intros) per channel; its meter in Settings → Sound
 2026-11-20T21:58:15 ok 12897939 Theme channels: a restarted radio engine never keeps the music dipped (duck_lvl back to 1)
 2026-11-20T22:17:26 ok ae413323 Theme channels: never two jingles / liners back to back (a fixed-time liner replaces the hour plan's next jingle)
+2026-11-20T22:27:26 ok 000a3120 Planner: the 'rested longest' history per database – the theme channels shared one cache, so songs repeated
