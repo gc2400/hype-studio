@@ -1,18 +1,18 @@
 {
- "time": "2026-11-20T21:58:15",
+ "time": "2026-11-20T22:17:26",
  "result": "ok",
- "commit": "128979397f448f960e21cd2e3597b3c5e6cf9032",
- "subject": "Theme channels: a restarted radio engine never keeps the music dipped (duck_lvl back to 1)",
+ "commit": "ae4133235e8dfade7b62c4e9f402fe4013672e13",
+ "subject": "Theme channels: never two jingles / liners back to back (a fixed-time liner replaces the hour plan's next jingle)",
  "log": [
-  "21:57:29 update 93ea092e \u2192 12897939 \u00b7 1 file(s): engine/chan.py",
-  "21:57:29 restart hype-channels",
-  "21:58:15 installed OK \u00b7 restarted: hype-channels"
+  "22:16:41 update 12897939 \u2192 ae413323 \u00b7 1 file(s): engine/chan.py",
+  "22:16:41 restart hype-channels",
+  "22:17:26 installed OK \u00b7 restarted: hype-channels"
  ],
  "guard": {
-  "song": "Caribang Radio 001 \u2013 Hosted by Essovilla",
+  "song": " \u2013 MENASA | PLAYAJERO | VOL 1 | GROOT KNIP | SHATTA | DANCEHALL | LATIN | AFRO",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
