@@ -1,20 +1,20 @@
 {
- "time": "2026-11-20T19:01:17",
- "result": "rolled-back",
- "commit": "07cd0c7aabd9203b22e7c8006d74761f0d81eadd",
- "subject": "Theme channels Hype Ambiente + Hype Latina (audio): hype-channels service, own library roots, channel switch, channel page \u2013 channels start switched off; Hype Radio's radio engine unchanged",
+ "time": "2026-11-20T19:13:07",
+ "result": "ok",
+ "commit": "921cc0243a9e5e3c9fe360eb64cf19ad671e2706",
+ "subject": "nginx: theme channel regex locations in quotes (nginx needs them for {1,19}) \u2013 tested with nginx -t on the server",
  "log": [
-  "19:01:16 update 82a21619 \u2192 07cd0c7a \u00b7 16 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/indexer.py, engine/planner.py, radio/channel.liq, system/hype-channels.service, system/nginx-hype.conf, tv/chan_hls.sh, web/panel/ch-ambiente-1024.png, web/panel/ch-ambiente.png, web/panel/ch-latina-1024.png, web/panel/ch-latina.png, web/panel/channel.html, web/panel/header.js, web/panel/library.html",
-  "19:01:16 PROBLEM during install: nginx -t failed: 1:16 [emerg] 3730699#3730699: pcre2_compile() failed: missing closing parenthesis in \"^/([a-z][a-z0-9]\" in /etc/nginx/sites-enabled/hype:101\nnginx: configuration file /etc/nginx/nginx.conf test failed \u2192 rolling back",
-  "19:01:17 restart hype-channels",
-  "19:01:17 restart hype-indexer",
-  "19:01:17 restart hype-engine"
+  "19:12:21 update 82a21619 \u2192 921cc024 \u00b7 16 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/indexer.py, engine/planner.py, radio/channel.liq, system/hype-channels.service, system/nginx-hype.conf, tv/chan_hls.sh, web/panel/ch-ambiente-1024.png, web/panel/ch-ambiente.png, web/panel/ch-latina-1024.png, web/panel/ch-latina.png, web/panel/channel.html, web/panel/header.js, web/panel/library.html",
+  "19:12:21 restart hype-channels",
+  "19:12:22 restart hype-indexer",
+  "19:12:22 restart hype-engine",
+  "19:13:07 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-indexer, nginx-reload"
  ],
  "guard": {
-  "song": "Sarz x Asake x Wizkid x Skillibeng \u2013 Getting Paid",
+  "song": "Yssi SB x Diquenza x Dopebwoy x Henkie T \u2013 Festival",
   "listeners": 4,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },

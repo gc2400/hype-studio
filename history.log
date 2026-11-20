@@ -449,3 +449,4 @@
 2026-11-20T10:03:32 ok 13db463d Pads (and media): 12 per page (3 rows of 4), the rest behind the next-page button
 2026-11-20T11:17:15 ok 82a21619 Hype Studio app icon (iPhone home screen / Android): logo + STUDIO, app name Hype Studio
 2026-11-20T19:01:17 rolled-back 07cd0c7a Theme channels Hype Ambiente + Hype Latina (audio): hype-channels service, own library roots, channel switch, channel page – channels start switched off; Hype Radio's radio engine unchanged
+2026-11-20T19:13:07 ok 921cc024 nginx: theme channel regex locations in quotes (nginx needs them for {1,19}) – tested with nginx -t on the server
