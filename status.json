@@ -1,19 +1,17 @@
 {
- "time": "2026-11-20T20:29:45",
+ "time": "2026-11-20T20:30:49",
  "result": "ok",
- "commit": "6cc02f67d6db2a40b32c22f671e5a9f7f243b2a0",
- "subject": "Theme channels: Hype Radio's smart mix (shared smartmix.py, per channel on/off), library in the middle, the last 2 played songs in the playlist",
+ "commit": "dc9962fcde8d6b088388752cd663cc802a675cca",
+ "subject": "Theme channel MP3s through the MP3 gate (start in ~1 s, like radio.mp3)",
  "log": [
-  "20:28:59 update 6a3efda8 \u2192 6cc02f67 \u00b7 5 file(s): engine/chan.py, engine/engine.py, engine/smartmix.py, web/panel/channel.html, web/panel/settings.html",
-  "20:28:59 restart hype-channels",
-  "20:29:00 restart hype-engine",
-  "20:29:45 installed OK \u00b7 restarted: hype-channels, hype-engine"
+  "20:30:49 update 6cc02f67 \u2192 dc9962fc \u00b7 1 file(s): system/nginx-hype.conf",
+  "20:30:49 installed OK \u00b7 restarted: nginx-reload"
  ],
  "guard": {
-  "song": "Ayra Starr x Theodora \u2013 Ms. Paper",
+  "song": "Tiakola \u2013 M\u00e9lo D\u00e9cal\u00e9",
   "listeners": 5,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },

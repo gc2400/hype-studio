@@ -458,3 +458,4 @@
 2026-11-20T20:19:44 ok f2a4bb18 Theme channels: station skins like the website (Latina sunset, Ambiente deep blue) on every page; no 'You are working on' bar
 2026-11-20T20:22:50 ok 6a3efda8 Theme channels: the website's calm station colours (Latina #0F0A0C / #FFB23F, Ambiente #070D1A / #4FC3F0)
 2026-11-20T20:29:45 ok 6cc02f67 Theme channels: Hype Radio's smart mix (shared smartmix.py, per channel on/off), library in the middle, the last 2 played songs in the playlist
+2026-11-20T20:30:49 ok dc9962fc Theme channel MP3s through the MP3 gate (start in ~1 s, like radio.mp3)
