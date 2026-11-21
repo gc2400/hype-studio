@@ -75,25 +75,19 @@ def fold(s):
     return "".join(x for x in unicodedata.normalize("NFKD", str(s or "")) if not unicodedata.combining(x)).lower()
 
 
-_COLS = []
-def write_through(c):
+_ITEMS_W = re.compile(r"^(\s*(?:UPDATE(?:\s+OR\s+\w+)?|DELETE\s+FROM|INSERT(?:\s+OR\s+\w+)?\s+INTO|REPLACE\s+INTO)\s+)items\b", re.I)
+class LibConn(sqlite3.Connection):
     """Song edits made on a theme station (cue points, rename, mode, delete …) go to the shared library, as on Hype Radio:
-    the view "items" passes UPDATE / DELETE / INSERT on to lib.items."""
-    if not _COLS: _COLS.extend(r[1] for r in c.execute("PRAGMA lib.table_info(items)"))
-    cols = [x for x in _COLS if x != "rowid"]
-    q = lambda x: '"%s"' % x
-    c.execute("CREATE TEMP TRIGGER IF NOT EXISTS items_upd INSTEAD OF UPDATE ON items BEGIN UPDATE lib.items SET %s WHERE rowid = (SELECT rowid FROM lib.items WHERE path = OLD.path LIMIT 1); END"
-              % ", ".join("%s = NEW.%s" % (q(x), q(x)) for x in cols))
-    c.execute("CREATE TEMP TRIGGER IF NOT EXISTS items_del INSTEAD OF DELETE ON items BEGIN DELETE FROM lib.items WHERE path = OLD.path; END")
-    c.execute("CREATE TEMP TRIGGER IF NOT EXISTS items_ins INSTEAD OF INSERT ON items BEGIN INSERT INTO lib.items(%s) VALUES(%s); END"
-              % (", ".join(map(q, cols)), ", ".join("NEW.%s" % q(x) for x in cols)))
+    a write to "items" (the read view of the library) is sent to lib.items."""
+    def execute(self, sql, *a): return super().execute(_ITEMS_W.sub(r"\1lib.items", sql, 1), *a)
+    def executemany(self, sql, *a): return super().executemany(_ITEMS_W.sub(r"\1lib.items", sql, 1), *a)
 
 
 _INIT = set()
 def connect(ch):
     """The channel's planning database, with the shared library attached read-only (view "items")."""
     import planner
-    c = sqlite3.connect(db_path(ch), timeout=30)
+    c = sqlite3.connect(db_path(ch), timeout=30, factory=LibConn)
     c.create_function("fold", 1, fold, deterministic=True)
     c.execute("ATTACH DATABASE ? AS lib", (LIB,))
     c.execute("CREATE TEMP VIEW IF NOT EXISTS items AS SELECT * FROM lib.items")
