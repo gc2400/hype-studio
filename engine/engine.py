@@ -484,16 +484,16 @@ class Screen:
             start = max(mark, now_ + max(3.0, after_s))               # at :MM, or a few seconds into a video that starts after :MM
             if start - now_ + dur + 5 < length and start - mark < 240:
                 self.also_hour = time.strftime("%Y%m%d%H", time.localtime(mark))
-                threading.Timer(start - now_, lambda: E.also_show(path, dur)).start()
+                threading.Timer(start - now_, lambda: self.also_show(path, dur)).start()
     def also_show(self, path, dur):
         """Hype Stations PiP now (Settings → TV: every hour at :MM) – same rules as Up next: over the music video that planned it, AUTO, not LIVE."""
-        n = self.now or {}
-        if n.get("path") != path or n.get("mode") not in ("clip", "pair") or self.live.live or self.stopped: return
-        if not self.tv.auto or self.tv.scene != "Music video": return
-        if self.now and self.now.get("chart_pid"): return
+        n = E.now or {}          # (this is the Screen planner: what plays and the TV are the engine's)
+        if n.get("path") != path or n.get("mode") not in ("clip", "pair") or E.live.live or E.stopped: return
+        if not E.tv.auto or E.tv.scene != "Music video": return
+        if n.get("chart_pid"): return
         also_fetch()
         if not ALSO_NOW["d"]: return                               # both theme stations off: nothing to show
-        log.info("Hype Stations PIP for %.0f s", dur); self.hold_scene(ALSO_SCENE, dur)
+        log.info("Hype Stations PIP for %.0f s", dur); E.hold_scene(ALSO_SCENE, dur)
     def on_show(self, title):
         c = dbc()
         for r in planner.api_screen_rules(c):
