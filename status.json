@@ -1,17 +1,19 @@
 {
- "time": "2026-11-21T16:17:33",
+ "time": "2026-11-21T16:58:11",
  "result": "ok",
- "commit": "dfe59852f5d43c4c85e9c283e275390fa05e6f3b",
- "subject": "Panel: \u25ce Stations on the library card works for the station you're on (Latina / Ambiente); the station menu stays closed on pages without a [hidden] rule (Status)",
+ "commit": "49c6f383c8fec475fdf8cb96075dd70180e2d3c3",
+ "subject": "Panel: Hype Stations in the PIP scene tab",
  "log": [
-  "16:17:33 update 8bcccd13 \u2192 dfe59852 \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
-  "16:17:33 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:57:26 update dfe59852 \u2192 49c6f383 \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
+  "16:57:26 restart hype-engine@*",
+  "16:57:26 restart hype-engine",
+  "16:58:11 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Kybba x Lion Fiah x Rafa Pabon x Citriem x Kensel Tell Them \u2013 CLASE",
-  "listeners": 9,
+  "song": "Jay Wheeler x Omar Courtz \u2013 De Lejitos (Remix)",
+  "listeners": 7,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
