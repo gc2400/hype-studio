@@ -1,19 +1,19 @@
 {
- "time": "2026-11-21T15:46:16",
+ "time": "2026-11-21T15:48:05",
  "result": "ok",
- "commit": "6d087a5de6b00369e8f3ecd7b2a4df599fe3155c",
- "subject": "Theme station engine: the Library / folders follow its own station; the station engines restart with an engine update",
+ "commit": "385eb4b4fb4bdc0f0bde96ea443c58a6a090dd1e",
+ "subject": "Theme station engine: \ud83d\udd25 for the song on air",
  "log": [
-  "15:45:31 update 7c233e05 \u2192 6d087a5d \u00b7 1 file(s): engine/engine.py",
-  "15:45:31 restart hype-engine@*",
-  "15:45:31 restart hype-engine",
-  "15:46:16 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "15:47:20 update 6d087a5d \u2192 385eb4b4 \u00b7 1 file(s): engine/engine.py",
+  "15:47:20 restart hype-engine@*",
+  "15:47:20 restart hype-engine",
+  "15:48:05 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Jonna Fraser \u2013 Tiki Taka",
+  "song": "Vybz Kartel x Shenseea \u2013 PANIC",
   "listeners": 6,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
