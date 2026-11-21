@@ -1,19 +1,18 @@
 {
- "time": "2026-11-21T15:34:29",
+ "time": "2026-11-21T15:37:19",
  "result": "ok",
- "commit": "3f84dc050966c85c3d66de290e0c64ab139cb984",
- "subject": "Channel mode: no cover worker of its own; the week of shows is read again every minute",
+ "commit": "7c233e05f07688a8b87941954c38ae40c4cefc21",
+ "subject": "Channel mode: no PIP frame (state answer)",
  "log": [
-  "15:33:43 update 28d9f87b \u2192 3f84dc05 \u00b7 4 file(s): engine/chancfg.py, engine/engine.py, web/panel/header.js, web/panel/index.html",
-  "15:33:43 restart hype-channels",
-  "15:33:44 restart hype-engine",
-  "15:34:29 installed OK \u00b7 restarted: hype-engine, hype-channels"
+  "15:36:33 update 3f84dc05 \u2192 7c233e05 \u00b7 1 file(s): engine/engine.py",
+  "15:36:34 restart hype-engine",
+  "15:37:19 installed OK \u00b7 restarted: hype-engine"
  ],
  "guard": {
-  "song": "ARIA VEGA \u2013 COMPA COLETO",
-  "listeners": 4,
+  "song": "RVFV x Kikimoteleba \u2013 TIGINI REMIX",
+  "listeners": 6,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
