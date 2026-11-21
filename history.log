@@ -480,3 +480,4 @@
 2026-11-21T01:03:24 ok cdb8f868 Station skin Ambiente: selected buttons light blue (#4FC3F0) instead of Hype yellow, like Latina's orange
 2026-11-21T01:29:01 ok 5b278724 On Air: ◎ Stations button on the library card (which stations' songs Hype Radio's library shows)
 2026-11-21T01:52:35 ok ee9548a4 Header on phones: one line again (the Hype logo is the channel switch, smaller dots + clock); the channel dots stay as they were while a page loads
+2026-11-21T02:16:53 ok cc79e821 Theme channels: own record of what is waiting in the radio engine (it pre-loads the next song and stops listing it) – a fixed liner no longer makes the next song go in twice (Quédate)

@@ -1,17 +1,18 @@
 {
- "time": "2026-11-21T01:52:35",
+ "time": "2026-11-21T02:16:53",
  "result": "ok",
- "commit": "ee9548a4bec61091cce258bd4df7824bceb1278b",
- "subject": "Header on phones: one line again (the Hype logo is the channel switch, smaller dots + clock); the channel dots stay as they were while a page loads",
+ "commit": "cc79e8217f6f78f8fe241467d9d9f7f78b356ba9",
+ "subject": "Theme channels: own record of what is waiting in the radio engine (it pre-loads the next song and stops listing it) \u2013 a fixed liner no longer makes the next song go in twice (Qu\u00e9date)",
  "log": [
-  "01:52:35 update 5b278724 \u2192 ee9548a4 \u00b7 1 file(s): web/panel/header.js",
-  "01:52:35 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "02:16:08 update ee9548a4 \u2192 cc79e821 \u00b7 1 file(s): engine/chan.py",
+  "02:16:08 restart hype-channels",
+  "02:16:53 installed OK \u00b7 restarted: hype-channels"
  ],
  "guard": {
-  "song": "B'Jay \u2013 Balaclava",
+  "song": "Lomiiel \u2013 HAY LUPITA",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
