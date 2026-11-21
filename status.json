@@ -1,18 +1,18 @@
 {
- "time": "2026-11-21T02:16:53",
+ "time": "2026-11-21T02:37:07",
  "result": "ok",
- "commit": "cc79e8217f6f78f8fe241467d9d9f7f78b356ba9",
- "subject": "Theme channels: own record of what is waiting in the radio engine (it pre-loads the next song and stops listing it) \u2013 a fixed liner no longer makes the next song go in twice (Qu\u00e9date)",
+ "commit": "52c6dd9c32168728bf501cf93b6b4a7b1dbcc236",
+ "subject": "Theme channels: one play = one history row (a repeated 'now playing' report from the radio engine is ignored); a planned item is never sent twice",
  "log": [
-  "02:16:08 update ee9548a4 \u2192 cc79e821 \u00b7 1 file(s): engine/chan.py",
-  "02:16:08 restart hype-channels",
-  "02:16:53 installed OK \u00b7 restarted: hype-channels"
+  "02:36:22 update cc79e821 \u2192 52c6dd9c \u00b7 1 file(s): engine/chan.py",
+  "02:36:22 restart hype-channels",
+  "02:37:07 installed OK \u00b7 restarted: hype-channels"
  ],
  "guard": {
-  "song": "Lomiiel \u2013 HAY LUPITA",
+  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
