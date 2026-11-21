@@ -96,6 +96,9 @@ class Liq:
     def queue_len(self):
         return len([x for x in self.cmd("q.queue").split() if x.isdigit()])
 
+def self_now_artist():
+    try: return (E.now or {}).get("artist")
+    except NameError: return None
 def artist_key(a):
     """Each artist on its own: "Pop Smoke X 50 Cent x Roddy Ricch" → pop smoke · 50 cent · roddy ricch (x / X, ft., feat., featuring, vs, &, en, comma)."""
     out = [p.strip().lower() for p in re.split(r"\s+(?:x|ft\.?|feat\.?|featuring|vs\.?|&|en|,)\s+|,", a or "", flags=re.I) if p.strip()]
@@ -142,6 +145,15 @@ class Picker:
             if path in paths or path in held: return False
             r = c.execute("SELECT artist FROM items WHERE path=?", (path,)).fetchone()
             return not (r and set(artist_key(r[0])) & arts)
+        near = set(avoid["artists"]) | set(artist_key((self_now_artist() or "")))
+        def fallback(path):
+            """No song in the slot fits the artist gap (a small folder where a few artists are on most songs – e.g. the theme
+            stations): relax ONLY the artist gap. Never a song that played in the last hours or is planned, and never the same
+            artist as one of the last songs before it."""
+            if path in paths or path in held: return False
+            r = c.execute("SELECT artist FROM items WHERE path=?", (path,)).fetchone()
+            return not (r and set(artist_key(r[0])) & near)
+        ok.fallback = fallback
         def pick_jingle(c_, folder):
             sec = "ads" if folder == "ADS" else "jingles"
             rows = c_.execute(f"SELECT path FROM items WHERE section=? AND problem IS NULL AND (folder=? OR folder LIKE ? OR ?='ADS')",
