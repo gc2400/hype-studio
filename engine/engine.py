@@ -2576,6 +2576,7 @@ def to_replace(c, folder="", q=""):
 def lib_show(ch=None, plan=False):
     """Which stations' songs a channel sees in the Library / Planning folders (Hype Radio = "main"). Default: Hype Radio only its own,
     a theme channel its own + Hype Radio's (e.g. LAT for Hype Latina)."""
+    ch = ch or CH                 # (a theme station's own engine: its own station)
     ch = ch if ch and chancfg.valid(ch) else "main"
     try: v = planner.get_setting(sqlite3.connect(DB, timeout=30), "lib_show_" + ch, None)
     except Exception: v = None
