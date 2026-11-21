@@ -384,7 +384,7 @@ const MSC = MROWS.flat().filter(Boolean);
 let CAMEDIT = null, CAMPICK = -1;    // editing the Cameras / PIP / MEDIA grid: {tab, cells, hidden}; CAMPICK = the place you clicked first (click another to swap)
 const scName = n => n.startsWith('PIP@') ? 'PIP · ' + n.slice(4).replace(/^PIP_/, '').replace(/\.png$/i, '') : n;
 const LTAB = () => SG === -2 ? 'pip' : SG === -3 ? 'media' : 'cam';
-function tabScenes(t) { return t === 'pip' ? ((S && S.pip_frames) || []).map(f => 'PIP@' + f).concat(['Up next']) : t === 'media' ? MSC : CAMS; }
+function tabScenes(t) { return t === 'pip' ? ((S && S.pip_frames) || []).map(f => 'PIP@' + f).concat(['Up next', 'Hype Stations']) : t === 'media' ? MSC : CAMS; }
 function tabDefault(t) { if (t === 'media') return MROWS.flat(); if (t === 'pip') return tabScenes('pip'); return [...CAMROWS.flat(), ...CAMMORE]; }
 function camLayout(t = LTAB()) {      // your own arrangement (saved on the server) – scenes it doesn't know yet go at the end
   const CAMS = tabScenes(t);
