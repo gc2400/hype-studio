@@ -1,19 +1,17 @@
 {
- "time": "2026-11-21T12:57:18",
+ "time": "2026-11-21T14:29:17",
  "result": "ok",
- "commit": "0cfdb33063439e28084bbd7d3c7e9479b02ca63e",
- "subject": "Theme channels: pad banks named like their own jingles folders (IDs, Liners \u2026) follow the folder, as on Hype Radio; \u25ce Stations row label aligned",
+ "commit": "226d89a89814d82384d511e28ec2d3eca020b32a",
+ "subject": "Header: the station's own logo + name is the station switch (one control, logos in the menu); streams popup: one tile per station (listeners now + peak), compact TV / health rows",
  "log": [
-  "12:56:33 update 52c6dd9c \u2192 0cfdb330 \u00b7 4 file(s): engine/planner.py, web/panel/channel.html, web/panel/index.html, web/panel/onair.css",
-  "12:56:33 restart hype-channels",
-  "12:56:33 restart hype-engine",
-  "12:57:18 installed OK \u00b7 restarted: hype-engine, hype-channels"
+  "14:29:17 update 0cfdb330 \u2192 226d89a8 \u00b7 1 file(s): web/panel/header.js",
+  "14:29:17 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Jaido x Issairo \u2013 Disiplina",
-  "listeners": 2,
+  "song": "Eladio Carrion X Bad Bunny \u2013 Coco Chanel",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
