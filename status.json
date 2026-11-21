@@ -1,18 +1,23 @@
 {
- "time": "2026-11-21T14:57:40",
- "result": "ok",
- "commit": "91a87f66d40692fe6a5d51b9c45eeac4367eef7d",
- "subject": "TV: \"Also on Hype\" PiP scene \u2013 the TV in a window, below it what Hype Latina / Hype Ambiente play now (Gianno's template); Scenes \u2192 PIP; optional every N minutes (Settings \u2192 TV)",
+ "time": "2026-11-21T15:08:43",
+ "result": "rolled-back",
+ "commit": "b68023b6215a2e3346381a740eb4ab797bc6fe72",
+ "subject": "Theme stations on Hype Radio's engine (step 1, not switched on yet): engine.py channel mode (HYPE_CH: own database, radio engine port, API port, state files; no TV / studio / Hype Live pushes), hype-engine@.service, hype-channels runs radio.liq for such a station and stays its front door, /api/ch/<id>/\u2026 reaches its engine",
  "log": [
-  "14:56:55 update 226d89a8 \u2192 91a87f66 \u00b7 4 file(s): engine/engine.py, web/overlay/index.html, web/panel/index.html, web/panel/settings.html",
-  "14:56:55 restart hype-engine",
-  "14:57:40 installed OK \u00b7 restarted: hype-engine"
+  "15:07:55 update 91a87f66 \u2192 b68023b6 \u00b7 5 file(s): deploy/updater.py, engine/chan.py, engine/chancfg.py, engine/engine.py, system/hype-engine@.service",
+  "15:07:56 restart hype-channels",
+  "15:07:56 restart hype-engine@*",
+  "15:07:56 restart hype-engine",
+  "15:08:41 PROBLEM after install: ['hype-engine@*'] \u2192 rolling back",
+  "15:08:41 restart hype-channels",
+  "15:08:43 restart hype-engine@*",
+  "15:08:43 restart hype-engine"
  ],
  "guard": {
-  "song": "Idaly x Ronnie Flex x Frenna \u2013 POPULAIR",
-  "listeners": 7,
+  "song": "BLAIZ FAYAH X TRIBAL KUSH \u2013 BAD",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },

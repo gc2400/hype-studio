@@ -485,3 +485,4 @@
 2026-11-21T12:57:18 ok 0cfdb330 Theme channels: pad banks named like their own jingles folders (IDs, Liners …) follow the folder, as on Hype Radio; ◎ Stations row label aligned
 2026-11-21T14:29:17 ok 226d89a8 Header: the station's own logo + name is the station switch (one control, logos in the menu); streams popup: one tile per station (listeners now + peak), compact TV / health rows
 2026-11-21T14:57:40 ok 91a87f66 TV: "Also on Hype" PiP scene – the TV in a window, below it what Hype Latina / Hype Ambiente play now (Gianno's template); Scenes → PIP; optional every N minutes (Settings → TV)
+2026-11-21T15:08:43 rolled-back b68023b6 Theme stations on Hype Radio's engine (step 1, not switched on yet): engine.py channel mode (HYPE_CH: own database, radio engine port, API port, state files; no TV / studio / Hype Live pushes), hype-engine@.service, hype-channels runs radio.liq for such a station and stays its front door, /api/ch/<id>/… reaches its engine
