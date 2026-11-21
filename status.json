@@ -1,19 +1,19 @@
 {
- "time": "2026-11-21T15:48:05",
+ "time": "2026-11-21T16:14:27",
  "result": "ok",
- "commit": "385eb4b4fb4bdc0f0bde96ea443c58a6a090dd1e",
- "subject": "Theme station engine: \ud83d\udd25 for the song on air",
+ "commit": "8bcccd136046f9da3bdc20d749f3030fc6cf0fb5",
+ "subject": "TV: the Also on Hype PIP is now \"Hype Stations\", every hour at :MM (Settings \u2192 TV; Gianno: :55)",
  "log": [
-  "15:47:20 update 6d087a5d \u2192 385eb4b4 \u00b7 1 file(s): engine/engine.py",
-  "15:47:20 restart hype-engine@*",
-  "15:47:20 restart hype-engine",
-  "15:48:05 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "16:13:42 update 385eb4b4 \u2192 8bcccd13 \u00b7 4 file(s): engine/engine.py, web/overlay/index.html, web/panel/index.html, web/panel/settings.html",
+  "16:13:42 restart hype-engine@*",
+  "16:13:42 restart hype-engine",
+  "16:14:27 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Vybz Kartel x Shenseea \u2013 PANIC",
-  "listeners": 6,
+  "song": "Rema \u2013 TEA",
+  "listeners": 9,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
