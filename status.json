@@ -1,19 +1,17 @@
 {
- "time": "2026-11-21T17:22:28",
- "result": "ok",
- "commit": "a37699eec4846b9e2f2d51cef0eaeb1077ff14c4",
- "subject": "Rotation: when no song in a slot fits the artist gap (small folders full of the same artists, e.g. the theme stations), only the artist gap is relaxed \u2013 never a song from the last hours, never the same artist as the songs just before",
+ "time": "2026-11-21T17:30:40",
+ "result": "waiting",
+ "commit": "0c6c9c13cf364f1f5929534136f87403efe8e358",
+ "subject": "TV blocks [night]: the TV can follow a theme station (Planning \u2192 TV week grid, On Air \u2192 TV by hand) \u2013 Hype Radio's engine keeps driving OBS with the station's songs (same preload + sync), the TV sound crossfades on the TV bus (tv_vol in radio.liq and the stations' radio engines); Hype Radio's radio stream never changes; LIVE always wins; a station that stops answering gives the TV back to Hype Radio",
  "log": [
-  "17:21:43 update 49c6f383 \u2192 a37699ee \u00b7 1 file(s): engine/engine.py",
-  "17:21:43 restart hype-engine@*",
-  "17:21:43 restart hype-engine",
-  "17:22:28 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "17:30:40 update a37699ee \u2192 0c6c9c13 \u00b7 5 file(s): engine/chan.py, engine/engine.py, radio/radio.liq, web/panel/index.html, web/panel/plan.html",
+  "17:30:40 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
   "song": "CLUB HYPE \u2013 TEAM RUSH HOUR MIXTAPE 11",
-  "listeners": 7,
+  "listeners": 8,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
