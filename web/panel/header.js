@@ -162,6 +162,30 @@ html[data-station] .card.hi{border-color:var(--line2)}
   setInterval(snapSave, 1000); addEventListener('pagehide', snapSave);
   // a theme channel: what only Hype Radio has goes away (AUTO/MANUAL, ON AIR/DJ/LIVE, GO LIVE, REC, the radio / TV dots, Voice, Broadcast, Hype Live)
   if (CH !== 'main') h.classList.add('ch-theme');
+  // station skin, part 2: Hype Radio's own colours written into the page styles (dark blues, cyan, yellow) -> the station's,
+  // on every page, so nothing stays "Hype Radio blue" on Hype Latina / Hype Ambiente (the website's station colours)
+  const SKIN = {
+    latina: {'#071a2b': '#170F12', '#0f2b44': '#261B1F', '#0b2236': '#1D1518', '#17344f': '#3A252C', '#23496b': '#4A3038', '#05a9c6': '#FFB23F',
+             '#062f38': '#2A1A1F', '#061423': '#0F0A0C', '#ffe000': '#FFB23F', '#2b2500': '#3A2510', '#04121f': '#0F0A0C', '#0a1e30': '#1D1518'},
+    ambiente: {'#071a2b': '#0B1426', '#0f2b44': '#15233F', '#0b2236': '#0F1A30', '#17344f': '#23395F', '#23496b': '#2D4774', '#05a9c6': '#4FC3F0',
+               '#062f38': '#0E2A44', '#061423': '#070D1A', '#04121f': '#070D1A', '#0a1e30': '#0F1A30'}};
+  function skinSheets() {
+    const m0 = SKIN[CH]; if (!m0) return;
+    const map = {};      // the browser gives colours back as rgb(…), not as written: match both
+    for (const [h, to] of Object.entries(m0)) { map[h] = to; const n = parseInt(h.slice(1), 16); map[`rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`] = to; }
+    const esc_ = x => x.replace(/[()]/g, '\\$&');
+    const re = new RegExp(Object.keys(map).map(esc_).join('|'), 'gi');
+    for (const sh of document.styleSheets) {
+      let rules; try { rules = sh.cssRules; } catch (e) { continue; }       // (other sites' sheets, e.g. fonts: not readable)
+      (function walk(rs) { for (const r of rs) {
+        if (r.cssRules) walk(r.cssRules);
+        if (!r.style || r.dataset_skinned) continue;
+        for (let i = 0; i < r.style.length; i++) { const k = r.style[i], v = r.style.getPropertyValue(k);
+          if (v && re.test(v)) { re.lastIndex = 0; r.style.setProperty(k, v.replace(re, m => map[m.toLowerCase()]), r.style.getPropertyPriority(k)); } re.lastIndex = 0; }
+      } })(rules);
+    }
+  }
+  if (SKIN[CH]) { skinSheets(); document.addEventListener('DOMContentLoaded', skinSheets); window.addEventListener('load', skinSheets); setTimeout(skinSheets, 1500); }
   // ---- channel switch ----
   const chSw = h.querySelector('#chSw'), chMenu = h.querySelector('#chMenu'); let CHS = [{id: 'main', name: 'Hype Radio', color: '#05A9C6', enabled: true, running: true}];
   function chPaint() {
