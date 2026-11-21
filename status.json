@@ -1,23 +1,19 @@
 {
- "time": "2026-11-21T15:08:43",
- "result": "rolled-back",
- "commit": "b68023b6215a2e3346381a740eb4ab797bc6fe72",
- "subject": "Theme stations on Hype Radio's engine (step 1, not switched on yet): engine.py channel mode (HYPE_CH: own database, radio engine port, API port, state files; no TV / studio / Hype Live pushes), hype-engine@.service, hype-channels runs radio.liq for such a station and stays its front door, /api/ch/<id>/\u2026 reaches its engine",
+ "time": "2026-11-21T15:20:32",
+ "result": "ok-restart-updater",
+ "commit": "28d9f87bcac9321f7206437e95f3b4da263fd195",
+ "subject": "Deploy: the theme-station engines get their restart rule in a second step (the running updater did not know hype-engine@* yet)",
  "log": [
-  "15:07:55 update 91a87f66 \u2192 b68023b6 \u00b7 5 file(s): deploy/updater.py, engine/chan.py, engine/chancfg.py, engine/engine.py, system/hype-engine@.service",
-  "15:07:56 restart hype-channels",
-  "15:07:56 restart hype-engine@*",
-  "15:07:56 restart hype-engine",
-  "15:08:41 PROBLEM after install: ['hype-engine@*'] \u2192 rolling back",
-  "15:08:41 restart hype-channels",
-  "15:08:43 restart hype-engine@*",
-  "15:08:43 restart hype-engine"
+  "15:19:47 update 91a87f66 \u2192 28d9f87b \u00b7 5 file(s): deploy/updater.py, engine/chan.py, engine/chancfg.py, engine/engine.py, system/hype-engine@.service",
+  "15:19:47 restart hype-channels",
+  "15:19:47 restart hype-engine",
+  "15:20:32 installed OK \u00b7 restarted: hype-updater, hype-channels, hype-engine"
  ],
  "guard": {
-  "song": "BLAIZ FAYAH X TRIBAL KUSH \u2013 BAD",
+  "song": "Shaggy x Aidonia x Akon \u2013 Boom Body (Shaz Remix)",
   "listeners": 5,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
