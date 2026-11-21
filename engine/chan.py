@@ -311,24 +311,34 @@ class Channel:
                     log.warning("%s: %s is gone – skipped", self.id, self.plan[0]["path"]); self.plan.pop(0); self.refill(c)
                 if waiting:
                     pass        # the next item is already in the radio engine: never a second one, never the same one twice
+                elif self.plan and self.plan[0].get("id") in getattr(self, "sent", {}):
+                    log.warning("%s: %s was already sent – not again", self.id, self.plan[0].get("path")); self.plan.pop(0)
                 elif self.plan:
                     it = self.plan[0]
                     mo, jd, sm_on = self.mixcfg()
-                    try: self.tel("q.push " + annotate(it, mo, jd, sm_on, self.plan[1] if len(self.plan) > 1 else None)); self.pushed = it["id"]; self.pushed_t = time.time(); self.err = ""
+                    try: self.tel("q.push " + annotate(it, mo, jd, sm_on, self.plan[1] if len(self.plan) > 1 else None)); self.pushed = it["id"]; self.pushed_t = time.time(); self.err = ""; self.mark_sent(it["id"])
                     except ValueError as e: log.warning("%s: %s – skipped", self.id, e); self.plan.pop(0)
                 else:
                     self.err = "Nothing to play: give this channel a clock in Planning (or put songs in its playlists)."
             finally: c.close()
 
+    def mark_sent(self, iid):
+        """Remember what went to the radio engine (6 h): a planned item is never sent a second time."""
+        self.sent = {k: v for k, v in getattr(self, "sent", {}).items() if time.time() - v < 6 * 3600}; self.sent[iid] = time.time()
+
     def on_track(self, d):
         with self.lock:
             hid = d.get("hype_id"); it = None
+            nw = self.now or {}
+            if hid and hid == nw.get("id") and time.time() - (nw.get("started") or 0) < max(30, self.len_of(nw)):
+                return          # the same play reported again (the radio engine can repeat its metadata): not a second play
             if hid and hid == self.pushed: self.pushed = None        # what we sent is on air now: the next one can go
             for i, p in enumerate(self.plan):
                 if p["id"] == hid: it = p; del self.plan[:i + 1]; break
             c = chancfg.connect(self.id)
             try:
                 if not it: it = item(c, d.get("hype_path") or "") or {"path": d.get("hype_path"), "artist": d.get("artist"), "title": d.get("title"), "section": "music", "folder": ""}
+                if hid: it["id"] = hid                  # (so a repeated report of this play is recognised)
                 it["started"] = time.time(); self.prev = self.now; self.now = it
                 c.execute("INSERT INTO asrun(started, path, artist, title, folder, mode, kind) VALUES(?,?,?,?,?,?,?)",
                           (it["started"], it["path"], it.get("artist"), it.get("title"), it.get("folder"), "audio", it.get("section")))
