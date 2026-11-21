@@ -421,7 +421,7 @@ function renderScenes() {
     const ed = $('#sgTabs [data-sgedit]'); if (ed) ed.onclick = () => { SGOPT = false; SGEDIT = {list: JSON.parse(JSON.stringify(groups())), i: SG}; renderScenes(); };
   }
   $('#sgEdit').hidden = !SGEDIT; if (SGEDIT && SG >= 0 && document.activeElement !== $('#sgName')) $('#sgName').value = (G[SG] || {}).name || '';
-  const PIPS = (S.pip_frames || []).map(f => 'PIP@' + f).concat(['Up next', 'Also on Hype']);
+  const PIPS = (S.pip_frames || []).map(f => 'PIP@' + f).concat(['Up next', 'Hype Stations']);
   const list = SGEDIT && SG >= 0 ? [...SCENES.map(x => x[0]), ...CAMS, ...PIPS, ...MSC, ...SSN] : SG === -1 ? CAMS : SG === -2 ? PIPS : SG === -3 ? MSC : SG === -4 ? SSN : ((G[SG] || {}).scenes || []);
   const scLive = n => n.startsWith('PIP@') ? S.scene === 'PIP' && S.pip === n.slice(4) : S.scene === n;
   const inG = SGEDIT && SG >= 0 ? new Set(G[SG].scenes) : null;

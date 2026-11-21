@@ -203,9 +203,9 @@ table{border-collapse:collapse;width:100%}
       <div class="sl" data-find="up next pip hour start how long"><label>Start of the hour · how long<small>seconds on screen, in the first music video of each hour (0 = off)</small></label><input type="range" id="upnext_hour_s" min="0" max="60" step="5"><span class="v" id="upnext_hour_s_v"></span></div>
       <div class="sl" data-find="up next pip after seconds into the video"><label>Start of the hour · after<small>seconds into that music video</small></label><input type="range" id="upnext_after_s" min="5" max="90" step="5"><span class="v" id="upnext_after_s_v"></span></div>
       <div class="sl" data-find="up next pip end of song half hour"><label>Also once after :30<small>the last seconds of one music video (0 = off)</small></label><input type="range" id="upnext_end_s" min="0" max="45" step="5"><span class="v" id="upnext_end_s_v"></span></div>
-      <span class="lab">TV · Also on Hype PIP</span>
-      <p class="muted" style="margin:0">The TV in a window, below it what Hype Latina and Hype Ambiente play now. Same rules as Up next. By hand: Scenes → PIP → Also on Hype.</p>
-      <div class="sl" data-find="also on hype pip latina ambiente every minutes"><label>Every<small>minutes, a few seconds into a music video (0 = only by hand)</small></label><input type="range" id="alsoon_every_min" min="0" max="120" step="15"><span class="v" id="alsoon_every_min_v"></span></div>
+      <span class="lab">TV · Hype Stations PIP</span>
+      <p class="muted" style="margin:0">The TV in a window, below it what Hype Latina and Hype Ambiente play now. Same rules as Up next. By hand: Scenes → PIP → Hype Stations.</p>
+      <div class="sl" data-find="hype stations pip latina ambiente every hour minute"><label>Every hour at<small>minute of the hour (the music video on air then; off = only by hand)</small></label><input type="range" id="alsoon_at" min="-1" max="59" step="1"><span class="v" id="alsoon_at_v"></span></div>
       <div class="sl" data-find="also on hype pip how long seconds"><label>How long<small>seconds on screen</small></label><input type="range" id="alsoon_s" min="10" max="60" step="5"><span class="v" id="alsoon_s_v"></span></div>
     </section>
     <section class="card sec" data-sec="tickers">
@@ -400,10 +400,10 @@ function render() {
     el.value = ST[k] ?? 0; $('#' + k + '_v').textContent = lab(+el.value);
     el.oninput = () => $('#' + k + '_v').textContent = lab(+el.value);
     el.onchange = () => post('settings', {[k]: +el.value}).then(d => { ST = d; toast(after ? 'Up next comes ' + el.value + ' s ' + w : +el.value > 0 ? 'Up next: ' + el.value + ' s ' + w : 'Up next ' + w + ': off'); }); });
-  [['alsoon_every_min', ' min'], ['alsoon_s', ' s']].forEach(([k, u]) => { const el = $('#' + k), lab = v => k === 'alsoon_every_min' && !(v > 0) ? 'by hand' : v + u;
-    el.value = ST[k] ?? 0; $('#' + k + '_v').textContent = lab(+el.value);
+  [['alsoon_at', ''], ['alsoon_s', ' s']].forEach(([k, u]) => { const el = $('#' + k), lab = v => k === 'alsoon_at' ? (v < 0 ? 'off' : ':' + String(v).padStart(2, '0')) : v + u;
+    el.value = ST[k] ?? -1; $('#' + k + '_v').textContent = lab(+el.value);
     el.oninput = () => $('#' + k + '_v').textContent = lab(+el.value);
-    el.onchange = () => post('settings', {[k]: +el.value}).then(d => { ST = d; toast('Also on Hype: ' + lab(+el.value)); }); });
+    el.onchange = () => post('settings', {[k]: +el.value}).then(d => { ST = d; toast('Hype Stations PIP: ' + lab(+el.value)); }); });
   relayPaint(ST.relay);
   $('#rlSave').onclick = () => relaySend({}).then(() => toast('Backup relay saved'));
   $('#rlOn').onclick = () => { const on = !(ST.relay && ST.relay.on); if (on && !$('#rlHost').value.trim()) return toast('Fill in the server first');

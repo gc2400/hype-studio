@@ -68,7 +68,7 @@ body.voice #np{visibility:hidden}
 #uc0 .ut{top:484px}#uc0 .ua{top:532px}#uc1 .ut{top:655px}#uc1 .ua{top:703px}#uc2 .ut{top:826px}#uc2 .ua{top:874px}
 #un .tm{position:absolute;left:1715px;width:100px;height:43px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#fff;font-variant-numeric:tabular-nums}
 #uc0 .tm{top:500px;color:#041C33}#uc1 .tm{top:671px}#uc2 .tm{top:842px}
-/* "Also on Hype" PiP (scene "Also on Hype", Gianno's template PNG in OBS): what Hype Latina / Hype Ambiente play now */
+/* Hype Stations PiP (scene "Hype Stations", Gianno's template PNG in OBS): what Hype Latina / Hype Ambiente play now */
 #ao{position:absolute;inset:0;opacity:0;transition:opacity .35s;font-family:Inter,sans-serif}#ao.on{opacity:1}
 #ao .t,#ao .a{position:absolute;max-width:528px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;line-height:1.15}
 #ao .t{top:940px;font-size:34px;font-weight:900}#ao .a{top:982px;font-size:24px;font-weight:600;opacity:.85}
@@ -135,7 +135,7 @@ function screen() {
     document.body.classList.toggle('pip', d.scene === 'PIP');
     document.body.classList.toggle('branding', d.scene === 'Branding');
     document.body.classList.toggle('upnext', d.scene === 'Up next');
-    document.body.classList.toggle('alsoon', d.scene === 'Also on Hype');
+    document.body.classList.toggle('alsoon', d.scene === 'Hype Stations');
     document.body.classList.toggle('jingle', !!d.jingle);
     ticker(d.ticker);
     slideshow(d.slides_layer === 'graphics' ? (d.slides || []) : [], d.slide_s || 30);
@@ -144,7 +144,7 @@ function screen() {
     voiceBox(d.voice, Date.now() / 1000 - off);
     chartSq(d.chart);
     upNext(d.scene === 'Up next' ? d.upnext : null, Date.now() / 1000 - off);
-    alsoOn(d.scene === 'Also on Hype' ? d.also : null, Date.now() / 1000 - off);
+    alsoOn(d.scene === 'Hype Stations' ? d.also : null, Date.now() / 1000 - off);
   }).catch(() => {}).finally(() => setTimeout(screen, 500));
 }
 // ticker: smooth scroll at a steady speed; a new ticker (or new headlines) slides in; it gives way to the Now Playing box
@@ -225,7 +225,7 @@ function upNext(u, now) {
     c.querySelector('.tm').textContent = it.start || ''; }
   $('#un').classList.toggle('on', on);
 }
-// "Also on Hype" PiP: song + artist of Hype Latina and Hype Ambiente (a station that is off: empty)
+// Hype Stations PiP: song + artist of Hype Latina and Hype Ambiente (a station that is off: empty)
 let AO_T = null;
 function alsoOn(a, now) {
   const on = !!a && !(a.until && now >= a.until - 0.45);
