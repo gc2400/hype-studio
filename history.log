@@ -484,3 +484,4 @@
 2026-11-21T02:37:07 ok 52c6dd9c Theme channels: one play = one history row (a repeated 'now playing' report from the radio engine is ignored); a planned item is never sent twice
 2026-11-21T12:57:18 ok 0cfdb330 Theme channels: pad banks named like their own jingles folders (IDs, Liners …) follow the folder, as on Hype Radio; ◎ Stations row label aligned
 2026-11-21T14:29:17 ok 226d89a8 Header: the station's own logo + name is the station switch (one control, logos in the menu); streams popup: one tile per station (listeners now + peak), compact TV / health rows
+2026-11-21T14:57:40 ok 91a87f66 TV: "Also on Hype" PiP scene – the TV in a window, below it what Hype Latina / Hype Ambiente play now (Gianno's template); Scenes → PIP; optional every N minutes (Settings → TV)
