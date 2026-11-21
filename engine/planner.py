@@ -863,9 +863,12 @@ def sync_folder_banks(c):
     the end, deleted ones leave. Your order and colours stay. (Other banks are yours alone.)"""
     folders = {r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section='jingles' AND problem IS NULL")}
     tops = folders | {f.split("/")[0] for f in folders}
+    # a theme channel: a bank named like one of ITS jingles folders (IDs, Liners …) follows jingles-<id>/<that folder>
+    sid = station_of(c); low = {f.lower(): f for f in tops}
     changed = False
-    for bid, name in c.execute("SELECT id, name FROM pad_banks").fetchall():
-        if name not in tops: continue
+    for bid, name0 in c.execute("SELECT id, name FROM pad_banks").fetchall():
+        name = (low.get((sid.upper() + "/" + name0).lower()) if sid else None) or (name0 if name0 in tops else None)
+        if not name: continue
         have = [r[0] for r in c.execute("SELECT path FROM pad_items WHERE bank_id=? ORDER BY pos", (bid,))]
         files = [r[0] for r in c.execute("""SELECT path FROM items WHERE section='jingles' AND problem IS NULL AND (folder=? OR folder LIKE ?)
                                             ORDER BY folder, title COLLATE NOCASE""", (name, name + "/%"))]
