@@ -1,18 +1,19 @@
 {
- "time": "2026-11-21T02:37:07",
+ "time": "2026-11-21T12:57:18",
  "result": "ok",
- "commit": "52c6dd9c32168728bf501cf93b6b4a7b1dbcc236",
- "subject": "Theme channels: one play = one history row (a repeated 'now playing' report from the radio engine is ignored); a planned item is never sent twice",
+ "commit": "0cfdb33063439e28084bbd7d3c7e9479b02ca63e",
+ "subject": "Theme channels: pad banks named like their own jingles folders (IDs, Liners \u2026) follow the folder, as on Hype Radio; \u25ce Stations row label aligned",
  "log": [
-  "02:36:22 update cc79e821 \u2192 52c6dd9c \u00b7 1 file(s): engine/chan.py",
-  "02:36:22 restart hype-channels",
-  "02:37:07 installed OK \u00b7 restarted: hype-channels"
+  "12:56:33 update 52c6dd9c \u2192 0cfdb330 \u00b7 4 file(s): engine/planner.py, web/panel/channel.html, web/panel/index.html, web/panel/onair.css",
+  "12:56:33 restart hype-channels",
+  "12:56:33 restart hype-engine",
+  "12:57:18 installed OK \u00b7 restarted: hype-engine, hype-channels"
  ],
  "guard": {
-  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
+  "song": "Jaido x Issairo \u2013 Disiplina",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
