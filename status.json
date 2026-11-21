@@ -1,17 +1,17 @@
 {
- "time": "2026-11-21T19:33:26",
+ "time": "2026-11-21T19:37:33",
  "result": "waiting",
- "commit": "4181d2572324e55de5b67cae42013d54a97942e6",
- "subject": "Sound settings per station: a theme station on Hype Radio's engine changed Hype Radio's sound (Liq() defaulted to Hype Radio's radio engine) \u2013 now each engine talks to its own. (TV blocks taken out of this install, back in tonight's [night] update)",
+ "commit": "5ac8236b0b27900d61fb699fd1ee607f8ba96aa3",
+ "subject": "TV blocks [night] (again, after the sound fix went in): the TV can follow a theme station \u2013 Planning \u2192 TV week grid, On Air \u2192 TV by hand; Hype Radio's engine keeps driving OBS with the station's songs, the TV sound crossfades on the TV bus; Hype Radio's radio stream never changes",
  "log": [
-  "19:33:26 update a37699ee \u2192 4181d257 \u00b7 1 file(s): engine/engine.py",
-  "19:33:26 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "19:37:33 update a37699ee \u2192 5ac8236b \u00b7 5 file(s): engine/chan.py, engine/engine.py, radio/radio.liq, web/panel/index.html, web/panel/plan.html",
+  "19:37:33 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Chip Charlez \u2013 Out Of The Blue",
-  "listeners": 3,
+  "song": "FMG \u2013 BOOT",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
