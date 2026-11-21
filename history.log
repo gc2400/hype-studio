@@ -487,3 +487,4 @@
 2026-11-21T14:57:40 ok 91a87f66 TV: "Also on Hype" PiP scene – the TV in a window, below it what Hype Latina / Hype Ambiente play now (Gianno's template); Scenes → PIP; optional every N minutes (Settings → TV)
 2026-11-21T15:08:43 rolled-back b68023b6 Theme stations on Hype Radio's engine (step 1, not switched on yet): engine.py channel mode (HYPE_CH: own database, radio engine port, API port, state files; no TV / studio / Hype Live pushes), hype-engine@.service, hype-channels runs radio.liq for such a station and stays its front door, /api/ch/<id>/… reaches its engine
 2026-11-21T15:20:32 ok-restart-updater 28d9f87b Deploy: the theme-station engines get their restart rule in a second step (the running updater did not know hype-engine@* yet)
+2026-11-21T15:22:39 conflict f3d3b423 Theme channels: undo the library write-through triggers (sqlite does not allow them on an attached database)

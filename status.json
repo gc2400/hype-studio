@@ -1,19 +1,17 @@
 {
- "time": "2026-11-21T15:20:32",
- "result": "ok-restart-updater",
- "commit": "28d9f87bcac9321f7206437e95f3b4da263fd195",
- "subject": "Deploy: the theme-station engines get their restart rule in a second step (the running updater did not know hype-engine@* yet)",
+ "time": "2026-11-21T15:22:39",
+ "result": "conflict",
+ "commit": "f3d3b42311abdb7d89029192a9051077f0ca88fe",
+ "subject": "Theme channels: undo the library write-through triggers (sqlite does not allow them on an attached database)",
  "log": [
-  "15:19:47 update 91a87f66 \u2192 28d9f87b \u00b7 5 file(s): deploy/updater.py, engine/chan.py, engine/chancfg.py, engine/engine.py, system/hype-engine@.service",
-  "15:19:47 restart hype-channels",
-  "15:19:47 restart hype-engine",
-  "15:20:32 installed OK \u00b7 restarted: hype-updater, hype-channels, hype-engine"
+  "15:22:39 update 28d9f87b \u2192 f3d3b423 \u00b7 4 file(s): engine/chancfg.py, engine/engine.py, web/panel/header.js, web/panel/index.html",
+  "15:22:39 CONFLICT: /opt/hype/chancfg.py was changed on the server \u2013 run deploy/export.py + push first"
  ],
  "guard": {
-  "song": "Shaggy x Aidonia x Akon \u2013 Boom Body (Shaz Remix)",
+  "song": "Sech x Ryan Castro x Kybba \u2013 Novio No",
   "listeners": 5,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
