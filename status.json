@@ -1,17 +1,17 @@
 {
- "time": "2026-11-21T01:03:24",
+ "time": "2026-11-21T01:29:01",
  "result": "ok",
- "commit": "cdb8f868894e7771cc8554e11a4302c8ea5ff5f4",
- "subject": "Station skin Ambiente: selected buttons light blue (#4FC3F0) instead of Hype yellow, like Latina's orange",
+ "commit": "5b2787246417365ab22ce4bafdefe92fa3bd45b8",
+ "subject": "On Air: \u25ce Stations button on the library card (which stations' songs Hype Radio's library shows)",
  "log": [
-  "01:03:24 update e1e9e9ca \u2192 cdb8f868 \u00b7 1 file(s): web/panel/header.js",
-  "01:03:24 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "01:29:01 update cdb8f868 \u2192 5b278724 \u00b7 1 file(s): web/panel/index.html",
+  "01:29:01 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Davido x Mayorkun x FOLA \u2013 B4 B4",
-  "listeners": 14,
+  "song": "Tems x Asake \u2013 Get it Right",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },

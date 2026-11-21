@@ -478,3 +478,4 @@
 2026-11-21T00:50:01 ok cc9d56be Theme channels rotation: no 'new song, then a familiar one' rule on a new channel (it replayed songs every other pick); moves in FileZilla keep the channels' play history
 2026-11-21T01:02:20 ok e1e9e9ca Station skin: Hype Radio's built-in page colours (blues, cyan, yellow) become the station's on every page
 2026-11-21T01:03:24 ok cdb8f868 Station skin Ambiente: selected buttons light blue (#4FC3F0) instead of Hype yellow, like Latina's orange
+2026-11-21T01:29:01 ok 5b278724 On Air: ◎ Stations button on the library card (which stations' songs Hype Radio's library shows)
