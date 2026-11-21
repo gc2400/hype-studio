@@ -583,7 +583,7 @@ def cover_worker():
         except Exception as e: log.info("cover %s – %s: %s", artist, title, e); COVER_MISS[k] = time.time() - 86400 + 300   # again in 5 min
         try: jdump(COVER_MISS, COVER_IDX)
         except Exception: pass
-threading.Thread(target=cover_worker, daemon=True).start()
+if not CH: threading.Thread(target=cover_worker, daemon=True).start()     # (a theme station: Hype Radio's engine fetches its covers)
 
 ADBOX = "/srv/hype/branding/adbox"
 PIP_DIR = "/srv/hype/branding/pip"          # frames for the PIP scene (full-frame PNG with a transparent window)
@@ -5467,7 +5467,12 @@ def loop():
     while True:
         try: E.tick()
         except Exception as e: log.warning("tick: %s", e)
-        if CH: time.sleep(1); continue           # a theme station: no TV / screens / pages
+        if CH:                                   # a theme station: no TV / screens / pages; its week of shows (from the website, via Hype Radio's engine)
+            if time.time() - last_sync > 60:
+                last_sync = time.time()
+                try: planner.WEEK[:] = json.load(open("/var/lib/hype/week_%s.json" % CH))
+                except Exception: pass
+            time.sleep(1); continue
         if int(time.time()) % 15 == 0:
             try: E.screen.tick()
             except Exception as e: log.warning("screen tick: %s", e)
