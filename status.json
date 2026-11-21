@@ -1,18 +1,19 @@
 {
- "time": "2026-11-21T15:37:19",
+ "time": "2026-11-21T15:46:16",
  "result": "ok",
- "commit": "7c233e05f07688a8b87941954c38ae40c4cefc21",
- "subject": "Channel mode: no PIP frame (state answer)",
+ "commit": "6d087a5de6b00369e8f3ecd7b2a4df599fe3155c",
+ "subject": "Theme station engine: the Library / folders follow its own station; the station engines restart with an engine update",
  "log": [
-  "15:36:33 update 3f84dc05 \u2192 7c233e05 \u00b7 1 file(s): engine/engine.py",
-  "15:36:34 restart hype-engine",
-  "15:37:19 installed OK \u00b7 restarted: hype-engine"
+  "15:45:31 update 7c233e05 \u2192 6d087a5d \u00b7 1 file(s): engine/engine.py",
+  "15:45:31 restart hype-engine@*",
+  "15:45:31 restart hype-engine",
+  "15:46:16 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "RVFV x Kikimoteleba \u2013 TIGINI REMIX",
+  "song": "Jonna Fraser \u2013 Tiki Taka",
   "listeners": 6,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
