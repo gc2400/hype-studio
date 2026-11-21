@@ -5473,6 +5473,11 @@ def loop():
                 last_sync = time.time()
                 try: planner.WEEK[:] = json.load(open("/var/lib/hype/week_%s.json" % CH))
                 except Exception: pass
+            if int(time.time()) % 10 == 0:       # 🔥 for the song on air (Hype Live's sync per station, via Hype Radio's engine)
+                try:
+                    f_ = json.load(open("/run/hype/ch_fire.json")).get(CH)
+                    if isinstance(f_, dict): FIRE_NOW.clear(); FIRE_NOW.update(f_)
+                except Exception: pass
             time.sleep(1); continue
         if int(time.time()) % 15 == 0:
             try: E.screen.tick()
