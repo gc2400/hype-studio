@@ -457,6 +457,19 @@ class Screen:
         elif end_s > 0 and time.localtime().tm_min >= 30 and getattr(self, "upn_half", None) != hk and it.get("mode") in ("clip", "pair") and length > end_s + 40:
             self.upn_half = hk          # once in the second half of the hour: the last N s of a music video
             threading.Timer(max(1.0, length - end_s), lambda: E.upnext_show(path, end_s - 0.5)).start()
+        every = float(planner.get_setting(c, "alsoon_every_min", 0) or 0); dur = float(planner.get_setting(c, "alsoon_s", 20) or 20)
+        if every > 0 and it.get("mode") in ("clip", "pair") and time.time() - getattr(self, "also_t", 0) >= every * 60 and length > after_s + dur + 25:
+            self.also_t = time.time()
+            threading.Timer(max(3.0, after_s + (hour_s + 20 if getattr(self, "upn_done", None) == hk and first else 0)), lambda: E.also_show(path, dur)).start()
+    def also_show(self, path, dur):
+        """"Also on Hype" PiP now (Settings → TV: every N minutes) – same rules as Up next: over the music video that planned it, AUTO, not LIVE."""
+        n = self.now or {}
+        if n.get("path") != path or n.get("mode") not in ("clip", "pair") or self.live.live or self.stopped: return
+        if not self.tv.auto or self.tv.scene != "Music video": return
+        if self.now and self.now.get("chart_pid"): return
+        also_fetch()
+        if not ALSO_NOW["d"]: return                               # both theme stations off: nothing to show
+        log.info("Also on Hype PIP for %.0f s", dur); self.hold_scene(ALSO_SCENE, dur)
     def on_show(self, title):
         c = dbc()
         for r in planner.api_screen_rules(c):
@@ -500,8 +513,11 @@ class Screen:
         if scene == "Up next":
             try: upn = E.upnext_data(); upn = dict(upn, until=getattr(E, "hold_until", 0)) if isinstance(upn, dict) else upn
             except Exception as e: log.warning("up next data: %s", e)
+        also = None
+        if scene == ALSO_SCENE:
+            also = dict(also_now(), until=getattr(E, "hold_until", 0))
         ch = self.chart if self.chart and self.chart["end"] > now else None
-        return {"now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and E.now and E.now.get("path") and E.now.get("section") != "music"),
+        return {"also": also, "now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and E.now and E.now.get("path") and E.now.get("section") != "music"),
                 "slides": ["/adbox/" + urllib.parse.quote(f) for f in slides], "slide_s": 30,
                 "slides_layer": "adbox" if scene == "Hype Screen" else "graphics"}   # Hype Screen: its own source under the Live Layer
 
@@ -555,7 +571,26 @@ threading.Thread(target=cover_worker, daemon=True).start()
 
 ADBOX = "/srv/hype/branding/adbox"
 PIP_DIR = "/srv/hype/branding/pip"          # frames for the PIP scene (full-frame PNG with a transparent window)
-STINGER_SCENES = {"Hype Screen", "PIP", "Up next"}
+ALSO_SCENE = "Also on Hype"                  # PiP: the TV in a window + what Hype Latina / Hype Ambiente play now (Gianno's template PNG)
+STINGER_SCENES = {"Hype Screen", "PIP", "Up next", ALSO_SCENE}
+ALSO_NOW = {"t": 0, "d": {}}
+def also_fetch():
+    """What the theme stations play now (their own nowplaying feed), for the "Also on Hype" scene. A station that is off: no text."""
+    out = {}
+    for k in ("latina", "ambiente"):
+        try:
+            with urllib.request.urlopen("http://127.0.0.1:%d/nowplaying/%s" % (chancfg.API_PORT, k), timeout=4) as r: song = (json.loads(r.read()).get("now_playing") or {}).get("song") or {}
+            if song.get("title"): out[k] = {"title": song.get("title") or "", "artist": song.get("artist") or ""}
+        except Exception: pass
+    ALSO_NOW.update(t=time.time(), d=out)
+def also_now():
+    if time.time() - ALSO_NOW["t"] > 15 and not ALSO_NOW.get("busy"):      # refreshed in the background, every 15 s while it is asked for
+        ALSO_NOW["busy"] = True
+        def run():
+            try: also_fetch()
+            finally: ALSO_NOW["busy"] = False
+        threading.Thread(target=run, daemon=True).start()
+    return ALSO_NOW["d"]
 def pip_frames():
     try: return sorted(f for f in os.listdir(PIP_DIR) if f.lower().endswith(".png"))
     except OSError: return []
@@ -720,7 +755,7 @@ class TV:
         live = bool(getattr(self, "live", False))
         ext = bool(getattr(self, "ext", False)) and not live    # a live stream with its own sound (Music off): its sound straight from OBS = in sync with its picture
         # PIP too: the sponsor frame goes around the video, so the clip's sound plays on (no switch to the mp3 and back)
-        split = bool(self.clip_sound and (scene_has_video(self.scene) or self.scene in ("PIP", "Up next"))) and not live and not ext
+        split = bool(self.clip_sound and (scene_has_video(self.scene) or self.scene in ("PIP", "Up next", ALSO_SCENE))) and not live and not ext
         if (split, live, ext) == (self.split, getattr(self, "_live_r", None), getattr(self, "_ext_r", None)) and not force: return
         try:
             cl = self.client()
@@ -2035,7 +2070,7 @@ class Engine:
                     hold = d["scene"] != want
                     self.tv.auto = not hold; self.tv.hold_song = hold; self.tv.set_scene(d["scene"])
                     return {"ok": True, "auto": not hold, "hold": hold}
-                else: self.tv.auto = False; self.tv.hold_song = False; self.tv.set_scene(d["scene"])
+                else: self.hold_until = 0; self.tv.auto = False; self.tv.hold_song = False; self.tv.set_scene(d["scene"])
             elif action == "live_layer":      # the Hype Live Layer (shoutouts, polls, chat …) on / off in every scene
                 on = bool(d.get("on")); planner.set_setting(c, "live_layer", on); self.tv.live_layer(on)
             elif action == "autoscene":      # the AUTO SCENES button: on <-> off (off = manual: the scene stays until you change it)
@@ -3442,6 +3477,7 @@ def _settings_main(c, snd):
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
             "jingle_hide": bool(planner.get_setting(c, "jingle_hide", True)), "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
+            "alsoon_every_min": float(planner.get_setting(c, "alsoon_every_min", 0) or 0), "alsoon_s": float(planner.get_setting(c, "alsoon_s", 20) or 20),
             "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "voice_per_hour": VOICE_AIR["per_hour"], "listener_keep_days": float(planner.get_setting(c, "listener_keep_days", 7)), "ss_photo_s": float(planner.get_setting(c, "ss_photo_s", 8)), "ss_fade_s": float(planner.get_setting(c, "ss_fade_s", 1)), "ss_random": bool(planner.get_setting(c, "ss_random", True)), "tidy_names": bool(planner.get_setting(c, "tidy_names", True)), "voice_max_plays": VOICE_AIR["max_plays"], "voice_intro": VOICE_AIR["intro"], "voices": voice_overview(), "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd, "relay": relay_public()}
 RELAY_CFG = "/etc/hype/relay.json"
@@ -3510,6 +3546,8 @@ def set_settings(d):
     if "upnext_hour_s" in d: planner.set_setting(c, "upnext_hour_s", max(0.0, min(60.0, float(d["upnext_hour_s"]))))
     if "upnext_after_s" in d: planner.set_setting(c, "upnext_after_s", max(3.0, min(120.0, float(d["upnext_after_s"]))))
     if "upnext_end_s" in d: planner.set_setting(c, "upnext_end_s", max(0.0, min(60.0, float(d["upnext_end_s"]))))
+    if "alsoon_every_min" in d: planner.set_setting(c, "alsoon_every_min", max(0.0, min(240.0, float(d["alsoon_every_min"]))))
+    if "alsoon_s" in d: planner.set_setting(c, "alsoon_s", max(10.0, min(60.0, float(d["alsoon_s"]))))
     if "artist_sep_min" in d: planner.set_setting(c, "artist_sep_min", max(0.0, min(360.0, float(d["artist_sep_min"]))))
     for k in ("strict_hold_before", "strict_hold_after"):
         if k in d: planner.set_setting(c, k, max(0.0, min(240.0, float(d[k])))); planner._HOLD.clear()
