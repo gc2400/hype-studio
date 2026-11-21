@@ -1,14 +1,14 @@
 {
- "time": "2026-11-21T01:29:01",
+ "time": "2026-11-21T01:52:35",
  "result": "ok",
- "commit": "5b2787246417365ab22ce4bafdefe92fa3bd45b8",
- "subject": "On Air: \u25ce Stations button on the library card (which stations' songs Hype Radio's library shows)",
+ "commit": "ee9548a4bec61091cce258bd4df7824bceb1278b",
+ "subject": "Header on phones: one line again (the Hype logo is the channel switch, smaller dots + clock); the channel dots stay as they were while a page loads",
  "log": [
-  "01:29:01 update cdb8f868 \u2192 5b278724 \u00b7 1 file(s): web/panel/index.html",
-  "01:29:01 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "01:52:35 update 5b278724 \u2192 ee9548a4 \u00b7 1 file(s): web/panel/header.js",
+  "01:52:35 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Tems x Asake \u2013 Get it Right",
+  "song": "B'Jay \u2013 Balaclava",
   "listeners": 2,
   "obs": true,
   "seg_age": 0.2,
