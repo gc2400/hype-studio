@@ -168,7 +168,7 @@ html[data-station] .card.hi{border-color:var(--line2)}
     latina: {'#071a2b': '#170F12', '#0f2b44': '#261B1F', '#0b2236': '#1D1518', '#17344f': '#3A252C', '#23496b': '#4A3038', '#05a9c6': '#FFB23F',
              '#062f38': '#2A1A1F', '#061423': '#0F0A0C', '#ffe000': '#FFB23F', '#2b2500': '#3A2510', '#04121f': '#0F0A0C', '#0a1e30': '#1D1518'},
     ambiente: {'#071a2b': '#0B1426', '#0f2b44': '#15233F', '#0b2236': '#0F1A30', '#17344f': '#23395F', '#23496b': '#2D4774', '#05a9c6': '#4FC3F0',
-               '#062f38': '#0E2A44', '#061423': '#070D1A', '#04121f': '#070D1A', '#0a1e30': '#0F1A30'}};
+               '#062f38': '#0E2A44', '#061423': '#070D1A', '#04121f': '#070D1A', '#0a1e30': '#0F1A30', '#ffe000': '#4FC3F0', '#2b2500': '#0E2A44'}};
   function skinSheets() {
     const m0 = SKIN[CH]; if (!m0) return;
     const map = {};      // the browser gives colours back as rgb(…), not as written: match both
