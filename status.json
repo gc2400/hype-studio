@@ -1,20 +1,17 @@
 {
- "time": "2026-11-21T00:50:01",
+ "time": "2026-11-21T01:02:20",
  "result": "ok",
- "commit": "cc9d56be5a17c01a914bd7582985a0b9c6ba0cbf",
- "subject": "Theme channels rotation: no 'new song, then a familiar one' rule on a new channel (it replayed songs every other pick); moves in FileZilla keep the channels' play history",
+ "commit": "e1e9e9ca95895b22ff6facbb99b7ce58bd10cfbc",
+ "subject": "Station skin: Hype Radio's built-in page colours (blues, cyan, yellow) become the station's on every page",
  "log": [
-  "00:49:16 update 04d4980d \u2192 cc9d56be \u00b7 2 file(s): engine/indexer.py, engine/planner.py",
-  "00:49:16 restart hype-indexer",
-  "00:49:16 restart hype-channels",
-  "00:49:16 restart hype-engine",
-  "00:50:01 installed OK \u00b7 restarted: hype-indexer, hype-engine, hype-channels"
+  "01:02:20 update cc9d56be \u2192 e1e9e9ca \u00b7 1 file(s): web/panel/header.js",
+  "01:02:20 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Issairo x Jaido x Soundflow \u2013 LORA WAK MI",
+  "song": "Davido x Mayorkun x FOLA \u2013 B4 B4",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
