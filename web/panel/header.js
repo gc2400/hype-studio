@@ -106,7 +106,12 @@ html[data-station] .card.hi{border-color:var(--line2)}
 #hhead a:focus-visible,#hhead .btn:focus-visible,#hhead .menu:focus-visible{outline:2px solid #05A9C6;outline-offset:1px}
 #hhead .menu{display:none;cursor:pointer;border:1px solid #23496B;background:#0F2B44;color:#F2F6FA;border-radius:10px;width:44px;height:40px;font-size:20px;line-height:1}
 @media (max-width:1180px){#hhead .hnav a{padding:9px 9px;font-size:12px}#hhead .show{display:none}}
-@media (max-width:1180px){#hhead .chsw{font-size:14px;padding:4px 6px}}@media (max-width:600px){#hhead #chName{display:none}#hhead .chmenu{min-width:220px}}
+@media (max-width:1180px){#hhead .chsw{font-size:14px;padding:4px 6px}}@media (max-width:600px){#hhead #chName{display:none}#hhead .chmenu{min-width:220px}
+  #hhead .chsw{display:none}#hhead .hb img{cursor:pointer}
+  #hhead #stRadio,#hhead #stTv{width:16px;height:16px}
+  #hhead #stRadio[data-n],#hhead #stTv[data-n],#hhead #stLog[data-n],#hhead .stch{min-width:16px;height:16px;padding:0 4px;font-size:10px;line-height:16px}
+  #hhead .stch.off{width:16px;padding:0}#hhead .hdots{gap:3px!important;padding:4px 4px!important}
+  #hhead #clock{font-size:14px!important}#hhead .hact{gap:3px!important}#hhead .menu{width:32px!important}}
 @media (max-width:900px){
   #hhead{flex-wrap:wrap;gap:8px;padding:8px 12px}
   #hhead .hb{order:1}#hhead .hst{order:2}#hhead .hact{order:2}#hhead .sp{order:3}#hhead .menu{display:block;order:4}
@@ -156,7 +161,7 @@ html[data-station] .card.hi{border-color:var(--line2)}
     <nav class="hnav" aria-label="Pages">${P.map(([u, t, k], i) => `<a href="${u}" data-k="${k}" class="${k === cur ? 'cur' : ''}" ${k === cur ? 'aria-current="page"' : ''} title="${t} (Alt+${i + 1})">${t}</a>`).join('')}<span class="sep"></span><a class="out" href="/logout" title="Log out" aria-label="Log out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span class="lo"> Log out</span></a></nav>`;
   // page changes: show the header exactly as it was (dots, numbers, AUTO/MANUAL, mode, GO LIVE, REC) until fresh data comes in
   const SNAP = () => [['A', h.querySelector('#' + A)], ['M', h.querySelector('#' + M)], ...[...h.querySelectorAll('.modes [data-mode]')].map(b => ['m_' + b.dataset.mode, b]),
-    ...['stRadio', 'stTv', 'stLog', 'hLive', 'hLiveT', 'hRec', 'hRecT'].map(i => [i, h.querySelector('#' + i)])].filter(x => x[1]);
+    ...['stRadio', 'stTv', 'stChs', 'stLog', 'hLive', 'hLiveT', 'hRec', 'hRecT'].map(i => [i, h.querySelector('#' + i)])].filter(x => x[1]);
   try { const o = JSON.parse(sessionStorage.getItem('hypeHdr') || 'null'); if (o) SNAP().forEach(([k, el]) => { const v = o[k]; if (v) { el.className = v[0]; el.innerHTML = v[1]; } }); } catch (e) {}
   const snapSave = () => { try { const o = {}; SNAP().forEach(([k, el]) => { o[k] = [el.className, el.innerHTML]; }); sessionStorage.setItem('hypeHdr', JSON.stringify(o)); } catch (e) {} };
   setInterval(snapSave, 1000); addEventListener('pagehide', snapSave);
@@ -198,6 +203,8 @@ html[data-station] .card.hi{border-color:var(--line2)}
       location.href = (to === 'main' && page === 'channel.html') ? '/panel/' : (to !== 'main' && (page === '' || page === 'index.html' || location.pathname === '/panel/')) ? '/panel/channel.html' : location.pathname + location.search; });
   }
   chSw.onclick = e => { e.stopPropagation(); const o = chMenu.hidden; chMenu.hidden = !o; chSw.setAttribute('aria-expanded', o); };
+  // phone: the channel switch button is hidden to keep the header on one line – tap the Hype logo instead
+  h.querySelector('.hb img').addEventListener('click', e => { if (getComputedStyle(chSw).display !== 'none') return; e.stopPropagation(); chMenu.hidden = !chMenu.hidden; });
   document.addEventListener('click', e => { if (!chMenu.hidden && !chMenu.contains(e.target)) { chMenu.hidden = true; chSw.setAttribute('aria-expanded', false); } });
   const chLoad = () => fetch('/api/channels', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(d => { if (d && d.channels) { CHS = [CHS[0], ...d.channels]; if (!CHS.some(x => x.id === CH)) { CH = 'main'; try { localStorage.setItem('hypeCh', 'main'); } catch (e) {} } chPaint(); } }).catch(() => {});
   chPaint(); chLoad(); setInterval(() => { if (!document.hidden) chLoad(); }, 30000);
@@ -324,7 +331,7 @@ html[data-station] .card.hi{border-color:var(--line2)}
     const box_ = h.querySelector('#stChs');
     const html = d.channels.map(c => { const L_ = c.listeners || {}, n = L_.current ?? ((L_.mp3 || 0) + (L_.hls || 0)), st = !c.enabled ? 'off' : (!c.running || c.down) ? 'bad' : '';
       return `<span class="chip stch ${st}" data-ch="${c.id}" style="background:${c.color};box-shadow:0 0 6px ${c.color}80" title="${c.name}: ${!c.enabled ? 'off' : st ? 'not running' : n + ' listening now'}">${c.enabled && !st ? n : st === 'bad' ? '!' : ''}</span>`; }).join('');
-    if (box_.dataset.h !== html) { box_.dataset.h = html; box_.innerHTML = html; } }).catch(() => {}); }
+    if (box_.dataset.h !== html) { box_.dataset.h = html; box_.innerHTML = html; snapSave(); } }).catch(() => {}); }
   chDots(); setInterval(() => { if (!document.hidden) chDots(); }, 5000);
   audLoad(); setInterval(() => { if (!document.hidden) audLoad(); }, 5000);   // every 5 s (was 15), and at once when you come back to the tab
   document.addEventListener('visibilitychange', () => { if (!document.hidden) audLoad(); });
