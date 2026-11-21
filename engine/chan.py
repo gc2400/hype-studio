@@ -687,6 +687,81 @@ class Channel:
         except Exception: return []
 
 
+RADIO_LIQ = "/etc/hype/radio.liq"
+def engine_liq(cfg, port):
+    """Hype Radio's own radio.liq for a theme station on Hype Radio's engine (channel mode): the same sound chain, mixing,
+    pads, decks and ID-over-intro, with the station's telnet port, engine port, sound settings and Icecast mounts.
+    No studio / stream inputs, no TV or studio return outputs."""
+    t = open(RADIO_LIQ).read(); cid = cfg["id"]
+    q = lambda v: str(v).replace('"', "'").replace("\\", "/")
+    def sub(a, b):
+        nonlocal t
+        if a not in t: raise ValueError("radio.liq changed: %r not found" % a[:50])
+        t = t.replace(a, b)
+    sub("settings.server.telnet.port.set(1234)", "settings.server.telnet.port.set(%d)" % int(cfg["telnet"]))
+    sub('"/var/log/hype/liquidsoap.log"', '"/var/log/hype/ch-%s.log"' % cid)
+    sub('"http://127.0.0.1:8090/', '"http://127.0.0.1:%d/' % port)
+    sub('input.harbor("studio", port=8005, password=live.harbor_pw, buffer=1.5, max=6.)', "blank()")
+    sub('input.harbor("ext", port=8006, password=live.harbor_pw, buffer=2., max=8.)', "blank()")
+    sub('interactive.persistent("/var/lib/hype/sound.json")', 'interactive.persistent("/var/lib/hype/sound-%s.json")' % cid)
+    i = t.index("\noutput.icecast(")
+    t = t[:i] + """
+# ---- %(name)s (theme station on Hype Radio's engine): internal 256k for the HLS stream + the public MP3 128k ----
+output.icecast(%%mp3(bitrate=256, samplerate=44100, stereo=true), host="127.0.0.1", port=8000,
+  password=conf.icecast_source, mount="%(id)s-rec.mp3", name="%(name)s - internal", description="internal: 256k for the HLS stream", public=false, s)
+output.icecast(%%mp3(bitrate=128, samplerate=44100, stereo=true), host="127.0.0.1", port=8000,
+  password=conf.icecast_source, mount="%(id)s.mp3", name="%(name)s", description="%(genre)s", genre="%(genre)s",
+  url="https://www.hyperadio.nl", public=false, s)
+output.dummy(fx)
+output.dummy(ret)
+output.dummy(ret2)
+""" % {"id": cid, "name": q(cfg["name"]), "genre": q(cfg.get("genre") or "")}
+    return "# GENERATED from radio.liq by hype-channels for %s – do not edit\n" % cid + t
+
+
+class EngineChannel(Channel):
+    """A theme station played by Hype Radio's own engine (engine.py in channel mode, systemd hype-engine@<id>).
+    hype-channels keeps the radio engine (Liquidsoap, from radio.liq) + HLS running and stays the station's front door
+    (status, now playing for the website / apps, listeners); the engine does everything that plays, exactly as on Hype Radio."""
+    def liq_text(self): return engine_liq(self.cfg, chancfg.engine_port(self.id))
+    def eng(self, path, data=None, timeout=4):
+        rq = urllib.request.Request("http://127.0.0.1:%d%s" % (chancfg.engine_port(self.id), path), data=json.dumps(data).encode() if data is not None else None,
+                                    headers={"Content-Type": "application/json"}, method="POST" if data is not None else "GET")
+        with urllib.request.urlopen(rq, timeout=timeout) as r: return json.loads(r.read() or b"{}")
+    def unit(self, verb):
+        try: subprocess.run(["systemctl", verb, "hype-engine@%s.service" % self.id], timeout=30, capture_output=True)
+        except Exception as e: log.warning("%s: systemctl %s: %s", self.id, verb, e)
+    def run(self):
+        log.info("%s: on (Hype Radio's engine)", self.id); last_l = 0; self.est = {}
+        try: self.adopt()
+        except Exception as e: log.warning("%s: adopt: %s", self.id, e)
+        self.unit("start")
+        while not self.stop_ev.is_set():
+            try:
+                self.start_procs()
+                try:
+                    st = self.eng("/state"); self.est = st; self.err = ""
+                    self.now = st.get("now") or None
+                    self.plan = [x for x in (st.get("upcoming") or []) if x]
+                except Exception as e:
+                    self.err = "engine: %s" % e
+                    if "refused" in str(e): self.unit("start")
+                try:
+                    v = self.tel("radio.level", 1).split()
+                    if len(v) >= 2: self.level = [float(v[0]), float(v[1])]; self.meter = [float(x) for x in v[:9]]
+                except Exception: pass
+                if time.time() - last_l > 15: last_l = time.time(); self.count_listeners()
+            except Exception as e: log.warning("%s: %s", self.id, e)
+            self.stop_ev.wait(2)
+        if HANDOVER["on"]: self.save_state(); log.info("%s: hype-channels restarts – the radio engine keeps playing", self.id); return
+        self.unit("stop"); self.stop_procs(); log.info("%s: off", self.id)
+    def status(self):
+        st = Channel.status(self); e = getattr(self, "est", {}) or {}
+        st.update(engine=True, port=chancfg.engine_port(self.id), running=bool(self.liq and self.liq.poll() is None) and not self.err,
+                  pad=None, queued=None, idi=None, voice=None, agc=None, auto=e.get("auto"), stopped=e.get("stopped"))
+        return st
+
+
 MAIN_LIVE = {"on": False}
 def main_live_watch():
     """Is Hype Radio's studio on air (LIVE)? Read-only question to Hype Radio's radio engine, every 3 s."""
@@ -710,8 +785,11 @@ def sync():
         if cid not in want:
             ch = CH.pop(cid); ch.stop_ev.set()
     for cid, cfg in want.items():
+        if cid in CH and bool(cfg.get("engine")) != isinstance(CH[cid], EngineChannel):     # moved to / from Hype Radio's engine
+            old = CH.pop(cid); old.stop_ev.set()
+            if old.thread: old.thread.join(15)
         if cid not in CH:
-            ch = Channel(cfg); CH[cid] = ch
+            ch = (EngineChannel if cfg.get("engine") else Channel)(cfg); CH[cid] = ch
             ch.thread = threading.Thread(target=ch.run, daemon=True, name="ch-" + cid); ch.thread.start()
         else: CH[cid].cfg.update(cfg)
 

@@ -1,0 +1,13 @@
+[Unit]
+Description=Hype Radio's playout engine for the theme station %i (channel mode: its own database, radio engine and API port)
+After=hype-channels.service
+[Service]
+Environment=HOME=/root
+Environment=HYPE_CH=%i
+ExecStart=/usr/bin/python3 /opt/hype/engine.py
+Restart=always
+RestartSec=3
+# a theme station never takes the CPU from Hype Radio / the TV
+Nice=3
+[Install]
+WantedBy=multi-user.target

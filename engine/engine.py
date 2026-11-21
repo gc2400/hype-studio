@@ -11,6 +11,21 @@ import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live,
 
 ROOT = "/srv/hype"; DB = "/srv/hype-data/library.db"; WEB = "/var/www/studio"; WAVES = "/srv/hype-data/wave"
 CONF = json.load(open("/etc/hype/engine.json"))
+# ---- channel mode (hype-engine@<id>): this same engine plays a theme station (Hype Latina, Hype Ambiente …) instead of Hype Radio.
+# Its own planning database (chan_<id>.db), radio engine (telnet port), API port and state files; no TV, studio, recordings or
+# Hype Live / website pushes (Hype Radio's engine keeps doing those). Unset = Hype Radio, exactly as before.
+CH = os.environ.get("HYPE_CH") or None
+CHC = chancfg.get(CH) if CH else None
+if CH and not CHC: raise SystemExit("unknown theme channel %r" % CH)
+LIQ_PORT = int(os.environ.get("HYPE_TELNET") or (CHC["telnet"] if CH else 1234))
+API_PORT = int(os.environ.get("HYPE_PORT") or (chancfg.engine_port(CH) if CH else 8090))
+ST_DIR = os.environ.get("HYPE_STATE") or ("/var/lib/hype/ch-%s" % CH if CH else "/var/lib/hype")
+if CH: os.makedirs(ST_DIR, exist_ok=True)
+def SP(p):
+    """A state file of THIS engine: Hype Radio's own path, or the same name in the channel's state folder."""
+    return os.path.join(ST_DIR, os.path.basename(p)) if CH else p
+JDIR = "jingles-%s" % CH if CH else "jingles"            # the station's own jingles root (IDs, liners, listener voices)
+VOICE_PFX = JDIR + "/VOICE/"; VT_PFX = JDIR + "/VOICETRACK/"
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("engine"); logging.getLogger("obsws_python").setLevel(logging.WARNING)
 
@@ -38,9 +53,10 @@ TL = threading.local()       # the theme channel a panel request is for (?ch=lat
 CH_PATHS = ("/playlists", "/playlist", "/folders", "/padbanks", "/pads", "/clocks", "/shows", "/schedule", "/events", "/preview_hour", "/history", "/history.csv",
             "/rights.csv", "/rights_check", "/week", "/weekreport", "/audstats", "/aud24", "/audsongs", "/audtime")
 _STATION_COL = []
-audstats.CHF = lambda: getattr(TL, "ch", None) or ""     # History → Audience per station: a theme channel's own stats_<id>.db
+audstats.CHF = lambda: getattr(TL, "ch", None) or CH or ""     # History → Audience per station: a theme channel's own stats_<id>.db
 def dbc():
-    if getattr(TL, "ch", None): return chancfg.connect(TL.ch)       # a theme channel's own planning database (songs = the library)
+    ch_ = getattr(TL, "ch", None) or CH
+    if ch_: return chancfg.connect(ch_)       # a theme channel's own planning database (songs = the library)
     c = sqlite3.connect(DB, timeout=30)
     if not _STATION_COL:            # items.station ('' = Hype Radio, else a theme channel) – the indexer adds it too; whoever is first
         try:
@@ -158,11 +174,11 @@ MIX_OUT = 1.5     # Settings → Mixing → fade-out of the old song (= how long
 SMART_MIX = True     # Settings → Mixing → Smart mix
 VOICE_AIR = {"per_hour": 2, "max_plays": 3, "intro": True}   # Settings → Listener voices (only voices marked ✓ OK for air in Hype Live)
 ID_INTRO = {"on": True, "max": 3, "gap": 15, "db": -4.0}   # Settings → Mixing → ID over soft intros (max per hour, minutes apart)
-ID_FOLDER = "IDS"    # the IDs: /srv/hype/jingles/IDS
+ID_FOLDER = (CH.upper() + "/IDS") if CH else "IDS"    # the IDs: /srv/hype/jingles/IDS
 ID_OFFSET, ID_DUCK = 0.4, 0.5   # the ID starts 0.4 s into the song; the (already soft) intro dips to 50 % under the voice
 PUSH_LEAD = 15.0      # the next item goes to Liquidsoap 15 s before the song on air ends (see push_next)
-CLOCK_POS = "/var/lib/hype/clock_pos.json"; PLAN_FILE = "/var/lib/hype/upnext_plan.json"
-SNAPS_FILE = "/var/lib/hype/plan_snaps.json"; MINE_FILE = "/var/lib/hype/upnext_mine.json"
+CLOCK_POS = SP("/var/lib/hype/clock_pos.json"); PLAN_FILE = SP("/var/lib/hype/upnext_plan.json")
+SNAPS_FILE = SP("/var/lib/hype/plan_snaps.json"); MINE_FILE = SP("/var/lib/hype/upnext_mine.json")
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
 LM_CACHE = {}
 LM_STAMP = {}
@@ -315,8 +331,8 @@ def annotate(it, pad=False, nxt=None):
             w = lm[int(ce * 2):int(ce * 2) + 4] if lm else None
             if w and L is not None and sum(w) / len(w) >= L - 12:
                 cross = max(0.3, min(MIX_MAX, MIX_OUT, ce - cm)); fade = cross
-    vm = vt_mix_at(it["path"]) if not pad and it["path"].startswith("jingles/VOICETRACK/") else None
-    vp = vt_pre(nxt["path"]) if not pad and nxt and str(nxt.get("path") or "").startswith("jingles/VOICETRACK/") else None
+    vm = vt_mix_at(it["path"]) if not pad and it["path"].startswith(VT_PFX) else None
+    vp = vt_pre(nxt["path"]) if not pad and nxt and str(nxt.get("path") or "").startswith(VT_PFX) else None
     if vp:      # the next item is a voice link that starts over the END of this song: earlier, and this song stays low under it
         end_ = max(ce, dur or ce); cm = max(cs + 1.0, min(cm, end_) - vp); cross = max(0.3, min(60.0, end_ - cm)); fade = cross
     if vm:      # a voice link that talks over the next song's intro: the song starts at the moment you started it while recording
@@ -334,7 +350,7 @@ def annotate(it, pad=False, nxt=None):
     return f"annotate:{meta}:{os.path.join(ROOT, it['path'])}"
 
 BAD_NAME = re.compile(r"[\x00-\x1f\x7f]")
-DECKS_FILE = "/var/lib/hype/decks.json"
+DECKS_FILE = SP("/var/lib/hype/decks.json")
 # Preloading the next clip (paused on its keyframe). 19 Nov: with the picture-only TV copies OBS 32 played a clip on while it
 # said PAUSED when we paused BEFORE seeking -> now seek, then pause, then check it stands still (else no preload).
 PRELOAD = True
@@ -594,7 +610,7 @@ def also_now():
 def pip_frames():
     try: return sorted(f for f in os.listdir(PIP_DIR) if f.lower().endswith(".png"))
     except OSError: return []
-SCREEN_STATE = "/var/lib/hype/screen_active.json"
+SCREEN_STATE = SP("/var/lib/hype/screen_active.json")
 
 def intro_kind(it):
     """A sweeper that announces a kind of song: 'new' (New Music) or 'throwback'."""
@@ -737,7 +753,7 @@ class TV:
         name = os.path.splitext(os.path.basename(f))[0]
         ev = {"t": int(t0), "type": "pip", "item": name, "brand": re.sub(r"^PIP[_ -]*", "", name, flags=re.I).replace("_", " ").strip(), "dur": dur}
         try:
-            p = "/var/lib/hype/screen_events.json"
+            p = SP("/var/lib/hype/screen_events.json")
             with SCREEN_EV_LOCK:
                 try: evs = json.load(open(p))
                 except FileNotFoundError: evs = []
@@ -1071,9 +1087,26 @@ class TV:
         r = self.client().get_source_screenshot(self.scene or "Hype Screen", "jpg", width, int(width * 9 / 16), 70)
         return base64.b64decode(r.image_data.split(",", 1)[1])
 
+class _Nop:
+    """Channel mode: no TV / studio. Every method is a no-op; the data the engine reads has a plain value."""
+    def __getattr__(self, k):
+        if k.startswith("__"): raise AttributeError(k)
+        return lambda *a, **kw: None
+class NullTV(_Nop):
+    def __init__(self):
+        self.auto = True; self.scene = None; self.hold_song = False; self.cl = None; self.split = None; self.live = False
+        self.first_show_seen = True; self.clip_sound = False; self.ll_on = False; self.olock = threading.RLock(); self.gen = 0
+        self.cur = "Clip B"; self.prog = None
+    def client(self): raise RuntimeError("no TV on a theme station")
+class NullLive(_Nop):
+    def __init__(self):
+        self.live = False; self.st = {"cams": {}, "lip_sync": 0, "auto_record": False}; self.air = "automation"; self.rec = None
+        self.song_scene = lambda: "Hype Screen"; self.on_audio = None; self.live_since = None
+    def split(self, *a, **kw): return False
+    def status(self, *a, **kw): return {"live": False, "air": "automation"}
 class Engine:
     def __init__(self):
-        self.liq = Liq(); self.picker = Picker(); self.tv = TV()
+        self.liq = Liq(LIQ_PORT); self.picker = Picker(); self.tv = NullTV() if CH else TV()
         try: rs = json.load(open(CLOCK_POS))        # after a restart: the hour clock goes on where the radio was, not from slot 1
         except Exception: rs = None
         self.runner = planner.ClockRunner(restore=rs)
@@ -1082,7 +1115,7 @@ class Engine:
         try: c0.execute("ALTER TABLE items ADD COLUMN mix_set INT DEFAULT 0"); c0.commit()    # 1 = MIX set by hand (smart mix leaves it alone)
         except sqlite3.OperationalError: pass
         c0.execute("UPDATE items SET mtime=0 WHERE (folder LIKE 'MIXES%' OR folder LIKE 'RECORDINGS%') AND problem LIKE 'no artist%'"); c0.commit()   # mixes need no artist: index again
-        self.live = live.Live(self.liq, self.tv, lambda: SHOW.get("title") or "show")
+        self.live = NullLive() if CH else live.Live(self.liq, self.tv, lambda: SHOW.get("title") or "show")
         self.tv.live = self.live.live; self.tv.route_audio(force=True)
         self.live.song_scene = lambda: (self.now or {}).get("scene") or "Hype Screen"     # the automatic scene for what plays now (studio drop-out)
         self.decks = {"1": None, "2": None}; self.tv_deck = None; self._air_lost = None
@@ -1108,7 +1141,7 @@ class Engine:
         self.last_kind = None
         try:      # after a restart: what played last (else an ID over the next intro is skipped – Bleeding, 9 Nov)
             lp = (dbc().execute("SELECT path FROM asrun ORDER BY id DESC LIMIT 1").fetchone() or [""])[0] or ""
-            self.last_kind = "music" if lp.startswith("music/") else "jingle" if lp.startswith("jingles/") else None
+            self.last_kind = "music" if lp.split("/")[0].startswith("music") else "jingle" if lp.split("/")[0].startswith("jingles") else None
         except Exception: pass
         self.missing = {}    # path -> when push_next found it missing / unplayable (not planned again for 10 min)
         self.plan = []; self.liq_next = None; self.now = {}; self.auto = True; self.stop_at_end = False; self.stopped = False
@@ -1127,7 +1160,7 @@ class Engine:
             if self.plan: log.info("Up next: %d song(s) you added are back after the restart", len(self.plan))
           except FileNotFoundError: pass
           except Exception as e: log.warning("up next (yours): %s", e)
-        try: self.aux = json.load(open("/var/lib/hype/aux.json"))
+        try: self.aux = json.load(open(SP("/var/lib/hype/aux.json")))
         except Exception: self.aux = {"1": [], "2": []}
         self.dj = getattr(self, "dj", False); self.deck = getattr(self, "deck", None); self.faders = {}; self.parked = None
         self.sgroups = planner.get_setting(c0, "scene_groups", [])
@@ -1491,7 +1524,7 @@ class Engine:
             return self.push_next(c, force)
         try:
             it.pop("id_over", None); idp = self.pick_intro_voice(c, it) or self.pick_intro_id(c, it)
-            if idp: it["id_over"] = idp; log.info("%s over the intro of %s: %s", "Voice" if idp.startswith("jingles/VOICE/") else "ID", it["title"], idp)
+            if idp: it["id_over"] = idp; log.info("%s over the intro of %s: %s", "Voice" if idp.startswith(VOICE_PFX) else "ID", it["title"], idp)
         except Exception as e: log.warning("intro ID: %s", e)
         # push FIRST: only when Liquidsoap really took it, it leaves Up next and its fixed time counts as done
         try: res = self.liq.cmd("q.push " + annotate(it, nxt=self.plan[1] if len(self.plan) > 1 else None))
@@ -1767,7 +1800,7 @@ class Engine:
             up = [p_["path"] for p_ in ([self.liq_next] if self.liq_next else []) + self.plan if p_.get("mode") in ("clip", "pair", "jingle-video")]
             if up != getattr(self, "_up_w", None):   # the indexer upgrades these clips' TV copies first
                 self._up_w = up
-                try: jdump(up, "/var/lib/hype/upcoming.json")
+                try: jdump(up, SP("/var/lib/hype/upcoming.json"))
                 except Exception: pass
     def dead_air(self, c):
         """The radio is empty while the engine thinks a song is still playing: after the radio (Liquidsoap) and/or the engine
@@ -1859,9 +1892,9 @@ class Engine:
             if it.get("deck"): self.deck = it["deck"]
             elif self.dj: self.deck = None
             if it["section"] == "music": self.intro_sweeper(c, it)
-            elif (path or "").startswith("jingles/VOICE/"):      # a listener voice from an hour-plan slot: counted + the voice box on TV
+            elif (path or "").startswith(VOICE_PFX):      # a listener voice from an hour-plan slot: counted + the voice box on TV
                 voice_played(path); voice_box(path, 0.3, max(2.0, (it.get("cue_end") or it.get("duration") or 8) - (it.get("cue_start") or 0)))
-            elif (path or "").startswith("jingles/VOICETRACK/"): vt_on_air(c, path, it)      # your own voice link (voice tracking)
+            elif (path or "").startswith(VT_PFX): vt_on_air(c, path, it)      # your own voice link (voice tracking)
             if JINGLE_HIDE: threading.Thread(target=self.tv.jingle_graphics, args=(it["section"] != "music" and scene == "Music video" and not self.live.live,), daemon=True).start()
             try: self.screen.on_song(c, it)
             except Exception as e: log.warning("screen: %s", e)
@@ -1917,7 +1950,7 @@ class Engine:
         jingle, offset, duck = None, 0.5, 0.35
         if it.get("id_over") and mode != "song" and prev == "music":     # ID over the soft intro (decided when it was queued)
             jingle, offset, duck = it["id_over"], ID_OFFSET, ID_DUCK
-            if not jingle.startswith("jingles/VOICE/"): self.idi_times.append(time.time()); self.idi_used[jingle] = time.time()
+            if not jingle.startswith(VOICE_PFX): self.idi_times.append(time.time()); self.idi_used[jingle] = time.time()
         elif mode == "song" and opath:                            # chosen for this song (e.g. the Top 10 number 1)
             jingle = planner.song_overlay_path(c, opath); offset = oat or 0.3
             if oduck: duck = max(0.1, min(0.9, 1 - oduck / 100)) if oduck > 1 else oduck
@@ -1935,7 +1968,7 @@ class Engine:
         jr = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (jingle,)).fetchone()
         if not jr: return
         self.ov_last = time.time(); self.ov_recent.append(jingle)
-        kind_ = ("Voice" if jingle.startswith("jingles/VOICE/") else "ID") if it.get("id_over") and jingle == it.get("id_over") else "Sweeper"
+        kind_ = ("Voice" if jingle.startswith(VOICE_PFX) else "ID") if it.get("id_over") and jingle == it.get("id_over") else "Sweeper"
         def go():
             ji = row_item(jr, "intro")
             if kind_ == "ID" and ji.get("lufs") is not None: ji["lufs"] = ji["lufs"] - ID_INTRO["db"]    # ID over the intro: its own level (Settings → Mixing)
@@ -2169,7 +2202,7 @@ class Engine:
                 self.pad_loops.pop(d.get("path"), None); self.duck_until = 0; self.liq.cmd("pads.stop"); self.pad_video_off(); VOICE_ON.clear()
             elif action == "pad":
                 r = c.execute(f"SELECT {COLS} FROM items WHERE path=?", (d["path"],)).fetchone()
-                if d["path"].startswith("jingles/VOICE/"):              # a listener's voice: always over ducked music, never a loop
+                if d["path"].startswith(VOICE_PFX):              # a listener's voice: always over ducked music, never a loop
                     d["duck"] = True; d["loop"] = False
                     try:
                         st = voice_state(); who = {}
@@ -2404,7 +2437,7 @@ class Engine:
         return {"ok": True, "path": new, "artist": artist, "title": title, "filename": fn}
     # ---------- AUX players: two lists you fill by dragging, fire into the log ----------
     def aux_save_file(self):
-        try: os.makedirs("/var/lib/hype", exist_ok=True); jdump(self.aux, "/var/lib/hype/aux.json")
+        try: os.makedirs(ST_DIR, exist_ok=True); jdump(self.aux, SP("/var/lib/hype/aux.json"))
         except Exception as e: log.warning("aux save: %s", e)
     def aux_cmd(self, c, action, d):
         a = str(d.get("aux", "1"))
@@ -2751,7 +2784,7 @@ def vt_list(c, pid):
         if v and v[3]: it["cue_mix"] = v[3]; it["over_intro"] = True
         if v and v[4]: it["pre"] = v[4]
         if v and v[5]: it["bed"] = os.path.splitext(os.path.basename(v[5]))[0]
-        if v or p_.startswith("jingles/VOICETRACK/"): it["vt"] = {"tv": (v or ("",))[0], "name": (v or ("", ""))[1], "video": bool((v or (0, 0, 0))[2])}
+        if v or p_.startswith(VT_PFX): it["vt"] = {"tv": (v or ("",))[0], "name": (v or ("", ""))[1], "video": bool((v or (0, 0, 0))[2])}
         out.append(it)
     h = c.execute("SELECT date, hour, clock_id FROM vt_hours WHERE pid=?", (pid,)).fetchone()
     return {"ok": True, "id": pid, "name": r[0], "fixed": fixed, "strict": bool(r[1]), "shuffle": bool(r[2]), "items": out,
@@ -2822,7 +2855,7 @@ def vt_cmd(a, d):
             paths = vt_paths(c, pid); p_ = str(d.get("path")); i = int(d.get("i", -1))
             if not (0 <= i < len(paths)) or paths[i] != p_: return {"ok": False, "error": "the list changed – reload"}
             paths.pop(i); vt_write(c, pid, paths)
-            if p_.startswith("jingles/VOICETRACK/") and p_ not in paths:
+            if p_.startswith(VT_PFX) and p_ not in paths:
                 c.execute("DELETE FROM vt WHERE path=?", (p_,)); c.commit()
                 try: os.remove(lib_file(p_))
                 except (OSError, ValueError): pass
@@ -3002,7 +3035,7 @@ def load_week():
             week.append({"day": di, "start": sh["show_time"], "end": sh["show_time_end"], "title": SHOW_TITLES[sid]})
     if week:
         planner.WEEK[:] = week; log.info("week schedule: %d show slots", len(week))
-        try: jdump(week, "/var/lib/hype/week.json")
+        try: jdump(week, SP("/var/lib/hype/week.json"))
         except Exception: pass
 
 def load_station_week(sid):
@@ -3030,9 +3063,9 @@ def load_station_week(sid):
     if old != week:
         jdump(week, f); log.info("week schedule %s: %d show slots", sid, len(week))
 
-try: planner.WEEK[:] = json.load(open("/var/lib/hype/week.json"))   # known right at start (show jingles plan right after a restart)
+try: planner.WEEK[:] = json.load(open("/var/lib/hype/week_%s.json" % CH if CH else "/var/lib/hype/week.json"))   # known right at start (show jingles plan right after a restart)
 except Exception: pass
-SPECIALS_F = "/var/lib/hype/specials.json"; SCHED_V = [""]
+SPECIALS_F = SP("/var/lib/hype/specials.json"); SCHED_V = [""]
 def load_specials():
     """One-off schedule changes for one date (Hype Live → 📅 Programming → ⭐ Specials, /wp-json/hype/v1/schedule)."""
     with urllib.request.urlopen(urllib.request.Request("https://www.hyperadio.nl/wp-json/hype/v1/schedule", headers={"User-Agent": "HypeStudio/1"}), timeout=15) as r:
@@ -3063,7 +3096,7 @@ def listener_slideshow():
                 try: os.symlink(src, os.path.join(d, f))
                 except OSError: pass
 
-SINK_IDS = "/var/lib/hype/sink_ids.json"
+SINK_IDS = SP("/var/lib/hype/sink_ids.json")
 def tv_audio_refresh():
     """After the audio bus was made new (reboot / PulseAudio restart: new sink numbers), OBS's 'Radio audio' / 'FX audio'
     keep listening to the old, gone sinks -> TV without sound (16 Nov). At engine start: if the sinks changed, OBS
@@ -3213,7 +3246,7 @@ def agc_loop():
     while True:
         time.sleep(DT)
         try:
-            if sock is None: sock = socket.create_connection(("127.0.0.1", 1234), timeout=2)
+            if sock is None: sock = socket.create_connection(("127.0.0.1", LIQ_PORT), timeout=2)
             def ask(cmd):
                 sock.sendall((cmd + "\n").encode()); buf = b""
                 while b"END" not in buf:
@@ -3279,7 +3312,7 @@ def meter_loop():
                 sock = None
             LEVEL.update(l=0.0, r=0.0, ch=None); time.sleep(0.5); continue
         try:
-            if sock is None: sock = socket.create_connection(("127.0.0.1", 1234), timeout=2)
+            if sock is None: sock = socket.create_connection(("127.0.0.1", LIQ_PORT), timeout=2)
             sock.sendall(b"radio.level\n"); buf = b""
             while b"END" not in buf:
                 b_ = sock.recv(256)
@@ -3335,7 +3368,7 @@ def aud_sampler():
                 last_jobs = time.time(); threading.Thread(target=stats_jobs_safe, daemon=True).start()
         except Exception as e: log.warning("audience sample: %s", e)
         time.sleep(15)
-HL_IMPORT = "/var/lib/hype/hl_stats_import.json"
+HL_IMPORT = SP("/var/lib/hype/hl_stats_import.json")
 STATS_BUSY = threading.Lock()
 FIRE_NOW = {}     # {"t": start of the song on air, "n": 🔥 votes so far} from Hype Live's sync answer
 def stats_jobs_safe():
@@ -3503,6 +3536,7 @@ def relay_save(d):
     os.replace(tmp, RELAY_CFG)
 def relay_title(it):
     """The song title on the Streamerr station too (AzuraCast takes Icecast-style metadata from the live source)."""
+    if CH: return
     r = relay_cfg()
     if not (r.get("on") and r.get("host") and r.get("password")): return
     def go():
@@ -3584,7 +3618,7 @@ def set_settings(d):
         if k == "mix_out": MIX_OUT = max(0.3, min(8.0, float(v)))
     return get_settings()
 
-LOWER_FILE = "/var/lib/hype/lower.json"
+LOWER_FILE = SP("/var/lib/hype/lower.json")
 def lower_load():
     try: return json.load(open(LOWER_FILE))
     except Exception: return {"visible": False, "style": "A", "size": "auto", "name": "", "role": "", "handle": "", "recent": []}
@@ -3620,9 +3654,30 @@ class H(BaseHTTPRequestHandler):
         ch = (parse_qs(urlparse(self.path).query).get("ch") or [""])[0]
         if not ch or ch == "main" or not chancfg.valid(ch): return None
         return ch if (p in CH_PATHS or p.startswith("/plan/") or p == "/settings") else None
+    def eng_proxy(self, method):
+        """/api/ch/<id>/… -> a theme station's own engine (Hype Radio's engine in channel mode): the panel works on it exactly
+        as on Hype Radio. Answers whatever it answers (JSON, CSV, audio …)."""
+        u = urlparse(self.path); m = re.match(r"^(?:/api)?/ch/([a-z][a-z0-9]{1,19})(/.*)$", u.path)
+        if not m or CH: return False
+        cid, rest = m.group(1), m.group(2) + ("?" + u.query if u.query else "")
+        cfg = chancfg.get(cid)
+        if not cfg or not cfg.get("engine"): self.send(404, {"ok": False, "error": "%s is not on Hype Radio's engine" % cid}); return True
+        body = self.rfile.read(int(self.headers.get("Content-Length") or 0)) if method == "POST" else None
+        hd = {k: v for k, v in self.headers.items() if k.lower() in ("content-type", "range", "x-file-name", "x-path", "x-section", "x-folder")}
+        try:
+            rq = urllib.request.Request("http://127.0.0.1:%d%s" % (chancfg.engine_port(cid), rest), data=body, method=method, headers=hd)
+            try: r = urllib.request.urlopen(rq, timeout=120)
+            except urllib.error.HTTPError as e: r = e
+            data = r.read(); self.send_response(r.status if hasattr(r, "status") else r.code)
+            for k, v in r.headers.items():
+                if k.lower() in ("content-type", "content-disposition", "content-range", "accept-ranges", "cache-control"): self.send_header(k, v)
+            self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
+        except Exception as e: self.send(503, {"ok": False, "error": "%s's engine is not reachable (%s)" % (cfg["name"], e)})
+        return True
     def do_GET(self):
         p = urlparse(self.path).path.replace("/api", "", 1)
         if p == "/channels": return self.chan_proxy("GET", "/status")
+        if p.startswith("/ch/") and self.eng_proxy("GET"): return
         TL.ch = self.ch_of(p)
         try: return self._do_GET()
         finally: TL.ch = None
@@ -3630,6 +3685,7 @@ class H(BaseHTTPRequestHandler):
         p = urlparse(self.path).path.replace("/api", "", 1)
         if p == "/channels/cmd":
             n = int(self.headers.get("Content-Length", 0)); return self.chan_proxy("POST", "/cmd", self.rfile.read(n))
+        if p.startswith("/ch/") and self.eng_proxy("POST"): return
         TL.ch = self.ch_of(p)
         try: return self._do_POST()
         finally: TL.ch = None
@@ -3803,7 +3859,7 @@ class H(BaseHTTPRequestHandler):
                 b = planner.api_padbanks(dbc()); played = {v.get("path"): v.get("played") for v in voice_state().values()}
                 for bk in b:
                     for it in bk["items"]:
-                        if it["path"].startswith("jingles/VOICE/"): it["voice"] = True; it["played"] = played.get(it["path"])
+                        if it["path"].startswith(VOICE_PFX): it["voice"] = True; it["played"] = played.get(it["path"])
                 return self.send(200, b)
             if p == "/live": return self.send(200, E.live.status())
             if p == "/guest_info":      # public (guest page): who am I, which other guests are on
@@ -4030,7 +4086,7 @@ def ensure_adbox():
 
 MEDIA_DIR = "/srv/hype/branding/media"
 MEDIA_SCENES = ["MEDIA FULL", "CAM 1 M", "CAM 1 2 M", "CAM 1 2 3 M", "CAM 1 M G", "CAM 1 2 3 M G", "M 1", "M 1 2", "M 1 2 3", "M 1 2 3 4", "CAM 1 M PIP", "M 1 LIVE MIX", "V M PIP"]   # M = the media window in place of the video; V M PIP = the music video big + media small
-MEDIA_CACHE = "/var/lib/hype/media_cache.json"
+MEDIA_CACHE = SP("/var/lib/hype/media_cache.json")
 _MC = {}
 def media_files():
     """Pictures and videos in branding/media, with length / sound / loudness (measured once per file)."""
@@ -4231,9 +4287,9 @@ def pre_diag(d):
     try:
         up = time.time() - float(subprocess.run(["systemctl", "show", "-p", "ActiveEnterTimestampMonotonic", "--value", "hype-obs"], capture_output=True, text=True, timeout=3).stdout.strip() or 0) / 1e6 - (time.time() - time.monotonic())
         d.update(t=round(time.time(), 2), obs_up_h=round(up / 3600, 1), load=os.getloadavg()[0])
-        with open("/var/lib/hype/preload_diag.jsonl", "a") as f: f.write(json.dumps(d) + "\n")
+        with open(SP("/var/lib/hype/preload_diag.jsonl"), "a") as f: f.write(json.dumps(d) + "\n")
     except Exception: pass
-STREAMS = "/var/lib/hype/streams.json"; STREAM_NOTE = {"t": 0, "text": ""}
+STREAMS = SP("/var/lib/hype/streams.json"); STREAM_NOTE = {"t": 0, "text": ""}
 MEDIA_VOL = {"v": 1.0}     # TV Media card → VOL (0 – 1.6, like the pads): media videos' sound + a live stream / the browser with Music off
 WEB_STREAM = {"id": "web", "name": "Browser", "url": "rtsp://127.0.0.1:8554/web"}
 def streams_load(saved_only=False):
@@ -4294,7 +4350,7 @@ def log_devices(log_, keep, window):
     return out
 ICE_ADMIN = {"t": 0, "auth": None}
 MP3_HITS = []     # (time, address, player) of every /radio.mp3 start (nginx mirrors it to /mp3hit; nothing waits on it)
-MP3_HITS_FILE = "/var/lib/hype/mp3hits.json"
+MP3_HITS_FILE = SP("/var/lib/hype/mp3hits.json")
 try: MP3_HITS.extend(tuple(h) for h in json.load(open(MP3_HITS_FILE)) if time.time() - h[0] < 7 * 86400)
 except Exception: pass
 def mp3_devices(mount="/radio.mp3"):
@@ -4326,7 +4382,7 @@ def tv_viewer_ips(window=40):
     """Different devices (address + player) that fetched TV stream pieces in the last `window` s (test link + stream.hyperadio.nl/tv/)."""
     return log_devices("/var/log/nginx/stream.access.log", lambda ln: " /tv/" in ln and ".ts" in ln, window)
 def hls_viewers(window=40): return len(tv_viewer_ips(window))
-VIEW = {"t": 0, "d": None}; VSTATS_FILE = "/var/lib/hype/viewers.json"
+VIEW = {"t": 0, "d": None}; VSTATS_FILE = SP("/var/lib/hype/viewers.json")
 VIEW_LOCK = threading.Lock(); LISTEN_LOCK = threading.Lock()   # one request at a time recounts (public /nowplaying: many at once)
 def viewers():
     """TV viewers on Hype Studio's own video stream (all players: website, app, TV apps, VLC …): now, peak today, unique today."""
@@ -4347,7 +4403,7 @@ def _viewers():
     except Exception: pass
     d = {"current": now_n, "peak_today": st["peak"], "peak_time": st["peak_t"], "unique_today": len(u)}
     VIEW.update(t=time.time(), d=d); return d
-AUD_DAYS = "/var/lib/hype/audience_days.json"
+AUD_DAYS = SP("/var/lib/hype/audience_days.json")
 def aud_archive(kind, st):
     """A finished day's numbers (peak + unique devices) are kept for the week report (90 days)."""
     if not st.get("day"): return
@@ -4460,7 +4516,7 @@ def streams_status(eng):
     except Exception: pass
     _ST.update(t=time.time(), d=d); return d
 LISTEN = {"t": 0, "d": None}
-LSTATS_FILE = "/var/lib/hype/listeners.json"
+LSTATS_FILE = SP("/var/lib/hype/listeners.json")
 def hls_radio_ips(window=30):
     """Devices (address + player) that fetched radio HLS pieces in the last `window` s."""
     return log_devices("/var/log/nginx/stream.access.log", lambda ln: " /r" in ln and ".ts " in ln, window)
@@ -4549,7 +4605,7 @@ def nowplaying_api():
     # only SONGS for the outside world (website, Hype Live, apps): while a jingle / sweeper / ad plays, "now playing" stays
     # the last song, and jingles are left out of the history and "next"
     rows = []
-    try: rows = dbc().execute("SELECT started, artist, title, folder, path FROM asrun WHERE path LIKE 'music/%' ORDER BY started DESC LIMIT 11").fetchall()
+    try: rows = dbc().execute("SELECT started, artist, title, folder, path FROM asrun WHERE path LIKE ? ORDER BY started DESC LIMIT 11", ("music%" if CH else "music/%",)).fetchall()
     except Exception: pass
     if n.get("section") != "music" and rows:
         r0 = rows[0]; n = {"artist": r0[1], "title": r0[2], "folder": r0[3], "section": "music", "started": r0[0], "path": r0[4]}
@@ -4611,6 +4667,7 @@ def rights_report(qs, as_csv):
 def hl_send_np(c, it):
     """Song info + sponsor proof of play to Hype Live (?hype_np=KEY, JSON). Only when switched on (Settings → 🛡 Alarm & Hype Live),
     because until go-live the public radio is still CLOSE."""
+    if CH: return            # a theme station: Hype Live / the website read its own now-playing feed
     try: g = json.load(open(GUARD_CONF))
     except Exception: return
     if not hl_key(g) or not (g.get("np") or (g.get("np_spots") and it.get("section") == "ads")): return
@@ -4632,7 +4689,7 @@ def hl_send_np(c, it):
     threading.Thread(target=go, daemon=True).start()
 
 # ---------------- automatic recordings (Settings → Auto recordings) ----------------
-AUTOREC_FILE = "/var/lib/hype/autorec.json"
+AUTOREC_FILE = SP("/var/lib/hype/autorec.json")
 def autorec_load():
     try: return json.load(open(AUTOREC_FILE))
     except Exception: return {"rules": []}
@@ -4703,12 +4760,13 @@ def autorec_save(d):
     return autorec_status()
 
 # ---------------- 🎙 voice messages from Hype Live → the VOICE pad bank ----------------
-VOICE_DIR = os.path.join(ROOT, "jingles", "VOICE"); VOICE_STATE = "/var/lib/hype/voice.json"; VOICE_DAYS = 14
+VOICE_DIR = os.path.join(ROOT, JDIR, "VOICE"); VOICE_STATE = "/var/lib/hype/voice.json"; VOICE_DAYS = 14
 VOICE_BANK = "🎙 VOICE"; VOICE_FAIL = {}
 def voice_state():
     try: return json.load(open(VOICE_STATE))
     except Exception: return {}
 def voice_save(st):
+    if CH: return            # Hype Radio's engine keeps the voices list (from Hype Live); a channel only reads it
     json.dump(st, open(VOICE_STATE + ".tmp", "w")); os.replace(VOICE_STATE + ".tmp", VOICE_STATE)
 def voice_when(v):
     try: return float(v)
@@ -4730,7 +4788,7 @@ def voice_drop(c, st, vid):
         except FileNotFoundError: pass
         c.execute("DELETE FROM pad_items WHERE path=?", (rel,)); c.execute("DELETE FROM items WHERE path=?", (rel,)); c.commit()
     log.info("voice: removed %s", vid)
-VOICE_PLAYS = "/var/lib/hype/voice_plays.json"; VOICE_TAKEN = []   # [(planned time, path, sender)] picked in the last minutes (one planning pass)
+VOICE_PLAYS = SP("/var/lib/hype/voice_plays.json"); VOICE_TAKEN = []   # [(planned time, path, sender)] picked in the last minutes (one planning pass)
 def voice_plays():
     try: return json.load(open(VOICE_PLAYS))
     except Exception: return {}
@@ -4768,16 +4826,16 @@ def voice_pick(c, at, max_len=None):
     VOICE_TAKEN[:] = [x for x in VOICE_TAKEN if now - x[3] < 600]
     st = voice_state(); pl = voice_plays()
     events = [(t, voice_who(v)) for v in st.values() for t in pl.get(v.get("path"), [])]
-    planned = {u.get("path") for u in (getattr(E, "plan", None) or []) if (u.get("path") or "").startswith("jingles/VOICE/") or (u.get("id_over") or "").startswith("jingles/VOICE/")}
+    planned = {u.get("path") for u in (getattr(E, "plan", None) or []) if (u.get("path") or "").startswith(VOICE_PFX) or (u.get("id_over") or "").startswith(VOICE_PFX)}
     planned |= {u.get("id_over") for u in (getattr(E, "plan", None) or []) if u.get("id_over")}
-    events += [(at, voice_who(voice_by_path(p))) for p in planned if p and p.startswith("jingles/VOICE/")]
+    events += [(at, voice_who(voice_by_path(p))) for p in planned if p and p.startswith(VOICE_PFX)]
     if not preview: events += [(x[0], x[2]) for x in VOICE_TAKEN]
     near = [w for t, w in events if abs(t - at) < 3600]
     if len(near) >= VOICE_AIR["per_hour"]: return None
     best = None
     for v in st.values():
         p = v.get("path")
-        if not v.get("air") or not p or p in planned or any(x[1] == p for x in VOICE_TAKEN) or v.get("station"): continue
+        if not v.get("air") or not p or p in planned or any(x[1] == p for x in VOICE_TAKEN) or (v.get("station") or None) != CH: continue
         if now - v.get("received", now) > VOICE_DAYS * 86400: continue
         n = len(pl.get(p, []))
         if n >= VOICE_AIR["max_plays"] or voice_who(v) in near: continue
@@ -4792,7 +4850,7 @@ def voice_pick(c, at, max_len=None):
 planner.VOICE_PICK = voice_pick
 
 # ---------------- Hype Live: sponsor deals, covers, weekly recap ----------------
-HL_SPONSORS = "/var/lib/hype/hl_sponsors.json"
+HL_SPONSORS = SP("/var/lib/hype/hl_sponsors.json")
 def hl_key(g, kind="write"):
     """Hype Live 2.40: read key (r…) for lists / files / sponsors / covers, write key (w…) for heartbeat, song link, acks,
     charts and the recap; the write key also reads. The old single key keeps working until it is switched off in Hype Live."""
@@ -4817,7 +4875,7 @@ def hl_call(param, extra="", data=None, timeout=20):
                                method="POST" if data is not None else "GET")
     return urllib.request.urlopen(r, timeout=timeout).read(2_000_000).decode("utf-8", "replace")
 # ---------------- listener photos & videos (approved in Hype Live) -> MEDIA pads ----------------
-MEDIA_IN = "/var/lib/hype/media_in.json"; MEDIA_LINK = {"t": 0, "ok": None, "error": "", "n": 0}; MEDIA_FAIL = {}
+MEDIA_IN = SP("/var/lib/hype/media_in.json"); MEDIA_LINK = {"t": 0, "ok": None, "error": "", "n": 0}; MEDIA_FAIL = {}
 def media_in_state():
     try: return json.load(open(MEDIA_IN))
     except Exception: return {}
@@ -5010,7 +5068,7 @@ def hl_open(url, timeout=60):
     return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "HypeStudio/1"}), timeout=timeout)
 
 # ---------------- Hype Top 10 -> Hype Live (for the website chart) ----------------
-TOP10_SENT = "/var/lib/hype/top10_sent.json"
+TOP10_SENT = SP("/var/lib/hype/top10_sent.json")
 def chart_show_at(name):
     """The next start of the show this chart belongs to ('Hype Top 10' -> a show with 'Top 10' in its name), or 0."""
     m = re.search(r"top\s*\d+", name or "", re.I); key = re.sub(r"\s+", "", (m.group(0) if m else name or "")).lower(); now = time.time()
@@ -5094,7 +5152,7 @@ def top10_loop():
                 if e.code != 404: log.warning("chart %s -> Hype Live: %s", name, e)
             except Exception as e: log.warning("chart %s -> Hype Live: %s", name, e)
 
-RECAP_SENT = "/var/lib/hype/recap_sent.json"
+RECAP_SENT = SP("/var/lib/hype/recap_sent.json")
 def recap_data(w=1):
     """Last week's playout summary for Hype Live's weekly recap (top songs / artists / new music / genres, live hours, peaks)."""
     import datetime as D, collections as C
@@ -5167,8 +5225,8 @@ def sponsors_loop():
         time.sleep(600)
 
 # ---------------- Hype Live 2.41: one sync call a minute (in the guard's heartbeat) + ⚡ poke ----------------
-HL_SYNC, HL_KNOWN, HL_ACKS = "/var/lib/hype/hl_sync.json", "/var/lib/hype/hl_known.json", "/var/lib/hype/hl_acks.json"
-HL_POKE, HL_SCHED, HL_WANT = "/var/lib/hype/hl_poke", "/var/lib/hype/hl_schedule_version", "/var/lib/hype/hl_want_covers.json"
+HL_SYNC, HL_KNOWN, HL_ACKS = SP("/var/lib/hype/hl_sync.json"), SP("/var/lib/hype/hl_known.json"), SP("/var/lib/hype/hl_acks.json")
+HL_POKE, HL_SCHED, HL_WANT = SP("/var/lib/hype/hl_poke"), SP("/var/lib/hype/hl_schedule_version"), SP("/var/lib/hype/hl_want_covers.json")
 def sync_covers(cv):
     """Covers from the sync answer ('artist|title' -> {url, fixed, none, pending}): saved like the old cover calls."""
     for key, v in (cv or {}).items():
@@ -5367,7 +5425,7 @@ def shutil_disk(p):
 
 HS_WD = {"last": 0, "fix": 0}
 PAGES_MT = {}
-RELOAD_REQ = "/var/lib/hype/reload_pages"; RELOAD_BTN = "/var/lib/hype/reload_pages_btn"
+RELOAD_REQ = SP("/var/lib/hype/reload_pages"); RELOAD_BTN = SP("/var/lib/hype/reload_pages_btn")
 def reload_changed_pages():
     """After an update of the graphics pages (Graphics / Ad box), OBS reloads them by itself (no old page in memory)."""
     # + a reload of ALL pages (also the website ones: Live Layer, Hype Screen) when asked: the panel button (RELOAD_BTN) or an
@@ -5409,6 +5467,7 @@ def loop():
     while True:
         try: E.tick()
         except Exception as e: log.warning("tick: %s", e)
+        if CH: time.sleep(1); continue           # a theme station: no TV / screens / pages
         if int(time.time()) % 15 == 0:
             try: E.screen.tick()
             except Exception as e: log.warning("screen tick: %s", e)
@@ -5425,6 +5484,17 @@ def loop():
             except Exception as e: log.warning("resync: %s", e)
         time.sleep(1)
 
+def main_channel():
+    """Channel mode: only what plays (clock, queue, mixing, pads, IDs over intros, AGC, meter) + the panel API."""
+    log.info("Hype Radio's engine for %s (radio engine :%d, API :%d)", CHC["name"], LIQ_PORT, API_PORT)
+    try: E.liq.cmd("radio.clear")
+    except Exception: pass
+    threading.Thread(target=loop, daemon=True).start()
+    threading.Thread(target=meter_loop, daemon=True).start()
+    threading.Thread(target=agc_loop, daemon=True).start()
+    ThreadingHTTPServer(("127.0.0.1", API_PORT), H).serve_forever()
+
+if __name__ == "__main__" and CH: main_channel()
 if __name__ == "__main__":
     try: E.liq.cmd("radio.clear")   # start clean: the engine decides what comes next
     except Exception: pass
@@ -5448,4 +5518,4 @@ if __name__ == "__main__":
     threading.Thread(target=hypeweb.watch, args=(lambda: bool(E.media.cur and E.media.cur.get("file") == "live:web"),), daemon=True).start()
     # (charts go to the website only when you press Publish in the chart – no automatic sending any more)
     threading.Thread(target=watch_show, daemon=True).start()
-    ThreadingHTTPServer(("127.0.0.1", 8090), H).serve_forever()
+    ThreadingHTTPServer(("127.0.0.1", API_PORT), H).serve_forever()

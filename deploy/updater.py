@@ -99,7 +99,7 @@ def deploy(cur, new):
             sh("systemctl reload nginx")
         late = [u for u in ("hype-engine", "hype-radio", "hype-updater") if u in us]
         for u in [u for u in us if u not in ("daemon-reload", "nginx-reload") and u not in late] + [u for u in late if u != "hype-updater"]:
-            log("restart", u); sh(f"systemctl restart {u}", 90)
+            log("restart", u); sh(f"systemctl restart '{u}'" if "*" in u else f"systemctl restart {u}", 90)   # hype-engine@* = the theme stations on Hype Radio's engine (only the running ones)
         return us
     open(PAUSE, "w").close()
     try:
@@ -107,7 +107,7 @@ def deploy(cur, new):
         # 4. check
         if [u for u in units if u not in ("daemon-reload", "nginx-reload", "hype-updater")]:
             time.sleep(45)
-        bad = [u for u in units if u.startswith("hype-") and u != "hype-updater" and sh(f"systemctl is-active {u}")[1] != "active"]
+        bad = [u for u in units if u.startswith("hype-") and u != "hype-updater" and "*" not in u and sh(f"systemctl is-active {u}")[1] != "active"]
         try: g = json.load(open("/var/lib/hype/guard.json")); gok = time.time() - g.get("t", 0) < 30
         except Exception: g, gok = {}, False
         if "hype-radio" in units and gok and (g.get("level") or 0) < 0.01:

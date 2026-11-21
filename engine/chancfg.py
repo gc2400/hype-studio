@@ -42,7 +42,7 @@ def load():
 
 
 def save(chs):
-    keep = [{k: c[k] for k in ("id", "name", "color", "enabled", "telnet", "genre", "join_live") if k in c} for c in chs]
+    keep = [{k: c[k] for k in ("id", "name", "color", "enabled", "telnet", "genre", "join_live", "engine") if k in c} for c in chs]
     tmp = CFG + ".tmp"
     with open(tmp, "w") as f: json.dump(keep, f, indent=1)
     os.replace(tmp, CFG)
@@ -60,12 +60,33 @@ def valid(ch):
 
 def db_path(ch):
     if not ID_RE.match(ch or ""): raise ValueError("bad channel")
+    if os.environ.get("HYPE_CHDB") and os.environ.get("HYPE_CH") == ch: return os.environ["HYPE_CHDB"]     # a test copy (side test)
     return os.path.join(DATA, "chan_%s.db" % ch)
+
+
+def engine_port(ch):
+    """A theme station on Hype Radio's engine (channel mode, hype-engine@<id>): its API port, 8800 + n (Ambiente 8801, Latina 8802)."""
+    c = get(ch)
+    return 8800 + int(c["telnet"]) - 1300 if c else None
 
 
 def fold(s):
     import unicodedata
     return "".join(x for x in unicodedata.normalize("NFKD", str(s or "")) if not unicodedata.combining(x)).lower()
+
+
+_COLS = []
+def write_through(c):
+    """Song edits made on a theme station (cue points, rename, mode, delete …) go to the shared library, as on Hype Radio:
+    the view "items" passes UPDATE / DELETE / INSERT on to lib.items."""
+    if not _COLS: _COLS.extend(r[1] for r in c.execute("PRAGMA lib.table_info(items)"))
+    cols = [x for x in _COLS if x != "rowid"]
+    q = lambda x: '"%s"' % x
+    c.execute("CREATE TEMP TRIGGER IF NOT EXISTS items_upd INSTEAD OF UPDATE ON items BEGIN UPDATE lib.items SET %s WHERE rowid = (SELECT rowid FROM lib.items WHERE path = OLD.path LIMIT 1); END"
+              % ", ".join("%s = NEW.%s" % (q(x), q(x)) for x in cols))
+    c.execute("CREATE TEMP TRIGGER IF NOT EXISTS items_del INSTEAD OF DELETE ON items BEGIN DELETE FROM lib.items WHERE path = OLD.path; END")
+    c.execute("CREATE TEMP TRIGGER IF NOT EXISTS items_ins INSTEAD OF INSERT ON items BEGIN INSERT INTO lib.items(%s) VALUES(%s); END"
+              % (", ".join(map(q, cols)), ", ".join("NEW.%s" % q(x) for x in cols)))
 
 
 _INIT = set()
@@ -76,6 +97,7 @@ def connect(ch):
     c.create_function("fold", 1, fold, deterministic=True)
     c.execute("ATTACH DATABASE ? AS lib", (LIB,))
     c.execute("CREATE TEMP VIEW IF NOT EXISTS items AS SELECT * FROM lib.items")
+    write_through(c)
     if ch not in _INIT:
         try: c.execute("PRAGMA journal_mode=WAL")
         except sqlite3.OperationalError: pass
