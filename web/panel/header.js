@@ -27,6 +27,9 @@
 html{scrollbar-gutter:stable}
 #hhead{position:sticky;top:0;z-index:60;background:#061423;box-sizing:border-box;width:100%;padding:10px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;font-family:Inter,system-ui,sans-serif;color:#F2F6FA;border-bottom:1px solid #102A42}
 #hhead .hb{display:flex;align-items:center;gap:10px;flex:none;position:relative}#hhead .hb img{width:40px;height:40px}
+#hhead .chsw #chLogo{width:40px;height:40px;border-radius:50%;flex:none;transition:transform .15s}#hhead .chsw:hover #chLogo{transform:scale(1.06)}
+#hhead .chsw{padding:3px 10px 3px 3px!important;border-radius:999px!important;gap:10px!important}
+#hhead .chmenu .cml{width:28px;height:28px;border-radius:50%;flex:none}#hhead .chmenu button{gap:10px!important;padding:7px 10px!important}
 #hhead .chsw{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:1px solid transparent;background:transparent;color:#F2F6FA;border-radius:10px;padding:4px 8px;font:900 17px Inter,system-ui,sans-serif;white-space:nowrap}
 #hhead .chsw:hover,#hhead .chsw[aria-expanded=true]{background:#0F2B44;border-color:#23496B}#hhead .chsw .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .cd.lg{width:24px!important;height:24px!important}#hhead .chsw .car{font-size:11px;color:#A9BCCD}
 #hhead .chmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:90;min-width:250px;background:#0B2236;border:1px solid #23496B;border-radius:14px;padding:6px;box-shadow:0 18px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:2px}
@@ -78,6 +81,15 @@ html[data-station] .card.hi{border-color:var(--line2)}
 #hhead .hpop .r span{color:#A9BCCD}#hhead .hpop .r b{text-align:right;font-weight:700}
 #hhead .hpop .ok{color:#3DDC97}#hhead .hpop .bad{color:#FF4D5E}#hhead .hpop .big{font:800 20px ui-monospace,Menlo,Consolas,monospace;color:#FFE000}
 #hhead .hpop .note{color:#7F96AB;font-size:11px;margin-top:8px}
+#hhead .hpop .hptiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:4px}
+#hhead .hpop .hpt{position:relative;background:#071A2B;border:1px solid #17344F;border-radius:10px;padding:8px 9px 7px;overflow:hidden;cursor:default}
+#hhead .hpop .hpt>i{position:absolute;left:0;top:0;right:0;height:3px}
+#hhead .hpop .hpn{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:#D3DEE8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hhead .hpop .hpd{width:7px;height:7px;border-radius:50%;flex:none;background:#55697D}#hhead .hpop .hpd.ok{background:#3DDC97}#hhead .hpop .hpd.bad{background:#FF4D5E}
+#hhead .hpop .hpv{font:800 24px/1.1 ui-monospace,Menlo,Consolas,monospace;color:#FFE000;margin-top:4px}
+#hhead .hpop .hpp{font-size:10.5px;color:#7F96AB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hhead .hpop .big.sm{font-size:14px}#hhead .hpop .warn{color:#FFB547}
+#hhead .hpop .hlc{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}#hhead .hpop .hlc i{font-style:normal;font-size:12px;cursor:default}#hhead .hpop .hlc i.ok{color:#3DDC97}#hhead .hpop .hlc i.warn{color:#FFB547}
 #hhead #stRadio,#hhead #stTv{display:inline-block;width:18px;height:18px;padding:0;border-radius:50%;font-size:0;background:#55697D;border:0;margin:0}
 #hhead #stRadio[data-n],#hhead #stTv[data-n],#hhead #stLog[data-n]{width:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font:800 11px/18px Inter,system-ui,sans-serif;color:#061423;text-align:center;box-sizing:border-box}
 #hhead #stRadio.bad[data-n],#hhead #stTv.bad[data-n],#hhead #stLog.bad[data-n]{color:#fff}
@@ -107,7 +119,7 @@ html[data-station] .card.hi{border-color:var(--line2)}
 #hhead .menu{display:none;cursor:pointer;border:1px solid #23496B;background:#0F2B44;color:#F2F6FA;border-radius:10px;width:44px;height:40px;font-size:20px;line-height:1}
 @media (max-width:1180px){#hhead .hnav a{padding:9px 9px;font-size:12px}#hhead .show{display:none}}
 @media (max-width:1180px){#hhead .chsw{font-size:14px;padding:4px 6px}}@media (max-width:600px){#hhead #chName{display:none}#hhead .chmenu{min-width:220px}
-  #hhead .chsw{display:none}#hhead .hb img{cursor:pointer}
+  #hhead .chsw{padding:2px!important}#hhead .chsw .car{display:none}#hhead .chsw #chLogo{width:32px;height:32px}
   #hhead #stRadio,#hhead #stTv{width:16px;height:16px}
   #hhead #stRadio[data-n],#hhead #stTv[data-n],#hhead #stLog[data-n],#hhead .stch{min-width:16px;height:16px;padding:0 4px;font-size:10px;line-height:16px}
   #hhead .stch.off{width:16px;padding:0}#hhead .hdots{gap:3px!important;padding:4px 4px!important}
@@ -147,7 +159,7 @@ html[data-station] .card.hi{border-color:var(--line2)}
   document.head.appendChild(st);
   const h = document.getElementById('hhead'); if (!h) return;
   document.body.insertBefore(h, document.body.firstChild);
-  h.innerHTML = `<div class="hb"><img src="/panel/logo.png" alt="Hype radio tv"><button class="chsw" id="chSw" aria-haspopup="menu" aria-expanded="false" title="The channel you work on"><i class="cd" style="background:#05A9C6"></i><span id="chName">Hype Radio</span><span class="car">▾</span></button><div class="show" id="show" hidden>Hype Studio</div><div class="chmenu" id="chMenu" role="menu" hidden></div></div>
+  h.innerHTML = `<div class="hb"><button class="chsw" id="chSw" aria-haspopup="menu" aria-expanded="false" title="Switch station"><img id="chLogo" src="${(() => { try { const c = localStorage.getItem('hypeCh') || 'main'; return c === 'main' ? '/panel/logo.png' : '/panel/ch-' + c + '.png'; } catch (e) { return '/panel/logo.png'; } })()}" alt=""><span id="chName">${(() => { try { const c = localStorage.getItem('hypeCh') || 'main'; return c === 'main' ? 'Hype Radio' : 'Hype ' + c.charAt(0).toUpperCase() + c.slice(1); } catch (e) { return 'Hype Radio'; } })()}</span><span class="car">▾</span></button><div class="show" id="show" hidden>Hype Studio</div><div class="chmenu" id="chMenu" role="menu" hidden></div></div>
     <div class="hctl"><span class="modes" role="group" aria-label="Programming"><button class="btn sm" id="${A}">AUTO</button><button class="btn sm" id="${M}">MANUAL</button></span>
       <span class="modes" role="tablist" aria-label="Mode"><button class="btn sm" data-mode="onair">ON AIR</button><button class="btn sm" data-mode="dj">DJ</button><button class="btn sm" data-mode="live">LIVE</button></span></div>
     <div class="hst"><button class="hdots" id="hDots" aria-haspopup="dialog" aria-expanded="false" title="Streams, listeners and viewers"><span class="chip" id="stRadio">● RADIO</span><span class="chip" id="stTv">● TV</span><span id="stChs" style="display:contents"></span><span class="chip" id="stLog">● LOG</span></button><a class="chip" id="stClock" href="/panel/plan.html" title="The hour plan that plays now – click: Planning">–</a><span id="clock">${hNow()}</span>
@@ -171,9 +183,9 @@ html[data-station] .card.hi{border-color:var(--line2)}
   // on every page, so nothing stays "Hype Radio blue" on Hype Latina / Hype Ambiente (the website's station colours)
   const SKIN = {
     latina: {'#071a2b': '#170F12', '#0f2b44': '#261B1F', '#0b2236': '#1D1518', '#17344f': '#3A252C', '#23496b': '#4A3038', '#05a9c6': '#FFB23F',
-             '#062f38': '#2A1A1F', '#061423': '#0F0A0C', '#ffe000': '#FFB23F', '#2b2500': '#3A2510', '#04121f': '#0F0A0C', '#0a1e30': '#1D1518'},
+             '#062f38': '#2A1A1F', '#061423': '#0F0A0C', '#ffe000': '#FFB23F', '#2b2500': '#3A2510', '#04121f': '#0F0A0C', '#0a1e30': '#1D1518', '#143049': '#2E1C22'},
     ambiente: {'#071a2b': '#0B1426', '#0f2b44': '#15233F', '#0b2236': '#0F1A30', '#17344f': '#23395F', '#23496b': '#2D4774', '#05a9c6': '#4FC3F0',
-               '#062f38': '#0E2A44', '#061423': '#070D1A', '#04121f': '#070D1A', '#0a1e30': '#0F1A30', '#ffe000': '#4FC3F0', '#2b2500': '#0E2A44'}};
+               '#062f38': '#0E2A44', '#061423': '#070D1A', '#04121f': '#070D1A', '#0a1e30': '#0F1A30', '#ffe000': '#4FC3F0', '#2b2500': '#0E2A44', '#143049': '#17284A'}};
   function skinSheets() {
     const m0 = SKIN[CH]; if (!m0) return;
     const map = {};      // the browser gives colours back as rgb(…), not as written: match both
@@ -195,16 +207,16 @@ html[data-station] .card.hi{border-color:var(--line2)}
   const chSw = h.querySelector('#chSw'), chMenu = h.querySelector('#chMenu'); let CHS = [{id: 'main', name: 'Hype Radio', color: '#05A9C6', enabled: true, running: true}];
   function chPaint() {
     const c = CHS.find(x => x.id === CH) || CHS[0];
-    const cd = chSw.querySelector('.cd'); cd.style.background = c.logo ? `center/cover url(${c.logo})` : c.color; cd.classList.toggle('lg', !!c.logo); h.querySelector('#chName').textContent = c.name;
-    chMenu.innerHTML = CHS.map(x => `<button role="menuitemradio" aria-checked="${x.id === CH}" class="${x.id === CH ? 'cur' : ''}" data-ch="${x.id}"><i class="cd${x.logo ? ' lg' : ''}" style="background:${x.logo ? `center/cover url(${x.logo})` : x.color}"></i>${x.name}<small>${x.id === 'main' ? 'main' : x.down ? 'service off' : !x.enabled ? 'off' : x.running ? 'on air' : 'starting'}</small></button>`).join('');
+    const lg = c.id === 'main' ? '/panel/logo.png' : (c.logo || '/panel/logo.png'); if (!h.querySelector('#chLogo').src.endsWith(lg)) h.querySelector('#chLogo').src = lg;
+    h.querySelector('#chName').textContent = c.name;
+    chMenu.innerHTML = CHS.map(x => `<button role="menuitemradio" aria-checked="${x.id === CH}" class="${x.id === CH ? 'cur' : ''}" data-ch="${x.id}"><img class="cml" src="${x.id === 'main' ? '/panel/logo.png' : (x.logo || '/panel/logo.png')}" alt="">${x.name}<small>${x.id === 'main' ? 'main' : x.down ? 'service off' : !x.enabled ? 'off' : x.running ? 'on air' : 'starting'}</small></button>`).join('');
     chMenu.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => {
       const to = b.dataset.ch; try { localStorage.setItem('hypeCh', to); } catch (e) {}
       const page = location.pathname.split('/').pop() || 'index.html';
       location.href = (to === 'main' && page === 'channel.html') ? '/panel/' : (to !== 'main' && (page === '' || page === 'index.html' || location.pathname === '/panel/')) ? '/panel/channel.html' : location.pathname + location.search; });
   }
   chSw.onclick = e => { e.stopPropagation(); const o = chMenu.hidden; chMenu.hidden = !o; chSw.setAttribute('aria-expanded', o); };
-  // phone: the channel switch button is hidden to keep the header on one line – tap the Hype logo instead
-  h.querySelector('.hb img').addEventListener('click', e => { if (getComputedStyle(chSw).display !== 'none') return; e.stopPropagation(); chMenu.hidden = !chMenu.hidden; });
+
   document.addEventListener('click', e => { if (!chMenu.hidden && !chMenu.contains(e.target)) { chMenu.hidden = true; chSw.setAttribute('aria-expanded', false); } });
   const chLoad = () => fetch('/api/channels', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(d => { if (d && d.channels) { CHS = [CHS[0], ...d.channels]; if (!CHS.some(x => x.id === CH)) { CH = 'main'; try { localStorage.setItem('hypeCh', 'main'); } catch (e) {} } chPaint(); } }).catch(() => {});
   chPaint(); chLoad(); setInterval(() => { if (!document.hidden) chLoad(); }, 30000);
@@ -230,36 +242,33 @@ html[data-station] .card.hi{border-color:var(--line2)}
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
   const yes = (v, a, b) => v ? '<b class="ok">● ' + a + '</b>' : '<b class="bad">● ' + b + '</b>';
   function popRender(d) {
-    const r = d.radio || {}, t = d.tv || {}, p = d.public || {}, sv = d.server || {};
-    pop.innerHTML = `<h4>Radio</h4>
-      <div class="r"><span>Playout</span>${yes(r.on_air, 'on air', 'stopped')}</div>
-      <div class="r"><span>Hype Studio stream (MP3 ${r.kbps || '–'}k)</span>${yes(r.ok, 'live', 'down')}</div>
-      <div class="r"><span>Own streams now (MP3 + HLS)</span><b class="big">${d.own ? d.own.current : '–'}</b></div>
-      <div class="r"><span>· MP3 / HLS · peak today</span><b>${d.own ? d.own.mp3 + ' / ' + d.own.hls + ' · ' + d.own.peak_today : '–'}</b></div>
-      <div class="r"><span>Public radio (Streamerr) now</span><b class="big">${p.ok ? p.listeners : '–'}</b></div>
-      ${(d.channels || []).map(c => { const o = c.own || {}; return `<h4 style="color:${esc(c.color)}">${esc(c.name)}</h4>
-      <div class="r"><span>Playout</span>${!c.enabled ? '<b style="color:#8FA3B8">● switched off</b>' : c.sim ? '<b class="ok">● live from Hype Radio</b>' : yes(c.running, 'on air', 'not running')}</div>
-      ${c.enabled ? `<div class="r"><span>Stream (MP3 ${c.kbps || '–'}k · HLS)</span>${yes(c.stream && c.hls, 'live', c.stream ? 'HLS down' : 'down')}</div>
-      <div class="r"><span>Own streams now (MP3 + HLS)</span><b class="big">${o.current ?? '–'}</b></div>
-      <div class="r"><span>· MP3 / HLS · peak today</span><b>${o.current != null ? o.mp3 + ' / ' + o.hls + ' · ' + o.peak_today : '–'}</b></div>
-      ${c.now ? `<div class="r"><span>Now</span><b>${esc(c.now)}</b></div>` : ''}` : ''}`; }).join('')}
+    const r = d.radio || {}, t = d.tv || {}, p = d.public || {}, sv = d.server || {}, g = d.guard || {}, o = d.own || {};
+    // listening now: one tile per station (status dot · listeners now · peak today); details on hover
+    const tile = (name, color, state, now, peak, tip, extra) => `<div class="hpt" title="${esc(tip)}"><i style="background:${color}"></i>
+      <div class="hpn"><span class="hpd ${state}"></span>${esc(name)}</div><div class="hpv">${now ?? '–'}</div><div class="hpp">peak ${peak ?? '–'}${extra || ''}</div></div>`;
+    const tiles = [tile('Hype Radio', '#05A9C6', r.on_air && r.ok ? 'ok' : 'bad', o.current, o.peak_today,
+        `Playout ${r.on_air ? 'on air' : 'stopped'} · stream ${r.ok ? 'live' : 'down'} (MP3 ${r.kbps || '–'}k) · MP3 ${o.mp3 ?? '–'} / HLS ${o.hls ?? '–'}`,
+        p.ok && p.listeners ? ` · +${p.listeners} Streamerr` : '')]
+      .concat((d.channels || []).map(c => { const q = c.own || {}, st = !c.enabled ? 'off' : (c.running && c.stream && c.hls) ? 'ok' : 'bad';
+        return tile(c.name.replace(/^Hype /, ''), c.color, st, c.enabled ? q.current : '–', c.enabled ? q.peak_today : '–',
+          !c.enabled ? 'Switched off' : `${c.sim ? 'Live from Hype Radio' : c.running ? 'On air' : 'NOT running'} · stream ${c.stream ? 'live' : 'down'}${c.hls ? '' : ' · HLS down'} · MP3 ${q.mp3 ?? '–'} / HLS ${q.hls ?? '–'}${c.now ? ' · now: ' + c.now : ''}`); }));
+    const dot = (ok, warn) => `<b class="${ok ? 'ok' : warn ? 'warn' : 'bad'}">●</b>`;
+    const hl = [['sync', g.sync && g.sync.active, 'Sync: one call a minute + ⚡ poke'],
+                ['ping', g.tick && g.tick.ok === true, 'Clock ping every minute' + (g.tick && g.tick.ok === false ? ' – failing ' + (g.tick.fails || 0) + '×: ' + (g.tick.error || '') : '')],
+                ['media', g.media_link && g.media_link.ok && g.media_link.age < 120, 'Media link' + (g.media_link && g.media_link.ok ? ': ' + g.media_link.n + ' listener photos/videos' : ': ' + ((g.media_link && g.media_link.error) || 'not connected'))],
+                ['alarm', g.heartbeat && g.heartbeat.ok, 'Alarm link' + (g.heartbeat && g.heartbeat.ok ? ' connected' : ': ' + ((g.heartbeat && g.heartbeat.answer) || 'off'))]];
+    const probs = (g.problems || []).map(x => esc(x.text)).join(' · ');
+    const last = (g.events || []).filter(e => e.level !== 'ok')[0];
+    pop.innerHTML = `<h4>Listening now</h4><div class="hptiles">${tiles.join('')}</div>
       <h4>TV</h4>
-      <div class="r"><span>OBS streaming</span>${yes(t.obs, 'yes', 'no')}</div>
-      <div class="r"><span>TV stream (HLS)</span>${t.seg_age == null ? '<b class="bad">● no pieces</b>' : yes(t.seg_age < 8, 'live · ' + t.seg_age + ' s', 'late · ' + t.seg_age + ' s')}</div>
-      <div class="r"><span>Viewers on this stream</span><b class="big">${t.viewers ?? '–'}</b></div>
+      <div class="r"><span>Stream</span><b>${!t.obs ? '<b class="bad">● OBS not streaming</b>' : t.seg_age == null ? '<b class="bad">● no pieces</b>' : t.seg_age < 8 ? '<b class="ok">● live</b>' : '<b class="bad">● late ' + t.seg_age + ' s</b>'} · <span class="big sm">${t.viewers ?? '–'}</span> watching</b></div>
       <div class="r"><span>Scene</span><b>${esc(t.scene || '–')}</b></div>
-      <h4>Guard · alarm</h4>
-      <div class="r"><span>Self-repair</span>${!d.guard || !d.guard.fresh ? '<b class="bad">● not running</b>' : (d.guard.problems || []).length ? '<b class="bad">● ' + d.guard.problems.map(x => esc(x.text)).join(' · ') + '</b>' : '<b class="ok">● all OK</b>'}</div>
-      <div class="r"><span>Hype Live sync</span>${d.guard && d.guard.sync && d.guard.sync.active ? '<b class="ok">● one call a minute + ⚡ poke</b>' : '<b style="color:#8FA3B8">● old polls (Hype Live before 2.41)</b>'}</div>
-      <div class="r"><span>Hype Live clock ping</span>${d.guard && d.guard.tick && d.guard.tick.ok === true ? '<b class="ok">● every minute</b>' : d.guard && d.guard.tick && d.guard.tick.ok === false ? '<b style="color:#FFB547">● failing ' + (d.guard.tick.fails || 0) + '× – ' + esc(d.guard.tick.error || '') + '</b>' : '<b style="color:#8FA3B8">● ' + esc((d.guard && d.guard.tick && d.guard.tick.error) || 'not yet') + '</b>'}</div>
-      <div class="r"><span>Hype Live media link</span>${d.guard && d.guard.media_link && d.guard.media_link.ok && d.guard.media_link.age < 120 ? '<b class="ok">● ' + d.guard.media_link.n + ' listener photos/videos</b>' : '<b style="color:#FFB547">● ' + esc((d.guard && d.guard.media_link && d.guard.media_link.error) || 'not checked yet') + '</b>'}</div>
-      <div class="r"><span>Hype Live alarm link</span>${d.guard && d.guard.heartbeat && d.guard.heartbeat.ok ? '<b class="ok">● connected</b>' : '<b style="color:#FFB547">● ' + esc((d.guard && d.guard.heartbeat && d.guard.heartbeat.answer) || 'off') + '</b>'}</div>
-      ${d.guard && (d.guard.events || []).filter(e => e.level !== 'ok').length ? '<div class="note">Last: ' + esc(d.guard.events.filter(e => e.level !== 'ok')[0].text) + '</div>' : ''}
-      <h4>Server</h4>
-      <div class="r"><span>Load</span><b>${sv.load ?? '–'} / ${sv.cpus ?? '–'} cores</b></div>
-      <div class="r"><span>Free on /srv</span><b>${sv.disk_free_gb ?? '–'} GB</b></div>
-      ${sv.reboot ? `<div class="r"><span>Reboot</span><b style="color:#FFB547">● needed since ${new Date(sv.reboot.since * 1000).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'})} – planned monthly, together</b></div>` : ''}
-      <div class="note">The public radio still runs via Streamerr; once Hype Studio's own streams are live, all numbers come from here.</div>`;
+      <h4>Health</h4>
+      <div class="r"><span>Self-repair</span>${!g.fresh ? '<b class="bad">● not running</b>' : probs ? '<b class="bad">● ' + probs + '</b>' : '<b class="ok">● all OK</b>'}</div>
+      <div class="r"><span>Hype Live</span><b class="hlc">${hl.map(([k, ok, tip]) => `<i class="${ok ? 'ok' : 'warn'}" title="${esc(tip)}">● ${k}</i>`).join('')}</b></div>
+      <div class="r"><span>Server</span><b>load ${sv.load ?? '–'} / ${sv.cpus ?? '–'} · ${sv.disk_free_gb ?? '–'} GB free</b></div>
+      ${sv.reboot ? `<div class="r"><span>Reboot</span><b class="warn">● needed since ${new Date(sv.reboot.since * 1000).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'})}</b></div>` : ''}
+      ${last ? '<div class="note">Last problem: ' + esc(last.text) + '</div>' : ''}`;
   }
   let popT = null;
   // "Needs you" from Hype Live (messages / photos / voices / videos / forms waiting) as a badge on the Hype Live link
