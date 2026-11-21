@@ -477,3 +477,4 @@
 2026-11-20T23:22:19 ok 04d4980d Theme channels: one HLS encoder per channel – the handover took over the radio engine but started a second HLS encoder each time (jumbled app / website stream)
 2026-11-21T00:50:01 ok cc9d56be Theme channels rotation: no 'new song, then a familiar one' rule on a new channel (it replayed songs every other pick); moves in FileZilla keep the channels' play history
 2026-11-21T01:02:20 ok e1e9e9ca Station skin: Hype Radio's built-in page colours (blues, cyan, yellow) become the station's on every page
+2026-11-21T01:03:24 ok cdb8f868 Station skin Ambiente: selected buttons light blue (#4FC3F0) instead of Hype yellow, like Latina's orange

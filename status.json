@@ -1,17 +1,17 @@
 {
- "time": "2026-11-21T01:02:20",
+ "time": "2026-11-21T01:03:24",
  "result": "ok",
- "commit": "e1e9e9ca95895b22ff6facbb99b7ce58bd10cfbc",
- "subject": "Station skin: Hype Radio's built-in page colours (blues, cyan, yellow) become the station's on every page",
+ "commit": "cdb8f868894e7771cc8554e11a4302c8ea5ff5f4",
+ "subject": "Station skin Ambiente: selected buttons light blue (#4FC3F0) instead of Hype yellow, like Latina's orange",
  "log": [
-  "01:02:20 update cc9d56be \u2192 e1e9e9ca \u00b7 1 file(s): web/panel/header.js",
-  "01:02:20 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "01:03:24 update e1e9e9ca \u2192 cdb8f868 \u00b7 1 file(s): web/panel/header.js",
+  "01:03:24 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Davido x Mayorkun x FOLA \u2013 B4 B4",
-  "listeners": 3,
+  "listeners": 14,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
