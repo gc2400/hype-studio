@@ -715,6 +715,9 @@ output.icecast(%%mp3(bitrate=128, samplerate=44100, stereo=true), host="127.0.0.
 output.dummy(fx)
 output.dummy(ret)
 output.dummy(ret2)
+# the TV bus (TV blocks: Hype Radio's engine crossfades this station's "tv_vol" up and Hype Radio's down; never saved = 0 after a restart)
+tv_vol = interactive.float("tv_vol", min=0., max=1., description="this station on the TV (TV block)", 0.)
+output.pulseaudio(device="hype_air", clock_safe=false, amplify(override=null(), tv_vol, s))
 """ % {"id": cid, "name": q(cfg["name"]), "genre": q(cfg.get("genre") or "")}
     return "# GENERATED from radio.liq by hype-channels for %s – do not edit\n" % cid + t
 
