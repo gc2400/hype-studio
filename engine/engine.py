@@ -1114,7 +1114,7 @@ class Engine:
         planner.init_pads(c0); planner.init_screen(c0); self.screen = Screen()
         try: c0.execute("ALTER TABLE items ADD COLUMN mix_set INT DEFAULT 0"); c0.commit()    # 1 = MIX set by hand (smart mix leaves it alone)
         except sqlite3.OperationalError: pass
-        c0.execute("UPDATE items SET mtime=0 WHERE (folder LIKE 'MIXES%' OR folder LIKE 'RECORDINGS%') AND problem LIKE 'no artist%'"); c0.commit()   # mixes need no artist: index again
+        if not CH: c0.execute("UPDATE items SET mtime=0 WHERE (folder LIKE 'MIXES%' OR folder LIKE 'RECORDINGS%') AND problem LIKE 'no artist%'"); c0.commit()   # mixes need no artist: index again
         self.live = NullLive() if CH else live.Live(self.liq, self.tv, lambda: SHOW.get("title") or "show")
         self.tv.live = self.live.live; self.tv.route_audio(force=True)
         self.live.song_scene = lambda: (self.now or {}).get("scene") or "Hype Screen"     # the automatic scene for what plays now (studio drop-out)

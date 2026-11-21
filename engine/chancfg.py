@@ -97,7 +97,6 @@ def connect(ch):
     c.create_function("fold", 1, fold, deterministic=True)
     c.execute("ATTACH DATABASE ? AS lib", (LIB,))
     c.execute("CREATE TEMP VIEW IF NOT EXISTS items AS SELECT * FROM lib.items")
-    write_through(c)
     if ch not in _INIT:
         try: c.execute("PRAGMA journal_mode=WAL")
         except sqlite3.OperationalError: pass

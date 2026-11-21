@@ -1,7 +1,8 @@
 /* Hype Studio – one header for every page. Computer: logo · AUTO/MANUAL · modes · radio/tv · clock ……… pages (right).
    Phone: logo · radio/tv · clock · ☰ (pages) / second row: the buttons. Keys: Alt+1 … Alt+8 */
 (function () {
-  const P = [[(() => { try { return (localStorage.getItem('hypeCh') || 'main') !== 'main'; } catch (e) { return false; } })() ? '/panel/channel.html' : '/panel/', 'Panel', 'onair'], ['/panel/library.html', 'Library', 'library'], ['/panel/plan.html', 'Planning', 'plan'], ['/panel/voice.html', 'Voice', 'voice'],
+  const CHENG = (() => { try { const c = localStorage.getItem('hypeCh') || 'main'; return c !== 'main' && (localStorage.getItem('hypeChEng') || '').split(',').includes(c); } catch (e) { return false; } })();   // a theme station on Hype Radio's engine
+  const P = [[(() => { try { return (localStorage.getItem('hypeCh') || 'main') !== 'main' && !CHENG; } catch (e) { return false; } })() ? '/panel/channel.html' : '/panel/', 'Panel', 'onair'], ['/panel/library.html', 'Library', 'library'], ['/panel/plan.html', 'Planning', 'plan'], ['/panel/voice.html', 'Voice', 'voice'],
              ['/panel/history.html', 'Reports', 'history'], ['/panel/studio.html', 'Broadcast', 'studio'], ['/panel/hypelive.html', 'Hype Live', 'hypelive'], ['/panel/settings.html', 'Settings', 'settings'], ['/', 'Status', 'status']];
   // ---- the channel you work on: Hype Radio ("main") or a theme channel (Hype Ambiente, Hype Latina …) ----
   // Planning, Library (playlists), Reports (history / rights) and Settings → Sound then use that channel's own data: every /api call
@@ -9,13 +10,23 @@
   let CH = 'main'; try { CH = localStorage.getItem('hypeCh') || 'main'; } catch (e) {}
   if (CH !== 'main') { document.documentElement.dataset.station = CH; const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = CH === 'latina' ? '#1A0714' : CH === 'ambiente' ? '#041230' : tc.content; }
   const CH_PATHS = /^\/(playlists|playlist|folders|padbanks|pads|listener_pads|library|clocks|shows|schedule|events|preview_hour|history|history\.csv|rights\.csv|rights_check|week|weekreport|level|audstats|aud24|audsongs|audtime|settings)$|^\/plan\//;
+  // a theme station on Hype Radio's engine: EVERY call goes to its own engine (/api/ch/<id>/…), exactly like Hype Radio's panel –
+  // except what is about the whole studio (channels, streams, listeners, alarm, Hype Live, version)
+  const MAIN_ONLY = /^\/(channels|streams|hl_needs|audience|guard|live|version|lib_show|me|login|logout|users|upload|wave|preview|cover|ch)(\/|$)/;
+  if (CH !== 'main' && CHENG && !window.__chFetch) {
+    window.__chFetch = true; const F = window.fetch.bind(window);
+    window.fetch = (u, o) => { try { if (typeof u === 'string' && u.includes('api/')) { const x = new URL(u, location.href), pth = x.pathname.replace(/^\/api/, '');
+      if (x.pathname.startsWith('/api/') && !MAIN_ONLY.test(pth)) u = '/api/ch/' + CH + pth + x.search; } } catch (e) {} return F(u, o); };
+  }
   if (CH !== 'main' && !window.__chFetch) {
     window.__chFetch = true; const F = window.fetch.bind(window);
     window.fetch = (u, o) => { try { if (typeof u === 'string' && u.includes('api/')) { const x = new URL(u, location.href), pth = x.pathname.replace(/^\/api/, '');
       if (CH_PATHS.test(pth) && !x.searchParams.has('ch')) { x.searchParams.set('ch', CH); u = x.pathname + x.search; } } } catch (e) {} return F(u, o); };
   }
   const f0 = location.pathname.split('/').pop().replace('.html', '') || 'index';
-  if (CH !== 'main' && f0 === 'index' && location.pathname.startsWith('/panel')) { location.replace('/panel/channel.html'); return; }
+  if (CH !== 'main' && !CHENG && f0 === 'index' && location.pathname.startsWith('/panel')) { location.replace('/panel/channel.html'); return; }
+  if (CH !== 'main' && CHENG && f0 === 'channel') { location.replace('/panel/'); return; }
+  if (CHENG) document.documentElement.classList.add('ch-eng');
   if (CH === 'main' && f0 === 'channel') { location.replace('/panel/'); return; }
   const f = f0;
   const cur = !location.pathname.startsWith('/panel') ? 'status' : f === 'index' || f === 'channel' ? 'onair' : f === 'help' ? 'settings' : f, home = cur === 'onair' && f !== 'channel';
@@ -213,12 +224,16 @@ html[data-station] .card.hi{border-color:var(--line2)}
     chMenu.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => {
       const to = b.dataset.ch; try { localStorage.setItem('hypeCh', to); } catch (e) {}
       const page = location.pathname.split('/').pop() || 'index.html';
-      location.href = (to === 'main' && page === 'channel.html') ? '/panel/' : (to !== 'main' && (page === '' || page === 'index.html' || location.pathname === '/panel/')) ? '/panel/channel.html' : location.pathname + location.search; });
+      const eng = to !== 'main' && !!(CHS.find(x => x.id === to) || {}).engine;
+      location.href = ((to === 'main' || eng) && page === 'channel.html') ? '/panel/' : (to !== 'main' && !eng && (page === '' || page === 'index.html' || location.pathname === '/panel/')) ? '/panel/channel.html' : location.pathname + location.search; });
   }
   chSw.onclick = e => { e.stopPropagation(); const o = chMenu.hidden; chMenu.hidden = !o; chSw.setAttribute('aria-expanded', o); };
 
   document.addEventListener('click', e => { if (!chMenu.hidden && !chMenu.contains(e.target)) { chMenu.hidden = true; chSw.setAttribute('aria-expanded', false); } });
-  const chLoad = () => fetch('/api/channels', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(d => { if (d && d.channels) { CHS = [CHS[0], ...d.channels]; if (!CHS.some(x => x.id === CH)) { CH = 'main'; try { localStorage.setItem('hypeCh', 'main'); } catch (e) {} } chPaint(); } }).catch(() => {});
+  const chLoad = () => fetch('/api/channels', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(d => { if (d && d.channels) { CHS = [CHS[0], ...d.channels]; if (!CHS.some(x => x.id === CH)) { CH = 'main'; try { localStorage.setItem('hypeCh', 'main'); } catch (e) {} }
+    const eng = d.channels.filter(x => x.engine).map(x => x.id).join(','); let was = ''; try { was = localStorage.getItem('hypeChEng') || ''; localStorage.setItem('hypeChEng', eng); } catch (e) {}
+    if (eng !== was && CH !== 'main' && eng.split(',').includes(CH) !== was.split(',').includes(CH)) { location.reload(); return; }      // the station moved to / from Hype Radio's engine
+    chPaint(); } }).catch(() => {});
   chPaint(); chLoad(); setInterval(() => { if (!document.hidden) chLoad(); }, 30000);
   window.HYPE_CH = () => CH;
   h.querySelector('#hMenu').onclick = () => { const o = h.classList.toggle('open'); h.querySelector('#hMenu').setAttribute('aria-expanded', o); };
