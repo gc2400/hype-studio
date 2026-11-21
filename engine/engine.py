@@ -1096,7 +1096,7 @@ class NullTV(_Nop):
     def __init__(self):
         self.auto = True; self.scene = None; self.hold_song = False; self.cl = None; self.split = None; self.live = False
         self.first_show_seen = True; self.clip_sound = False; self.ll_on = False; self.olock = threading.RLock(); self.gen = 0
-        self.cur = "Clip B"; self.prog = None
+        self.cur = "Clip B"; self.prog = None; self.pip = ""
     def client(self): raise RuntimeError("no TV on a theme station")
 class NullLive(_Nop):
     def __init__(self):
