@@ -151,7 +151,7 @@ class Channel:
             try:
                 st = json.load(open(os.path.join(RUN, self.id + ".state.json")))
                 if time.time() - st.get("t", 0) < 300:
-                    self.plan = st.get("plan") or []; self.now = st.get("now"); self.prev = st.get("prev"); self.pushed = st.get("pushed")
+                    self.plan = st.get("plan") or []; self.now = st.get("now"); self.prev = st.get("prev"); self.pushed = st.get("pushed"); self.pushed_t = st.get("pushed_t") or time.time()
                     self.idi_times = st.get("idi_times") or []; self.idi_used = st.get("idi_used") or {}; self.ov_last = st.get("ov_last") or 0
             except Exception: pass
         else:
@@ -166,7 +166,7 @@ class Channel:
 
     def save_state(self):
         try:
-            st = {"t": time.time(), "plan": self.plan, "now": self.now, "prev": getattr(self, "prev", None), "pushed": self.pushed,
+            st = {"t": time.time(), "plan": self.plan, "now": self.now, "prev": getattr(self, "prev", None), "pushed": self.pushed, "pushed_t": getattr(self, "pushed_t", 0),
                   "idi_times": getattr(self, "idi_times", []), "idi_used": getattr(self, "idi_used", {}), "ov_last": getattr(self, "ov_last", 0)}
             f = os.path.join(RUN, self.id + ".state.json")
             with open(f + ".tmp", "w") as fh: json.dump(st, fh, default=str)
@@ -298,26 +298,32 @@ class Channel:
         with self.lock:
             try: n = len([x for x in self.tel("q.queue").split() if x.isdigit()])
             except OSError: return                                   # its Liquidsoap is (re)starting
+            # "is something already waiting in the radio engine?" – our own record, not only its queue: it pre-loads the next
+            # song and then no longer lists it (21 Nov: Quédate sent twice when a fixed liner came in right after it)
+            if self.pushed and n == 0 and time.time() - getattr(self, "pushed_t", 0) > max(120, self.len_of(self.now or {}) + 60):
+                self.pushed = None                                   # (lost somehow: never wait for it for ever)
+            waiting = n > 0 or bool(self.pushed)
             c = chancfg.connect(self.id)
             try:
-                self.fixed(c, n)
+                self.fixed(c, waiting)
                 self.refill(c)
-                while n == 0 and self.plan and not os.path.exists(os.path.join(ROOT, self.plan[0]["path"])):    # moved / deleted since it was planned
+                while not waiting and self.plan and not os.path.exists(os.path.join(ROOT, self.plan[0]["path"])):    # moved / deleted since it was planned
                     log.warning("%s: %s is gone – skipped", self.id, self.plan[0]["path"]); self.plan.pop(0); self.refill(c)
-                if n == 0 and self.plan and self.pushed and self.plan[0].get("id") == self.pushed:
-                    pass        # already in the radio engine (it pre-loads the next song, so its queue looks empty): never twice
-                elif n == 0 and self.plan:
+                if waiting:
+                    pass        # the next item is already in the radio engine: never a second one, never the same one twice
+                elif self.plan:
                     it = self.plan[0]
                     mo, jd, sm_on = self.mixcfg()
-                    try: self.tel("q.push " + annotate(it, mo, jd, sm_on, self.plan[1] if len(self.plan) > 1 else None)); self.pushed = it["id"]; self.err = ""
+                    try: self.tel("q.push " + annotate(it, mo, jd, sm_on, self.plan[1] if len(self.plan) > 1 else None)); self.pushed = it["id"]; self.pushed_t = time.time(); self.err = ""
                     except ValueError as e: log.warning("%s: %s – skipped", self.id, e); self.plan.pop(0)
-                elif n == 0 and not self.plan:
+                else:
                     self.err = "Nothing to play: give this channel a clock in Planning (or put songs in its playlists)."
             finally: c.close()
 
     def on_track(self, d):
         with self.lock:
             hid = d.get("hype_id"); it = None
+            if hid and hid == self.pushed: self.pushed = None        # what we sent is on air now: the next one can go
             for i, p in enumerate(self.plan):
                 if p["id"] == hid: it = p; del self.plan[:i + 1]; break
             c = chancfg.connect(self.id)
