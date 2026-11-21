@@ -944,12 +944,12 @@ $('#libFind').onclick = () => { const b = $('#libSearch');
 $('#q').addEventListener('keydown', e => { if (e.key === 'Escape') { $('#q').value = ''; lib(); $('#libSearch').hidden = true; $('#libFind').classList.remove('on'); } });
 // ◎ Stations: which stations' songs Hype Radio's library shows (the same switch as on the Library page and the theme channels' panel)
 (() => {
-  const b = $('#bStations'), row = $('#stRow');
+  const b = $('#bStations'), row = $('#stRow'), LCH = (() => { try { return localStorage.getItem('hypeCh') || 'main'; } catch (e) { return 'main'; } })();   // the station you're on
   const paint = d => { row.innerHTML = '<span class="muted">Show songs of:</span>' + d.stations.map(x => `<button class="btn sm ${d.show.includes(x.id) ? 'on' : ''}" data-st="${x.id}" aria-pressed="${d.show.includes(x.id)}"><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${x.color}"></i> ${esc(x.name)}</button>`).join('');
     row.querySelectorAll('[data-st]').forEach(x => x.onclick = () => { const id = x.dataset.st, show = d.show.includes(id) ? d.show.filter(y => y !== id) : [...d.show, id];
       if (!show.length) return toast('Keep at least one');
-      api('lib_show', {ch: 'main', show}).then(r => { d.show = r.show; paint(d); GENRE = ''; FOLDER = ''; lib(); }); }); };
-  b.onclick = () => { row.hidden = !row.hidden; b.classList.toggle('on', !row.hidden); b.setAttribute('aria-expanded', !row.hidden); if (!row.hidden) api('lib_show?ch=main').then(r => r.json ? r.json() : r).then(paint); };
+      api('lib_show', {ch: LCH, show}).then(r => { d.show = r.show; paint(d); GENRE = ''; FOLDER = ''; lib(); }); }); };
+  b.onclick = () => { row.hidden = !row.hidden; b.classList.toggle('on', !row.hidden); b.setAttribute('aria-expanded', !row.hidden); if (!row.hidden) api('lib_show?ch=' + LCH).then(r => r.json ? r.json() : r).then(paint); };
 })();
 $('#libSort').onclick = () => { LSORT = LSORT === 'new' ? 'az' : 'new'; try { localStorage.setItem('hypeLibSort', LSORT); } catch (e) {} lib(); };
 let qT; $('#q').oninput = () => { clearTimeout(qT); qT = setTimeout(lib, 200); };
