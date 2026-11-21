@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 os.environ["TZ"] = "Europe/Amsterdam"; time.tzset()   # all show times are Amsterdam time, whatever the server's zone
 import obsws_python as obs
-import sys, urllib.parse; sys.path.insert(0, "/opt/hype"); import planner, live, tickers, audstats, slideshow, hypeweb, chancfg
+import sys, urllib.parse; sys.path.insert(0, os.environ.get("HYPE_LIB") or "/opt/hype"); import planner, live, tickers, audstats, slideshow, hypeweb, chancfg
 
 ROOT = "/srv/hype"; DB = "/srv/hype-data/library.db"; WEB = "/var/www/studio"; WAVES = "/srv/hype-data/wave"
 CONF = json.load(open("/etc/hype/engine.json"))
