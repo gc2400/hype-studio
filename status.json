@@ -1,19 +1,17 @@
 {
- "time": "2026-11-21T20:04:57",
- "result": "ok",
- "commit": "c512b259c9ad59ee8c5eb671447b5d5f23d29739",
- "subject": "Take the TV blocks out of the queue again so the sound fix (each station its own sound engine) installs now; TV blocks come back for the night install",
+ "time": "2026-11-21T22:00:28",
+ "result": "waiting",
+ "commit": "7d7572699fe9393055e538228ce19119195d89a6",
+ "subject": "TV blocks [night]: the TV can follow a theme station \u2013 Planning \u2192 TV week grid, On Air \u2192 TV by hand; Hype Radio's engine keeps driving OBS with the station's songs, the TV sound crossfades on the TV bus; Hype Radio's radio stream never changes",
  "log": [
-  "20:04:12 update a37699ee \u2192 c512b259 \u00b7 1 file(s): engine/engine.py",
-  "20:04:12 restart hype-engine@*",
-  "20:04:12 restart hype-engine",
-  "20:04:57 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "22:00:28 update c512b259 \u2192 7d757269 \u00b7 5 file(s): engine/chan.py, engine/engine.py, radio/radio.liq, web/panel/index.html, web/panel/plan.html",
+  "22:00:28 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "STACEY \u2013 Papiado",
-  "listeners": 4,
+  "song": "Chimbala X Secreto El Famoso Biberon X Crazy Desing X Albert Diamond \u2013 Banana (Remix)",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
