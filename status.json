@@ -1,19 +1,19 @@
 {
- "time": "2026-11-21T16:58:11",
+ "time": "2026-11-21T17:22:28",
  "result": "ok",
- "commit": "49c6f383c8fec475fdf8cb96075dd70180e2d3c3",
- "subject": "Panel: Hype Stations in the PIP scene tab",
+ "commit": "a37699eec4846b9e2f2d51cef0eaeb1077ff14c4",
+ "subject": "Rotation: when no song in a slot fits the artist gap (small folders full of the same artists, e.g. the theme stations), only the artist gap is relaxed \u2013 never a song from the last hours, never the same artist as the songs just before",
  "log": [
-  "16:57:26 update dfe59852 \u2192 49c6f383 \u00b7 2 file(s): engine/engine.py, web/panel/index.html",
-  "16:57:26 restart hype-engine@*",
-  "16:57:26 restart hype-engine",
-  "16:58:11 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "17:21:43 update 49c6f383 \u2192 a37699ee \u00b7 1 file(s): engine/engine.py",
+  "17:21:43 restart hype-engine@*",
+  "17:21:43 restart hype-engine",
+  "17:22:28 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Jay Wheeler x Omar Courtz \u2013 De Lejitos (Remix)",
+  "song": "CLUB HYPE \u2013 TEAM RUSH HOUR MIXTAPE 11",
   "listeners": 7,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
