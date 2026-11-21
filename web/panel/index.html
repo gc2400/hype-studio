@@ -168,7 +168,8 @@
     <section class="col cA" id="deckA" hidden></section>
     <section class="col c3" id="col3">
       <div class="card" id="cLib">
-        <div class="row between"><span class="lab">Library</span><div class="row" style="gap:6px"><button class="btn sm" id="libFind" aria-label="Search" title="Search ( / )"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button><button class="btn sm" id="libSort" title="A–Z or newest uploads first">A–Z</button></div></div>
+        <div class="row between"><span class="lab">Library</span><div class="row" style="gap:6px"><button class="btn sm" id="libFind" aria-label="Search" title="Search ( / )"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button><button class="btn sm" id="libSort" title="A–Z or newest uploads first">A–Z</button><button class="btn sm" id="bStations" aria-expanded="false" title="Which stations' songs this library shows">◎ Stations</button></div></div>
+        <div class="wrapchips" id="stRow" hidden></div>
         <label class="search" id="libSearch" hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9BCCD" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
           <span style="position:absolute;left:-9999px">Search the library</span>
@@ -939,6 +940,15 @@ $('#libFind').onclick = () => { const b = $('#libSearch');
   if (b.hidden) { b.hidden = false; $('#q').focus(); } else { if ($('#q').value) { $('#q').value = ''; lib(); } b.hidden = true; }
   $('#libFind').classList.toggle('on', !b.hidden); };
 $('#q').addEventListener('keydown', e => { if (e.key === 'Escape') { $('#q').value = ''; lib(); $('#libSearch').hidden = true; $('#libFind').classList.remove('on'); } });
+// ◎ Stations: which stations' songs Hype Radio's library shows (the same switch as on the Library page and the theme channels' panel)
+(() => {
+  const b = $('#bStations'), row = $('#stRow');
+  const paint = d => { row.innerHTML = '<span class="muted">Show songs of:</span>' + d.stations.map(x => `<button class="btn sm ${d.show.includes(x.id) ? 'on' : ''}" data-st="${x.id}" aria-pressed="${d.show.includes(x.id)}"><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${x.color}"></i> ${esc(x.name)}</button>`).join('');
+    row.querySelectorAll('[data-st]').forEach(x => x.onclick = () => { const id = x.dataset.st, show = d.show.includes(id) ? d.show.filter(y => y !== id) : [...d.show, id];
+      if (!show.length) return toast('Keep at least one');
+      api('lib_show', {ch: 'main', show}).then(r => { d.show = r.show; paint(d); GENRE = ''; FOLDER = ''; lib(); }); }); };
+  b.onclick = () => { row.hidden = !row.hidden; b.classList.toggle('on', !row.hidden); b.setAttribute('aria-expanded', !row.hidden); if (!row.hidden) api('lib_show?ch=main').then(r => r.json ? r.json() : r).then(paint); };
+})();
 $('#libSort').onclick = () => { LSORT = LSORT === 'new' ? 'az' : 'new'; try { localStorage.setItem('hypeLibSort', LSORT); } catch (e) {} lib(); };
 let qT; $('#q').oninput = () => { clearTimeout(qT); qT = setTimeout(lib, 200); };
 document.addEventListener('keydown', e => { if (e.key === '/' && document.activeElement.tagName !== 'INPUT') { e.preventDefault(); $('#libSearch').hidden = false; $('#libFind').classList.add('on'); $('#q').focus(); } });
