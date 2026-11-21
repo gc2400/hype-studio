@@ -493,3 +493,4 @@
 2026-11-21T15:46:16 ok 6d087a5d Theme station engine: the Library / folders follow its own station; the station engines restart with an engine update
 2026-11-21T15:48:05 ok 385eb4b4 Theme station engine: 🔥 for the song on air
 2026-11-21T16:14:27 ok 8bcccd13 TV: the Also on Hype PIP is now "Hype Stations", every hour at :MM (Settings → TV; Gianno: :55)
+2026-11-21T16:17:33 ok dfe59852 Panel: ◎ Stations on the library card works for the station you're on (Latina / Ambiente); the station menu stays closed on pages without a [hidden] rule (Status)
