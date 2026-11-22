@@ -1,19 +1,19 @@
 {
- "time": "2026-11-22T21:53:52",
+ "time": "2026-11-22T22:07:57",
  "result": "ok",
- "commit": "7fb475af93991c72fbe32e00425f70dca2e36af0",
- "subject": "TV block: clock / show box / Live Layer hide on the STATION's jingles (they followed Hype Radio's jingles)",
+ "commit": "ebe93cd57ccf3c90639eaec11cc4ceb0216d4526",
+ "subject": "TV block show box: branding/shownames/station_<id>.png (Hype_Ambiente matched the Hype Radio show 'Hype Ambiente' too); only a file the web server can read",
  "log": [
-  "21:53:07 update 1f7f9f69 \u2192 7fb475af \u00b7 1 file(s): engine/engine.py",
-  "21:53:07 restart hype-engine@*",
-  "21:53:07 restart hype-engine",
-  "21:53:52 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "22:07:12 update 7fb475af \u2192 ebe93cd5 \u00b7 1 file(s): engine/engine.py",
+  "22:07:12 restart hype-engine@*",
+  "22:07:12 restart hype-engine",
+  "22:07:57 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Velli Lirx \u2013 SENDE",
+  "song": "Farruko x Eddy Lover \u2013 Ay Dale",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 0.3,
   "problems": [],
   "ok": true
  },
