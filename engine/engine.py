@@ -1175,6 +1175,10 @@ class Engine:
         self.missing = {}    # path -> when push_next found it missing / unplayable (not planned again for 10 min)
         self.plan = []; self.liq_next = None; self.now = {}; self.auto = True; self.stop_at_end = False; self.stopped = False
         self.snaps = []      # (item id, playlist positions before it was planned) for the planned items not on air yet
+        try:      # what played in the last hours (title / artist separation) – the picker's memory was empty after every restart
+            for t_, p_, a_ in c0.execute("SELECT started, path, artist FROM asrun WHERE started > ? AND path IS NOT NULL ORDER BY started", (time.time() - TITLE_SEP,)):
+                self.picker.recent.append((t_, p_, artist_key(a_ or "")))
+        except Exception as e: log.warning("recent plays: %s", e)
         kept = self.restore_plan(c0)
         if kept: pass        # Up next is back exactly as it was: its playlist positions stay used (snaps loaded with it)
         else:
@@ -1224,6 +1228,7 @@ class Engine:
             i.pop("pushed", None)
             if isinstance(i.get("event"), list): i["event"] = tuple(i["event"])     # (JSON made it a list: it is compared / hashed as a tuple)
         self.plan = items
+        for i in items: self.picker.note(i)          # (22 Nov: restored songs were not "recent" – after a replan they could be planned again)
         try: self.snaps = [tuple(x) for x in json.load(open(SNAPS_FILE))]
         except Exception: self.snaps = []
         pos = next((i["pos"] for i in reversed(items) if i.get("pos")), None)
