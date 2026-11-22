@@ -1,18 +1,17 @@
 {
- "time": "2026-11-22T23:32:24",
- "result": "ok",
- "commit": "ea3d3f2082dd0e2573e1df33019b55844f242028",
- "subject": "Library: a renamed file that now has 'Artist - Title' loses its 'no artist' problem and plays again",
+ "time": "2026-11-23T00:49:05",
+ "result": "error",
+ "commit": "",
+ "subject": "",
  "log": [
-  "23:31:39 update 0d4fd951 \u2192 ea3d3f20 \u00b7 1 file(s): engine/indexer.py",
-  "23:31:39 restart hype-indexer",
-  "23:32:24 installed OK \u00b7 restarted: hype-indexer"
+  "00:49:05 error: git fetch -q origin main: Connection to github.com closed by remote host.\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
  ],
+ "error": "git fetch -q origin main: Connection to github.com closed by remote host.\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "Jeon \u2013 Nabe",
+  "song": "Shallipopi x Burna Boy \u2013 Laho II",
   "listeners": 3,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
