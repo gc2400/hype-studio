@@ -2162,6 +2162,13 @@ class Engine:
                     self.tv.auto = not hold; self.tv.hold_song = hold; self.tv.set_scene(d["scene"])
                     return {"ok": True, "auto": not hold, "hold": hold}
                 else: self.hold_until = 0; self.tv.auto = False; self.tv.hold_song = False; self.tv.set_scene(d["scene"])
+            elif action == "keep_card":       # Settings → TV: test the "Keep listening" card of the station on TV now (on air)
+                f_ = keep_card_file(TVF["ch"])
+                if not f_: return {"ok": False, "error": "no card for this station (branding/keeplistening/%s.png)" % (TVF["ch"] or "hype")}
+                if not E.tv.auto or E.live.live: return {"ok": False, "error": "only with the scenes on AUTO and not LIVE"}
+                secs_ = float(planner.get_setting(c, "keep_s", 8) or 0) or 8.0
+                threading.Thread(target=lambda: (keep_card(TVF["ch"], secs_, test=True), keep_back()), daemon=True).start()
+                return {"ok": True, "secs": secs_}
             elif action == "tv_follow":       # On Air → TV: which station has the TV now (by hand); "" / None = the TV schedule again
                 ch_ = d.get("ch") or None
                 if ch_ and ch_ != "main" and not tv_station_ok(ch_): return {"ok": False, "error": "that station is not on Hype Radio's engine / is off"}
@@ -3589,7 +3596,7 @@ def _settings_main(c, snd):
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
             "jingle_hide": bool(planner.get_setting(c, "jingle_hide", True)), "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
-            "alsoon_at": int(planner.get_setting(c, "alsoon_at", -1) if planner.get_setting(c, "alsoon_at", -1) is not None else -1), "alsoon_s": float(planner.get_setting(c, "alsoon_s", 20) or 20),
+            "alsoon_at": int(planner.get_setting(c, "alsoon_at", -1) if planner.get_setting(c, "alsoon_at", -1) is not None else -1), "alsoon_s": float(planner.get_setting(c, "alsoon_s", 20) or 20), "keep_s": float(planner.get_setting(c, "keep_s", 8) or 0),
             "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "voice_per_hour": VOICE_AIR["per_hour"], "listener_keep_days": float(planner.get_setting(c, "listener_keep_days", 7)), "ss_photo_s": float(planner.get_setting(c, "ss_photo_s", 8)), "ss_fade_s": float(planner.get_setting(c, "ss_fade_s", 1)), "ss_random": bool(planner.get_setting(c, "ss_random", True)), "tidy_names": bool(planner.get_setting(c, "tidy_names", True)), "voice_max_plays": VOICE_AIR["max_plays"], "voice_intro": VOICE_AIR["intro"], "voices": voice_overview(), "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd, "relay": relay_public()}
 RELAY_CFG = "/etc/hype/relay.json"
@@ -3661,6 +3668,7 @@ def set_settings(d):
     if "upnext_end_s" in d: planner.set_setting(c, "upnext_end_s", max(0.0, min(60.0, float(d["upnext_end_s"]))))
     if "alsoon_at" in d: planner.set_setting(c, "alsoon_at", max(-1, min(59, int(d["alsoon_at"]))))
     if "alsoon_s" in d: planner.set_setting(c, "alsoon_s", max(10.0, min(60.0, float(d["alsoon_s"]))))
+    if "keep_s" in d: planner.set_setting(c, "keep_s", max(0.0, min(20.0, float(d["keep_s"]))))
     if "artist_sep_min" in d: planner.set_setting(c, "artist_sep_min", max(0.0, min(360.0, float(d["artist_sep_min"]))))
     for k in ("strict_hold_before", "strict_hold_after"):
         if k in d: planner.set_setting(c, k, max(0.0, min(240.0, float(d[k])))); planner._HOLD.clear()
@@ -4244,9 +4252,51 @@ def tv_show_station(n):
         try: E.tv.jingle_graphics(n.get("section") != "music" and scene == "Music video")
         except Exception: pass
     log.info("TV (%s): %s – %s [%s] scene=%s", TVF["ch"], n.get("artist"), n.get("title"), mode, scene)
+KEEP_SCENE, KEEP_SRC, KEEP_DIR = "Keep Listening", "Keep listening card", "/srv/hype/branding/keeplistening"
+def keep_card_file(cid):
+    """branding/keeplistening/<id>.png (hype.png = Hype Radio): the station the TV is LEAVING ("… keeps playing!" + its QR)."""
+    f = os.path.join(KEEP_DIR, "%s.png" % (cid or "hype"))
+    return f if os.path.isfile(f) else None
+def keep_scene_ready():
+    """The OBS scene "Keep Listening" = only the full-screen card (no Live Layer, logo, clock or song text): made once."""
+    with E.tv.olock:
+        cl = E.tv.client()
+        if KEEP_SCENE not in [x["sceneName"] for x in cl.get_scene_list().scenes]:
+            cl.create_scene(KEEP_SCENE); log.info("OBS: scene %s made", KEEP_SCENE)
+        try: cl.get_input_settings(KEEP_SRC)
+        except Exception:
+            cl.create_input(KEEP_SCENE, KEEP_SRC, "image_source", {"file": keep_card_file(None) or ""}, True)
+def keep_card(cid, secs=None, test=False):
+    """The "Keep listening" card of the station the TV leaves, full screen, before the new station's picture: its sound keeps
+    playing under the card (the viewer hears what the card says keeps playing), then picture + sound go over together.
+    Only when the scenes are on AUTO and not LIVE (a live show's own start / your cameras are never covered).
+    Returns True if it was shown (then the caller does the handover)."""
+    if secs is None:
+        try: secs = float(planner.get_setting(dbc(), "keep_s", 8) or 0)
+        except Exception: secs = 8.0
+    f = keep_card_file(cid)
+    if secs <= 0 or not f or not E.tv.auto or getattr(E.live, "live", False) or E.stopped: return False
+    try:
+        keep_scene_ready()
+        with E.tv.olock: E.tv.client().set_input_settings(KEEP_SRC, {"file": f}, True)
+        with LOCK: E.tv.auto = False; E.tv.set_scene(KEEP_SCENE)
+        log.info("TV: keep listening card %s (%.0f s)%s", os.path.basename(f), secs, " – test" if test else "")
+        time.sleep(secs)
+        return True
+    except Exception as e:
+        log.warning("keep listening card: %s", e); return False
+    finally:
+        with LOCK:
+            if E.tv.scene == KEEP_SCENE and not E.tv.auto:
+                E.tv.auto = True; E.tv.scene = None        # the card stays on screen until the next picture is set
+def keep_back():
+    """After a card (test or a switch): the picture of whatever is on TV now."""
+    TVF["started"] = None
+    if not TVF["ch"]: resync_tv(force=True)
 def tv_follow_step():
     want = tv_want()
-    if want != TVF["ch"]: tv_handover(TVF["ch"], want)
+    if want != TVF["ch"]:
+        keep_card(TVF["ch"]); tv_handover(TVF["ch"], want)      # (tv_handover sets the new picture: Hype Radio's at once, a station's next step)
     cid = TVF["ch"]
     if not cid: return
     try: d = tv_get(cid, "/tvnow"); TVF["fail"] = 0

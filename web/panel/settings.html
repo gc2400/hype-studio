@@ -207,6 +207,10 @@ table{border-collapse:collapse;width:100%}
       <p class="muted" style="margin:0">The TV in a window, below it what Hype Latina and Hype Ambiente play now. Same rules as Up next. By hand: Scenes → PIP → Hype Stations.</p>
       <div class="sl" data-find="hype stations pip latina ambiente every hour minute"><label>Every hour at<small>minute of the hour (the music video on air then; off = only by hand)</small></label><input type="range" id="alsoon_at" min="-1" max="59" step="1"><span class="v" id="alsoon_at_v"></span></div>
       <div class="sl" data-find="also on hype pip how long seconds"><label>How long<small>seconds on screen</small></label><input type="range" id="alsoon_s" min="10" max="60" step="5"><span class="v" id="alsoon_s_v"></span></div>
+      <span class="lab">TV · Keep listening card</span>
+      <p class="muted" style="margin:0">When the TV changes station (a TV block starts or ends, or LIVE on a station ends): first the full-screen card of the station it leaves ("… keeps playing!" with its QR), its sound still playing, then the new station. Not when you go LIVE, not with the scenes on manual. Cards: branding/keeplistening (hype.png, latina.png, ambiente.png).</p>
+      <div class="sl" data-find="keep listening card qr station change seconds"><label>How long<small>seconds on screen (0 = off)</small></label><input type="range" id="keep_s" min="0" max="20" step="1"><span class="v" id="keep_s_v"></span></div>
+      <div class="row" style="gap:8px"><button class="btn sm" id="keepTest" title="Shows the card of the station on TV now, on air">Test on air</button></div>
     </section>
     <section class="card sec" data-sec="tickers">
       <div class="row between"><span class="lab">Tickers · the scrolling bar at the bottom of the TV</span><button class="btn sm" id="tkAdd">+ Ticker</button></div>
@@ -404,6 +408,11 @@ function render() {
     el.value = ST[k] ?? -1; $('#' + k + '_v').textContent = lab(+el.value);
     el.oninput = () => $('#' + k + '_v').textContent = lab(+el.value);
     el.onchange = () => post('settings', {[k]: +el.value}).then(d => { ST = d; toast('Hype Stations PIP: ' + lab(+el.value)); }); });
+  { const el = $('#keep_s'), lab = v => v <= 0 ? 'off' : v + ' s';
+    el.value = ST.keep_s ?? 8; $('#keep_s_v').textContent = lab(+el.value);
+    el.oninput = () => $('#keep_s_v').textContent = lab(+el.value);
+    el.onchange = () => post('settings', {keep_s: +el.value}).then(d => { ST = d; toast('Keep listening card: ' + lab(+el.value)); });
+    $('#keepTest').onclick = () => { if (confirm('Show the Keep listening card on air now?')) post('cmd/keep_card', {}).then(d => toast(d.ok === false ? d.error : 'Card on air for ' + d.secs + ' s')).catch(e => toast(e.message)); }; }
   relayPaint(ST.relay);
   $('#rlSave').onclick = () => relaySend({}).then(() => toast('Backup relay saved'));
   $('#rlOn').onclick = () => { const on = !(ST.relay && ST.relay.on); if (on && !$('#rlHost').value.trim()) return toast('Fill in the server first');
