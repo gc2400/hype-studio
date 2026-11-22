@@ -509,3 +509,4 @@
 2026-11-22T12:47:58 ok f31ec145 Planning → On screen: Hype Stations PIP can be scheduled like the other PIPs
 2026-11-22T12:50:03 ok 7d864786 Settings on a theme station (Hype Radio's engine): ID over intros (on/off, per hour, level, minutes apart), jingle fade and pad ducking are shown – they are the station's own
 2026-11-22T12:54:11 ok 50e631e8 Settings on a theme station: Listener voices (over soft intros, per hour, max plays) – the station's own
+2026-11-22T12:56:15 ok c6b0b47d Streams popup: what each station plays now, in its tile

@@ -1,17 +1,17 @@
 {
- "time": "2026-11-22T12:54:11",
+ "time": "2026-11-22T12:56:15",
  "result": "ok",
- "commit": "50e631e84f1732e5e7835df711dfc59ef79e30d2",
- "subject": "Settings on a theme station: Listener voices (over soft intros, per hour, max plays) \u2013 the station's own",
+ "commit": "c6b0b47d70ef4ea4bf727ca576726afbc7aab766",
+ "subject": "Streams popup: what each station plays now, in its tile",
  "log": [
-  "12:54:11 update 7d864786 \u2192 50e631e8 \u00b7 1 file(s): web/panel/settings.html",
-  "12:54:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "12:56:15 update 50e631e8 \u2192 c6b0b47d \u00b7 1 file(s): web/panel/header.js",
+  "12:56:15 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Frsh x KM \u2013 Bare Minimum (Starboy)",
+  "song": "Kendrick Lamar \u2013 Not Like Us",
   "listeners": 4,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
