@@ -140,6 +140,7 @@ function screen() {
     ticker(d.ticker);
     slideshow(d.slides_layer === 'graphics' ? (d.slides || []) : [], d.slide_s || 30);
     if (d.scene !== SC_LAST) { if (d.scene === 'Music video' && SC_LAST !== null) SC_IN = d.now; SC_LAST = d.scene; }
+    STATION = d.station || null;
     nowPlaying(d.scene === 'Music video' ? d.np : null, Date.now() / 1000 - off);
     voiceBox(d.voice, Date.now() / 1000 - off);
     chartSq(d.chart);
@@ -190,6 +191,7 @@ function slideshow(list, secs) {
 }
 // Now Playing box with artist + title (Music video scene only): the 18 s animation, text on top
 let NP = {key: null};
+const NP_BOX = {latina: 'np_box_latina.webm', ambiente: 'np_box_ambiente.webm'}; let STATION = null;
 let SC_LAST = null, SC_IN = 0;     // when the TV came INTO the Music video scene (from another scene)
 const NP_WAIT = 3;                 // s: the scene's own transition first, then the Now Playing animation from its start
 function nowPlaying(np, now) {
@@ -203,6 +205,8 @@ function nowPlaying(np, now) {
   let at = null; for (const a0 of wins) { if (now >= a0 && now < a0 + 18) { at = a0; break; } }
   const key = at ? np.id + '|' + at : null;
   if (key && key !== NP.key) {
+    // the box in the colours of the station that is on TV (a TV block / LIVE on a station), Hype Radio's otherwise
+    const src = NP_BOX[STATION] || 'np_box.webm'; if (v.getAttribute('src') !== src) { v.setAttribute('src', src); v.load(); }
     NP.key = key; $('#npt').textContent = np.title; $('#npa').textContent = np.artist;
     box.style.display = 'block'; box.classList.remove('txon');
     fitText($('#npt'), 44, 30); fitText($('#npa'), 28, 20);

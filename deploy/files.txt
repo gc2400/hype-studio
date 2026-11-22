@@ -39,6 +39,8 @@ web/overlay/adbox.html|/var/www/overlay/adbox.html|644|-
 web/overlay/lower.html|/var/www/overlay/lower.html|644|-
 web/overlay/clockbox.png|/var/www/overlay/clockbox.png|644|-
 web/overlay/np_box.webm|/var/www/overlay/np_box.webm|644|-
+web/overlay/np_box_latina.webm|/var/www/overlay/np_box_latina.webm|644|-
+web/overlay/np_box_ambiente.webm|/var/www/overlay/np_box_ambiente.webm|644|-
 web/guest/index.html|/var/www/guest/index.html|644|-
 web/guest/hype-rtc.js|/var/www/guest/hype-rtc.js|644|-
 web/guest/logo.png|/var/www/guest/logo.png|644|-

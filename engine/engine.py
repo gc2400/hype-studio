@@ -553,7 +553,7 @@ class Screen:
         if scene == ALSO_SCENE:
             also = dict(also_now(), until=getattr(E, "hold_until", 0))
         ch = self.chart if self.chart and self.chart["end"] > now else None
-        return {"also": also, "now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and E.now and E.now.get("path") and E.now.get("section") != "music"),
+        return {"also": also, "station": None if CH else TVF.get("ch"), "now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and E.now and E.now.get("path") and E.now.get("section") != "music"),
                 "slides": ["/adbox/" + urllib.parse.quote(f) for f in slides], "slide_s": 30,
                 "slides_layer": "adbox" if scene == "Hype Screen" else "graphics"}   # Hype Screen: its own source under the Live Layer
 
@@ -784,6 +784,19 @@ class TV:
         if os.path.exists(f) and getattr(self, "pip", None) != f:
             if getattr(self, "prog", None) == "PIP": self.pip_done(); self._pip_t = time.time(); self._pip_f = f   # another frame while PIP stays on
             self.client().set_input_settings("PIP frame", {"file": f}, True); self.pip = f
+    def adopt_audio(self):
+        """At an engine start: take over the TV sound as OBS has it now, instead of forcing radio sound.
+        (22 Nov: a restart during a paired clip with its own sound switched the TV to the radio mid-song: a hiccup.)
+        The next song routes as normal."""
+        try:
+            if not getattr(self, "live", False):
+                with self.olock:
+                    db_ = self.client().get_input_volume("Radio audio").input_volume_db
+                if db_ is not None and db_ <= -90:
+                    self.clip_sound = True; self.split = True; self._radio_db = -100.0; self._live_r = False; self._ext_r = False
+                    log.info("TV sound: left as it was (the clip's own sound) until the next song"); return
+        except Exception as e: log.warning("TV sound at start: %s", e)
+        self.route_audio(force=True)
     def route_audio(self, force=False):
       """TV sound = the radio, except when a paired clip is on screen: then the clip's own sound (+ pads/sweepers).
       While LIVE: only your studio mix, straight from the studio stream (same path as the cameras = in sync), never a clip's sound."""
@@ -1152,7 +1165,7 @@ class Engine:
                 with open("/run/hype/studio_port", "w") as f_: f_.write(str(chancfg.studio_port(t_) if t_ else 8005))
             except OSError: pass
             if t_: self.live.live = self.live.liq_live()
-        self.tv.live = self.live.live; self.tv.route_audio(force=True)
+        self.tv.live = self.live.live; self.tv.adopt_audio()
         self.live.song_scene = lambda: tv_scene()     # the automatic scene for what plays now (studio drop-out)
         self.decks = {"1": None, "2": None}; self.tv_deck = None; self._air_lost = None
         try: self.overlap = bool(json.load(open(DECKS_FILE)).get("overlap"))
