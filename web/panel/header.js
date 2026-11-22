@@ -46,7 +46,7 @@ html{scrollbar-gutter:stable}
 #hhead [hidden]{display:none!important}#hhead .chmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:90;min-width:250px;background:#0B2236;border:1px solid #23496B;border-radius:14px;padding:6px;box-shadow:0 18px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:2px}
 #hhead .chmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;color:#F2F6FA;font:700 14px Inter,system-ui,sans-serif;padding:10px;border-radius:10px;cursor:pointer}
 #hhead .chmenu button:hover{background:#0F2B44}#hhead .chmenu button.cur{background:#143049}#hhead .chmenu .cd{width:10px;height:10px;border-radius:50%;flex:none}#hhead .chmenu small{margin-left:auto;color:#7F96AB;font-weight:700;font-size:11px}
-#hhead.ch-theme .hctl,#hhead.ch-theme #hLive,#hhead.ch-theme #hRec,#hhead.ch-theme .hnav a[data-k=voice],#hhead.ch-theme .hnav a[data-k=studio],#hhead.ch-theme .hnav a[data-k=hypelive]{display:none!important}
+#hhead.ch-theme:not(.ch-engh) .hctl,#hhead.ch-engh .modes[role=tablist],#hhead.ch-theme #hLive,#hhead.ch-theme #hRec,#hhead.ch-theme .hnav a[data-k=voice],#hhead.ch-theme .hnav a[data-k=studio],#hhead.ch-theme .hnav a[data-k=hypelive]{display:none!important}
 /* station skins = the website's colours (Hype Latina / Hype Ambiente): calm, dark – the accent shows which channel you're on */
 html[data-station=latina]{--bg:#0F0A0C;--card:#1D1518;--card2:#261B1F;--deep:#170F12;--line:#3A252C;--line2:#4A3038;--mut:#C9B8BD;--soft:#DCCDD1;--b:#FFB23F;--b2:#FF6A2B;--c:#FFB23F}
 html[data-station=ambiente]{--bg:#070D1A;--card:#0F1A30;--card2:#15233F;--deep:#0B1426;--line:#23395F;--line2:#2D4774;--mut:#A9C6E6;--soft:#C9DBEF;--b:#4FC3F0;--b2:#1E5BC6;--c:#4FC3F0}
@@ -191,6 +191,7 @@ html[data-station] .card.hi{border-color:var(--line2)}
   setInterval(snapSave, 1000); addEventListener('pagehide', snapSave);
   // a theme channel: what only Hype Radio has goes away (AUTO/MANUAL, ON AIR/DJ/LIVE, GO LIVE, REC, the radio / TV dots, Voice, Broadcast, Hype Live)
   if (CH !== 'main') h.classList.add('ch-theme');
+  if (CH !== 'main' && CHENG) h.classList.add('ch-engh');     // a station on Hype Radio's engine: AUTO / MANUAL like Hype Radio (its own programming)
   // station skin, part 2: Hype Radio's own colours written into the page styles (dark blues, cyan, yellow) -> the station's,
   // on every page, so nothing stays "Hype Radio blue" on Hype Latina / Hype Ambiente (the website's station colours)
   const SKIN = {
