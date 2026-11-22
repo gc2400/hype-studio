@@ -524,3 +524,4 @@
 2026-11-22T15:22:39 ok a37e05c2 Station view: the Scenes card shows while that station is on TV (TV block / LIVE on it), run by Hype Radio's engine
 2026-11-22T15:28:33 ok b1769976 TV logo: Hype Radio's new 3D coin-spin logo (branding/logo_corner_hype.mov); station logos replaced on the server
 2026-11-22T15:31:22 ok 32127571 Recording while LIVE on a station: the station's sound (<id>-rec.mp3) and its name on the file (was Hype Radio's sound and show)
+2026-11-22T15:38:17 ok 67a6bd4f TV logos as VP9 .webm with alpha (the png .mov with still parts played too fast in OBS)

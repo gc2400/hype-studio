@@ -1,19 +1,19 @@
 {
- "time": "2026-11-22T15:31:22",
+ "time": "2026-11-22T15:38:17",
  "result": "ok",
- "commit": "32127571e58e4f7192d51a5f0789271a88ccf2cf",
- "subject": "Recording while LIVE on a station: the station's sound (<id>-rec.mp3) and its name on the file (was Hype Radio's sound and show)",
+ "commit": "67a6bd4ff6a70183d1926fd0972fda7cc0709445",
+ "subject": "TV logos as VP9 .webm with alpha (the png .mov with still parts played too fast in OBS)",
  "log": [
-  "15:30:37 update b1769976 \u2192 32127571 \u00b7 2 file(s): engine/engine.py, engine/live.py",
-  "15:30:37 restart hype-engine@*",
-  "15:30:37 restart hype-engine",
-  "15:31:22 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "15:37:32 update 32127571 \u2192 67a6bd4f \u00b7 1 file(s): engine/engine.py",
+  "15:37:32 restart hype-engine@*",
+  "15:37:32 restart hype-engine",
+  "15:38:17 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Jaido x Issairo \u2013 Disiplina",
+  "song": " \u2013 Hype SWP Afternoon 3",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
