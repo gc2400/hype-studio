@@ -3985,7 +3985,10 @@ class H(BaseHTTPRequestHandler):
                                                             clock=int(qs["clock"][0]) if "clock" in qs else None))
             if p == "/graphics" and TVF["ch"]:
                 nm_ = (chancfg.get(TVF["ch"]) or {}).get("name") or ""
-                return self.send(200, {"show": nm_, "show_image": show_name_image(nm_), "show_v": show_image_v(nm_), "start": 0, "end": 0,      # (branding/shownames/Hype_Ambiente.png …)
+                fi_ = "station_%s.png" % TVF["ch"]; fp_ = os.path.join(ROOT, "branding", "shownames", fi_)     # the station's own box (Gianno's PNG)
+                try: v_ = int(os.path.getmtime(fp_)) if os.access(fp_, os.R_OK) and os.stat(fp_).st_mode & 0o004 else 0      # (only one the web server can read)
+                except OSError: v_ = 0
+                return self.send(200, {"show": nm_, "show_image": fi_ if v_ else None, "show_v": v_, "start": 0, "end": 0,      # (no box file: the text box with its name)
                                        "temp": WEATHER["temp"], "code": WEATHER["code"]})
             if p == "/graphics": return self.send(200, {"show": SHOW["title"], "show_image": show_name_image(SHOW["title"]), "show_v": show_image_v(SHOW["title"]), "start": SHOW["start"], "end": SHOW["end"], "temp": WEATHER["temp"], "code": WEATHER["code"]})
             if p == "/pads":
