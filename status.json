@@ -1,17 +1,17 @@
 {
- "time": "2026-11-22T14:27:27",
+ "time": "2026-11-22T14:29:31",
  "result": "waiting",
- "commit": "f694053fa5945a4983b9a448191784794a83d9e7",
- "subject": "Rotation memory survives restarts [night]: the engine fills its \"recently played\" from the as-run log at start and counts the restored Up next as planned \u2013 after a restart (every update) a song from the last 3 h could come again (22 Nov: Bo No Ta Bon 13:08 \u2192 14:24 on Ambiente, Abatido 11:17 \u2192 12:56 on Latina; Hype Radio had the same gap)",
+ "commit": "f738b8a37b2e52e021fdae8a0ea62936693d19ed",
+ "subject": "Panel library card: on a theme station the folders open their subfolders (RITMO \u2192 RITMO-POWER, RITMO-CURRENT \u2026) \u2013 the station's top folder is skipped [night]",
  "log": [
-  "14:27:27 update 843df756 \u2192 f694053f \u00b7 11 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/guard.py, engine/hype_auth.py, engine/live.py, engine/live/studio_in.sh, radio/radio.liq, web/panel/index.html, web/panel/plan.html, web/panel/studio.html",
-  "14:27:27 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "14:29:31 update 843df756 \u2192 f738b8a3 \u00b7 11 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/guard.py, engine/hype_auth.py, engine/live.py, engine/live/studio_in.sh, radio/radio.liq, web/panel/index.html, web/panel/plan.html, web/panel/studio.html",
+  "14:29:31 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "2Sync \u2013 Aventura",
-  "listeners": 3,
+  "song": "Tekno \u2013 Press Button",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
