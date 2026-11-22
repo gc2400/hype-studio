@@ -5,7 +5,7 @@ CLI:  hype_auth.py setpass <user>      set/replace a password (asks twice)
       hype_auth.py totp <user> <png>   new 2-factor secret, QR written to <png>
       hype_auth.py logout-all          end every session
 """
-import base64, hashlib, hmac, html, json, os, secrets, struct, sys, time, threading, urllib.parse
+import base64, hashlib, hmac, html, json, os, re, secrets, struct, sys, time, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 CONF = "/etc/hype/auth.json"
@@ -99,7 +99,7 @@ def mtx_ok(d):
     if live.get("studio_key") and hmac.compare_digest(key, live["studio_key"]):
         if action == "read" and path in ("live/program", "preview", "web"): return True     # the panel live preview + the 🌐 browser view
         if path == "guestview": return action == "read"
-        return action in ("publish", "read") and (path in STUDIO_PATHS or path.startswith("guest"))
+        return action in ("publish", "read") and (path in STUDIO_PATHS or path.startswith("guest") or re.match(r"^return-[a-z][a-z0-9]{1,19}$", path or ""))   # a theme station's return (LIVE on that station)
     g = load(GUESTS, {}).get("guests", {})
     for slot, info in g.items():
         if info.get("token") and hmac.compare_digest(key, info["token"]) and info.get("exp", 0) > time.time():

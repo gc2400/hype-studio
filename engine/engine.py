@@ -1136,6 +1136,15 @@ class Engine:
         except sqlite3.OperationalError: pass
         if not CH: c0.execute("UPDATE items SET mtime=0 WHERE (folder LIKE 'MIXES%' OR folder LIKE 'RECORDINGS%') AND problem LIKE 'no artist%'"); c0.commit()   # mixes need no artist: index again
         self.live = NullLive() if CH else live.Live(self.liq, self.tv, lambda: SHOW.get("title") or "show")
+        if not CH:      # LIVE on a theme station (Broadcast → station): its radio engine, its studio input port
+            self.live.liq_for = lambda cid: Liq(int(chancfg.get(cid)["telnet"]))
+            self.live.port_for = lambda cid: chancfg.studio_port(cid) if tv_station_ok(cid) else None
+            t_ = self.live.target()
+            try:
+                os.makedirs("/run/hype", exist_ok=True)
+                with open("/run/hype/studio_port", "w") as f_: f_.write(str(chancfg.studio_port(t_) if t_ else 8005))
+            except OSError: pass
+            if t_: self.live.live = self.live.liq_live()
         self.tv.live = self.live.live; self.tv.route_audio(force=True)
         self.live.song_scene = lambda: tv_scene()     # the automatic scene for what plays now (studio drop-out)
         self.decks = {"1": None, "2": None}; self.tv_deck = None; self._air_lost = None
@@ -4015,6 +4024,7 @@ class H(BaseHTTPRequestHandler):
                     if not L.live and not L.status().get("studio_online"):    # never on air without the studio: that would be silence / the automation
                         return self.send(409, dict(L.status(), error="The studio is not connected – open Broadcast and connect the studio first"))
                     L.set_live(True)
+                elif a == "target": L.set_target(d.get("target") or None)     # Broadcast → which station you go LIVE on
                 elif a == "off":
                     L.set_live(False)
                     E.cmd("autoscene", {"on": True})        # END LIVE: the TV follows the music again (no camera left on screen)
@@ -4107,7 +4117,10 @@ def tv_station_ok(cid):
     return bool(cfg and cfg.get("enabled") and cfg.get("engine"))
 def tv_want():
     """The station that should have the TV now (None = Hype Radio). LIVE from the studio always wins."""
-    if CH or E.live.live: return None
+    if CH: return None
+    if E.live.live:            # LIVE: from the studio on Hype Radio -> the TV is Hype Radio's; LIVE on a station -> the TV is that station's
+        t_ = E.live.target()
+        return t_ if t_ and tv_station_ok(t_) else None
     b = tv_blocks(); lt = time.localtime()
     w = b["manual"] if b["manual"] else b["grid"].get("%d-%d" % (lt.tm_wday, lt.tm_hour))
     return w if w and w != "main" and tv_station_ok(w) else None
@@ -4179,6 +4192,7 @@ def tv_follow_step():
             log.warning("TV: %s does not answer (%s) – back to Hype Radio", cid, e); tv_handover(cid, None); TVF["since"] = time.time()
         return
     n = d.get("now") or {}
+    if E.live.live: return         # LIVE on this station: the cameras are on TV (the normal LIVE scenes), its sound is on the TV bus
     if n.get("path") and n.get("started") != TVF["started"] and E.tv.auto:      # (a scene you chose stays; back on AUTO it catches up)
         TVF["started"] = n.get("started"); tv_show_station(n)
     nx = d.get("next") or {}
@@ -4190,9 +4204,17 @@ def tv_follow_loop():
     tv_level(LIQ_PORT, 1.0)         # (after an engine restart: Hype Radio has the TV sound until a block says otherwise)
     for cfg in chancfg.load():
         if cfg.get("engine"): tv_level(int(cfg["telnet"]), 0.0)
+    n_ = 0
     while True:
         try: tv_follow_step()
         except Exception as e: log.warning("TV follow: %s", e)
+        n_ += 1
+        if n_ % 8 == 0:      # every 2 s: which station is LIVE from the studio (hype-channels: the station's now playing says LIVE)
+            try:
+                d_ = {"target": E.live.target(), "live": bool(E.live.live and E.live.air == "studio"), "t": time.time()}
+                if d_ != TVF.get("lt"):
+                    TVF["lt"] = d_; tmp = "/run/hype/live_target.json.tmp"; json.dump(d_, open(tmp, "w")); os.replace(tmp, "/run/hype/live_target.json")
+            except Exception: pass
         time.sleep(0.25)
 def tv_info():
     b = tv_blocks()
@@ -4791,7 +4813,7 @@ def nowplaying_api():
                         "hls_url": "https://stream.hyperadio.nl/radio.m3u8", "hls_enabled": True, "is_public": True,
                         "mounts": [{"name": "MP3 128", "url": "https://stream.hyperadio.nl/radio.mp3", "bitrate": 128, "format": "mp3", "is_default": True}]},
             # listener / viewer numbers are NOT public any more (Hype Live gets them in the heartbeat, write key) – song info only
-            "live": {"is_live": E.live.status().get("air") == "studio" if hasattr(E, "live") else False, "streamer_name": "", "broadcast_start": None},
+            "live": {"is_live": (E.live.status().get("air") == "studio" and not E.live.target()) if hasattr(E, "live") else False, "streamer_name": "", "broadcast_start": None},
             "now_playing": {"sh_id": int(n.get("started") or 0), "played_at": int(n.get("started") or t), "duration": round(dur), "elapsed": round(el), "remaining": round(max(0, dur - el)),
                             "playlist": n.get("folder") or "", "streamer": "", "is_request": False, "song": song(n),
                             "type": "song" if n.get("section") == "music" else "jingle" if n.get("section") == "jingles" else (n.get("section") or "")},

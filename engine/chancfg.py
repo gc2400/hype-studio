@@ -70,6 +70,12 @@ def engine_port(ch):
     return 8800 + int(c["telnet"]) - 1300 if c else None
 
 
+def studio_port(ch):
+    """A theme station's studio input (LIVE on that station): 8010 + n (Ambiente 8011, Latina 8012). Hype Radio: 8005."""
+    c = get(ch) if ch else None
+    return 8010 + int(c["telnet"]) - 1300 if c else 8005
+
+
 def fold(s):
     import unicodedata
     return "".join(x for x in unicodedata.normalize("NFKD", str(s or "")) if not unicodedata.combining(x)).lower()

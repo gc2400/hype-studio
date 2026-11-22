@@ -94,15 +94,47 @@ class Live:
                 if d.get("with_live"):
                     try: self.restream(k, True)
                     except Exception as e: log.warning("restream %s: %s", k, e)
+    # ---------- which station you go LIVE on (Broadcast → station): Hype Radio (None) or a theme station ----------
+    # The studio mix goes into THAT station's radio engine (its own harbor port), its music comes back to the Mixcast
+    # ("return-<id>"), its LIVE switch is used; Hype Radio keeps playing its own programme. The TV follows the station
+    # (a TV block) with the normal camera scenes. Only one LIVE at a time: you can only change it while not LIVE.
+    liq_for = None          # (the engine: station id -> its radio engine's telnet)
+    port_for = None         # (the engine: station id -> its studio input port)
+    on_target = None        # (the engine: the return feed / TV follow the new station)
+    def target(self):
+        t = self.st.get("target")
+        return t if t and self.liq_for else None
+    def tl(self):
+        """The radio engine you are LIVE on (Hype Radio's or the station's)."""
+        t = self.target()
+        if t:
+            try: return self.liq_for(t)
+            except Exception as e: log.warning("LIVE station %s: %s", t, e)
+        return self.liq
+    def set_target(self, t):
+        t = t or None
+        if self.live: raise ValueError("You are LIVE – END LIVE first, then choose another station")
+        if t and self.port_for and not self.port_for(t): raise ValueError("That station cannot go live (not on Hype Radio's engine / switched off)")
+        self.st["target"] = t; save(STATE, self.st)
+        port = self.port_for(t) if (t and self.port_for) else 8005
+        try:
+            os.makedirs("/run/hype", exist_ok=True)
+            with open("/run/hype/studio_port", "w") as f_: f_.write(str(port))
+            subprocess.run(["systemctl", "restart", "hype-studio-in"], timeout=20)     # the studio mix now goes to that station
+        except Exception as e: log.warning("studio input → %s: %s", port, e)
+        if self.on_target:
+            try: self.on_target(t)
+            except Exception as e: log.warning("LIVE station (engine): %s", e)
+        log.info("LIVE station: %s", t or "Hype Radio")
     # ---------- LIVE on/off ----------
     def liq_live(self):
-        try: return self.liq.cmd("var.get live_on").split()[0] == "true"
+        try: return self.tl().cmd("var.get live_on").split()[0] == "true"
         except Exception: return False
     def watch_air(self):
         """What is really on air (Liquidsoap): your studio mix, or the automation. Counts drop-outs while LIVE."""
         while True:
             try:
-                a = (self.liq.cmd("live.source") or "").split()[0]
+                a = (self.tl().cmd("live.source") or "").split()[0]
                 if self.live and self.air == "studio" and a != "studio": self.drops += 1; log.warning("LIVE: studio signal dropped – automation on air")
                 if self.live and self.air != "studio" and a == "studio" and self.drops: log.info("LIVE: studio signal back")
                 self.air = a
@@ -173,14 +205,14 @@ class Live:
         return bool(self.live and self.st.get("audio_split"))
     def apply_audio(self):
         try:
-            self.liq.cmd(f"var.set split_on = {'true' if self.split() else 'false'}")
-            self.liq.cmd(f"var.set pads_to2 = {'true' if self.st.get('pads_to') == '2' else 'false'}")
+            self.tl().cmd(f"var.set split_on = {'true' if self.split() else 'false'}")
+            self.tl().cmd(f"var.set pads_to2 = {'true' if self.st.get('pads_to') == '2' else 'false'}")
         except Exception as e: log.warning("audio routing: %s", e)
         if self.on_audio:
             try: self.on_audio()
             except Exception as e: log.warning("audio routing (engine): %s", e)
     def set_live(self, on):
-        self.liq.cmd(f"var.set live_on = {'true' if on else 'false'}"); self.live = on
+        self.tl().cmd(f"var.set live_on = {'true' if on else 'false'}"); self.live = on
         self.live_since = time.time() if on else None; self.drops = 0
         self.tv.live = on; self.tv.route_audio(force=True)      # TV sound while LIVE: your studio mix only (in sync with the cameras)
         if on and self.st.get("auto_record", True) and not self.rec: self.start_rec("live")
@@ -403,7 +435,8 @@ class Live:
         paths = mtx_paths(); g = self.guests(); c = conf()
         def on(p): return bool(paths.get(p, {}).get("ready"))
         return {
-            "live": self.live, "live_since": self.live_since, "studio_online": on("studio"), "return_online": on("return"),
+            "live": self.live, "live_since": self.live_since, "studio_online": on("studio"), "return_online": on("return-" + self.target() if self.target() else "return"),
+            "target": self.target(), "return_path": ("return-" + self.target()) if self.target() else "return",
             "sources": {s: {"online": on(s), "name": (g.get(s) or {}).get("name") if s.startswith("guest") else {"cam1": "Studio cam 1", "cam2": "Studio cam 2", "cam3": "Studio cam 3", "screen": "Screen share"}[s]} for s in SOURCES},
             "cams": self.st["cams"], "lip_sync": self.st.get("lip_sync", 0), "guest_adj": self.st.get("guest_adj", 0), "guest_sync": {s: self.guest_sync_ms(s) for s in self.gmeas}, "guest_net": {s: {k: v for k, v in d.items() if k != "t"} for s, d in self.gnet.items()}, "air": self.air, "drops": self.drops, "audio_split": bool(self.st.get("audio_split")), "pads_to": self.st.get("pads_to", "1"), "return2_online": on("return2"), "auto_record": self.st.get("auto_record", True), "rec_what": self.st.get("rec_what", "both"),
             "guests": {s: {"name": i["name"], "token": i["token"], "exp": i["exp"], "online": on(s), "vol": i.get("vol", 1.0), "muted": bool(i.get("muted")), "mode": i.get("mode", "video")} for s, i in g.items()},

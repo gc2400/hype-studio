@@ -88,6 +88,8 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
         <button class="btn yellow" id="connect">Connect studio</button><button class="btn red" id="disconnect" hidden>Disconnect</button></div>
       <div class="step"><span class="sn">2</span><div class="sb"><b>Go live</b><span class="muted">your Mixcast mix on air · END LIVE = back to the automation</span></div>
         <button class="golive" id="goLive" disabled>GO LIVE</button></div>
+      <div class="step" id="tgStep" hidden><span class="sn">⇄</span><div class="sb"><b>Live on</b><span class="muted">the station your show is on (TV + cameras follow)</span></div>
+        <span class="row" id="tgBtns" style="gap:6px;flex-wrap:wrap" role="group" aria-label="Which station you go live on"></span></div>
       <div class="step grow" id="airBox"><span style="font-size:26px" id="airIcon">◌</span>
         <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:900" id="airTitle">On air: the automation</div><div class="muted" id="airSub" style="font-size:12px">When you are LIVE this turns green: only your studio mix is on the radio and the TV (no clip sound).</div>
           <div class="row" style="margin-top:6px;gap:6px"><span class="chip" id="stStudio">Studio: not connected</span><span class="chip" id="stOnAir">On air: automation</span><span class="chip" id="stRec">REC off</span><span class="chip" id="airDrops" hidden></span></div></div></div>
@@ -266,7 +268,7 @@ async function connect() {
     }
     // music back to the Mixcast USB fader
     const ma = new Audio(); ma.autoplay = true; document.body.appendChild(ma);
-    conns.music = HypeRTC.keep('music', async alive => { const r = await HypeRTC.play('return', {key: KEY, bufferMs: 250}); if (!alive()) return r; /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ ma.srcObject = r.stream; if (ma.setSinkId && $('#dMusic').value) await ma.setSinkId($('#dMusic').value); ma.play().catch(() => {}); meterTo(r.stream, 'mMusic'); return r; }, setState);
+    conns.music = HypeRTC.keep('music', async alive => { const r = await HypeRTC.play((L && L.return_path) || 'return', {key: KEY, bufferMs: 250}); if (!alive()) return r; /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ ma.srcObject = r.stream; if (ma.setSinkId && $('#dMusic').value) await ma.setSinkId($('#dMusic').value); ma.play().catch(() => {}); meterTo(r.stream, 'mMusic'); return r; }, setState);
     // AUX 2 (deck 2) to the second output – silent unless Split is on and deck 2 plays
     if ($('#dMusic2').value) { const mb = new Audio(); mb.autoplay = true; document.body.appendChild(mb);
       conns.music2 = HypeRTC.keep('aux 2', async alive => { const r = await HypeRTC.play('return2', {key: KEY, bufferMs: 250}); if (!alive()) return r; mb.srcObject = r.stream; if (mb.setSinkId) await mb.setSinkId($('#dMusic2').value); mb.play().catch(() => {}); meterTo(r.stream, 'mMusic2'); return r; }, setState); }
@@ -305,6 +307,21 @@ $('#goLive').onclick = () => {
   if (!L.studio_online) return toast('The studio mix is not reaching the server yet – Connect studio first');
   post('live/on').then(d => { L = d; render(); toast('You are LIVE'); });
 };
+
+// ---------- which station you go LIVE on (Hype Radio / a theme station on Hype Radio's engine) ----------
+let TGS = [];
+function tgLoad() { fetch('../api/channels').then(authed).then(r => r.json()).then(d => { TGS = (d.channels || []).filter(c => c.enabled && c.engine); tgRender(); }).catch(() => {}); }
+function tgName(t) { const c = TGS.find(x => x.id === t); return c ? c.name : 'Hype Radio'; }
+function tgRender() {
+  if (!L) return; $('#tgStep').hidden = !TGS.length;
+  const cur = L.target || '', opts = [['', 'Hype Radio']].concat(TGS.map(c => [c.id, c.name]));
+  const h = opts.map(([id, nm]) => `<button class="btn sm ${cur === id ? 'yellow' : ''}" data-tg="${id}" ${L.live ? 'disabled' : ''} aria-pressed="${cur === id}">${nm}</button>`).join('');
+  if ($('#tgBtns').dataset.h !== h) { $('#tgBtns').innerHTML = h; $('#tgBtns').dataset.h = h;
+    $$('#tgBtns [data-tg]').forEach(b => b.onclick = () => post('live/target', {target: b.dataset.tg || null}).then(d => { L = d; render();
+      toast('Live on ' + tgName(L.target) + (connected ? ' – reconnecting the studio to it…' : ''));
+      if (connected) { disconnect(); setTimeout(connect, 1200); } }).catch(e => toast(e.message, 1))); }
+}
+tgLoad(); setInterval(tgLoad, 30000);
 
 // ---------- guests ----------
 $('#gAdd').onclick = () => post('live/guest_add', {name: $('#gName').value, mode: $('#gMode').value}).then(d => { $('#gName').value = ''; toast('Guest link made – send it to your guest'); refresh(); }).catch(e => toast(e.message));
@@ -413,7 +430,7 @@ $('#rtSplit').onclick = () => { if (!$('#dMusic2').value) toast('Choose the AUX 
 $$('[data-pto]').forEach(b => b.onclick = () => post('live/settings', {pads_to: b.dataset.pto}).then(d => { L = d; render(); }));
 function render() {
   restRender(); rtRender();
-  const g = $('#goLive'); g.disabled = false; g.textContent = L.live ? 'END LIVE' : 'GO LIVE'; g.classList.toggle('live', L.live);
+  const g = $('#goLive'); g.disabled = false; g.textContent = L.live ? 'END LIVE' : (L.target ? 'GO LIVE on ' + tgName(L.target) : 'GO LIVE'); g.classList.toggle('live', L.live); tgRender();
   $('#stOnAir').textContent = L.live ? (L.studio_online ? 'On air: STUDIO' : 'On air: automation (studio lost!)') : 'On air: automation'; $('#stOnAir').className = 'chip ' + (L.live ? (L.studio_online ? 'bad' : 'wait') : '');
   const ab = $('#airBox'), studioAir = L.live && L.air === 'studio';
   ab.classList.toggle('on', studioAir); ab.classList.toggle('lost', L.live && !studioAir);

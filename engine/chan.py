@@ -663,7 +663,7 @@ class Channel:
         return {"station": {"id": self.id, "name": self.cfg["name"], "shortcode": self.id, "listen_url": "https://stream.hyperadio.nl/" + self.cfg["mount"],
                             "hls_url": "https://stream.hyperadio.nl/%s.m3u8" % self.id, "hls_enabled": True, "is_public": True, "logo": logo,
                             "mounts": [{"name": "MP3 128", "url": "https://stream.hyperadio.nl/" + self.cfg["mount"], "bitrate": 128, "format": "mp3", "is_default": True}]},
-                "live": {"is_live": bool(self.sim), "streamer_name": "", "broadcast_start": None},
+                "live": {"is_live": bool(self.sim or getattr(self, "live_on", False)), "streamer_name": "", "broadcast_start": None},
                 "now_playing": {"sh_id": int(n.get("started") or 0), "played_at": int(n.get("started") or t), "duration": dur, "elapsed": round(el),
                                 "remaining": round(max(0, dur - el)), "playlist": n.get("folder") or "", "streamer": "", "is_request": False,
                                 "song": song(n.get("artist"), n.get("title"), n.get("folder")), "type": "song"},
@@ -690,6 +690,7 @@ class Channel:
 
 
 RADIO_LIQ = "/etc/hype/radio.liq"
+def studio_port(cfg): return 8010 + int(cfg["telnet"]) - 1300       # = chancfg.studio_port (Ambiente 8011, Latina 8012)
 def engine_liq(cfg, port):
     """Hype Radio's own radio.liq for a theme station on Hype Radio's engine (channel mode): the same sound chain, mixing,
     pads, decks and ID-over-intro, with the station's telnet port, engine port, sound settings and Icecast mounts.
@@ -703,7 +704,8 @@ def engine_liq(cfg, port):
     sub("settings.server.telnet.port.set(1234)", "settings.server.telnet.port.set(%d)" % int(cfg["telnet"]))
     sub('"/var/log/hype/liquidsoap.log"', '"/var/log/hype/ch-%s.log"' % cid)
     sub('"http://127.0.0.1:8090/', '"http://127.0.0.1:%d/' % port)
-    sub('input.harbor("studio", port=8005, password=live.harbor_pw, buffer=1.5, max=6.)', "blank()")
+    # LIVE on this station (Broadcast → station choice): the studio's Mixcast mix comes in on its own harbor port (8010 + n)
+    sub('input.harbor("studio", port=8005,', 'input.harbor("studio", port=%d,' % studio_port(cfg))
     sub('input.harbor("ext", port=8006, password=live.harbor_pw, buffer=2., max=8.)', "blank()")
     sub('interactive.persistent("/var/lib/hype/sound.json")', 'interactive.persistent("/var/lib/hype/sound-%s.json")' % cid)
     i = t.index("\noutput.icecast(")
@@ -715,7 +717,9 @@ output.icecast(%%mp3(bitrate=128, samplerate=44100, stereo=true), host="127.0.0.
   password=conf.icecast_source, mount="%(id)s.mp3", name="%(name)s", description="%(genre)s", genre="%(genre)s",
   url="https://www.hyperadio.nl", public=false, s)
 output.dummy(fx)
-output.dummy(ret)
+# music + jingles for the studio's Mixcast fader while you are LIVE on this station (Broadcast plays "return-<id>")
+output.url(url="rtsp://127.0.0.1:8554/return-%(id)s",
+  %%ffmpeg(format="rtsp", rtsp_transport="tcp", %%audio(codec="libopus", b="256k", samplerate=48000, channels=2, application="audio", frame_duration=20)), ret)
 output.dummy(ret2)
 # the TV bus (TV blocks: Hype Radio's engine crossfades this station's "tv_vol" up and Hype Radio's down; never saved = 0 after a restart)
 tv_vol = interactive.float("tv_vol", min=0., max=1., description="this station on the TV (TV block)", 0.)
@@ -756,6 +760,10 @@ class EngineChannel(Channel):
                     if len(v) >= 2: self.level = [float(v[0]), float(v[1])]; self.meter = [float(x) for x in v[:9]]
                 except Exception: pass
                 if time.time() - last_l > 15: last_l = time.time(); self.count_listeners()
+                try:       # LIVE from the studio on this station (Hype Radio's engine writes it): the now-playing feed says LIVE
+                    lt = json.load(open("/run/hype/live_target.json"))
+                    self.live_on = bool(lt.get("live") and lt.get("target") == self.id and time.time() - lt.get("t", 0) < 30)
+                except Exception: self.live_on = False
             except Exception as e: log.warning("%s: %s", self.id, e)
             self.stop_ev.wait(2)
         if HANDOVER["on"]: self.save_state(); log.info("%s: hype-channels restarts – the radio engine keeps playing", self.id); return
