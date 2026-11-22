@@ -1105,7 +1105,8 @@ class TV:
             log.info("show intro: %s", os.path.basename(f))
         except Exception as e: log.warning("show intro: %s", e); self.cl = None
     def branding_loop(self):
-        f = show_intro(SHOW.get("title"))
+        st_ = "/srv/hype/branding/stations/loop_%s.mp4" % TVF["ch"] if (TVF.get("ch") and not CH) else None   # a TV block: the station's loop
+        f = st_ if st_ and os.path.isfile(st_) else show_intro(SHOW.get("title"))
         if not f: return None
         try:
           with self.olock:     # (also called from the show watcher thread: one OBS request at a time)
