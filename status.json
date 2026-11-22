@@ -1,17 +1,17 @@
 {
- "time": "2026-11-22T01:45:32",
- "result": "waiting",
- "commit": "ac1962603b42713b0b418cb8dcb35908bcf224e1",
- "subject": "Guard [night]: also watches the theme stations on Hype Radio's engine \u2013 silence / broken sound 25 s \u2192 restart that station's engine, 60 s or its radio engine not answering \u2192 restart that station's radio engine, engine not answering \u2192 restart it; never touches Hype Radio or the TV (installs with the TV blocks)",
+ "time": "2026-11-22T03:53:07",
+ "result": "ok",
+ "commit": "8865e2f755f37682c490e65b975c165c3b1e395c",
+ "subject": "Hold tonight's update (TV blocks + station watchdog) for a night: the server froze at ~02:58 and is being reset \u2013 no update right after a fresh restart. Comes back once the cause is clear.",
  "log": [
-  "01:45:32 update c512b259 \u2192 ac196260 \u00b7 6 file(s): engine/chan.py, engine/engine.py, engine/guard.py, radio/radio.liq, web/panel/index.html, web/panel/plan.html",
-  "01:45:32 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "03:53:07 update c512b259 \u2192 8865e2f7 \u00b7 0 file(s): none (not server files)",
+  "03:53:07 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Frenna \u2013 STARLIFE",
-  "listeners": 2,
-  "obs": true,
-  "seg_age": 0.1,
+  "song": "",
+  "listeners": 0,
+  "obs": null,
+  "seg_age": null,
   "problems": [],
   "ok": true
  },
@@ -19,7 +19,7 @@
   "hype-radio": "active",
   "hype-engine": "active",
   "hype-obs": "active",
-  "hype-ladder": "active",
+  "hype-ladder": "activating",
   "hype-guard": "active",
   "hype-indexer": "active",
   "nginx": "active"
