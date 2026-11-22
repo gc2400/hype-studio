@@ -1,17 +1,17 @@
 {
- "time": "2026-11-21T22:00:28",
+ "time": "2026-11-22T01:45:32",
  "result": "waiting",
- "commit": "7d7572699fe9393055e538228ce19119195d89a6",
- "subject": "TV blocks [night]: the TV can follow a theme station \u2013 Planning \u2192 TV week grid, On Air \u2192 TV by hand; Hype Radio's engine keeps driving OBS with the station's songs, the TV sound crossfades on the TV bus; Hype Radio's radio stream never changes",
+ "commit": "ac1962603b42713b0b418cb8dcb35908bcf224e1",
+ "subject": "Guard [night]: also watches the theme stations on Hype Radio's engine \u2013 silence / broken sound 25 s \u2192 restart that station's engine, 60 s or its radio engine not answering \u2192 restart that station's radio engine, engine not answering \u2192 restart it; never touches Hype Radio or the TV (installs with the TV blocks)",
  "log": [
-  "22:00:28 update c512b259 \u2192 7d757269 \u00b7 5 file(s): engine/chan.py, engine/engine.py, radio/radio.liq, web/panel/index.html, web/panel/plan.html",
-  "22:00:28 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "01:45:32 update c512b259 \u2192 ac196260 \u00b7 6 file(s): engine/chan.py, engine/engine.py, engine/guard.py, radio/radio.liq, web/panel/index.html, web/panel/plan.html",
+  "01:45:32 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Chimbala X Secreto El Famoso Biberon X Crazy Desing X Albert Diamond \u2013 Banana (Remix)",
-  "listeners": 3,
+  "song": "Frenna \u2013 STARLIFE",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
