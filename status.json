@@ -1,17 +1,17 @@
 {
- "time": "2026-11-22T15:43:26",
+ "time": "2026-11-22T15:46:32",
  "result": "ok",
- "commit": "90a65105cfecdff9b4b250329397e5fe23cbd7d6",
- "subject": "TV buttons (Schedule / Hype Radio / station) moved to Planning \u2192 TV; station view also shows the TV media card while that station is on TV",
+ "commit": "b5ff91cc963496af482eccd62973e96b8098dd85",
+ "subject": "Station view (on Hype Radio's engine): AUTO / MANUAL buttons in the header",
  "log": [
-  "15:43:26 update 67a6bd4f \u2192 90a65105 \u00b7 3 file(s): web/panel/header.js, web/panel/index.html, web/panel/plan.html",
-  "15:43:26 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:46:32 update 90a65105 \u2192 b5ff91cc \u00b7 1 file(s): web/panel/header.js",
+  "15:46:32 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Jeon x Upgrade Music x Steve Andreas \u2013 Savaneta",
-  "listeners": 2,
+  "song": "Bad Bunny \u2013 VOY A LLeVARTE PA PR",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
