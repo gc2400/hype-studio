@@ -529,3 +529,4 @@
 2026-11-22T15:46:32 ok b5ff91cc Station view (on Hype Radio's engine): AUTO / MANUAL buttons in the header
 2026-11-22T16:23:20 waiting 4ffd973a [night] Stations can join Hype Radio's live show (Broadcast → Live on Hype Radio + also on Ambiente / Latina): Hype Radio's on-air sound replaces the station's while LIVE, its own programme waits; chosen per show
 2026-11-22T18:34:15 waiting ba1a4d21 [night] Keep listening card: at a TV station change, first the full-screen card of the station the TV leaves (its sound under it), then the new station; Settings → TV (seconds, 0 = off, test on air)
+2026-11-22T18:37:21 waiting ee37b8c1 [night] TV block: the station's own show box PNG (branding/shownames/Hype_<Station>.png) instead of the text box
