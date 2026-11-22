@@ -553,7 +553,7 @@ class Screen:
         if scene == ALSO_SCENE:
             also = dict(also_now(), until=getattr(E, "hold_until", 0))
         ch = self.chart if self.chart and self.chart["end"] > now else None
-        return {"also": also, "station": None if CH else TVF.get("ch"), "now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and E.now and E.now.get("path") and E.now.get("section") != "music"),
+        return {"also": also, "station": None if CH else TVF.get("ch"), "now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and tv_item().get("path") and tv_item().get("section") != "music"),
                 "slides": ["/adbox/" + urllib.parse.quote(f) for f in slides], "slide_s": 30,
                 "slides_layer": "adbox" if scene == "Hype Screen" else "graphics"}   # Hype Screen: its own source under the Live Layer
 
@@ -757,11 +757,11 @@ class TV:
         except Exception as e: log.warning("OBS scene: %s", e); self.cl = None
         self.route_audio()
         try:   # clean screen during a jingle only in the Music video scene: another scene (cameras …) -> the logo back at once
-            n = E.now or {}
+            n = tv_item()
             self.jingle_graphics(bool(JINGLE_HIDE and self.scene == "Music video" and not E.live.live and n.get("path") and n.get("section") != "music"))
         except Exception: pass
         try:
-            n = E.now or {}
+            n = tv_item()
             self.ll_hide(bool(self.scene == "Branding" or (self.scene == "Music video" and n.get("path") and n.get("section") == "jingles")))
         except Exception: pass
     def pip_done(self):
@@ -4213,12 +4213,16 @@ def tv_now():
         try: return tv_get(TVF["ch"], "/tvnow").get("now") or {}
         except Exception: return {}
     return E.now
+def tv_item():
+    """What the TV shows now: during a TV block the station's item (its jingle hides the clock / show name like Hype Radio's),
+    else Hype Radio's. (22 Nov: Hype Radio's jingles hid the clock + show box over Ambiente's songs, Ambiente's did not.)"""
+    return (TVF.get("now") or {}) if TVF.get("ch") else (E.now or {})
 def tv_handover(old, new):
     """Picture + sound to another station: the sound crossfades in ~1.2 s, the picture switches to what it plays right now."""
     ports = {None: LIQ_PORT}
     for x in (old, new):
         if x: ports[x] = int(chancfg.get(x)["telnet"])
-    TVF.update(ch=new, started=None, pre=None, fail=0, since=time.time())
+    TVF.update(ch=new, started=None, pre=None, fail=0, since=time.time(), now=None)
     for i in range(1, 13):
         f = i / 12.0
         tv_level(ports[new], f)
@@ -4236,6 +4240,7 @@ def tv_handover(old, new):
 def tv_show_station(n):
     """A station's song on the TV: the same show() as Hype Radio's songs (preloaded clip, keyframe sync)."""
     c = dbc(); path = n.get("path") or ""; mode = n.get("mode"); clip = None; start = n.get("cue_start") or 0; kf = None
+    TVF["now"] = n
     if mode in ("clip", "jingle-video"): clip, kf = tv_file(c, path), keyframes(c, path)
     elif mode == "pair" and n.get("clip_path"):      # its own video, shown without its own sound (the station's sound is on TV)
         clip, start = pair_clip(c, n["clip_path"])[:2]; kf = keyframes(c, n["clip_path"])
