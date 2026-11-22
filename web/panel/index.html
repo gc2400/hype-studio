@@ -914,16 +914,17 @@ function lib() {
     $('#secs').innerHTML = SECS.map(([k, n]) => `<button class="${k === SEC ? 'on' : ''}" data-sec="${k}" role="tab" aria-selected="${k === SEC}">${n}<span>${Object.assign({}, d.counts, PLCN)[k] ?? ''}</span></button>`).join('');
     if (!('clocks' in PLCN)) plcCount();
     $('#secs').querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { SEC = b.dataset.sec; GENRE = ''; FOLDER = ''; lib(); });
-    // level 1: genre folders · level 2: the subfolders of the chosen genre
-    const genres = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))];
-    $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g ? esc(g) : 'All'}</button>`).join('');
+    // level 1: genre folders · level 2: the subfolders of the chosen genre. One top folder only (a theme station: AMBIENTE/…,
+    // Mixes: MIXES/…) is skipped – its folders are level 1 and THEIR subfolders level 2 (22 Nov: RITMO did not open on Ambiente)
+    const tops = [...new Set(d.all_folders.map(f => f.split('/')[0]).filter(Boolean))], root = tops.length === 1 ? tops[0] : '', dep = root ? 2 : 1;
+    const genres = [...new Set(d.all_folders.map(f => f.split('/').slice(0, dep).join('/')).filter(f => f && f.split('/').length === dep))];
+    $('#folders').innerHTML = ['', ...genres].map(g => `<button class="btn sm ${g === GENRE ? 'on' : ''}" data-g="${esc(g)}">${g ? esc(g.split('/').slice(dep - 1).join('/')) : 'All'}</button>`).join('');
     $('#folders').querySelectorAll('[data-g]').forEach(b => b.onclick = () => { GENRE = b.dataset.g; FOLDER = ''; lib(); });
-    // one top folder only (Mixes: everything is in MIXES/…): skip it and show its subfolders straight away
-    const one = genres.length === 1 ? genres[0] : '', G = GENRE || one;
-    $('#folders').hidden = !!one;
-    const subs = G ? [...new Set(d.all_folders.filter(f => f.startsWith(G + '/')).map(f => f.split('/').slice(0, 2).join('/')))] : [];
+    $('#folders').hidden = !genres.length;
+    const G = GENRE;
+    const subs = G ? [...new Set(d.all_folders.filter(f => f.startsWith(G + '/')).map(f => f.split('/').slice(0, dep + 1).join('/')))] : [];
     $('#subfolders').hidden = !subs.length;
-    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(1).join('/')) : (one ? 'All' : 'All ' + esc(G))}</button>`).join('');
+    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(dep).join('/')) : 'All ' + esc(G.split('/').pop())}</button>`).join('');
     $('#subfolders').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FOLDER = b.dataset.f; lib(); });
     $('#res').innerHTML = d.items.map(it => { const [bt, bc] = badge(SEC === 'jingles' ? 'jingle' : it.mode);
       const last = it.last ? 'played ' + ago(it.last) : 'not played yet';
