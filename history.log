@@ -537,3 +537,4 @@
 2026-11-22T22:07:57 ok ebe93cd5 TV block show box: branding/shownames/station_<id>.png (Hype_Ambiente matched the Hype Radio show 'Hype Ambiente' too); only a file the web server can read
 2026-11-22T22:16:55 ok a72236b3 25 fps Now Playing boxes (Gianno); TV block: the Branding scene loops the station's own video (branding/stations/loop_<id>.mp4)
 2026-11-22T22:24:07 ok 5670b87a Now Playing box Hype Ambiente: Gianno's new version (25 fps)
+2026-11-22T22:54:48 ok 0d4fd951 Now Playing box: the 3 station boxes all preloaded (no file switch at the box's start - the Latina box hung)
