@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/panel/onair.css?v=1795262300">
 <style>/* a theme station on Hype Radio's engine: the same On Air page, without what only Hype Radio has (TV, studio, guests, AUX decks) */
-html.ch-eng #cScenes,html.ch-eng #cTvm,html.ch-eng #liveCard,html.ch-eng #cXfade,html.ch-eng #cGuests,html.ch-eng #deckA,html.ch-eng #deckB,html.ch-eng [data-pltab="1"],html.ch-eng [data-pltab="2"]{display:none!important}</style>
+html.ch-eng:not(.ch-tv) #cScenes,html.ch-eng #cTvm,html.ch-eng #liveCard,html.ch-eng #cXfade,html.ch-eng #cGuests,html.ch-eng #deckA,html.ch-eng #deckB,html.ch-eng [data-pltab="1"],html.ch-eng [data-pltab="2"]{display:none!important}</style>
 </head>
 <body>
 <div class="wrap">
@@ -243,7 +243,22 @@ function tvPaint() {
   $('#tvInfo').textContent = 'on TV: ' + (st ? st.name : 'Hype Radio') + (man ? ' · by hand' : '');
 }
 setInterval(tvLoad, 10000); setTimeout(tvLoad, 800);
-function refresh() { return api('state').then(d => { S = d; skew = Date.now() / 1000 - d.server_time; try { localStorage.setItem('hypeSkew', skew); } catch (e) {} render(); }).catch(() => { $('#stRadio').className = 'chip bad'; }); }
+// a theme station's view while THIS station is on TV (TV block / LIVE on it): the Scenes card too, run by Hype Radio's engine
+// (the one TV) - its TV part of the state comes from there, so you never have to switch to Hype Radio to change a scene
+const TVKEYS = ['scene', 'auto_scene', 'layouts', 'scene_groups', 'elements', 'pip_frames', 'pip', 'web', 'streams', 'media', 'media_vol'];
+let MTV = null;
+function mainTv() {
+  if (!document.documentElement.classList.contains('ch-eng') || !window.__mainFetch) return;
+  const ch = (() => { try { return localStorage.getItem('hypeCh'); } catch (e) { return null; } })();
+  Promise.all([window.__mainFetch('/api/tv').then(r => r.json()), window.__mainFetch('/api/live').then(r => r.json()).catch(() => ({}))]).then(([t, l]) => {
+    const on = t.ch === ch || (l && l.live && l.target === ch);
+    document.documentElement.classList.toggle('ch-tv', !!on);
+    if (!on) { MTV = null; return; }
+    return window.__mainFetch('/api/state').then(r => r.json()).then(d => { MTV = d; });
+  }).catch(() => {});
+}
+setInterval(mainTv, 1000); mainTv();
+function refresh() { return api('state').then(d => { S = d; if (MTV && document.documentElement.classList.contains('ch-tv')) TVKEYS.forEach(k => { if (k in MTV) S[k] = MTV[k]; }); skew = Date.now() / 1000 - d.server_time; try { localStorage.setItem('hypeSkew', skew); } catch (e) {} render(); }).catch(() => { $('#stRadio').className = 'chip bad'; }); }
 function render() {
   const n = S.now || {};
   $('#bAuto').classList.toggle('on', S.auto); $('#bManual').classList.toggle('on', !S.auto);

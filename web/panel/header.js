@@ -12,9 +12,9 @@
   const CH_PATHS = /^\/(playlists|playlist|folders|padbanks|pads|listener_pads|library|clocks|shows|schedule|events|preview_hour|history|history\.csv|rights\.csv|rights_check|week|weekreport|level|audstats|aud24|audsongs|audtime|settings)$|^\/plan\//;
   // a theme station on Hype Radio's engine: EVERY call goes to its own engine (/api/ch/<id>/…), exactly like Hype Radio's panel –
   // except what is about the whole studio (channels, streams, listeners, alarm, Hype Live, version)
-  const MAIN_ONLY = /^\/(channels|streams|hl_needs|audience|guard|live|version|lib_show|me|login|logout|users|upload|wave|preview|cover|ch)(\/|$)/;
+  const MAIN_ONLY = /^\/(channels|streams|hl_needs|audience|guard|live|version|lib_show|me|login|logout|users|upload|wave|preview|cover|ch|tv|lower|pvclip|screenrules|cmd\/(?:scene|autoscene|live_layer|element|cam_layout|scene_groups|lower))(\/|$)/;   // (+ the TV: there is one TV, Hype Radio's engine runs it)
   if (CH !== 'main' && CHENG && !window.__chFetch) {
-    window.__chFetch = true; const F = window.fetch.bind(window);
+    window.__chFetch = true; const F = window.fetch.bind(window); window.__mainFetch = F;
     window.fetch = (u, o) => { try { if (typeof u === 'string' && u.includes('api/')) { const x = new URL(u, location.href), pth = x.pathname.replace(/^\/api/, '');
       if (x.pathname.startsWith('/api/') && !MAIN_ONLY.test(pth)) u = '/api/ch/' + CH + pth + x.search; } } catch (e) {} return F(u, o); };
   }
