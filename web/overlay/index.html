@@ -86,7 +86,7 @@ body.alsoon #chq,body.alsoon #np,body.alsoon #screen .it,body.alsoon #tk,body.al
 <div id="ao"><div id="aoL"><div class="t"></div><div class="a"></div></div><div id="aoA"><div class="t"></div><div class="a"></div></div></div>
 <div id="vb"><img id="vbi" alt=""><div id="vbn"></div></div>
 <div id="chq"><div class="n" id="chqn"></div><div class="m" id="chqm"></div></div>
-<div id="np"><video id="npv" src="np_box.webm" muted playsinline preload="auto"></video><div class="tx"><div class="t" id="npt"></div><div class="a" id="npa"></div></div></div>
+<div id="np"><video id="npv" data-k="" src="np_box.webm" muted playsinline preload="auto"></video><video id="npv_latina" data-k="latina" src="np_box_latina.webm" muted playsinline preload="auto" style="visibility:hidden"></video><video id="npv_ambiente" data-k="ambiente" src="np_box_ambiente.webm" muted playsinline preload="auto" style="visibility:hidden"></video><div class="tx"><div class="t" id="npt"></div><div class="a" id="npa"></div></div></div>
 <div id="screen"></div>
 <img id="showimg" class="full" alt="">
 <div id="showbox"><span class="lbl">NOW ON HYPE</span><span class="nm" id="shownm"></span></div>
@@ -193,11 +193,14 @@ function slideshow(list, secs) {
 }
 // Now Playing box with artist + title (Music video scene only): the 18 s animation, text on top
 let NP = {key: null};
-const NP_BOX = {latina: 'np_box_latina.webm', ambiente: 'np_box_ambiente.webm'}; let STATION = null;
+// the 3 boxes are all loaded from the start (22 Nov: switching the one video's file at the box's start left the Latina box
+// hanging) - the box of the station on TV plays, the others wait hidden
+let STATION = null, NPV = null;
+function npVideo() { return document.getElementById(STATION && document.getElementById('npv_' + STATION) ? 'npv_' + STATION : 'npv'); }
 let SC_LAST = null, SC_IN = 0;     // when the TV came INTO the Music video scene (from another scene)
 const NP_WAIT = 3;                 // s: the scene's own transition first, then the Now Playing animation from its start
 function nowPlaying(np, now) {
-  const box = $('#np'), v = $('#npv');
+  const box = $('#np'); let v = NPV || npVideo();
   // a window that was already running when the scene came in starts again (from 0) NP_WAIT s after the switch
   const s0 = t => SC_IN > t && SC_IN < t + 18 ? SC_IN + NP_WAIT : t;
   let wins = np ? np.at.map(s0) : [];
@@ -208,17 +211,18 @@ function nowPlaying(np, now) {
   const key = at ? np.id + '|' + at : null;
   if (key && key !== NP.key) {
     // the box in the colours of the station that is on TV (a TV block / LIVE on a station), Hype Radio's otherwise
-    const src = NP_BOX[STATION] || 'np_box.webm'; if (v.getAttribute('src') !== src) { v.setAttribute('src', src); v.load(); }
+    if (NPV) NPV.pause(); v = NPV = npVideo();
+    document.querySelectorAll('#np video').forEach(x => { x.style.visibility = x === v ? 'visible' : 'hidden'; if (x !== v) x.pause(); });
     NP.key = key; $('#npt').textContent = np.title; $('#npa').textContent = np.artist;
     box.style.display = 'block'; box.classList.remove('txon');
     fitText($('#npt'), 44, 30); fitText($('#npa'), 28, 20);
     v.currentTime = Math.max(0, now - at); v.play().catch(() => {});
   }
-  if (!key && NP.key) { NP.key = null; box.style.display = 'none'; box.classList.remove('txon'); v.pause(); }
+  if (!key && NP.key) { NP.key = null; box.style.display = 'none'; box.classList.remove('txon'); v.pause(); NPV = null; }
   NP.on = !!key;
 }
 // the text follows the animation's own clock (not the server's), so it always lands exactly in the box: in at 1.25 s, out at 16.75 s
-(function npText() { const v = $('#npv'), box = $('#np'); if (NP.on) { const t = v.currentTime || 0; box.classList.toggle('txon', t > 1.25 && t < 16.75); } requestAnimationFrame(npText); })();
+(function npText() { const v = NPV || $('#npv'), box = $('#np'); if (NP.on) { const t = v.currentTime || 0; box.classList.toggle('txon', t > 1.25 && t < 16.75); } requestAnimationFrame(npText); })();
 // Up next PIP: the 3 cards (the frame PNG with labels and badges is an image in the OBS scene "Up next")
 let UN_T = null;
 function upNext(u, now) {
