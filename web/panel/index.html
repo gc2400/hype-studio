@@ -84,6 +84,7 @@ html.ch-eng #cScenes,html.ch-eng #cTvm,html.ch-eng #liveCard,html.ch-eng #cXfade
             <span class="pvst" id="pvSt"></span>
           </div>
         </div>
+        <div class="row" id="tvRow" style="gap:5px;flex-wrap:wrap;align-items:center" hidden><span class="lab" title="Which station the TV shows. Hype Radio's radio always plays its own programme.">TV</span><span class="bjoin" id="tvBtns" role="group" aria-label="Which station has the TV"></span><span class="muted" id="tvInfo" style="font-size:12px"></span></div>
         <details class="slots" id="slotsBox"><summary><span class="lab">Camera slots</span><span class="muted" id="slotsSum"></span></summary>
           <div class="slotg" id="slotsGrid"></div></details>
         <div class="row between" style="flex-wrap:wrap;gap:6px"><span class="lab">Scenes</span>
@@ -228,6 +229,20 @@ function toast(t, err) { const e = $('#toast'); e.textContent = t; e.classList.a
 
 let S = null, skew = (() => { try { return +localStorage.getItem('hypeSkew') || 0; } catch (e) { return 0; } })(), waveFor = null, wavePeaks = null;
 // ---------- state ----------
+// TV blocks: which station the TV shows (Planning → TV = the schedule; here by hand). Hype Radio's radio is never touched.
+let TVI = null;
+function tvLoad() { if (document.documentElement.classList.contains('ch-eng')) return; api('tv').then(d => { TVI = d; tvPaint(); }).catch(() => {}); }
+function tvPaint() {
+  const d = TVI; if (!d) return; $('#tvRow').hidden = !d.stations.some(x => x.ok);
+  const cur = d.ch || 'main', man = d.manual;
+  const opts = [['', 'Schedule', 'the TV follows Planning → TV'], ['main', 'Hype Radio', 'Hype Radio on TV, whatever the schedule says']].concat(d.stations.filter(x => x.ok).map(x => [x.id, x.name.replace(/^Hype /, ''), x.name + ' on TV now (until you choose Schedule)']));
+  const h = opts.map(([id, nm, t]) => `<button class="btn sm ${(man || '') === id ? 'on' : ''}" data-tv="${id}" title="${t}" aria-pressed="${(man || '') === id}">${nm}</button>`).join('');
+  if ($('#tvBtns').dataset.h !== h) { $('#tvBtns').innerHTML = h; $('#tvBtns').dataset.h = h;
+    $$('#tvBtns [data-tv]').forEach(b => b.onclick = () => api('cmd/tv_follow', {ch: b.dataset.tv || null}).then(r => { if (r.ok === false) return toast(r.error, 1); TVI = r.tv; tvPaint(); toast(b.dataset.tv ? 'TV: ' + b.textContent + ' (by hand)' : 'TV follows the schedule'); setTimeout(tvLoad, 2500); })); }
+  const st = d.stations.find(x => x.id === d.ch);
+  $('#tvInfo').textContent = 'on TV: ' + (st ? st.name : 'Hype Radio') + (man ? ' · by hand' : '');
+}
+setInterval(tvLoad, 10000); setTimeout(tvLoad, 800);
 function refresh() { return api('state').then(d => { S = d; skew = Date.now() / 1000 - d.server_time; try { localStorage.setItem('hypeSkew', skew); } catch (e) {} render(); }).catch(() => { $('#stRadio').className = 'chip bad'; }); }
 function render() {
   const n = S.now || {};

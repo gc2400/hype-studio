@@ -20,7 +20,9 @@ Every 60 s a heartbeat goes to Hype Live (when a key is set): https://www.hypera
 Pause (deploys): touch /run/hype/guard_pause  (ignored when older than 15 min).
 Status for the panel: /var/lib/hype/guard.json · settings: /var/lib/hype/guard_conf.json
 """
-import json, os, re, socket, subprocess, time, urllib.request, logging, collections
+import json, os, re, socket, subprocess, time, urllib.request, logging, collections, sys
+sys.path.insert(0, "/opt/hype")
+import chancfg
 
 STATUS = "/var/lib/hype/guard.json"
 CONF = "/var/lib/hype/guard_conf.json"
@@ -43,8 +45,8 @@ def conf():
     try: return dict(DEFAULT, **json.load(open(CONF)))
     except Exception: return dict(DEFAULT)
 
-def telnet(cmd, timeout=3):
-    s = socket.create_connection(("127.0.0.1", 1234), timeout=timeout)
+def telnet(cmd, timeout=3, port=1234):
+    s = socket.create_connection(("127.0.0.1", port), timeout=timeout)
     try:
         s.sendall((cmd + "\nquit\n").encode()); buf = b""
         while b"END" not in buf and b"Bye" not in buf:
@@ -210,6 +212,7 @@ class Guard:
             try: cl.start_stream()
             except Exception as e: self.event("warn", f"start streaming failed: {e}")
         elif t > 60: self.restart("obs", "hype-obs", "OBS still not streaming"); self.since["obs_off"] = time.time()
+        self.check_stations(st)
         if time.time() - getattr(self, "snd_t", 0) > 600:      # keep a last good copy of every sound settings file (hype-soundcheck.py)
             self.snd_t = time.time()
             try: subprocess.run(["python3", "/opt/hype/hype-soundcheck.py"] + sorted(__import__("glob").glob("/var/lib/hype/sound*.json")), timeout=20, capture_output=True)
@@ -282,6 +285,57 @@ class Guard:
         if t > 20: self.restart("radio_hls", "hype-radio-hls", f"Radio HLS stream: no new pieces for {ra} s"); self.since["radio_hls"] = time.time()
         self.state = st
 
+    def check_stations(self, st):
+        """The theme stations on Hype Radio's engine (Hype Latina, Hype Ambiente …): the same silence rules as Hype Radio,
+        each station on its own – a repair only ever restarts THAT station (never Hype Radio, never the TV).
+          silence (or broken sound) 25 s → restart its engine (hype-engine@<id>; it queues the music again)
+          still silent 60 s / its radio engine not answering 20 s → restart its radio engine (hype-channels starts it again at once)
+          its engine not answering 30 s → restart its engine"""
+        out = {}
+        try: chs = [x for x in chancfg.load() if x.get("enabled") and x.get("engine")]
+        except Exception: chs = []
+        for cfg in chs:
+            cid, nm = cfg["id"], cfg["name"]
+            for k, txt in (("silence", "Silence on air"), ("liq_down", "Radio engine not answering"), ("engine_down", "Playout engine not answering")):
+                PIDS["%s_%s" % (k, cid)] = "%s: %s" % (nm, txt)
+            eng = None
+            try: eng = http_json("http://127.0.0.1:%d/state" % chancfg.engine_port(cid))
+            except Exception: pass
+            stopped = bool(eng and eng.get("stopped"))
+            level = None
+            try:
+                v = telnet("radio.level", port=int(cfg["telnet"])).split(); level = max(float(v[0]), float(v[1]))
+                if level != level: level = 0.0      # NaN = broken sound = silence
+            except Exception: pass
+            silent = level is not None and level < 0.003 and not stopped
+            ts = self.bad("silence_" + cid, silent)
+            out[cid] = {"engine": bool(eng), "liq": level is not None, "level": level, "silent_s": round(ts), "stopped": stopped}
+            if os.path.exists(PAUSE) and time.time() - os.path.getmtime(PAUSE) < 900: continue
+            part = "ch_" + cid; unit = "hype-engine@%s" % cid
+            t = self.bad("liq_down_" + cid, level is None)
+            if t > 20: self.restart_ch_radio(part, cid, nm + ": radio engine not answering"); self.since["liq_down_" + cid] = time.time()
+            t = self.bad("engine_down_" + cid, not eng)
+            if t > 30: self.restart(part, unit, nm + ": playout engine not answering"); self.since["engine_down_" + cid] = time.time()
+            k = "silence_" + cid
+            if silent and ts > 25 and self.step.get(k, 0) == 0:
+                self.step[k] = 1; self.restart(part, unit, nm + ": silence on air for 25 s")
+            elif silent and ts > 60 and self.step.get(k, 0) == 1:
+                self.step[k] = 2; self.restart_ch_radio(part, cid, nm + ": still silence on air after 60 s")
+        st["stations"] = out
+    def restart_ch_radio(self, part, cid, why):
+        """A theme station's radio engine runs under hype-channels: stop that one process (its own pid) – hype-channels
+        starts it again within seconds (the station's engine queues the music again)."""
+        if not conf().get("repair", True): return self.event("warn", f"{why} – automatic repair is off")
+        if not self.may_restart(part):
+            if self.step.get(part + "_gaveup") is None:
+                self.step[part + "_gaveup"] = 1; self.event("bad", f"{why} – restarted 3× in 30 min, stopped trying: needs you")
+            return
+        try: pids = [int(x) for x in subprocess.run(["pgrep", "-f", "^liquidsoap /run/hype-ch/%s\\.liq$" % cid], capture_output=True, text=True, timeout=5).stdout.split()]
+        except Exception: pids = []
+        self.done[part].append(time.time()); self.event("repair", f"{why} → restarting its radio engine" + ("" if pids else " (not running – hype-channels starts it)"))
+        for p_ in pids:
+            try: os.kill(p_, 15)
+            except OSError: pass
     def problems(self):
         out = []
         for pid, s in self.since.items():

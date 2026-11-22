@@ -354,7 +354,10 @@ output.icecast(%mp3(bitrate=256, samplerate=44100, stereo=true), host="127.0.0.1
 output.icecast(%mp3(bitrate=128, samplerate=44100, stereo=true), host="127.0.0.1", port=8000,
   password=conf.icecast_source, mount="radio.mp3", name="Hype Radio TV", description="Hype your life!", genre="Afro · Latin · Caribbean · Dutch · Hip-hop",
   url="https://www.hyperadio.nl", public=false, s)
-output.pulseaudio(device="hype_air", clock_safe=false, s)
+# the TV sound: Hype Radio at "tv_vol" (1; 0 while a theme station has the TV – a TV block, the engine crossfades it).
+# Defined after interactive.persistent on purpose: never saved, so after a restart Hype Radio is always on the TV.
+tv_vol = interactive.float("tv_vol", min=0., max=1., description="Hype Radio on the TV (0 during a TV block of a theme station)", 1.)
+output.pulseaudio(device="hype_air", clock_safe=false, amplify(override=null(), tv_vol, s))
 output.pulseaudio(device="hype_fx", clock_safe=false, fx)
 # music + jingles for the studio (Mixcast USB fader) – always the automation (unprocessed), also while LIVE.
 # Straight from Liquidsoap to MediaMTX "return" (Opus 256k): sample-exact timing. (Before: a Pulse capture, whose clock jitter
