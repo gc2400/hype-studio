@@ -419,7 +419,9 @@ let SEC = 'sound'; try { SEC = localStorage.getItem('hypeSetSec') || 'sound'; } 
 const SCH = (() => { try { return window.HYPE_CH ? window.HYPE_CH() : (localStorage.getItem('hypeCh') || 'main'); } catch (e) { return 'main'; } })();
 if (SCH !== 'main') {
   // (hidden, not removed: the rest of this page still fills them in)
-  ['voices', 'tv', 'tickers', 'live', 'guard'].forEach(k => $$(`[data-sec="${k}"]`).forEach(x => x.classList.add('chx')));
+  // a station on Hype Radio's engine plays its own listener voices (sent for that station from Hype Live) – only the clean-up days are Hype Radio's
+  (document.documentElement.classList.contains('ch-eng') ? ['tv', 'tickers', 'live', 'guard'] : ['voices', 'tv', 'tickers', 'live', 'guard']).forEach(k => $$(`[data-sec="${k}"]`).forEach(x => x.classList.add('chx')));
+  if (document.documentElement.classList.contains('ch-eng')) { const e = document.getElementById('listener_keep_days'), r = e && e.closest('.sl, .opt'); if (r) r.classList.add('chx'); }
   // a station on Hype Radio's engine has ID over intros, jingle fade and pad ducking exactly like Hype Radio (only the TV delay is not its)
   (document.documentElement.classList.contains('ch-eng') ? ['av_lag'] : ['jingle_fade', 'pad_duck', 'id_intro', 'id_intro_max', 'id_intro_db', 'id_intro_gap', 'av_lag']).forEach(id => { const e = document.getElementById(id), r = e && e.closest('.sl, .opt'); if (r) r.classList.add('chx'); });
   document.head.insertAdjacentHTML('beforeend', '<style>.chx{display:none!important}</style>');
