@@ -1,17 +1,17 @@
 {
- "time": "2026-11-22T03:53:07",
+ "time": "2026-11-22T03:58:19",
  "result": "ok",
- "commit": "8865e2f755f37682c490e65b975c165c3b1e395c",
- "subject": "Hold tonight's update (TV blocks + station watchdog) for a night: the server froze at ~02:58 and is being reset \u2013 no update right after a fresh restart. Comes back once the cause is clear.",
+ "commit": "d1d3b36cdc356790eeb4ad80614440de6a8fc3f3",
+ "subject": "Backup: also the theme stations' own planning (chan_*.db: hour clocks, events, pads, history) and the listener stats databases",
  "log": [
-  "03:53:07 update c512b259 \u2192 8865e2f7 \u00b7 0 file(s): none (not server files)",
-  "03:53:07 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "03:58:19 update 8865e2f7 \u2192 d1d3b36c \u00b7 1 file(s): system/hype-backup.sh",
+  "03:58:19 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "",
-  "listeners": 0,
-  "obs": null,
-  "seg_age": null,
+  "song": "Langa \u2013 Bottega",
+  "listeners": 1,
+  "obs": true,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
@@ -19,7 +19,7 @@
   "hype-radio": "active",
   "hype-engine": "active",
   "hype-obs": "active",
-  "hype-ladder": "activating",
+  "hype-ladder": "active",
   "hype-guard": "active",
   "hype-indexer": "active",
   "nginx": "active"
