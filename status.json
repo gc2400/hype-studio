@@ -1,17 +1,19 @@
 {
- "time": "2026-11-22T19:11:41",
+ "time": "2026-11-22T21:53:52",
  "result": "ok",
- "commit": "1f7f9f698f3ce07e8f4ecf3a4246a63d5aa74274",
- "subject": "Hype Stations PIP: the show name box stays (75 %, left of the video window)",
+ "commit": "7fb475af93991c72fbe32e00425f70dca2e36af0",
+ "subject": "TV block: clock / show box / Live Layer hide on the STATION's jingles (they followed Hype Radio's jingles)",
  "log": [
-  "19:11:41 update 2661d5a5 \u2192 1f7f9f69 \u00b7 1 file(s): web/overlay/index.html",
-  "19:11:41 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "21:53:07 update 1f7f9f69 \u2192 7fb475af \u00b7 1 file(s): engine/engine.py",
+  "21:53:07 restart hype-engine@*",
+  "21:53:07 restart hype-engine",
+  "21:53:52 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Rich Kalashh \u2013 Taurus",
-  "listeners": 5,
+  "song": "Velli Lirx \u2013 SENDE",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
