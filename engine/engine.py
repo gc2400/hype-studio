@@ -4154,7 +4154,7 @@ def tv_get(cid, path, timeout=2):
 def tv_level(port, v):
     try: Liq(port).cmd("var.set tv_vol = %.3f" % v)
     except Exception as e: log.warning("TV sound level (%d): %s", port, e)
-LOGO_MAIN = "/srv/hype/branding/logo_corner.mov"
+LOGO_MAIN = "/srv/hype/branding/logo_corner_hype.mov" if os.path.isfile("/srv/hype/branding/logo_corner_hype.mov") else "/srv/hype/branding/logo_corner.mov"   # (22 Nov: the 3D coin-spin logo; the old one stays as logo_corner.mov)
 def tv_logo(cid, fade=True):
     """The corner logo on TV: the station's during its TV block (branding/logo_corner_<id>.mov, same size and spot as
     Hype Radio's), Hype Radio's animated logo otherwise. No file for the station: Hype Radio's stays.
@@ -4259,7 +4259,7 @@ def tv_follow_step():
 def tv_follow_loop():
     time.sleep(10)
     tv_level(LIQ_PORT, 1.0)         # (after an engine restart: Hype Radio has the TV sound until a block says otherwise)
-    tv_logo(None, fade=False)
+    tv_logo(None)                   # (Hype Radio's logo; fades only if OBS had another file)
     for cfg in chancfg.load():
         if cfg.get("engine"): tv_level(int(cfg["telnet"]), 0.0)
     n_ = 0
