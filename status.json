@@ -1,19 +1,19 @@
 {
- "time": "2026-11-22T22:07:57",
+ "time": "2026-11-22T22:16:55",
  "result": "ok",
- "commit": "ebe93cd57ccf3c90639eaec11cc4ceb0216d4526",
- "subject": "TV block show box: branding/shownames/station_<id>.png (Hype_Ambiente matched the Hype Radio show 'Hype Ambiente' too); only a file the web server can read",
+ "commit": "a72236b3ce60ca0c78f3123daa865b5096c0b943",
+ "subject": "25 fps Now Playing boxes (Gianno); TV block: the Branding scene loops the station's own video (branding/stations/loop_<id>.mp4)",
  "log": [
-  "22:07:12 update 7fb475af \u2192 ebe93cd5 \u00b7 1 file(s): engine/engine.py",
-  "22:07:12 restart hype-engine@*",
-  "22:07:12 restart hype-engine",
-  "22:07:57 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "22:16:10 update ebe93cd5 \u2192 a72236b3 \u00b7 4 file(s): engine/engine.py, web/overlay/np_box.webm, web/overlay/np_box_ambiente.webm, web/overlay/np_box_latina.webm",
+  "22:16:10 restart hype-engine@*",
+  "22:16:10 restart hype-engine",
+  "22:16:55 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Farruko x Eddy Lover \u2013 Ay Dale",
+  "song": "RULY x Amos Balentin \u2013 Dos Kaminda",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.3,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
