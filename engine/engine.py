@@ -881,12 +881,12 @@ class TV:
             cl.set_source_filter_index(name, "Level", 0); self.LEVEL_OK.add(name)
         cl.set_source_filter_settings(name, "Level", {"db": g}, True)
         cl.set_input_volume(name, vol_db=0.0)
-    def show(self, mode, clip_file, cue_start, sound=False, gain=0.0, kf=None, t0=None):
+    def show(self, mode, clip_file, cue_start, sound=False, gain=0.0, kf=None):
         """Switch the TV for a new song.
         - sound=True (paired song): the clip plays with its own sound, from its own cue point.
         - otherwise the clip is picture only and must match the radio: when the song starts later in the file (cue point),
           we jump to the next keyframe and start it exactly when the radio gets there (the previous picture stays up till then)."""
-        self.t_show = time.time(); t0 = t0 or self.t_show      # t0: when the radio started the song (a TV block: the station's start)
+        t0 = time.time(); self.t_show = t0
         with self.olock:
           try:
             cl = self.client(); self.gen += 1; gen = self.gen
@@ -1137,7 +1137,7 @@ class Engine:
         if not CH: c0.execute("UPDATE items SET mtime=0 WHERE (folder LIKE 'MIXES%' OR folder LIKE 'RECORDINGS%') AND problem LIKE 'no artist%'"); c0.commit()   # mixes need no artist: index again
         self.live = NullLive() if CH else live.Live(self.liq, self.tv, lambda: SHOW.get("title") or "show")
         self.tv.live = self.live.live; self.tv.route_audio(force=True)
-        self.live.song_scene = lambda: tv_scene()     # the automatic scene for what plays now (studio drop-out)
+        self.live.song_scene = lambda: (self.now or {}).get("scene") or "Hype Screen"     # the automatic scene for what plays now (studio drop-out)
         self.decks = {"1": None, "2": None}; self.tv_deck = None; self._air_lost = None
         try: self.overlap = bool(json.load(open(DECKS_FILE)).get("overlap"))
         except Exception: self.overlap = False
@@ -1459,7 +1459,7 @@ class Engine:
                 with LOCK:
                     if self.tv.scene == n.split("@")[0] and not self.tv.auto:
                         self.tv.auto = True; self.tv.scene = None
-                        if self.now: self.tv.set_scene(tv_scene())
+                        if self.now: self.tv.set_scene(self.now.get("scene") or "Hype Screen")
             threading.Timer(hold, back).start()
     def place(self, it):
         """New Music / Throwback sweepers always go RIGHT BEFORE a song of their kind (a clock may list them after it):
@@ -1555,7 +1555,7 @@ class Engine:
         except Exception as e:      # not reachable (restarting …): nothing was sent, it stays first in Up next
             log.warning("queue %s – %s failed (%s): stays first in Up next", it.get("artist"), it.get("title"), e); return
         self.plan.pop(0); self.liq_next = it; it["pushed"] = time.time(); warm(c, it)
-        if it.get("mode") in ("clip", "jingle-video") and PRELOAD and not TVF["ch"]:
+        if it.get("mode") in ("clip", "jingle-video") and PRELOAD:
             try:
                 cf, kf_ = tv_file(c, it["path"]), keyframes(c, it["path"])
                 threading.Thread(target=self.tv.preload, args=(cf, it.get("cue_start") or 0, kf_), daemon=True).start()
@@ -1894,10 +1894,8 @@ class Engine:
                 clip_file, start_at, sound, gain = pair_clip(c, it["clip_path"])
             if getattr(self.tv, "hold_song", False):      # a scene you held for the last song: this song is automatic again
                 self.tv.hold_song = False; self.tv.auto = True; self.tv.scene = None
-            if TVF["ch"]:       # a TV block: the TV follows a theme station – Hype Radio's song only goes on the radio
-                scene = "Music video" if clip_file else "Hype Screen"
-            else: scene = self.tv.show(mode, clip_file, start_at, sound, gain, kf)
-            if mode == "pair" and it["clip_path"] and not TVF["ch"]:
+            scene = self.tv.show(mode, clip_file, start_at, sound, gain, kf)
+            if mode == "pair" and it["clip_path"]:
                 cd = c.execute("SELECT duration FROM items WHERE path=?", (it["clip_path"],)).fetchone()
                 if cd and cd[0] and it["duration"] and cd[0] < it["duration"] - 1:
                     threading.Timer(max(1.0, cd[0] - 0.3), lambda p=path: self.now.get("path") == p and self.tv.show("audio", None, 0)).start()
@@ -1917,10 +1915,9 @@ class Engine:
             elif (path or "").startswith(VOICE_PFX):      # a listener voice from an hour-plan slot: counted + the voice box on TV
                 voice_played(path); voice_box(path, 0.3, max(2.0, (it.get("cue_end") or it.get("duration") or 8) - (it.get("cue_start") or 0)))
             elif (path or "").startswith(VT_PFX): vt_on_air(c, path, it)      # your own voice link (voice tracking)
-            if JINGLE_HIDE and not TVF["ch"]: threading.Thread(target=self.tv.jingle_graphics, args=(it["section"] != "music" and scene == "Music video" and not self.live.live,), daemon=True).start()
-            if not TVF["ch"]:
-                try: self.screen.on_song(c, it)
-                except Exception as e: log.warning("screen: %s", e)
+            if JINGLE_HIDE: threading.Thread(target=self.tv.jingle_graphics, args=(it["section"] != "music" and scene == "Music video" and not self.live.live,), daemon=True).start()
+            try: self.screen.on_song(c, it)
+            except Exception as e: log.warning("screen: %s", e)
             log.info("ON AIR %s – %s [%s/%s] scene=%s", it["artist"], it["title"], it["folder"], mode, scene)
             hl_send_np(c, it); relay_title(it)
             if it["section"] != "music": self.last_kind = "jingle"
@@ -2122,20 +2119,11 @@ class Engine:
                     # the scene that fits what plays now (e.g. Music video during a clip, back from the cameras): AUTO SCENES on.
                     # another one (e.g. Hype Screen during a clip): held for THIS song, the next song is automatic again
                     self._live_layer_back(c)
-                    want = tv_scene()
+                    want = (self.now or {}).get("scene") or "Hype Screen"
                     hold = d["scene"] != want
                     self.tv.auto = not hold; self.tv.hold_song = hold; self.tv.set_scene(d["scene"])
                     return {"ok": True, "auto": not hold, "hold": hold}
                 else: self.hold_until = 0; self.tv.auto = False; self.tv.hold_song = False; self.tv.set_scene(d["scene"])
-            elif action == "tv_follow":       # On Air → TV: which station has the TV now (by hand); "" / None = the TV schedule again
-                ch_ = d.get("ch") or None
-                if ch_ and ch_ != "main" and not tv_station_ok(ch_): return {"ok": False, "error": "that station is not on Hype Radio's engine / is off"}
-                b = tv_blocks(c); b["manual"] = ch_; planner.set_setting(c, "tv_blocks", b); TV_BLOCKS["t"] = 0
-                return {"ok": True, "tv": tv_info()}
-            elif action == "tv_blocks":       # Planning → TV: the week grid {"<weekday>-<hour>": station id}
-                g = {str(k): str(v) for k, v in (d.get("grid") or {}).items() if re.match(r"^[0-6]-(1?[0-9]|2[0-3])$", str(k)) and v and str(v) != "main" and chancfg.valid(str(v))}
-                b = tv_blocks(c); b["grid"] = g; planner.set_setting(c, "tv_blocks", b); TV_BLOCKS["t"] = 0
-                return {"ok": True, "tv": tv_info()}
             elif action == "live_layer":      # the Hype Live Layer (shoutouts, polls, chat …) on / off in every scene
                 on = bool(d.get("on")); planner.set_setting(c, "live_layer", on); self.tv.live_layer(on)
             elif action == "autoscene":      # the AUTO SCENES button: on <-> off (off = manual: the scene stays until you change it)
@@ -2144,7 +2132,7 @@ class Engine:
                     return {"ok": True, "auto": False}
                 self._live_layer_back(c)
                 self.tv.auto = True; self.tv.hold_song = False; self.tv.scene = None
-                if self.now: self.tv.set_scene(tv_scene())
+                if self.now: self.tv.set_scene(self.now.get("scene") or "Hype Screen")
                 return {"ok": True, "auto": True}
             elif action == "media_play":
                 res = self.media.play(self, d)
@@ -2185,7 +2173,7 @@ class Engine:
                 if not os.path.isdir(src): return {"ok": False, "error": "not found"}
                 os.makedirs(os.path.join(slideshow.ROOT, ".deleted"), exist_ok=True)
                 os.replace(src, os.path.join(slideshow.ROOT, ".deleted", time.strftime("%Y%m%d-%H%M%S-") + f[2] + "-" + f[3]))
-                if self.tv.scene == slideshow.scene_name(f[2], f[3]): self.tv.auto = True; self.tv.scene = None; self.tv.set_scene(tv_scene())
+                if self.tv.scene == slideshow.scene_name(f[2], f[3]): self.tv.auto = True; self.tv.scene = None; self.tv.set_scene((self.now or {}).get("scene") or "Hype Screen")
                 slideshow.STATE["force"] = True; log.info("slideshow deleted: %s", "/".join(f)); return {"ok": True}
             elif action == "fetch_url":      # a picture / video / sound dragged from a website onto the pads: the server fetches it
                 return fetch_url(c, d)
@@ -2361,7 +2349,7 @@ class Engine:
                 self.plan = keep; self.runner = planner.ClockRunner()
             self.parked = None
             self.tv.auto = True; self.tv.scene = None      # the TV follows the music again too
-            if self.now: self.tv.set_scene(tv_scene())
+            if self.now: self.tv.set_scene(self.now.get("scene") or "Hype Screen")
         else:
             self.park(); self.auto = False
         self.refill(c); self.push_next(c); return {"ok": True}
@@ -3737,8 +3725,6 @@ class H(BaseHTTPRequestHandler):
         u = urlparse(self.path); qs = parse_qs(u.query); p = u.path.replace("/api", "", 1)
         try:
             if p == "/state": return self.send(200, E.state())
-            if p == "/tvnow": return self.send(200, {"now": E.now or None, "next": E.liq_next or None, "t": time.time()})
-            if p == "/tv": return self.send(200, tv_info())
             if p == "/library": return self.send(200, library(qs))
             if p == "/upload/status": return self.send(200, up_status(qs))
             if p == "/history": return self.send(200, history(qs))
@@ -3918,9 +3904,6 @@ class H(BaseHTTPRequestHandler):
                 if not planner.get_setting(c, "hour_preview", True): return self.send(200, {"off": True})
                 return self.send(200, planner.preview_hour(c, day=int(qs["day"][0]) if "day" in qs else None, hour=int(qs["hour"][0]) if "hour" in qs else None,
                                                             clock=int(qs["clock"][0]) if "clock" in qs else None))
-            if p == "/graphics" and TVF["ch"]:
-                nm_ = (chancfg.get(TVF["ch"]) or {}).get("name") or ""
-                return self.send(200, {"show": nm_, "show_image": None, "show_v": 0, "start": 0, "end": 0, "temp": WEATHER["temp"], "code": WEATHER["code"]})
             if p == "/graphics": return self.send(200, {"show": SHOW["title"], "show_image": show_name_image(SHOW["title"]), "show_v": show_image_v(SHOW["title"]), "start": SHOW["start"], "end": SHOW["end"], "temp": WEATHER["temp"], "code": WEATHER["code"]})
             if p == "/pads":
                 c = dbc(); rows = c.execute("SELECT path, title, folder, duration, has_video FROM items WHERE section='jingles' AND problem IS NULL AND " + station_sql(TL.ch, plan=True) + " ORDER BY folder, title").fetchall()
@@ -4067,119 +4050,9 @@ class H(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
 RESYNC_N = {}     # song start -> how often its clip was put back in step (max 2 per song)
-# ---------------- TV blocks: the TV follows a theme station (Hype Radio's radio stays as it is) ----------------
-# Planning → TV: per hour of the week which station has the TV; On Air → TV: by hand. Hype Radio's engine keeps driving
-# OBS (the same players, preload and sync as always); during a block it takes the songs from the station's engine.
-# TV sound: every radio engine has an output on the TV bus (hype_air) with its own level "tv_vol" – Hype Radio 1, a station
-# 0; a block crossfades them. Hype Radio's radio stream never changes.
-TVF = {"ch": None, "started": None, "pre": None, "fail": 0, "since": 0}
-TV_BLOCKS = {"t": 0, "d": None}
-def tv_blocks(c=None):
-    """{"grid": {"<weekday 0-6>-<hour>": "<station id>"}, "manual": None | "main" | "<station id>"} (main database)."""
-    if c is None and TV_BLOCKS["d"] is not None and time.time() - TV_BLOCKS["t"] < 5: return TV_BLOCKS["d"]
-    d = planner.get_setting(c or sqlite3.connect(DB, timeout=30), "tv_blocks", None) or {}
-    d = {"grid": dict(d.get("grid") or {}), "manual": d.get("manual")}
-    TV_BLOCKS.update(t=time.time(), d=d); return d
-def tv_station_ok(cid):
-    cfg = chancfg.get(cid) if cid else None
-    return bool(cfg and cfg.get("enabled") and cfg.get("engine"))
-def tv_want():
-    """The station that should have the TV now (None = Hype Radio). LIVE from the studio always wins."""
-    if CH or E.live.live: return None
-    b = tv_blocks(); lt = time.localtime()
-    w = b["manual"] if b["manual"] else b["grid"].get("%d-%d" % (lt.tm_wday, lt.tm_hour))
-    return w if w and w != "main" and tv_station_ok(w) else None
-def tv_get(cid, path, timeout=2):
-    with urllib.request.urlopen("http://127.0.0.1:%d%s" % (chancfg.engine_port(cid), path), timeout=timeout) as r: return json.loads(r.read())
-def tv_level(port, v):
-    try: Liq(port).cmd("var.set tv_vol = %.3f" % v)
-    except Exception as e: log.warning("TV sound level (%d): %s", port, e)
-def tv_scene():
-    """The automatic scene for what the TV shows now (Hype Radio's song, or during a block the station's)."""
-    if TVF["ch"]:
-        n = tv_now() or {}
-        return "Music video" if n.get("mode") in ("clip", "jingle-video", "pair") else "Hype Screen"
-    return (E.now or {}).get("scene") or "Hype Screen"
-def tv_now():
-    """The song the TV shows now: Hype Radio's, or during a block the station's."""
-    if TVF["ch"]:
-        try: return tv_get(TVF["ch"], "/tvnow").get("now") or {}
-        except Exception: return {}
-    return E.now
-def tv_handover(old, new):
-    """Picture + sound to another station: the sound crossfades in ~1.2 s, the picture switches to what it plays right now."""
-    ports = {None: LIQ_PORT}
-    for x in (old, new):
-        if x: ports[x] = int(chancfg.get(x)["telnet"])
-    TVF.update(ch=new, started=None, pre=None, fail=0, since=time.time())
-    for i in range(1, 13):
-        f = i / 12.0
-        tv_level(ports[new], f)
-        tv_level(ports[old], 1.0 - f)
-        time.sleep(0.1)
-    for x, prt in ports.items():
-        if x != new: tv_level(prt, 0.0)
-    log.info("TV: %s → %s", (chancfg.get(old) or {}).get("name", "Hype Radio") if old else "Hype Radio", (chancfg.get(new) or {}).get("name", "Hype Radio") if new else "Hype Radio")
-    if not new:
-        E.screen.np = None
-        try: E.tv.jingle_graphics(False)
-        except Exception: pass
-        resync_tv(force=True)        # Hype Radio's song on air, at the right spot
-def tv_show_station(n):
-    """A station's song on the TV: the same show() as Hype Radio's songs (preloaded clip, keyframe sync)."""
-    c = dbc(); path = n.get("path") or ""; mode = n.get("mode"); clip = None; start = n.get("cue_start") or 0; kf = None
-    if mode in ("clip", "jingle-video"): clip, kf = tv_file(c, path), keyframes(c, path)
-    elif mode == "pair" and n.get("clip_path"):      # its own video, shown without its own sound (the station's sound is on TV)
-        clip, start = pair_clip(c, n["clip_path"])[:2]; kf = keyframes(c, n["clip_path"])
-    el = time.time() - (n.get("started") or time.time())
-    if getattr(E.tv, "hold_song", False): E.tv.hold_song = False; E.tv.auto = True; E.tv.scene = None
-    if el > 3 and clip:     # joined in the middle (block start): straight to the spot it is at now
-        scene = E.tv.show("clip" if mode == "pair" else mode, clip, start + el, False, 0.0, kf)
-    else:
-        scene = E.tv.show("clip" if mode == "pair" else mode, clip, start, False, 0.0, kf, t0=n.get("started"))
-    if n.get("section") == "music":
-        ln = max(1.0, (n.get("cue_mix") or n.get("cue_end") or n.get("duration") or 180) - (n.get("cue_start") or 0)); now = time.time()
-        E.screen.np = {"id": uuid.uuid4().hex[:8], "title": n.get("title") or "", "artist": n.get("artist") or "", "at": [now + 5.0] + ([now + ln / 2] if ln > 150 else []), "start": now, "end": now + max(5.0, ln - el)}
-    else: E.screen.np = None
-    if JINGLE_HIDE:
-        try: E.tv.jingle_graphics(n.get("section") != "music" and scene == "Music video")
-        except Exception: pass
-    log.info("TV (%s): %s – %s [%s] scene=%s", TVF["ch"], n.get("artist"), n.get("title"), mode, scene)
-def tv_follow_step():
-    want = tv_want()
-    if want != TVF["ch"]: tv_handover(TVF["ch"], want)
-    cid = TVF["ch"]
-    if not cid: return
-    try: d = tv_get(cid, "/tvnow"); TVF["fail"] = 0
-    except Exception as e:
-        TVF["fail"] += 1
-        if TVF["fail"] >= 20:          # ~5 s without an answer: the TV goes back to Hype Radio until the station answers again
-            log.warning("TV: %s does not answer (%s) – back to Hype Radio", cid, e); tv_handover(cid, None); TVF["since"] = time.time()
-        return
-    n = d.get("now") or {}
-    if n.get("path") and n.get("started") != TVF["started"] and E.tv.auto:      # (a scene you chose stays; back on AUTO it catches up)
-        TVF["started"] = n.get("started"); tv_show_station(n)
-    nx = d.get("next") or {}
-    if PRELOAD and nx.get("path") and nx.get("mode") in ("clip", "jingle-video") and TVF["pre"] != nx.get("id") and E.tv.auto:
-        TVF["pre"] = nx.get("id"); c = dbc()
-        threading.Thread(target=E.tv.preload, args=(tv_file(c, nx["path"]), nx.get("cue_start") or 0, keyframes(c, nx["path"])), daemon=True).start()
-def tv_follow_loop():
-    time.sleep(10)
-    tv_level(LIQ_PORT, 1.0)         # (after an engine restart: Hype Radio has the TV sound until a block says otherwise)
-    for cfg in chancfg.load():
-        if cfg.get("engine"): tv_level(int(cfg["telnet"]), 0.0)
-    while True:
-        try: tv_follow_step()
-        except Exception as e: log.warning("TV follow: %s", e)
-        time.sleep(0.25)
-def tv_info():
-    b = tv_blocks()
-    return {"ch": TVF["ch"], "since": TVF["since"], "manual": b["manual"], "grid": b["grid"],
-            "stations": [{"id": x["id"], "name": x["name"], "color": x.get("color"), "ok": tv_station_ok(x["id"])} for x in chancfg.load()]}
-
 def resync_tv(force=False):
     """After an OBS or engine restart: show the clip of the song on air again, at the right spot. force: right now (after a jump)."""
-    n = tv_now()
+    n = E.now
     if not n or n.get("mode") not in ("clip", "pair", "jingle-video"): 
         if n and E.tv.auto: E.tv.scene = None; E.tv.set_scene(n.get("scene") or "Hype Screen")
         return
@@ -4191,7 +4064,6 @@ def resync_tv(force=False):
             f, cs, snd, gain = pair_clip(c, n["clip_path"]); start = cs + el
         else:
             f, start, snd, gain = tv_file(c, n["path"]), (n.get("cue_start") or 0) + el, False, 0.0
-        if TVF["ch"]: snd = False      # a TV block: the station's sound, its clips are picture only
         if not f: return
         on = [i["sourceName"] for i in items if i["sceneItemEnabled"] and i["sourceName"] in ("Clip A", "Clip B")]
         if on and not force and (E.tv.scene == "Music video" or not E.tv.auto):
@@ -5677,5 +5549,4 @@ if __name__ == "__main__":
     threading.Thread(target=hypeweb.watch, args=(lambda: bool(E.media.cur and E.media.cur.get("file") == "live:web"),), daemon=True).start()
     # (charts go to the website only when you press Publish in the chart – no automatic sending any more)
     threading.Thread(target=watch_show, daemon=True).start()
-    threading.Thread(target=tv_follow_loop, daemon=True).start()
     ThreadingHTTPServer(("127.0.0.1", API_PORT), H).serve_forever()
