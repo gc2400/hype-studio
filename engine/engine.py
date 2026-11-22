@@ -4155,14 +4155,20 @@ def tv_get(cid, path, timeout=2):
 def tv_level(port, v):
     try: Liq(port).cmd("var.set tv_vol = %.3f" % v)
     except Exception as e: log.warning("TV sound level (%d): %s", port, e)
-LOGO_MAIN = "/srv/hype/branding/logo_corner_hype.mov" if os.path.isfile("/srv/hype/branding/logo_corner_hype.mov") else "/srv/hype/branding/logo_corner.mov"   # (22 Nov: the 3D coin-spin logo; the old one stays as logo_corner.mov)
+def _logo(n):
+    """branding/logo_corner_<n>: .webm first (VP9 with alpha - OBS plays it at the right speed; the png .mov with long still
+    parts ran too fast in OBS, 22 Nov), then .mov."""
+    for x in ("webm", "mov"):
+        f = "/srv/hype/branding/logo_corner_%s.%s" % (n, x)
+        if os.path.isfile(f): return f
+    return None
+LOGO_MAIN = _logo("hype") or "/srv/hype/branding/logo_corner.mov"   # (22 Nov: the 3D coin-spin logo; the old one stays as logo_corner.mov)
 def tv_logo(cid, fade=True):
     """The corner logo on TV: the station's during its TV block (branding/logo_corner_<id>.mov, same size and spot as
     Hype Radio's), Hype Radio's animated logo otherwise. No file for the station: Hype Radio's stays.
     The change fades: the old logo out in 0.5 s, the new file in while nothing shows, then fades in in 0.5 s
     (a "Fade" colour filter on Logo; runs in its own thread so the sound handover is never held up)."""
-    f = "/srv/hype/branding/logo_corner_%s.mov" % cid if cid else LOGO_MAIN
-    if not os.path.isfile(f): f = LOGO_MAIN
+    f = (_logo(cid) if cid else None) or LOGO_MAIN
     def op(x):
         with E.tv.olock: E.tv.client().set_source_filter_settings("Logo", "Fade", {"opacity": round(x, 3)}, True)
     def run():
