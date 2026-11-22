@@ -16,6 +16,10 @@ trap 'rm -rf "$TMP"' EXIT
 # 1. settings
 mkdir -p "$TMP/s"
 python3 -c 'import sqlite3,sys; s=sqlite3.connect(sys.argv[1]); d=sqlite3.connect(sys.argv[2]); s.backup(d); d.close()' /srv/hype-data/library.db "$TMP/s/library.db" || fail "library copy"
+# the theme stations' own planning (hour clocks, events, pads, history) + the stations' listener stats (22 Nov: were missing)
+for f in /srv/hype-data/chan_*.db /srv/hype-data/stats*.db; do
+  [ -f "$f" ] && python3 -c 'import sqlite3,sys; s=sqlite3.connect(sys.argv[1]); d=sqlite3.connect(sys.argv[2]); s.backup(d); d.close()' "$f" "$TMP/s/$(basename "$f")" || true
+done
 tar -C / -czf "$TMP/$DAY.tar.gz" --ignore-failed-read -C "$TMP" s -C / var/lib/hype etc/hype etc/nginx/sites-enabled etc/systemd/system root/.config/obs-studio opt/mediamtx/mediamtx.yml opt/hype 2>/dev/null
 [ -s "$TMP/$DAY.tar.gz" ] || fail "settings archive"
 $SSH "$BOX" mkdir -p settings media media-old >/dev/null 2>&1
