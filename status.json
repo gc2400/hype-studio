@@ -1,17 +1,17 @@
 {
- "time": "2026-11-22T12:50:03",
+ "time": "2026-11-22T12:54:11",
  "result": "ok",
- "commit": "7d86478673459b9ac8f3d6e80d2d71d6bfa3a9d7",
- "subject": "Settings on a theme station (Hype Radio's engine): ID over intros (on/off, per hour, level, minutes apart), jingle fade and pad ducking are shown \u2013 they are the station's own",
+ "commit": "50e631e84f1732e5e7835df711dfc59ef79e30d2",
+ "subject": "Settings on a theme station: Listener voices (over soft intros, per hour, max plays) \u2013 the station's own",
  "log": [
-  "12:50:03 update f31ec145 \u2192 7d864786 \u00b7 1 file(s): web/panel/settings.html",
-  "12:50:03 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "12:54:11 update 7d864786 \u2192 50e631e8 \u00b7 1 file(s): web/panel/settings.html",
+  "12:54:11 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Mensa x SRNO x Henkie T \u2013 Pak \u2018t Op",
+  "song": "Frsh x KM \u2013 Bare Minimum (Starboy)",
   "listeners": 4,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 2.0,
   "problems": [],
   "ok": true
  },
