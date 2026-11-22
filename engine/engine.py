@@ -485,27 +485,6 @@ class Screen:
         elif end_s > 0 and time.localtime().tm_min >= 30 and getattr(self, "upn_half", None) != hk and it.get("mode") in ("clip", "pair") and length > end_s + 40:
             self.upn_half = hk          # once in the second half of the hour: the last N s of a music video
             threading.Timer(max(1.0, length - end_s), lambda: E.upnext_show(path, end_s - 0.5)).start()
-        # Hype Stations PIP: every hour at :MM (Settings → TV). The music video that is on at :MM gets it (or, when a jingle / audio
-        # song plays then, the first music video that starts in the next 4 minutes)
-        at = int(planner.get_setting(c, "alsoon_at", -1) if planner.get_setting(c, "alsoon_at", -1) is not None else -1)
-        dur = float(planner.get_setting(c, "alsoon_s", 20) or 20)
-        if 0 <= at <= 59 and it.get("mode") in ("clip", "pair") and getattr(self, "also_hour", None) != hk:
-            now_ = time.time(); lt = time.localtime(now_)
-            mark = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, lt.tm_hour, at, 0, 0, 0, -1))
-            if mark + 240 < now_: mark += 3600                       # :MM already well past this hour: the next hour's
-            start = max(mark, now_ + max(3.0, after_s))               # at :MM, or a few seconds into a video that starts after :MM
-            if start - now_ + dur + 5 < length and start - mark < 240:
-                self.also_hour = time.strftime("%Y%m%d%H", time.localtime(mark))
-                threading.Timer(start - now_, lambda: self.also_show(path, dur)).start()
-    def also_show(self, path, dur):
-        """Hype Stations PiP now (Settings → TV: every hour at :MM) – same rules as Up next: over the music video that planned it, AUTO, not LIVE."""
-        n = E.now or {}          # (this is the Screen planner: what plays and the TV are the engine's)
-        if n.get("path") != path or n.get("mode") not in ("clip", "pair") or E.live.live or E.stopped: return
-        if not E.tv.auto or E.tv.scene != "Music video": return
-        if n.get("chart_pid"): return
-        also_fetch()
-        if not ALSO_NOW["d"]: return                               # both theme stations off: nothing to show
-        log.info("Hype Stations PIP for %.0f s", dur); E.hold_scene(ALSO_SCENE, dur)
     def on_show(self, title):
         c = dbc()
         for r in planner.api_screen_rules(c):
@@ -3542,7 +3521,6 @@ def _settings_main(c, snd):
     return {"smart_pick": bool(planner.get_setting(c, "smart_pick", True)), "hit_hour": bool(planner.get_setting(c, "hit_hour", True)),
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
             "jingle_hide": bool(planner.get_setting(c, "jingle_hide", True)), "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
-            "alsoon_at": int(planner.get_setting(c, "alsoon_at", -1) if planner.get_setting(c, "alsoon_at", -1) is not None else -1), "alsoon_s": float(planner.get_setting(c, "alsoon_s", 20) or 20),
             "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "voice_per_hour": VOICE_AIR["per_hour"], "listener_keep_days": float(planner.get_setting(c, "listener_keep_days", 7)), "ss_photo_s": float(planner.get_setting(c, "ss_photo_s", 8)), "ss_fade_s": float(planner.get_setting(c, "ss_fade_s", 1)), "ss_random": bool(planner.get_setting(c, "ss_random", True)), "tidy_names": bool(planner.get_setting(c, "tidy_names", True)), "voice_max_plays": VOICE_AIR["max_plays"], "voice_intro": VOICE_AIR["intro"], "voices": voice_overview(), "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd, "relay": relay_public()}
 RELAY_CFG = "/etc/hype/relay.json"
@@ -3612,8 +3590,6 @@ def set_settings(d):
     if "upnext_hour_s" in d: planner.set_setting(c, "upnext_hour_s", max(0.0, min(60.0, float(d["upnext_hour_s"]))))
     if "upnext_after_s" in d: planner.set_setting(c, "upnext_after_s", max(3.0, min(120.0, float(d["upnext_after_s"]))))
     if "upnext_end_s" in d: planner.set_setting(c, "upnext_end_s", max(0.0, min(60.0, float(d["upnext_end_s"]))))
-    if "alsoon_at" in d: planner.set_setting(c, "alsoon_at", max(-1, min(59, int(d["alsoon_at"]))))
-    if "alsoon_s" in d: planner.set_setting(c, "alsoon_s", max(10.0, min(60.0, float(d["alsoon_s"]))))
     if "artist_sep_min" in d: planner.set_setting(c, "artist_sep_min", max(0.0, min(360.0, float(d["artist_sep_min"]))))
     for k in ("strict_hold_before", "strict_hold_after"):
         if k in d: planner.set_setting(c, k, max(0.0, min(240.0, float(d[k])))); planner._HOLD.clear()
