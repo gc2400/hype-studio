@@ -98,6 +98,7 @@ html[data-station] .card.hi{border-color:var(--line2)}
 #hhead .hpop .hpn{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:#D3DEE8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #hhead .hpop .hpd{width:7px;height:7px;border-radius:50%;flex:none;background:#55697D}#hhead .hpop .hpd.ok{background:#3DDC97}#hhead .hpop .hpd.bad{background:#FF4D5E}
 #hhead .hpop .hpv{font:800 24px/1.1 ui-monospace,Menlo,Consolas,monospace;color:#FFE000;margin-top:4px}
+#hhead .hpop .hps{font-size:11px;line-height:1.3;color:#B9C9D8;margin:3px 0 4px;min-height:28px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 #hhead .hpop .hpp{font-size:10.5px;color:#7F96AB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #hhead .hpop .big.sm{font-size:14px}#hhead .hpop .warn{color:#FFB547}
 #hhead .hpop .hlc{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}#hhead .hpop .hlc i{font-style:normal;font-size:12px;cursor:default}#hhead .hpop .hlc i.ok{color:#3DDC97}#hhead .hpop .hlc i.warn{color:#FFB547}
@@ -259,14 +260,15 @@ html[data-station] .card.hi{border-color:var(--line2)}
   function popRender(d) {
     const r = d.radio || {}, t = d.tv || {}, p = d.public || {}, sv = d.server || {}, g = d.guard || {}, o = d.own || {};
     // listening now: one tile per station (status dot · listeners now · peak today); details on hover
-    const tile = (name, color, state, now, peak, tip, extra) => `<div class="hpt" title="${esc(tip)}"><i style="background:${color}"></i>
-      <div class="hpn"><span class="hpd ${state}"></span>${esc(name)}</div><div class="hpv">${now ?? '–'}</div><div class="hpp">peak ${peak ?? '–'}${extra || ''}</div></div>`;
+    const song = x => String(x || '').replace(/^\s*–\s*/, '').replace(/\s*–\s*$/, '');      // "artist – title" (a jingle has no artist)
+    const tile = (name, color, state, now, peak, tip, extra, playing) => `<div class="hpt" title="${esc(tip)}"><i style="background:${color}"></i>
+      <div class="hpn"><span class="hpd ${state}"></span>${esc(name)}</div><div class="hpv">${now ?? '–'}</div><div class="hps">${playing ? '♪ ' + esc(playing) : '<span style="opacity:.5">–</span>'}</div><div class="hpp">peak ${peak ?? '–'}${extra || ''}</div></div>`;
     const tiles = [tile('Hype Radio', '#05A9C6', r.on_air && r.ok ? 'ok' : 'bad', o.current, o.peak_today,
         `Playout ${r.on_air ? 'on air' : 'stopped'} · stream ${r.ok ? 'live' : 'down'} (MP3 ${r.kbps || '–'}k) · MP3 ${o.mp3 ?? '–'} / HLS ${o.hls ?? '–'}`,
-        p.ok && p.listeners ? ` · +${p.listeners} Streamerr` : '')]
+        p.ok && p.listeners ? ` · +${p.listeners} Streamerr` : '', r.on_air ? song(r.song) : '')]
       .concat((d.channels || []).map(c => { const q = c.own || {}, st = !c.enabled ? 'off' : (c.running && c.stream && c.hls) ? 'ok' : 'bad';
         return tile(c.name.replace(/^Hype /, ''), c.color, st, c.enabled ? q.current : '–', c.enabled ? q.peak_today : '–',
-          !c.enabled ? 'Switched off' : `${c.sim ? 'Live from Hype Radio' : c.running ? 'On air' : 'NOT running'} · stream ${c.stream ? 'live' : 'down'}${c.hls ? '' : ' · HLS down'} · MP3 ${q.mp3 ?? '–'} / HLS ${q.hls ?? '–'}${c.now ? ' · now: ' + c.now : ''}`); }));
+          !c.enabled ? 'Switched off' : `${c.sim ? 'Live from Hype Radio' : c.running ? 'On air' : 'NOT running'} · stream ${c.stream ? 'live' : 'down'}${c.hls ? '' : ' · HLS down'} · MP3 ${q.mp3 ?? '–'} / HLS ${q.hls ?? '–'}${c.now ? ' · now: ' + c.now : ''}`, '', c.enabled ? song(c.now) : ''); }));
     const dot = (ok, warn) => `<b class="${ok ? 'ok' : warn ? 'warn' : 'bad'}">●</b>`;
     const hl = [['sync', g.sync && g.sync.active, 'Sync: one call a minute + ⚡ poke'],
                 ['ping', g.tick && g.tick.ok === true, 'Clock ping every minute' + (g.tick && g.tick.ok === false ? ' – failing ' + (g.tick.fails || 0) + '×: ' + (g.tick.error || '') : '')],
