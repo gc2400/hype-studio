@@ -1,18 +1,17 @@
 {
- "time": "2026-11-22T18:39:10",
+ "time": "2026-11-22T19:01:25",
  "result": "ok",
- "commit": "1784d6fd36fc6070e390e93a963bc89607b470fb",
- "subject": "Install now (Gianno 18:37): stations join live, keep listening card, station show boxes",
+ "commit": "2661d5a5dcf1faa51947d371f1b0236dfda646a0",
+ "subject": "Keep Listening scene: with the TV sound sources (Radio / FX / Studio audio) - the card was silent",
  "log": [
-  "18:38:25 update b5ff91cc \u2192 1784d6fd \u00b7 4 file(s): engine/chan.py, engine/engine.py, web/panel/settings.html, web/panel/studio.html",
-  "18:38:25 restart hype-channels",
-  "18:38:25 restart hype-engine@*",
-  "18:38:25 restart hype-engine",
-  "18:39:10 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*"
+  "19:00:40 update 1784d6fd \u2192 2661d5a5 \u00b7 1 file(s): engine/engine.py",
+  "19:00:40 restart hype-engine@*",
+  "19:00:40 restart hype-engine",
+  "19:01:25 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Kapo x Ryan Castro \u2013 D\u00d3NDE",
-  "listeners": 4,
+  "song": "Frsh x KM \u2013 Bare Minimum (Starboy)",
+  "listeners": 5,
   "obs": true,
   "seg_age": 1.9,
   "problems": [],
