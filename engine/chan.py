@@ -186,6 +186,8 @@ class Channel:
                 self.liq_fail += 1; log.warning("%s: radio engine stopped (exit %s) – starting again", self.id, self.liq.returncode)
             if self.liq_fail > 5: time.sleep(min(60, 5 * self.liq_fail))       # keeps failing: slow down, never a busy loop
             env = dict(os.environ, HOME="/root", XDG_RUNTIME_DIR="/run/hype")
+            try: subprocess.run(["python3", "/opt/hype/hype-soundcheck.py", "/var/lib/hype/sound-%s.json" % self.id], timeout=10)   # a broken sound file never keeps the station off air
+            except Exception: pass
             self.liq = subprocess.Popen(["nice", "-n", "2", "liquidsoap", self.liq_file()], env=env,
                                         stdout=subprocess.DEVNULL, stderr=open("/var/log/hype/ch-%s.err" % self.id, "a"))
             self.pushed = None; self.fresh = True

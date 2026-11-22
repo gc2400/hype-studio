@@ -210,6 +210,10 @@ class Guard:
             try: cl.start_stream()
             except Exception as e: self.event("warn", f"start streaming failed: {e}")
         elif t > 60: self.restart("obs", "hype-obs", "OBS still not streaming"); self.since["obs_off"] = time.time()
+        if time.time() - getattr(self, "snd_t", 0) > 600:      # keep a last good copy of every sound settings file (hype-soundcheck.py)
+            self.snd_t = time.time()
+            try: subprocess.run(["python3", "/opt/hype/hype-soundcheck.py"] + sorted(__import__("glob").glob("/var/lib/hype/sound*.json")), timeout=20, capture_output=True)
+            except Exception: pass
         sa = st["seg_age"]
         t = self.bad("hls_late", bool(obs_on) and (sa is None or sa > 20))
         if t > 20: self.restart("ladder", "hype-ladder", f"TV stream: no new pieces for {sa} s"); self.since["hls_late"] = time.time()

@@ -103,3 +103,7 @@ web/panel/ch-ambiente-1024.png|/var/www/studio/panel/ch-ambiente-1024.png|644|-
 web/panel/ch-latina.png|/var/www/studio/panel/ch-latina.png|644|-
 web/panel/ch-latina-1024.png|/var/www/studio/panel/ch-latina-1024.png|644|-
 system/hype-engine@.service|/etc/systemd/system/hype-engine@.service|644|daemon-reload
+system/hype-soundcheck.py|/opt/hype/hype-soundcheck.py|755|-
+system/hype-radio.service.d/soundcheck.conf|/etc/systemd/system/hype-radio.service.d/soundcheck.conf|644|daemon-reload
+system/hype-watchdog-modules.conf|/etc/modules-load.d/hype-watchdog.conf|644|-
+system/hype-watchdog.conf|/etc/systemd/system.conf.d/hype-watchdog.conf|644|-
