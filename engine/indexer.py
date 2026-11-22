@@ -212,7 +212,11 @@ def follow_move(c, rel, fp):
             c.execute("UPDATE items SET path=? WHERE path=?", (rel, old))
             # renamed (e.g. by FTP): the shown artist / title follow the new file name, as with a new file ("Artist - Title" wins)
             fa, ft = split_name(os.path.basename(rel)); sec = rel.split("/")[0]
-            if fa: c.execute("UPDATE items SET artist=?, title=? WHERE path=?", (fa, clean_title(ft), rel))
+            if fa:
+                c.execute("UPDATE items SET artist=?, title=? WHERE path=?", (fa, clean_title(ft), rel))
+                # it had no artist before: now it has one -> the "no artist" problem goes and it plays again (22 Nov: STACEY x RAEY – Keda)
+                c.execute("""UPDATE items SET problem=NULL, mode=COALESCE(mode, CASE WHEN has_video=1 THEN 'clip' ELSE 'audio' END)
+                             WHERE path=? AND problem LIKE 'no artist%' AND section='music'""", (rel,))
             elif sec != "music": c.execute("UPDATE items SET artist='', title=? WHERE path=?", (clean_title(ft or os.path.splitext(os.path.basename(rel))[0]), rel))
             c.execute("UPDATE items SET clip_path=? WHERE clip_path=?", (rel, old))
             c.execute("UPDATE items SET clip_suggest=? WHERE clip_suggest=?", (rel, old))
