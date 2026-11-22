@@ -4141,6 +4141,18 @@ def tv_get(cid, path, timeout=2):
 def tv_level(port, v):
     try: Liq(port).cmd("var.set tv_vol = %.3f" % v)
     except Exception as e: log.warning("TV sound level (%d): %s", port, e)
+LOGO_MAIN = "/srv/hype/branding/logo_corner.mov"
+def tv_logo(cid):
+    """The corner logo on TV: the station's during its TV block (branding/logo_corner_<id>.mov, same size and spot as
+    Hype Radio's), Hype Radio's animated logo otherwise. No file for the station: Hype Radio's stays."""
+    f = "/srv/hype/branding/logo_corner_%s.mov" % cid if cid else LOGO_MAIN
+    if not os.path.isfile(f): f = LOGO_MAIN
+    try:
+        with E.tv.olock:
+            cl = E.tv.client()
+            if (cl.get_input_settings("Logo").input_settings or {}).get("local_file") != f:
+                cl.set_input_settings("Logo", {"local_file": f, "looping": True}, True); log.info("TV logo: %s", os.path.basename(f))
+    except Exception as e: log.warning("TV logo: %s", e)
 def tv_scene():
     """The automatic scene for what the TV shows now (Hype Radio's song, or during a block the station's)."""
     if TVF["ch"]:
@@ -4167,6 +4179,7 @@ def tv_handover(old, new):
     for x, prt in ports.items():
         if x != new: tv_level(prt, 0.0)
     log.info("TV: %s → %s", (chancfg.get(old) or {}).get("name", "Hype Radio") if old else "Hype Radio", (chancfg.get(new) or {}).get("name", "Hype Radio") if new else "Hype Radio")
+    tv_logo(new)
     if not new:
         E.screen.np = None
         try: E.tv.jingle_graphics(False)
@@ -4214,6 +4227,7 @@ def tv_follow_step():
 def tv_follow_loop():
     time.sleep(10)
     tv_level(LIQ_PORT, 1.0)         # (after an engine restart: Hype Radio has the TV sound until a block says otherwise)
+    tv_logo(None)
     for cfg in chancfg.load():
         if cfg.get("engine"): tv_level(int(cfg["telnet"]), 0.0)
     n_ = 0
