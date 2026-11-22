@@ -522,3 +522,4 @@
 2026-11-22T15:08:31 ok 4ab11f7a TV logo switch fades (0.5 s out, file swap, 0.5 s in) instead of cutting
 2026-11-22T15:12:23 ok 41f26f15 Now Playing box per station (new Hype Radio box + Latina/Ambiente boxes, picked by the station on TV); engine start keeps the TV sound as OBS has it (no hiccup mid paired clip)
 2026-11-22T15:22:39 ok a37e05c2 Station view: the Scenes card shows while that station is on TV (TV block / LIVE on it), run by Hype Radio's engine
+2026-11-22T15:28:33 ok b1769976 TV logo: Hype Radio's new 3D coin-spin logo (branding/logo_corner_hype.mov); station logos replaced on the server

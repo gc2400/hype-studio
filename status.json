@@ -1,17 +1,19 @@
 {
- "time": "2026-11-22T15:22:39",
+ "time": "2026-11-22T15:28:33",
  "result": "ok",
- "commit": "a37e05c2f1976f53fe533aaab7deff7eb2286cb3",
- "subject": "Station view: the Scenes card shows while that station is on TV (TV block / LIVE on it), run by Hype Radio's engine",
+ "commit": "b176997665b466f75d3b96b5be3aa79137f336c6",
+ "subject": "TV logo: Hype Radio's new 3D coin-spin logo (branding/logo_corner_hype.mov); station logos replaced on the server",
  "log": [
-  "15:22:38 update 41f26f15 \u2192 a37e05c2 \u00b7 2 file(s): web/panel/header.js, web/panel/index.html",
-  "15:22:39 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "15:27:47 update a37e05c2 \u2192 b1769976 \u00b7 1 file(s): engine/engine.py",
+  "15:27:48 restart hype-engine@*",
+  "15:27:48 restart hype-engine",
+  "15:28:33 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Feid x El Americano 4KT x Pirlo \u2013 PARADIXE",
+  "song": "Rema \u2013 Soundgasm",
   "listeners": 2,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
