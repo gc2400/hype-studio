@@ -1,17 +1,19 @@
 {
- "time": "2026-11-22T14:53:40",
+ "time": "2026-11-22T14:57:31",
  "result": "ok",
- "commit": "c50cabac186203459defc1dde9738b337b613917",
- "subject": "Broadcast: steps in one row \u2013 1 Connect \u00b7 2 Live on \u00b7 3 Go live \u2013 and \"On air\" full width under them",
+ "commit": "7a901899ba490485de9c1d3dff7fcd444af5d0d6",
+ "subject": "TV blocks: the corner logo switches to the station's (branding/logo_corner_<id>.mov, same size and spot) and back to Hype Radio's",
  "log": [
-  "14:53:40 update 994305c0 \u2192 c50cabac \u00b7 1 file(s): web/panel/studio.html",
-  "14:53:40 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "14:56:46 update c50cabac \u2192 7a901899 \u00b7 1 file(s): engine/engine.py",
+  "14:56:46 restart hype-engine@*",
+  "14:56:46 restart hype-engine",
+  "14:57:31 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "J Balvin x Ryan Castro \u2013 Dalmation",
+  "song": "Qlas \u2013 Zij Kent",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
