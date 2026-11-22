@@ -4264,9 +4264,12 @@ def keep_scene_ready():
         cl = E.tv.client()
         if KEEP_SCENE not in [x["sceneName"] for x in cl.get_scene_list().scenes]:
             cl.create_scene(KEEP_SCENE); log.info("OBS: scene %s made", KEEP_SCENE)
-        try: cl.get_input_settings(KEEP_SRC)
-        except Exception:
-            cl.create_input(KEEP_SCENE, KEEP_SRC, "image_source", {"file": keep_card_file(None) or ""}, True)
+        have = [x["sourceName"] for x in cl.get_scene_item_list(KEEP_SCENE).scene_items]
+        if KEEP_SRC not in have:
+            if KEEP_SRC in [x["inputName"] for x in cl.get_input_list().inputs]: cl.create_scene_item(KEEP_SCENE, KEEP_SRC, True)
+            else: cl.create_input(KEEP_SCENE, KEEP_SRC, "image_source", {"file": keep_card_file(None) or ""}, True)
+        for n in ("Radio audio", "FX audio", "Studio audio"):   # the TV sound (as in every scene): the station keeps playing under the card
+            if n not in have: cl.create_scene_item(KEEP_SCENE, n, True)
 def keep_card(cid, secs=None, test=False):
     """The "Keep listening" card of the station the TV leaves, full screen, before the new station's picture: its sound keeps
     playing under the card (the viewer hears what the card says keeps playing), then picture + sound go over together.
