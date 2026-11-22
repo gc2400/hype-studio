@@ -1,19 +1,19 @@
 {
- "time": "2026-11-22T15:28:33",
+ "time": "2026-11-22T15:31:22",
  "result": "ok",
- "commit": "b176997665b466f75d3b96b5be3aa79137f336c6",
- "subject": "TV logo: Hype Radio's new 3D coin-spin logo (branding/logo_corner_hype.mov); station logos replaced on the server",
+ "commit": "32127571e58e4f7192d51a5f0789271a88ccf2cf",
+ "subject": "Recording while LIVE on a station: the station's sound (<id>-rec.mp3) and its name on the file (was Hype Radio's sound and show)",
  "log": [
-  "15:27:47 update a37e05c2 \u2192 b1769976 \u00b7 1 file(s): engine/engine.py",
-  "15:27:48 restart hype-engine@*",
-  "15:27:48 restart hype-engine",
-  "15:28:33 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "15:30:37 update b1769976 \u2192 32127571 \u00b7 2 file(s): engine/engine.py, engine/live.py",
+  "15:30:37 restart hype-engine@*",
+  "15:30:37 restart hype-engine",
+  "15:31:22 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Rema \u2013 Soundgasm",
+  "song": "Jaido x Issairo \u2013 Disiplina",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
