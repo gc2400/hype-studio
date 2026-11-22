@@ -520,3 +520,4 @@
 2026-11-22T14:53:40 ok c50cabac Broadcast: steps in one row – 1 Connect · 2 Live on · 3 Go live – and "On air" full width under them
 2026-11-22T14:57:31 ok 7a901899 TV blocks: the corner logo switches to the station's (branding/logo_corner_<id>.mov, same size and spot) and back to Hype Radio's
 2026-11-22T15:08:31 ok 4ab11f7a TV logo switch fades (0.5 s out, file swap, 0.5 s in) instead of cutting
+2026-11-22T15:12:23 ok 41f26f15 Now Playing box per station (new Hype Radio box + Latina/Ambiente boxes, picked by the station on TV); engine start keeps the TV sound as OBS has it (no hiccup mid paired clip)

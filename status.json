@@ -1,19 +1,19 @@
 {
- "time": "2026-11-22T15:08:31",
+ "time": "2026-11-22T15:12:23",
  "result": "ok",
- "commit": "4ab11f7ac85e9909682e37b6afb051db9dd22ae1",
- "subject": "TV logo switch fades (0.5 s out, file swap, 0.5 s in) instead of cutting",
+ "commit": "41f26f15007e64f15de5181900268eb5736298ac",
+ "subject": "Now Playing box per station (new Hype Radio box + Latina/Ambiente boxes, picked by the station on TV); engine start keeps the TV sound as OBS has it (no hiccup mid paired clip)",
  "log": [
-  "15:07:46 update 7a901899 \u2192 4ab11f7a \u00b7 1 file(s): engine/engine.py",
-  "15:07:46 restart hype-engine@*",
-  "15:07:46 restart hype-engine",
-  "15:08:31 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "15:11:38 update 4ab11f7a \u2192 41f26f15 \u00b7 5 file(s): engine/engine.py, web/overlay/index.html, web/overlay/np_box.webm, web/overlay/np_box_ambiente.webm, web/overlay/np_box_latina.webm",
+  "15:11:38 restart hype-engine@*",
+  "15:11:38 restart hype-engine",
+  "15:12:23 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Chimbala x Rochy RD \u2013 Careta (Remix)",
+  "song": "Tiakola x Jorja Smith \u2013 Jet Lag",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 1.3,
   "problems": [],
   "ok": true
  },
