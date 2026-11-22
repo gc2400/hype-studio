@@ -706,7 +706,11 @@ def engine_liq(cfg, port):
     sub('"http://127.0.0.1:8090/', '"http://127.0.0.1:%d/' % port)
     # LIVE on this station (Broadcast → station choice): the studio's Mixcast mix comes in on its own harbor port (8010 + n)
     sub('input.harbor("studio", port=8005,', 'input.harbor("studio", port=%d,' % studio_port(cfg))
-    sub('input.harbor("ext", port=8006, password=live.harbor_pw, buffer=2., max=8.)', "blank()")
+    # "joins Hype Radio's live show" (Broadcast → Live on Hype Radio + this station): Hype Radio's on-air sound (its internal
+    # 256k, already processed: not processed again) comes in where Hype Radio has its live streams; while it plays, this
+    # station's own automation waits (not pulled) and goes on with the next song afterwards. ext_on = on (hype-channels sets it).
+    sub('input.harbor("ext", port=8006, password=live.harbor_pw, buffer=2., max=8.)', 'buffer(buffer=2., max=10., input.http(max_buffer=10., "http://127.0.0.1:8000/rec.mp3"))')
+    sub("ext = process(ext)", "ext = ext")
     sub('interactive.persistent("/var/lib/hype/sound.json")', 'interactive.persistent("/var/lib/hype/sound-%s.json")' % cid)
     i = t.index("\noutput.icecast(")
     t = t[:i] + """
@@ -760,6 +764,8 @@ class EngineChannel(Channel):
                     if len(v) >= 2: self.level = [float(v[0]), float(v[1])]; self.meter = [float(x) for x in v[:9]]
                 except Exception: pass
                 if time.time() - last_l > 15: last_l = time.time(); self.count_listeners()
+                try: self.join_step()
+                except Exception as e: log.warning("%s: join live: %s", self.id, e)
                 try:       # LIVE from the studio on this station (Hype Radio's engine writes it): the now-playing feed says LIVE
                     lt = json.load(open("/run/hype/live_target.json"))
                     self.live_on = bool(lt.get("live") and lt.get("target") == self.id and time.time() - lt.get("t", 0) < 30)
@@ -768,6 +774,25 @@ class EngineChannel(Channel):
             self.stop_ev.wait(2)
         if HANDOVER["on"]: self.save_state(); log.info("%s: hype-channels restarts – the radio engine keeps playing", self.id); return
         self.unit("stop"); self.stop_procs(); log.info("%s: off", self.id)
+    def join_step(self):
+        """Joins Hype Radio's live show (you choose it per show, Broadcast → Live on): while Hype Radio's studio is on air this
+        station plays Hype Radio's sound; when that LIVE ends the station goes on with its own next song and the choice is
+        cleared (next show: choose again). Compared with what the radio engine really does every 2 s (also after a restart)."""
+        want = bool(self.cfg.get("join_live")) and MAIN_LIVE["on"]
+        try: on = "true" in (self.tel("var.get ext_on", 1) or "")
+        except OSError: return
+        if want and not on:
+            self.tel("var.set ext_on = true"); self.sim = True; self.joined = True; log.info("%s: joins Hype Radio's live show", self.id)
+        elif not want and on:
+            self.tel("var.set ext_on = false"); self.tel("radio.skip"); self.sim = False      # (its own NEXT song, not the rest of the waiting one)
+            log.info("%s: back to its own programme", self.id)
+        else: self.sim = on
+        if getattr(self, "joined", False) and not MAIN_LIVE["on"] and self.cfg.get("join_live"):
+            self.joined = False; self.cfg["join_live"] = False      # the show is over: the choice is cleared
+            chs = chancfg.load()
+            for c in chs:
+                if c["id"] == self.id: c["join_live"] = False
+            chancfg.save(chs)
     def status(self):
         st = Channel.status(self); e = getattr(self, "est", {}) or {}
         st.update(engine=True, port=chancfg.engine_port(self.id), running=bool(self.liq and self.liq.poll() is None) and not self.err,

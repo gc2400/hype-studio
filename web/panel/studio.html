@@ -87,7 +87,8 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
       <div class="step"><span class="sn">1</span><div class="sb"><b>Connect the studio</b><span class="muted">cameras + Mixcast to the server</span></div>
         <button class="btn yellow" id="connect">Connect studio</button><button class="btn red" id="disconnect" hidden>Disconnect</button></div>
       <div class="step" id="tgStep" hidden><span class="sn">2</span><div class="sb"><b>Live on</b><span class="muted">TV + cameras follow</span></div>
-        <span class="row" id="tgBtns" style="gap:6px;flex-wrap:nowrap" role="group" aria-label="Which station you go live on"></span></div>
+        <span class="row" id="tgBtns" style="gap:6px;flex-wrap:nowrap" role="group" aria-label="Which station you go live on"></span>
+        <span class="row" id="tjBox" style="gap:6px;flex-wrap:nowrap;align-items:center" hidden><span class="muted" style="font-size:12px" title="These stations play Hype Radio's live show too (their own music waits). Chosen per show: after END LIVE they go back to their own programme by themselves.">+ also on</span><span class="row" id="tjBtns" style="gap:6px" role="group" aria-label="Stations that join Hype Radio's live show"></span></span></div>
       <div class="step"><span class="sn" id="goN">2</span><div class="sb"><b>Go live</b><span class="muted">your Mixcast mix on air · END LIVE = automation</span></div>
         <button class="golive" id="goLive" disabled>GO LIVE</button></div>
       <div class="step grow" id="airBox"><span style="font-size:26px" id="airIcon">◌</span>
@@ -321,7 +322,16 @@ function tgRender() {
       toast('Live on ' + tgName(L.target) + (connected ? ' – reconnecting the studio to it…' : ''));
       if (connected) { disconnect(); setTimeout(connect, 1200); } }).catch(e => toast(e.message, 1))); }
 }
-tgLoad(); setInterval(tgLoad, 30000);
+// stations that join Hype Radio's live show (only when you go live on Hype Radio): your choice per show
+function tjRender() {
+  const box = $('#tjBox'); box.hidden = !TGS.length || !!(L && L.target); if (box.hidden) return;
+  const h = TGS.map(c => `<button class="btn sm ${c.join_live ? 'on' : ''}" data-tj="${c.id}" aria-pressed="${!!c.join_live}" title="${c.join_live ? c.name + ' plays Hype Radio\'s live show (click: off)' : c.name + ' joins Hype Radio\'s live show'}">${c.name.replace(/^Hype /, '')}${c.sim ? ' · on air' : ''}</button>`).join('');
+  if ($('#tjBtns').dataset.h !== h) { $('#tjBtns').innerHTML = h; $('#tjBtns').dataset.h = h;
+    $$('#tjBtns [data-tj]').forEach(b => b.onclick = () => { const c = TGS.find(x => x.id === b.dataset.tj), on = !c.join_live;
+      post('channels/cmd', {ch: c.id, action: 'join_live', on}).then(() => { c.join_live = on; tjRender(); toast(on ? c.name + (L && L.live ? ' joins your live show now' : ' joins when you GO LIVE') : c.name + ': its own programme'); setTimeout(tgLoad, 3000); }).catch(e => toast(e.message, 1)); }); }
+}
+const _tgR = tgRender; tgRender = function () { _tgR(); tjRender(); };
+tgLoad(); setInterval(tgLoad, 10000);
 
 // ---------- guests ----------
 $('#gAdd').onclick = () => post('live/guest_add', {name: $('#gName').value, mode: $('#gMode').value}).then(d => { $('#gName').value = ''; toast('Guest link made – send it to your guest'); refresh(); }).catch(e => toast(e.message));
