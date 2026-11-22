@@ -1,17 +1,20 @@
 {
- "time": "2026-11-22T18:37:21",
- "result": "waiting",
- "commit": "ee37b8c1c69cbd12c781d78a335b4d45d17ebf07",
- "subject": "[night] TV block: the station's own show box PNG (branding/shownames/Hype_<Station>.png) instead of the text box",
+ "time": "2026-11-22T18:39:10",
+ "result": "ok",
+ "commit": "1784d6fd36fc6070e390e93a963bc89607b470fb",
+ "subject": "Install now (Gianno 18:37): stations join live, keep listening card, station show boxes",
  "log": [
-  "18:37:21 update b5ff91cc \u2192 ee37b8c1 \u00b7 4 file(s): engine/chan.py, engine/engine.py, web/panel/settings.html, web/panel/studio.html",
-  "18:37:21 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "18:38:25 update b5ff91cc \u2192 1784d6fd \u00b7 4 file(s): engine/chan.py, engine/engine.py, web/panel/settings.html, web/panel/studio.html",
+  "18:38:25 restart hype-channels",
+  "18:38:25 restart hype-engine@*",
+  "18:38:25 restart hype-engine",
+  "18:39:10 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*"
  ],
  "guard": {
   "song": "Kapo x Ryan Castro \u2013 D\u00d3NDE",
   "listeners": 4,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
