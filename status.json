@@ -1,25 +1,17 @@
 {
- "time": "2026-11-22T14:50:34",
+ "time": "2026-11-22T14:53:40",
  "result": "ok",
- "commit": "994305c00128ae5776cf27e9b51fe283a673538c",
- "subject": "Install now (Gianno: go, 22 Nov 14:48) \u2013 TV blocks, LIVE per station, station watchdog, rotation memory, subfolder buttons, TV click fix",
+ "commit": "c50cabac186203459defc1dde9738b337b613917",
+ "subject": "Broadcast: steps in one row \u2013 1 Connect \u00b7 2 Live on \u00b7 3 Go live \u2013 and \"On air\" full width under them",
  "log": [
-  "14:49:02 update 843df756 \u2192 994305c0 \u00b7 11 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/guard.py, engine/hype_auth.py, engine/live.py, engine/live/studio_in.sh, radio/radio.liq, web/panel/index.html, web/panel/plan.html, web/panel/studio.html",
-  "14:49:48 lab: PASS (6/6 good readings)",
-  "14:49:48 restart hype-channels",
-  "14:49:48 restart hype-engine@*",
-  "14:49:48 restart hype-guard",
-  "14:49:48 restart hype-auth",
-  "14:49:48 restart hype-studio-in",
-  "14:49:48 restart hype-engine",
-  "14:49:48 restart hype-radio",
-  "14:50:34 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*, hype-guard, hype-auth, hype-studio-in, hype-radio"
+  "14:53:40 update 994305c0 \u2192 c50cabac \u00b7 1 file(s): web/panel/studio.html",
+  "14:53:40 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "JMANI x Adje x JZyNo x Lucky Jones \u2013 LIKE 2 DANCE",
+  "song": "J Balvin x Ryan Castro \u2013 Dalmation",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
