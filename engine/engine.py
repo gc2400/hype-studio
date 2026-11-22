@@ -1159,6 +1159,7 @@ class Engine:
         if not CH:      # LIVE on a theme station (Broadcast → station): its radio engine, its studio input port
             self.live.liq_for = lambda cid: Liq(int(chancfg.get(cid)["telnet"]))
             self.live.port_for = lambda cid: chancfg.studio_port(cid) if tv_station_ok(cid) else None
+            self.live.name_for = lambda cid: (chancfg.get(cid) or {}).get("name")
             t_ = self.live.target()
             try:
                 os.makedirs("/run/hype", exist_ok=True)

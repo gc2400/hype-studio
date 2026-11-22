@@ -101,6 +101,7 @@ class Live:
     liq_for = None          # (the engine: station id -> its radio engine's telnet)
     port_for = None         # (the engine: station id -> its studio input port)
     on_target = None        # (the engine: the return feed / TV follow the new station)
+    name_for = None         # (the engine: station id -> its name, for the recording's file name)
     def target(self):
         t = self.st.get("target")
         return t if t and self.liq_for else None
@@ -376,13 +377,16 @@ class Live:
         try:
             import pwd, grp; os.chown(REC_DIR, pwd.getpwnam("upload").pw_uid, grp.getgrnam("hype").gr_gid); os.chmod(REC_DIR, 0o2775)
         except Exception: pass
-        base = os.path.join(REC_DIR, time.strftime("%Y-%m-%d %H%M ") + safe_name(name or self.show_title()))
+        t = self.target()          # LIVE on a theme station: its sound (its own 256k internal mount) and its name on the file
+        tn = (self.name_for(t) if (t and self.name_for) else None) or t
+        base = os.path.join(REC_DIR, time.strftime("%Y-%m-%d %H%M ") + safe_name(name or (tn + " live" if t else self.show_title())))
+        radio = "http://127.0.0.1:8000/%s-rec.mp3" % t if t else RADIO
         jobs = []
         if what in ("both", "video"):
             jobs.append(("hype-rec-video", "mp4", ["-i", PROGRAM, "-c", "copy", "-f", "mp4", "-movflags", "+frag_keyframe+empty_moov+default_base_moof"]))
         if what in ("both", "audio"):
             jobs.append(("hype-rec-audio", "mp3", ["-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_at_eof", "1", "-reconnect_delay_max", "2",
-                                                   "-i", RADIO, "-c", "copy", "-f", "mp3"]))
+                                                   "-i", radio, "-c", "copy", "-f", "mp3"]))
         # if the input stops (radio or OBS restarted) ffmpeg ends: the loop goes on in "<name> part2", part3 … – never cut off.
         # RuntimeMaxSec: a forgotten recording stops by itself after 8 hours.
         loop = ('B="$1"; X="$2"; shift 2; n=1; while :; do f="$B.$X"; [ $n -gt 1 ] && f="$B part$n.$X"; '
