@@ -56,8 +56,8 @@ table.hl{width:100%;border-collapse:collapse;font-size:12px}table.hl th{text-ali
 ::-webkit-scrollbar-thumb{background:#23496B;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#05A9C6;background-clip:padding-box}
 ::-webkit-scrollbar-button{display:none;width:0;height:0}
 .steps{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch}
-.step{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--deep);border:1px solid var(--line2);flex-wrap:wrap}
-.step.grow{flex:1 1 360px;min-width:0}.step .sb{display:flex;flex-direction:column;gap:2px;min-width:0}.step .sb b{font-size:14px}.step .sb .muted{font-size:12px}
+.step{display:flex;flex:1 1 auto;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--deep);border:1px solid var(--line2);flex-wrap:wrap}
+.step.grow{flex:1 1 100%;min-width:0}.step .sb{display:flex;flex-direction:column;gap:2px;min-width:0}.step .sb b{font-size:14px}.step .sb .muted{font-size:12px}
 .sn{width:26px;height:26px;border-radius:50%;background:var(--card2);border:1px solid var(--line2);display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--y);flex:none}
 .golive{min-height:52px!important;font-size:18px!important;padding:0 22px!important}
 #airBox.on{border-color:var(--g);background:#0B2A22}#airBox.lost{border-color:var(--r);background:#2A0E16}
@@ -86,10 +86,10 @@ details.sec>summary .btn{margin-left:auto}.secb{display:flex;flex-direction:colu
     <div class="steps">
       <div class="step"><span class="sn">1</span><div class="sb"><b>Connect the studio</b><span class="muted">cameras + Mixcast to the server</span></div>
         <button class="btn yellow" id="connect">Connect studio</button><button class="btn red" id="disconnect" hidden>Disconnect</button></div>
-      <div class="step"><span class="sn">2</span><div class="sb"><b>Go live</b><span class="muted">your Mixcast mix on air · END LIVE = back to the automation</span></div>
+      <div class="step" id="tgStep" hidden><span class="sn">2</span><div class="sb"><b>Live on</b><span class="muted">TV + cameras follow</span></div>
+        <span class="row" id="tgBtns" style="gap:6px;flex-wrap:nowrap" role="group" aria-label="Which station you go live on"></span></div>
+      <div class="step"><span class="sn" id="goN">2</span><div class="sb"><b>Go live</b><span class="muted">your Mixcast mix on air · END LIVE = automation</span></div>
         <button class="golive" id="goLive" disabled>GO LIVE</button></div>
-      <div class="step" id="tgStep" hidden><span class="sn">⇄</span><div class="sb"><b>Live on</b><span class="muted">the station your show is on (TV + cameras follow)</span></div>
-        <span class="row" id="tgBtns" style="gap:6px;flex-wrap:wrap" role="group" aria-label="Which station you go live on"></span></div>
       <div class="step grow" id="airBox"><span style="font-size:26px" id="airIcon">◌</span>
         <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:900" id="airTitle">On air: the automation</div><div class="muted" id="airSub" style="font-size:12px">When you are LIVE this turns green: only your studio mix is on the radio and the TV (no clip sound).</div>
           <div class="row" style="margin-top:6px;gap:6px"><span class="chip" id="stStudio">Studio: not connected</span><span class="chip" id="stOnAir">On air: automation</span><span class="chip" id="stRec">REC off</span><span class="chip" id="airDrops" hidden></span></div></div></div>
@@ -313,7 +313,7 @@ let TGS = [];
 function tgLoad() { fetch('../api/channels').then(authed).then(r => r.json()).then(d => { TGS = (d.channels || []).filter(c => c.enabled && c.engine); tgRender(); }).catch(() => {}); }
 function tgName(t) { const c = TGS.find(x => x.id === t); return c ? c.name : 'Hype Radio'; }
 function tgRender() {
-  if (!L) return; $('#tgStep').hidden = !TGS.length;
+  if (!L) return; $('#tgStep').hidden = !TGS.length; $('#goN').textContent = TGS.length ? '3' : '2';
   const cur = L.target || '', opts = [['', 'Hype Radio']].concat(TGS.map(c => [c.id, c.name]));
   const h = opts.map(([id, nm]) => `<button class="btn sm ${cur === id ? 'yellow' : ''}" data-tg="${id}" ${L.live ? 'disabled' : ''} aria-pressed="${cur === id}">${nm}</button>`).join('');
   if ($('#tgBtns').dataset.h !== h) { $('#tgBtns').innerHTML = h; $('#tgBtns').dataset.h = h;
