@@ -1,19 +1,17 @@
 {
- "time": "2026-11-22T22:16:55",
+ "time": "2026-11-22T22:24:07",
  "result": "ok",
- "commit": "a72236b3ce60ca0c78f3123daa865b5096c0b943",
- "subject": "25 fps Now Playing boxes (Gianno); TV block: the Branding scene loops the station's own video (branding/stations/loop_<id>.mp4)",
+ "commit": "5670b87abac82189ac07e27f73bb687f82f4a126",
+ "subject": "Now Playing box Hype Ambiente: Gianno's new version (25 fps)",
  "log": [
-  "22:16:10 update ebe93cd5 \u2192 a72236b3 \u00b7 4 file(s): engine/engine.py, web/overlay/np_box.webm, web/overlay/np_box_ambiente.webm, web/overlay/np_box_latina.webm",
-  "22:16:10 restart hype-engine@*",
-  "22:16:10 restart hype-engine",
-  "22:16:55 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "22:24:06 update a72236b3 \u2192 5670b87a \u00b7 1 file(s): web/overlay/np_box_ambiente.webm",
+  "22:24:07 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "RULY x Amos Balentin \u2013 Dos Kaminda",
+  "song": "Davido x Leon Thomas \u2013 Tell Everybody",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },

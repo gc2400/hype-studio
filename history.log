@@ -536,3 +536,4 @@
 2026-11-22T21:53:52 ok 7fb475af TV block: clock / show box / Live Layer hide on the STATION's jingles (they followed Hype Radio's jingles)
 2026-11-22T22:07:57 ok ebe93cd5 TV block show box: branding/shownames/station_<id>.png (Hype_Ambiente matched the Hype Radio show 'Hype Ambiente' too); only a file the web server can read
 2026-11-22T22:16:55 ok a72236b3 25 fps Now Playing boxes (Gianno); TV block: the Branding scene loops the station's own video (branding/stations/loop_<id>.mp4)
+2026-11-22T22:24:07 ok 5670b87a Now Playing box Hype Ambiente: Gianno's new version (25 fps)
