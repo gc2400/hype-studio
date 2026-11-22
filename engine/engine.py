@@ -4142,17 +4142,36 @@ def tv_level(port, v):
     try: Liq(port).cmd("var.set tv_vol = %.3f" % v)
     except Exception as e: log.warning("TV sound level (%d): %s", port, e)
 LOGO_MAIN = "/srv/hype/branding/logo_corner.mov"
-def tv_logo(cid):
+def tv_logo(cid, fade=True):
     """The corner logo on TV: the station's during its TV block (branding/logo_corner_<id>.mov, same size and spot as
-    Hype Radio's), Hype Radio's animated logo otherwise. No file for the station: Hype Radio's stays."""
+    Hype Radio's), Hype Radio's animated logo otherwise. No file for the station: Hype Radio's stays.
+    The change fades: the old logo out in 0.5 s, the new file in while nothing shows, then fades in in 0.5 s
+    (a "Fade" colour filter on Logo; runs in its own thread so the sound handover is never held up)."""
     f = "/srv/hype/branding/logo_corner_%s.mov" % cid if cid else LOGO_MAIN
     if not os.path.isfile(f): f = LOGO_MAIN
-    try:
-        with E.tv.olock:
-            cl = E.tv.client()
-            if (cl.get_input_settings("Logo").input_settings or {}).get("local_file") != f:
-                cl.set_input_settings("Logo", {"local_file": f, "looping": True}, True); log.info("TV logo: %s", os.path.basename(f))
-    except Exception as e: log.warning("TV logo: %s", e)
+    def op(x):
+        with E.tv.olock: E.tv.client().set_source_filter_settings("Logo", "Fade", {"opacity": round(x, 3)}, True)
+    def run():
+      with TV_LOGO_LOCK:
+        try:
+            with E.tv.olock:
+                cl = E.tv.client()
+                if (cl.get_input_settings("Logo").input_settings or {}).get("local_file") == f: return
+                if not any(x["filterName"] == "Fade" for x in cl.get_source_filter_list("Logo").filters):
+                    cl.create_source_filter("Logo", "Fade", "color_filter_v2", {"opacity": 1.0})
+            if fade:
+                for k in range(9, -1, -1): op(k / 10.0); time.sleep(0.05)
+            with E.tv.olock: E.tv.client().set_input_settings("Logo", {"local_file": f, "looping": True}, True)
+            log.info("TV logo: %s", os.path.basename(f))
+            if fade:
+                time.sleep(0.35)               # (the new file is loaded and showing its first frame)
+                for k in range(1, 11): op(k / 10.0); time.sleep(0.05)
+        except Exception as e:
+            log.warning("TV logo: %s", e)
+            try: op(1.0)
+            except Exception: pass
+    threading.Thread(target=run, daemon=True).start()
+TV_LOGO_LOCK = threading.Lock()
 def tv_scene():
     """The automatic scene for what the TV shows now (Hype Radio's song, or during a block the station's)."""
     if TVF["ch"]:
@@ -4227,7 +4246,7 @@ def tv_follow_step():
 def tv_follow_loop():
     time.sleep(10)
     tv_level(LIQ_PORT, 1.0)         # (after an engine restart: Hype Radio has the TV sound until a block says otherwise)
-    tv_logo(None)
+    tv_logo(None, fade=False)
     for cfg in chancfg.load():
         if cfg.get("engine"): tv_level(int(cfg["telnet"]), 0.0)
     n_ = 0
