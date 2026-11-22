@@ -1,19 +1,17 @@
 {
- "time": "2026-11-22T12:47:58",
+ "time": "2026-11-22T12:50:03",
  "result": "ok",
- "commit": "f31ec1450ed73e01a48c8bb9deff71ac286c879d",
- "subject": "Planning \u2192 On screen: Hype Stations PIP can be scheduled like the other PIPs",
+ "commit": "7d86478673459b9ac8f3d6e80d2d71d6bfa3a9d7",
+ "subject": "Settings on a theme station (Hype Radio's engine): ID over intros (on/off, per hour, level, minutes apart), jingle fade and pad ducking are shown \u2013 they are the station's own",
  "log": [
-  "12:47:13 update 4d83356e \u2192 f31ec145 \u00b7 2 file(s): engine/engine.py, web/panel/plan.html",
-  "12:47:13 restart hype-engine@*",
-  "12:47:13 restart hype-engine",
-  "12:47:58 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "12:50:03 update f31ec145 \u2192 7d864786 \u00b7 1 file(s): web/panel/settings.html",
+  "12:50:03 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
   "song": "Mensa x SRNO x Henkie T \u2013 Pak \u2018t Op",
   "listeners": 4,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },

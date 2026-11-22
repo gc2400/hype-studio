@@ -507,3 +507,4 @@
 2026-11-22T04:07:18 ok 829b3bdb Hardware watchdog on (a frozen server restarts itself after 60 s) + sound settings files can no longer keep a radio engine off air: checked before every start (Hype Radio, the stations), last good copy kept every 10 min, a broken one is replaced by it (22 Nov: after the hard power-off sound.json was zeros and Hype Radio did not start)
 2026-11-22T12:02:13 ok 4d83356e Library + Planning: Hype Radio's empty folders show too (MIXES/SATURDAY 21 disappeared once its mix was archived, so there was nowhere to put the next mix)
 2026-11-22T12:47:58 ok f31ec145 Planning → On screen: Hype Stations PIP can be scheduled like the other PIPs
+2026-11-22T12:50:03 ok 7d864786 Settings on a theme station (Hype Radio's engine): ID over intros (on/off, per hour, level, minutes apart), jingle fade and pad ducking are shown – they are the station's own
