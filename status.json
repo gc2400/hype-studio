@@ -1,19 +1,19 @@
 {
- "time": "2026-11-22T14:57:31",
+ "time": "2026-11-22T15:08:31",
  "result": "ok",
- "commit": "7a901899ba490485de9c1d3dff7fcd444af5d0d6",
- "subject": "TV blocks: the corner logo switches to the station's (branding/logo_corner_<id>.mov, same size and spot) and back to Hype Radio's",
+ "commit": "4ab11f7ac85e9909682e37b6afb051db9dd22ae1",
+ "subject": "TV logo switch fades (0.5 s out, file swap, 0.5 s in) instead of cutting",
  "log": [
-  "14:56:46 update c50cabac \u2192 7a901899 \u00b7 1 file(s): engine/engine.py",
-  "14:56:46 restart hype-engine@*",
-  "14:56:46 restart hype-engine",
-  "14:57:31 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "15:07:46 update 7a901899 \u2192 4ab11f7a \u00b7 1 file(s): engine/engine.py",
+  "15:07:46 restart hype-engine@*",
+  "15:07:46 restart hype-engine",
+  "15:08:31 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Qlas \u2013 Zij Kent",
+  "song": "Chimbala x Rochy RD \u2013 Careta (Remix)",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },

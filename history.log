@@ -519,3 +519,4 @@
 2026-11-22T14:50:34 ok 994305c0 Install now (Gianno: go, 22 Nov 14:48) – TV blocks, LIVE per station, station watchdog, rotation memory, subfolder buttons, TV click fix
 2026-11-22T14:53:40 ok c50cabac Broadcast: steps in one row – 1 Connect · 2 Live on · 3 Go live – and "On air" full width under them
 2026-11-22T14:57:31 ok 7a901899 TV blocks: the corner logo switches to the station's (branding/logo_corner_<id>.mov, same size and spot) and back to Hype Radio's
+2026-11-22T15:08:31 ok 4ab11f7a TV logo switch fades (0.5 s out, file swap, 0.5 s in) instead of cutting
