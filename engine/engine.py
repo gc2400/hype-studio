@@ -434,7 +434,7 @@ class Screen:
         if f.startswith("scene:"):    # a rule can also switch the TV to a scene (0 s = it stays until AUTO SCENES)
             name, dl, hold = f[6:], r["delay"] or 0, r["duration"] or 0
             if not E.tv.auto: log.info("scheduled scene %s skipped: scenes are on manual (e.g. a live show)", name); return
-            threading.Timer(max(0.0, dl), lambda: E.hold_scene(name, hold)).start(); log.info("scheduled scene: %s (%s)", name, r["trigger"]); return
+            threading.Timer(max(0.0, dl), lambda: (also_fetch() if name == ALSO_SCENE else None, E.hold_scene(name, hold))).start(); log.info("scheduled scene: %s (%s)", name, r["trigger"]); return
         if f.startswith(("ticker:", "adbox:")):   # a ticker (News, Traffic …) or the ad box slideshow: duration 0 = 60 s
             self.add(r["id"], f, r["delay"] or 0, r["duration"] or 60, r["where_"]); log.info("ticker on screen: %s (%s)", f[7:], r["trigger"]); return
         dur = r["duration"] or max(5.0, (length or 180) - (r["delay"] or 0))    # 0 = the whole song, until the next song starts
