@@ -4818,7 +4818,9 @@ def nowplaying_api():
                             "playlist": n.get("folder") or "", "streamer": "", "is_request": False, "song": song(n),
                             "type": "song" if n.get("section") == "music" else "jingle" if n.get("section") == "jingles" else (n.get("section") or "")},
             "playing_next": {"song": song(nxt)} if nxt else None, "song_history": hist, "is_online": not E.stopped,
-            "hype": {"source": "hype-studio"}}
+            "hype": {"source": "hype-studio",
+                     # Hype TV: which station's programme the TV shows right now (None = Hype Radio) and which station the studio is LIVE on
+                     "tv_station": None if CH else TVF.get("ch"), "live_station": None if CH else (E.live.target() if E.live.live else None)}}
 
 GUARD_CONF = "/var/lib/hype/guard_conf.json"
 def rights_report(qs, as_csv):
