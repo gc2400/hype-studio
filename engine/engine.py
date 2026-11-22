@@ -3985,7 +3985,8 @@ class H(BaseHTTPRequestHandler):
                                                             clock=int(qs["clock"][0]) if "clock" in qs else None))
             if p == "/graphics" and TVF["ch"]:
                 nm_ = (chancfg.get(TVF["ch"]) or {}).get("name") or ""
-                return self.send(200, {"show": nm_, "show_image": None, "show_v": 0, "start": 0, "end": 0, "temp": WEATHER["temp"], "code": WEATHER["code"]})
+                return self.send(200, {"show": nm_, "show_image": show_name_image(nm_), "show_v": show_image_v(nm_), "start": 0, "end": 0,      # (branding/shownames/Hype_Ambiente.png …)
+                                       "temp": WEATHER["temp"], "code": WEATHER["code"]})
             if p == "/graphics": return self.send(200, {"show": SHOW["title"], "show_image": show_name_image(SHOW["title"]), "show_v": show_image_v(SHOW["title"]), "start": SHOW["start"], "end": SHOW["end"], "temp": WEATHER["temp"], "code": WEATHER["code"]})
             if p == "/pads":
                 c = dbc(); rows = c.execute("SELECT path, title, folder, duration, has_video FROM items WHERE section='jingles' AND problem IS NULL AND " + station_sql(TL.ch, plan=True) + " ORDER BY folder, title").fetchall()
