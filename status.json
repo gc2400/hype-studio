@@ -1,17 +1,17 @@
 {
- "time": "2026-11-22T14:29:31",
+ "time": "2026-11-22T14:45:56",
  "result": "waiting",
- "commit": "f738b8a37b2e52e021fdae8a0ea62936693d19ed",
- "subject": "Panel library card: on a theme station the folders open their subfolders (RITMO \u2192 RITMO-POWER, RITMO-CURRENT \u2026) \u2013 the station's top folder is skipped [night]",
+ "commit": "a4b71c99cf73addf51c60a9c854773ee5ae5e20a",
+ "subject": "TV sound: the switch between the radio and a paired clip's own sound is a short ramp instead of a hard cut (it clicked on TV at the start of Amapiano, where the ID over the intro began) [night]",
  "log": [
-  "14:29:31 update 843df756 \u2192 f738b8a3 \u00b7 11 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/guard.py, engine/hype_auth.py, engine/live.py, engine/live/studio_in.sh, radio/radio.liq, web/panel/index.html, web/panel/plan.html, web/panel/studio.html",
-  "14:29:31 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "14:45:56 update 843df756 \u2192 a4b71c99 \u00b7 11 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/guard.py, engine/hype_auth.py, engine/live.py, engine/live/studio_in.sh, radio/radio.liq, web/panel/index.html, web/panel/plan.html, web/panel/studio.html",
+  "14:45:56 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Tekno \u2013 Press Button",
-  "listeners": 4,
+  "song": "Asake x Olamide \u2013 Amapiano",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 1.7,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
