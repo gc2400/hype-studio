@@ -1,14 +1,14 @@
 {
- "time": "2026-11-22T12:59:21",
- "result": "ok",
- "commit": "843df756ff8b73e36acb316f774533133f109ec1",
- "subject": "Undo: Hype Stations PIP stays in Settings \u2192 TV (every hour at :MM, like Up next), as before",
+ "time": "2026-11-22T13:19:51",
+ "result": "waiting",
+ "commit": "c6aa19e30d390c8505dcc19b1c3a50a27d404d3f",
+ "subject": "LIVE on a theme station [night]: Broadcast \u2192 \"Live on\" Hype Radio / Hype Latina / Hype Ambiente \u2013 the studio mix goes into that station's radio engine (its own harbor port 8011/8012), its music comes back to the Mixcast (return-<id>), its LIVE switch, the station's now-playing says LIVE; the TV follows the station with the normal camera scenes and its sound; Hype Radio keeps its own programme. Only while not LIVE can you change the station. (+ TV blocks + station watchdog from before)",
  "log": [
-  "12:59:21 update c6b0b47d \u2192 843df756 \u00b7 0 file(s): none (not server files)",
-  "12:59:21 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "13:19:51 update 843df756 \u2192 c6aa19e3 \u00b7 11 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/guard.py, engine/hype_auth.py, engine/live.py, engine/live/studio_in.sh, radio/radio.liq, web/panel/index.html, web/panel/plan.html, web/panel/studio.html",
+  "13:19:51 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Kendrick Lamar \u2013 Not Like Us",
+  "song": " \u2013 ZAZA CLUB | DANCEHALL | FUNK CARIOCA | HIP HOP | WORLD MUSIC DJ SET BY HADER",
   "listeners": 4,
   "obs": true,
   "seg_age": 0.6,
