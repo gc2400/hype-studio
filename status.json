@@ -1,17 +1,17 @@
 {
- "time": "2026-11-22T13:19:51",
+ "time": "2026-11-22T13:20:55",
  "result": "waiting",
- "commit": "c6aa19e30d390c8505dcc19b1c3a50a27d404d3f",
- "subject": "LIVE on a theme station [night]: Broadcast \u2192 \"Live on\" Hype Radio / Hype Latina / Hype Ambiente \u2013 the studio mix goes into that station's radio engine (its own harbor port 8011/8012), its music comes back to the Mixcast (return-<id>), its LIVE switch, the station's now-playing says LIVE; the TV follows the station with the normal camera scenes and its sound; Hype Radio keeps its own programme. Only while not LIVE can you change the station. (+ TV blocks + station watchdog from before)",
+ "commit": "fbf2ab994be886ec7b2a6bdd78bf15fd0161165d",
+ "subject": "Now-playing feed: hype.tv_station (which station the TV shows) and hype.live_station (LIVE on which station) \u2013 for Hype Live's Live Layer [night]",
  "log": [
-  "13:19:51 update 843df756 \u2192 c6aa19e3 \u00b7 11 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/guard.py, engine/hype_auth.py, engine/live.py, engine/live/studio_in.sh, radio/radio.liq, web/panel/index.html, web/panel/plan.html, web/panel/studio.html",
-  "13:19:51 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "13:20:55 update 843df756 \u2192 fbf2ab99 \u00b7 11 file(s): engine/chan.py, engine/chancfg.py, engine/engine.py, engine/guard.py, engine/hype_auth.py, engine/live.py, engine/live/studio_in.sh, radio/radio.liq, web/panel/index.html, web/panel/plan.html, web/panel/studio.html",
+  "13:20:55 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
   "song": " \u2013 ZAZA CLUB | DANCEHALL | FUNK CARIOCA | HIP HOP | WORLD MUSIC DJ SET BY HADER",
   "listeners": 4,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
