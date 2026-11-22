@@ -439,7 +439,8 @@ input[type=date]{background:var(--deep,#071A2B);color:var(--txt,#F2F6FA);border:
   <section id="tab-tv" hidden>
     <div class="card" style="padding:14px;display:flex;flex-direction:column;gap:10px">
       <span class="lab">TV · which station the TV shows</span>
-      <p class="muted" style="margin:0">Click an hour to give the TV to a station (click again for the next one, back to Hype Radio). Hype Radio's radio always plays its own programme; only the TV picture and sound follow the station. LIVE from the studio always wins. By hand: On Air → TV.</p>
+      <p class="muted" style="margin:0">Click an hour to give the TV to a station (click again for the next one, back to Hype Radio). Hype Radio's radio always plays its own programme; only the TV picture and sound follow the station. LIVE from the studio always wins. By hand (Now): Hype Radio or a station on TV until you choose Schedule again.</p>
+      <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center"><span class="lab">Now</span><span class="bjoin" id="tvBtns" role="group" aria-label="Which station has the TV now"></span><span class="muted" id="tvInfo" style="font-size:12px"></span></div>
       <div class="row" id="tvLegend" style="gap:12px;flex-wrap:wrap"></div>
       <div id="tvGrid" style="overflow-x:auto"></div>
     </div>
@@ -493,6 +494,16 @@ $$('.tab').forEach(b => b.addEventListener('click', () => { if (b.dataset.tab ==
 // TV blocks (Hype Radio only): a week grid, one cell per hour; a cell = the station that has the TV then
 let TVG = null;
 function tvGridLoad() { get('tv').then(d => { TVG = d; tvGridPaint(); }); }
+function tvNowPaint() {
+  const d = TVG; if (!d) return; const man = d.manual;
+  const opts = [['', 'Schedule', 'the TV follows the grid below'], ['main', 'Hype Radio', 'Hype Radio on TV, whatever the schedule says']].concat(d.stations.filter(x => x.ok).map(x => [x.id, x.name.replace(/^Hype /, ''), x.name + ' on TV now (until you choose Schedule)']));
+  const h = opts.map(([id, nm, t]) => `<button class="btn sm ${(man || '') === id ? 'on' : ''}" data-tv="${id}" title="${t}" aria-pressed="${(man || '') === id}">${nm}</button>`).join('');
+  if ($('#tvBtns').dataset.h !== h) { $('#tvBtns').innerHTML = h; $('#tvBtns').dataset.h = h;
+    $$('#tvBtns [data-tv]').forEach(b => b.onclick = () => post('cmd/tv_follow', {ch: b.dataset.tv || null}).then(r => { if (r.ok === false) return toast(r.error, 1); TVG = r.tv; tvGridPaint(); toast(b.dataset.tv ? 'TV: ' + b.textContent + ' (by hand)' : 'TV follows the schedule'); setTimeout(tvGridLoad, 2500); }).catch(e => toast(e.message, 1))); }
+  const st = d.stations.find(x => x.id === d.ch);
+  $('#tvInfo').textContent = 'on TV: ' + (st ? st.name : 'Hype Radio') + (man ? ' · by hand' : '');
+}
+setInterval(() => { if (!$('#tab-tv').hidden) tvGridLoad(); }, 10000);
 function tvGridPaint() {
   const d = TVG, ok = d.stations.filter(x => x.ok), col = id => (d.stations.find(x => x.id === id) || {}).color || '#555';
   const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], now = new Date(), wd = (now.getDay() + 6) % 7, hr = now.getHours();
@@ -502,7 +513,7 @@ function tvGridPaint() {
     for (let hh = 0; hh < 24; hh++) { const k = dd + '-' + hh, v = d.grid[k], nowc = dd === wd && hh === hr;
       h += `<td><button data-k="${k}" title="${DAYS[dd]} ${String(hh).padStart(2, '0')}:00 – ${v ? esc((d.stations.find(x => x.id === v) || {}).name || v) : 'Hype Radio'}" aria-label="${DAYS[dd]} ${hh}:00 ${v || 'Hype Radio'}" style="width:26px;height:22px;border-radius:4px;border:${nowc ? '2px solid var(--y, #FFE000)' : '1px solid var(--line2)'};background:${v ? col(v) : 'transparent'};cursor:pointer"></button></td>`; }
     h += '</tr>'; }
-  $('#tvGrid').innerHTML = h + '</table>';
+  $('#tvGrid').innerHTML = h + '</table>'; tvNowPaint();
   $$('#tvGrid [data-k]').forEach(b => b.onclick = () => { const k = b.dataset.k, cur = d.grid[k] || '', ids = ['', ...ok.map(x => x.id)], nx = ids[(ids.indexOf(cur) + 1) % ids.length];
     const g = Object.assign({}, d.grid); if (nx) g[k] = nx; else delete g[k];
     post('cmd/tv_blocks', {grid: g}).then(r => { if (r.ok === false) return toast(r.error, 1); TVG = r.tv; tvGridPaint(); }).catch(e => toast(e.message, 1)); });
