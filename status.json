@@ -1,19 +1,17 @@
 {
- "time": "2026-11-22T15:38:17",
+ "time": "2026-11-22T15:43:26",
  "result": "ok",
- "commit": "67a6bd4ff6a70183d1926fd0972fda7cc0709445",
- "subject": "TV logos as VP9 .webm with alpha (the png .mov with still parts played too fast in OBS)",
+ "commit": "90a65105cfecdff9b4b250329397e5fe23cbd7d6",
+ "subject": "TV buttons (Schedule / Hype Radio / station) moved to Planning \u2192 TV; station view also shows the TV media card while that station is on TV",
  "log": [
-  "15:37:32 update 32127571 \u2192 67a6bd4f \u00b7 1 file(s): engine/engine.py",
-  "15:37:32 restart hype-engine@*",
-  "15:37:32 restart hype-engine",
-  "15:38:17 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "15:43:26 update 67a6bd4f \u2192 90a65105 \u00b7 3 file(s): web/panel/header.js, web/panel/index.html, web/panel/plan.html",
+  "15:43:26 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": " \u2013 Hype SWP Afternoon 3",
+  "song": "Jeon x Upgrade Music x Steve Andreas \u2013 Savaneta",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.1,
+  "seg_age": 0.7,
   "problems": [],
   "ok": true
  },
