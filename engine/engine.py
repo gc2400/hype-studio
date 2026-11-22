@@ -795,7 +795,14 @@ class TV:
         if (split, live, ext) == (self.split, getattr(self, "_live_r", None), getattr(self, "_ext_r", None)) and not force: return
         try:
             cl = self.client()
-            cl.set_input_volume("Radio audio", vol_db=-100.0 if (split or live or ext) else 0.0)
+            want = -100.0 if (split or live or ext) else 0.0
+            if not force and want != getattr(self, "_radio_db", None) and getattr(self, "_radio_db", None) is not None:
+                # a short ramp instead of a hard cut (22 Nov: the switch radio -> a paired clip's own sound clicked on TV,
+                # right where the ID over the intro started)
+                steps = (-2.0, -6.0, -14.0, -30.0) if want < 0 else (-30.0, -14.0, -6.0, -2.0)
+                if want < 0: cl.set_input_mute("FX audio", not (split or ext))
+                for db_ in steps: cl.set_input_volume("Radio audio", vol_db=db_); time.sleep(0.03)
+            cl.set_input_volume("Radio audio", vol_db=want); self._radio_db = want
             cl.set_input_mute("FX audio", not (split or ext))
             try: cl.set_input_mute("Media video", not ext)       # (a media FILE's sound always comes through the radio)
             except Exception: pass
