@@ -532,3 +532,4 @@
 2026-11-22T18:37:21 waiting ee37b8c1 [night] TV block: the station's own show box PNG (branding/shownames/Hype_<Station>.png) instead of the text box
 2026-11-22T18:39:10 ok 1784d6fd Install now (Gianno 18:37): stations join live, keep listening card, station show boxes
 2026-11-22T19:01:25 ok 2661d5a5 Keep Listening scene: with the TV sound sources (Radio / FX / Studio audio) - the card was silent
+2026-11-22T19:11:41 ok 1f7f9f69 Hype Stations PIP: the show name box stays (75 %, left of the video window)

@@ -1,19 +1,17 @@
 {
- "time": "2026-11-22T19:01:25",
+ "time": "2026-11-22T19:11:41",
  "result": "ok",
- "commit": "2661d5a5dcf1faa51947d371f1b0236dfda646a0",
- "subject": "Keep Listening scene: with the TV sound sources (Radio / FX / Studio audio) - the card was silent",
+ "commit": "1f7f9f698f3ce07e8f4ecf3a4246a63d5aa74274",
+ "subject": "Hype Stations PIP: the show name box stays (75 %, left of the video window)",
  "log": [
-  "19:00:40 update 1784d6fd \u2192 2661d5a5 \u00b7 1 file(s): engine/engine.py",
-  "19:00:40 restart hype-engine@*",
-  "19:00:40 restart hype-engine",
-  "19:01:25 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "19:11:41 update 2661d5a5 \u2192 1f7f9f69 \u00b7 1 file(s): web/overlay/index.html",
+  "19:11:41 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Frsh x KM \u2013 Bare Minimum (Starboy)",
+  "song": "Rich Kalashh \u2013 Taurus",
   "listeners": 5,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
