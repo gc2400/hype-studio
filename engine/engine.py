@@ -2641,6 +2641,17 @@ def library(qs):
     folders = [r[0] for r in c.execute("SELECT DISTINCT folder FROM items WHERE section=? AND " + (station_sql(chq) if sec in ("music", "jingles") else "1=1") + " ORDER BY folder", (sec,))]
     if recs: folders = [f for f in folders if (f or "").upper().startswith("RECORDINGS")]
     elif sec == "music": folders = [f for f in folders if (f or "").upper().startswith("MIXES") == mixes and not (f or "").upper().startswith("RECORDINGS")]
+    if sec in ("music", "jingles") and "main" in set(lib_show(chq)):     # Hype Radio's EMPTY folders too (22 Nov: MIXES/SATURDAY 21 was gone from the list once its mix was archived – nowhere to put the next one)
+        base = os.path.join(ROOT, sec)
+        for dp, dn, _ in os.walk(base):
+            dn[:] = [x for x in dn if not x.startswith(".")]
+            rel = os.path.relpath(dp, base)
+            if rel == ".": continue
+            if rel.count(os.sep) >= 2: dn[:] = []
+            f = rel.replace(os.sep, "/"); U = f.upper()
+            if sec == "music" and (U.startswith("MIXES") != mixes or (U.startswith("RECORDINGS") != recs)): continue
+            if f not in folders: folders.append(f)
+        folders.sort()
     all_folders = list(folders)
     if sec in ("music", "jingles") and not mixes and not recs:      # a theme channel's folders on disk (also still empty) – for Upload
         vis = set(lib_show(chq))
@@ -3844,7 +3855,18 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, {"paths": paths})
             if p == "/clocks": return self.send(200, planner.api_clocks(dbc()))
             if p == "/schedule": return self.send(200, planner.api_schedule(dbc()))
-            if p == "/folders": return self.send(200, planner.api_folders(dbc(), station_sql(TL.ch, plan=True)))
+            if p == "/folders":
+                d_ = planner.api_folders(dbc(), station_sql(TL.ch, plan=True))
+                if not (TL.ch or CH):        # Hype Radio: also EMPTY folders (e.g. a show's mix folder like MIXES/SATURDAY 21 after its mix was archived – 22 Nov: you could not find it to put the next mix in)
+                    base = os.path.join(ROOT, "music")
+                    for dp, dn, fn in os.walk(base):
+                        dn[:] = sorted(x for x in dn if not x.startswith("."))
+                        rel = os.path.relpath(dp, base)
+                        if rel == "." or rel.count(os.sep) > 2: continue
+                        f_ = rel.replace(os.sep, "/")
+                        if f_ not in d_["counts"]: d_["music"].append(f_); d_["counts"][f_] = 0
+                    d_["music"] = sorted(set(d_["music"]))
+                return self.send(200, d_)
             if p == "/lib_show": return self.send(200, {"show": lib_show((qs.get("ch") or [""])[0]), "stations": [{"id": "main", "name": "Hype Radio", "color": "#05A9C6"}] + [{"id": x["id"], "name": x["name"], "color": x["color"], "logo": x.get("logo")} for x in chancfg.load()],
                                                        "roots": sorted(d for d in os.listdir(ROOT) if re.match(r"^(music|jingles)-[a-z][a-z0-9]{1,19}$", d))})
             if p == "/overlays": return self.send(200, planner.api_overlays(dbc()))
