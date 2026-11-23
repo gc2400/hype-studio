@@ -541,3 +541,4 @@
 2026-11-22T23:32:24 ok ea3d3f20 Library: a renamed file that now has 'Artist - Title' loses its 'no artist' problem and plays again
 2026-11-23T00:49:05 error  
 2026-11-23T11:53:04 ok 03007b12 Folders: a subfolder of a 2-level folder (CLASSICS/CLASSICS/CLASSICS-LATIN) mixes in with its songs (was: only the subfolder played); archive subfolders (_…) never
+2026-11-23T13:57:46 ok de037ea7 Hype Stations PIP: show name box hidden again (Gianno)

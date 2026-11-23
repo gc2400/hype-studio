@@ -1,20 +1,17 @@
 {
- "time": "2026-11-23T11:53:04",
+ "time": "2026-11-23T13:57:46",
  "result": "ok",
- "commit": "03007b12c4e07033e3c474e769d02d3a9a0c3d8a",
- "subject": "Folders: a subfolder of a 2-level folder (CLASSICS/CLASSICS/CLASSICS-LATIN) mixes in with its songs (was: only the subfolder played); archive subfolders (_\u2026) never",
+ "commit": "de037ea701637a8325c9ac7a2dd7e2a3738391a7",
+ "subject": "Hype Stations PIP: show name box hidden again (Gianno)",
  "log": [
-  "11:52:19 update ea3d3f20 \u2192 03007b12 \u00b7 2 file(s): engine/engine.py, engine/planner.py",
-  "11:52:19 restart hype-engine@*",
-  "11:52:19 restart hype-channels",
-  "11:52:19 restart hype-engine",
-  "11:53:04 installed OK \u00b7 restarted: hype-engine, hype-engine@*, hype-channels"
+  "13:57:46 update 03007b12 \u2192 de037ea7 \u00b7 1 file(s): web/overlay/index.html",
+  "13:57:46 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Nelly x Ashanti x Akon \u2013 Body On Me",
+  "song": "Rich Kalashh x RULY \u2013 Whoosh",
   "listeners": 4,
   "obs": true,
-  "seg_age": 1.8,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
