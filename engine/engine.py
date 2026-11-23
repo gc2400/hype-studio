@@ -115,6 +115,7 @@ class Picker:
     def pick_song(self, c, folder, avoid):
         rows = c.execute(f"""SELECT {COLS} FROM items WHERE section='music' AND problem IS NULL AND mode IS NOT NULL
                              AND (folder=? OR folder LIKE ? OR folder LIKE ?) AND ((folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%') OR ? LIKE 'MIXES%' OR ? LIKE 'RECORDINGS%')""", (folder, "%/" + folder, folder + "/%", folder, folder)).fetchall()
+        if "/" in folder: rows = [r for r in rows if not any(x.startswith("_") for x in (r[3] or "")[len(folder) + 1:].split("/")) or not (r[3] or "").startswith(folder + "/")]   # (never an archive subfolder)
         if not rows: return None
         now = time.time(); paths = {r[1] for r in self.recent} | avoid["paths"]
         arts = {a for t, p, aa in self.recent if now - t < ARTIST_SEP for a in aa} | avoid["artists"]

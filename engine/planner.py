@@ -128,7 +128,11 @@ def playlist_songs(c, pid, seen=None):
             w, a = folder_where(ref)
             rows = c.execute(f"""SELECT path, folder FROM items WHERE section='music' AND problem IS NULL AND mode IS NOT NULL
                        AND {w} ORDER BY artist COLLATE NOCASE, title COLLATE NOCASE""", a).fetchall()
-            if any((f or "").startswith(ref + "/") for _, f in rows):     # a folder with subfolders: only the songs IN the subfolders
+            sub = lambda f: (f or "").startswith(ref + "/")
+            # an archive subfolder (_…-ARC) never plays; another subfolder (e.g. CLASSICS/CLASSICS/CLASSICS-LATIN for a theme station)
+            # is simply part of its folder: its songs mix in with the others, as if they were loose in it (23 Nov)
+            if "/" in ref: rows = [r for r in rows if not (sub(r[1]) and any(x.startswith("_") for x in r[1][len(ref) + 1:].split("/")))]
+            if "/" not in ref and any(sub(f) for _, f in rows):     # a TOP folder with subfolders (CLASSICS): only the songs IN the subfolders
                 rows = [r for r in rows if r[1] != ref]
             out += [r[0] for r in rows]
         elif kind == "file":
