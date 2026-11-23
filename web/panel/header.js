@@ -262,14 +262,16 @@ html[data-station] .card.hi{border-color:var(--line2)}
     const r = d.radio || {}, t = d.tv || {}, p = d.public || {}, sv = d.server || {}, g = d.guard || {}, o = d.own || {};
     // listening now: one tile per station (status dot · listeners now · peak today); details on hover
     const song = x => String(x || '').replace(/^\s*–\s*/, '').replace(/\s*–\s*$/, '');      // "artist – title" (a jingle has no artist)
-    const tile = (name, color, state, now, peak, tip, extra, playing) => `<div class="hpt" title="${esc(tip)}"><i style="background:${color}"></i>
-      <div class="hpn"><span class="hpd ${state}"></span>${esc(name)}</div><div class="hpv">${now ?? '–'}</div><div class="hps">${playing ? '♪ ' + esc(playing) : '<span style="opacity:.5">–</span>'}</div><div class="hpp">peak ${peak ?? '–'}${extra || ''}</div></div>`;
+    const pkT = t => t ? ' at ' + new Date(t * 1000).toLocaleTimeString('nl-NL', {hour: '2-digit', minute: '2-digit'}) : '';
+    let peakT = null;
+    const tile = (name, color, state, now, peak, tip, extra, playing, pt) => (peakT = pt, 0) ||  `<div class="hpt" title="${esc(tip)}"><i style="background:${color}"></i>
+      <div class="hpn"><span class="hpd ${state}"></span>${esc(name)}</div><div class="hpv">${now ?? '–'}</div><div class="hps">${playing ? '♪ ' + esc(playing) : '<span style="opacity:.5">–</span>'}</div><div class="hpp">peak ${peak ?? '–'}${pkT(peakT)}${extra || ''}</div></div>`;
     const tiles = [tile('Hype Radio', '#05A9C6', r.on_air && r.ok ? 'ok' : 'bad', o.current, o.peak_today,
         `Playout ${r.on_air ? 'on air' : 'stopped'} · stream ${r.ok ? 'live' : 'down'} (MP3 ${r.kbps || '–'}k) · MP3 ${o.mp3 ?? '–'} / HLS ${o.hls ?? '–'}`,
-        p.ok && p.listeners ? ` · +${p.listeners} Streamerr` : '', r.on_air ? song(r.song) : '')]
+        p.ok && p.listeners ? ` · +${p.listeners} Streamerr` : '', r.on_air ? song(r.song) : '', o.peak_time)]
       .concat((d.channels || []).map(c => { const q = c.own || {}, st = !c.enabled ? 'off' : (c.running && c.stream && c.hls) ? 'ok' : 'bad';
         return tile(c.name.replace(/^Hype /, ''), c.color, st, c.enabled ? q.current : '–', c.enabled ? q.peak_today : '–',
-          !c.enabled ? 'Switched off' : `${c.sim ? 'Live from Hype Radio' : c.running ? 'On air' : 'NOT running'} · stream ${c.stream ? 'live' : 'down'}${c.hls ? '' : ' · HLS down'} · MP3 ${q.mp3 ?? '–'} / HLS ${q.hls ?? '–'}${c.now ? ' · now: ' + c.now : ''}`, '', c.enabled ? song(c.now) : ''); }));
+          !c.enabled ? 'Switched off' : `${c.sim ? 'Live from Hype Radio' : c.running ? 'On air' : 'NOT running'} · stream ${c.stream ? 'live' : 'down'}${c.hls ? '' : ' · HLS down'} · MP3 ${q.mp3 ?? '–'} / HLS ${q.hls ?? '–'}${c.now ? ' · now: ' + c.now : ''}`, '', c.enabled ? song(c.now) : '', c.enabled ? q.peak_time : null); }));
     const dot = (ok, warn) => `<b class="${ok ? 'ok' : warn ? 'warn' : 'bad'}">●</b>`;
     const hl = [['sync', g.sync && g.sync.active, 'Sync: one call a minute + ⚡ poke'],
                 ['ping', g.tick && g.tick.ok === true, 'Clock ping every minute' + (g.tick && g.tick.ok === false ? ' – failing ' + (g.tick.fails || 0) + '×: ' + (g.tick.error || '') : '')],
@@ -302,11 +304,11 @@ html[data-station] .card.hi{border-color:var(--line2)}
     }).catch(() => {});
     setTimeout(go, 1500); setInterval(() => { if (!document.hidden) go(); }, 30000);
   })();
-  function popLoad() { fetch('/api/streams').then(r => r.json()).then(popRender).catch(() => { pop.innerHTML = '<div class="r"><span>Status</span><b class="bad">● no answer</b></div>'; }); }
+  function popLoad() { fetch('/api/streams').then(r => r.json()).then(d => { popRender(d); dotsPaint(d); return d; }).then(() => {}).catch(() => { pop.innerHTML = '<div class="r"><span>Status</span><b class="bad">● no answer</b></div>'; }); }
   const box = h.querySelector('#hBox'); let TAB = 's';
   function boxTab(t) { TAB = t; h.querySelectorAll('[data-ht]').forEach(b => { b.classList.toggle('on', b.dataset.ht === t); b.setAttribute('aria-selected', b.dataset.ht === t); });
     pop.hidden = t !== 's'; lp.hidden = t !== 'l'; clearInterval(popT);
-    if (t === 's') { popLoad(); popT = setInterval(popLoad, 5000); } else logSeenNow(); }
+    if (t === 's') { popLoad(); popT = setInterval(popLoad, 3000); } else logSeenNow(); }
   function popOpen(o, t) { box.hidden = !o; dots.setAttribute('aria-expanded', o); clearInterval(popT); if (o) boxTab(t || TAB); }
   h.querySelectorAll('[data-ht]').forEach(b => b.onclick = e => { e.stopPropagation(); boxTab(b.dataset.ht); });
   // a click on the dots: the log when something new happened there, else the streams
@@ -359,9 +361,22 @@ html[data-station] .card.hi{border-color:var(--line2)}
     const html = d.channels.map(c => { const L_ = c.listeners || {}, n = L_.current ?? ((L_.mp3 || 0) + (L_.hls || 0)), st = !c.enabled ? 'off' : (!c.running || c.down) ? 'bad' : '';
       return `<span class="chip stch ${st}" data-ch="${c.id}" style="background:${c.color};box-shadow:0 0 6px ${c.color}80" title="${c.name}: ${!c.enabled ? 'off' : st ? 'not running' : n + ' listening now'}">${c.enabled && !st ? n : st === 'bad' ? '!' : ''}</span>`; }).join('');
     if (box_.dataset.h !== html) { box_.dataset.h = html; box_.innerHTML = html; snapSave(); } }).catch(() => {}); }
-  chDots(); setInterval(() => { if (!document.hidden) chDots(); }, 5000);
-  audLoad(); setInterval(() => { if (!document.hidden) audLoad(); }, 5000);   // every 5 s (was 15), and at once when you come back to the tab
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) audLoad(); });
+  // the dots show exactly the window's numbers (the same /api/streams data): Hype Radio = its listeners now, each station its own
+  function dotsPaint(d) {
+    if (!d) return;
+    const o = d.own || {}; if (o.current != null) { const el = h.querySelector('#stRadio'); el.dataset.n = 1; el.textContent = o.current; el.dataset.what = 'listeners'; el.title = 'Radio: ' + o.current + ' listening now'; }
+    const t_ = d.own_tv || {}; if (t_.current != null) { const el = h.querySelector('#stTv'); el.dataset.n = 1; el.textContent = t_.current; el.dataset.what = 'viewers'; el.title = 'TV: ' + t_.current + ' watching now'; }
+    if (!d.channels || !d.channels.length) return;
+    const box_ = h.querySelector('#stChs');
+    const html = d.channels.map(c => { const q = c.own || {}, n = q.current ?? 0, st = !c.enabled ? 'off' : !c.running ? 'bad' : '';
+      return `<span class="chip stch ${st}" data-ch="${c.id}" style="background:${c.color};box-shadow:0 0 6px ${c.color}80" title="${c.name}: ${!c.enabled ? 'off' : st ? 'not running' : n + ' listening now'}">${c.enabled && !st ? n : st === 'bad' ? '!' : ''}</span>`; }).join('');
+    if (box_.dataset.h !== html) { box_.dataset.h = html; box_.innerHTML = html; snapSave(); }
+  }
+  function dotsLoad() { if (!box.hidden) return;      // (the open window loads the same data every 5 s and paints the dots too)
+    fetch('/api/streams', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(dotsPaint).catch(() => {}); }
+  chDots(); setTimeout(dotsLoad, 300); setInterval(() => { if (!document.hidden) dotsLoad(); }, 3000);
+  audLoad();      // (first paint; after that dotsLoad keeps the dots on the window's numbers)
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) dotsLoad(); });
   // ---- REC: start at once, stop with a second click (so it never stops by accident) ----
   const rb = h.querySelector('#hRec'); let REC = null, recAsk = 0;
   const fmtT = s => { s = Math.max(0, Math.floor(s)); const hh = Math.floor(s / 3600), mm = Math.floor(s % 3600 / 60), ss = s % 60; return (hh ? hh + ':' + String(mm).padStart(2, '0') : mm) + ':' + String(ss).padStart(2, '0'); };
