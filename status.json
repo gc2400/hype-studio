@@ -1,17 +1,20 @@
 {
- "time": "2026-11-23T00:49:05",
- "result": "error",
- "commit": "",
- "subject": "",
+ "time": "2026-11-23T11:53:04",
+ "result": "ok",
+ "commit": "03007b12c4e07033e3c474e769d02d3a9a0c3d8a",
+ "subject": "Folders: a subfolder of a 2-level folder (CLASSICS/CLASSICS/CLASSICS-LATIN) mixes in with its songs (was: only the subfolder played); archive subfolders (_\u2026) never",
  "log": [
-  "00:49:05 error: git fetch -q origin main: Connection to github.com closed by remote host.\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
+  "11:52:19 update ea3d3f20 \u2192 03007b12 \u00b7 2 file(s): engine/engine.py, engine/planner.py",
+  "11:52:19 restart hype-engine@*",
+  "11:52:19 restart hype-channels",
+  "11:52:19 restart hype-engine",
+  "11:53:04 installed OK \u00b7 restarted: hype-engine, hype-engine@*, hype-channels"
  ],
- "error": "git fetch -q origin main: Connection to github.com closed by remote host.\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "Shallipopi x Burna Boy \u2013 Laho II",
-  "listeners": 3,
+  "song": "Nelly x Ashanti x Akon \u2013 Body On Me",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 1.8,
   "problems": [],
   "ok": true
  },
