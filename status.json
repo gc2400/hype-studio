@@ -1,17 +1,17 @@
 {
- "time": "2026-11-24T00:27:23",
+ "time": "2026-11-24T00:48:55",
  "result": "ok",
- "commit": "8f00dcde3a1e5a70c9d272af369d30fb9662dbb1",
- "subject": "Header: the listener dots show the streams window's own numbers (same data, every 3 s); the window shows the time of today's peak",
+ "commit": "74f32e84d7be04805e14ee119768d2768265b895",
+ "subject": "Radio MP3 streams: max 12 per address (was 4) - Safari opens 2 per stream and old ones linger when you switch stations (429s)",
  "log": [
-  "00:27:23 update de037ea7 \u2192 8f00dcde \u00b7 1 file(s): web/panel/header.js",
-  "00:27:23 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "00:48:55 update 8f00dcde \u2192 74f32e84 \u00b7 1 file(s): system/nginx-hype.conf",
+  "00:48:55 installed OK \u00b7 restarted: nginx-reload"
  ],
  "guard": {
-  "song": "Feid \u2013 SORRY 4 THAT MUCH",
-  "listeners": 5,
+  "song": "Davido x Leon Thomas \u2013 Tell Everybody",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
