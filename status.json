@@ -1,17 +1,17 @@
 {
- "time": "2026-11-23T13:57:46",
+ "time": "2026-11-24T00:27:23",
  "result": "ok",
- "commit": "de037ea701637a8325c9ac7a2dd7e2a3738391a7",
- "subject": "Hype Stations PIP: show name box hidden again (Gianno)",
+ "commit": "8f00dcde3a1e5a70c9d272af369d30fb9662dbb1",
+ "subject": "Header: the listener dots show the streams window's own numbers (same data, every 3 s); the window shows the time of today's peak",
  "log": [
-  "13:57:46 update 03007b12 \u2192 de037ea7 \u00b7 1 file(s): web/overlay/index.html",
-  "13:57:46 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "00:27:23 update de037ea7 \u2192 8f00dcde \u00b7 1 file(s): web/panel/header.js",
+  "00:27:23 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Rich Kalashh x RULY \u2013 Whoosh",
-  "listeners": 4,
+  "song": "Feid \u2013 SORRY 4 THAT MUCH",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 0.2,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },

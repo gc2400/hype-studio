@@ -542,3 +542,4 @@
 2026-11-23T00:49:05 error  
 2026-11-23T11:53:04 ok 03007b12 Folders: a subfolder of a 2-level folder (CLASSICS/CLASSICS/CLASSICS-LATIN) mixes in with its songs (was: only the subfolder played); archive subfolders (_…) never
 2026-11-23T13:57:46 ok de037ea7 Hype Stations PIP: show name box hidden again (Gianno)
+2026-11-24T00:27:23 ok 8f00dcde Header: the listener dots show the streams window's own numbers (same data, every 3 s); the window shows the time of today's peak
