@@ -73,9 +73,8 @@ body.voice #np{visibility:hidden}
 #ao .t,#ao .a{position:absolute;max-width:528px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;line-height:1.15}
 #ao .t{top:940px;font-size:34px;font-weight:900}#ao .a{top:982px;font-size:24px;font-weight:600;opacity:.85}
 #aoL .t,#aoL .a{left:248px}#aoA .t,#aoA .a{left:1132px}
-body.alsoon #chq,body.alsoon #np,body.alsoon #screen .it,body.alsoon #tk,body.alsoon #tkw,body.alsoon #slides{opacity:0!important}   /* nothing of Studio's own over the video window or the cards */
-/* Hype Stations PIP: the show name box stays, 75 % in the space left of the video window (x 320) */
-#showimg,#showbox{transform-origin:0 0}#showimg{transition:opacity .6s,transform .6s}body.alsoon #showimg.on{transform:scale(.75)}body.alsoon #showbox.on{transform:scale(.75)}
+body.alsoon #chq,body.alsoon #np,body.alsoon #showbox,body.alsoon #showimg,body.alsoon #screen .it,body.alsoon #tk,body.alsoon #tkw,body.alsoon #slides{opacity:0!important}   /* nothing of Studio's own over the video window or the cards */
+/* Hype Stations PIP: no show name box (Gianno 23 Nov) */
 #un .ut,#un .ua{text-transform:uppercase}#un .ua{letter-spacing:.02em}      /* capitals, like the Now Playing box (Gianno, 9 Nov) */
 </style></head><body>
 <script>{const q=new URLSearchParams(location.search);if(q.get('layer')==='clock')document.body.classList.add('onlyclock');if(q.get('noclock'))document.body.classList.add('noclock');if(q.get('layer')==='top10')document.body.classList.add('onlytop10');}</script>
