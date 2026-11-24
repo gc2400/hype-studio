@@ -2445,6 +2445,11 @@ class Engine:
         tdir = os.path.dirname(rel)
         if d.get("folder"):        # Library → Move to: the same file in another folder of the same section (cues, history, playlists stay)
             tdir = os.path.normpath(str(d["folder"])).strip("/")
+            # a theme station's folder as the Library shows it ("music/LATINA/MERENGUE/MER-CURRENT") -> its real place on disk
+            # ("music-latina/MERENGUE/MER-CURRENT") (24 Nov: moving inside Hype Latina said "choose a folder of the same section")
+            tp_ = tdir.split("/")
+            if len(tp_) >= 2 and os.path.isdir(os.path.join(ROOT, "%s-%s" % (tp_[0], tp_[1].lower()))) and not os.path.isdir(os.path.join(ROOT, tdir)):
+                tdir = "/".join(["%s-%s" % (tp_[0], tp_[1].lower())] + tp_[2:])
             if tdir.split("/")[0] != rel.split("/")[0] or ".." in tdir.split("/") or not os.path.isdir(os.path.join(ROOT, tdir)):
                 return {"ok": False, "error": "choose a folder of the same section"}
             if not d.get("name"): d = dict(d, name=os.path.splitext(os.path.basename(rel))[0])
