@@ -550,3 +550,4 @@
 2026-11-24T12:36:37 ok 377b20f6 Library Move to inside a theme station (LATINA/… → music-latina/…)
 2026-11-24T12:41:46 ok 27e33046 Library list: CLIP / AUDIO badges the same width (titles line up)
 2026-11-24T13:14:30 ok d437309d Upload: Clips / Ads can go straight into their main folder (there are no subfolders)
+2026-11-24T17:34:02 ok 463e22a3 Graphics at a jingle all at once (one moment, 0.4 s fade; back 0.6 s after the song starts); Replace a music video by better audio keeps the video as its paired clip; Keep listening card as a slow-zoom video; covers that fail: back off
