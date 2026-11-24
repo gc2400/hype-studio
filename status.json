@@ -1,19 +1,17 @@
 {
- "time": "2026-11-24T12:36:37",
+ "time": "2026-11-24T12:41:46",
  "result": "ok",
- "commit": "377b20f68daf2440680adc6fb2c0c604e2c7909c",
- "subject": "Library Move to inside a theme station (LATINA/\u2026 \u2192 music-latina/\u2026)",
+ "commit": "27e3304665878fe7b779320255dab3dbc5536ff7",
+ "subject": "Library list: CLIP / AUDIO badges the same width (titles line up)",
  "log": [
-  "12:35:52 update f5f2247f \u2192 377b20f6 \u00b7 1 file(s): engine/engine.py",
-  "12:35:52 restart hype-engine@*",
-  "12:35:52 restart hype-engine",
-  "12:36:37 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "12:41:46 update 377b20f6 \u2192 27e33046 \u00b7 1 file(s): web/panel/library.html",
+  "12:41:46 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "KM x Idaly \u2013 Nu Meteen (Slide)",
+  "song": "Frenna \u2013 NASA",
   "listeners": 5,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
