@@ -4731,7 +4731,8 @@ _ST = {"t": 0, "d": None, "pub": None, "pub_t": 0}
 # test tools, scripts and bots are no listeners / viewers (13 Nov: a stream test from ~30 cloud addresses with Python-urllib
 # showed as +11 / -11 TV viewers on two songs). Real players (browsers, AVPlayer, ExoPlayer/okhttp, VLC, Lavf, IPTV boxes) stay.
 NOT_PLAYER = re.compile(r"^(python-|python/|curl/|wget/|go-http-client|aiohttp|node-fetch|node/|axios/|undici|libwww-perl|httpie|postman|insomnia|guzzle|scrapy)"
-                        r"|bot\b|bot/|crawl|spider|headlesschrome|phantomjs|uptime|pingdom|statuscake|site24x7|lighthouse|facebookexternalhit|whatsapp/|slurp", re.I)
+                        r"|bot\b|bot/|crawl|spider|headlesschrome|phantomjs|uptime|pingdom|statuscake|site24x7|lighthouse|facebookexternalhit|whatsapp/|slurp"
+                        r"|hypelive-alarm|hypelive|hypestudio", re.I)     # (our own checks: Hype Live's off-air alarm every minute - not a listener / viewer)
 def is_player(ua): return not NOT_PLAYER.search(ua or "")
 def log_devices(log_, keep, window):
     """Devices (internet address + app/browser) that fetched pieces in the last `window` s, from an nginx log.
