@@ -1,15 +1,15 @@
 {
- "time": "2026-11-24T12:41:46",
+ "time": "2026-11-24T13:14:30",
  "result": "ok",
- "commit": "27e3304665878fe7b779320255dab3dbc5536ff7",
- "subject": "Library list: CLIP / AUDIO badges the same width (titles line up)",
+ "commit": "d437309d33eda09e6d0c2c6d96ee55435ebe72c7",
+ "subject": "Upload: Clips / Ads can go straight into their main folder (there are no subfolders)",
  "log": [
-  "12:41:46 update 377b20f6 \u2192 27e33046 \u00b7 1 file(s): web/panel/library.html",
-  "12:41:46 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "13:14:30 update 27e33046 \u2192 d437309d \u00b7 1 file(s): web/panel/library.html",
+  "13:14:30 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Frenna \u2013 NASA",
-  "listeners": 5,
+  "song": "Drake \u2013 2 Hard 4 The Radio",
+  "listeners": 7,
   "obs": true,
   "seg_age": 0.2,
   "problems": [],
