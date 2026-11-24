@@ -49,7 +49,7 @@ h1{margin:0;font-size:20px;font-weight:900}h1 small{color:var(--mut);font-weight
 #mvBox .mvl{max-height:none;flex:1}
 .ri.dropover{outline:2px dashed var(--y)}.ri .rep:hover{color:var(--y);border-color:var(--y)}
 .fx{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:rgba(255,181,71,.15);color:#FFB54D;font-weight:700}
-#subfolders .btn.dropok,#folders .btn.dropok{outline:2px dashed var(--y)}
+#subfolders .btn.dropok,#subfolders2 .btn.dropok,#folders .btn.dropok{outline:2px dashed var(--y)}
 .delq input{flex:1;min-width:120px;max-width:520px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);padding:0 10px;font:inherit;font-weight:600}
 .plmenu{position:fixed;z-index:50;width:260px;max-height:340px;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:8px;gap:6px}
 .plmenu input{min-height:34px;border-radius:8px;border:1px solid var(--line2);background:var(--deep);color:var(--txt);padding:0 10px;font:inherit;font-size:13px}
@@ -169,6 +169,7 @@ dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
       </div>
       <div class="chipwrap" id="folders" aria-label="Genre"></div>
       <div class="chipwrap" id="subfolders" hidden></div>
+      <div class="chipwrap" id="subfolders2" hidden></div>
       <div class="fpanel" id="fpanel" hidden>
         <div class="fr"><span class="fl">Type</span><div class="row" id="kinds" style="flex-wrap:wrap;gap:5px"><button class="btn sm on" data-k="">All</button><button class="btn sm" data-k="audio" title="Audio files (with or without a clip)">Audio</button><button class="btn sm" data-k="pair" title="Audio file + its own clip (same name in /clips)">With clip</button><button class="btn sm" data-k="noclip" title="Audio file, no clip → TV shows the Hype Screen">No clip</button><button class="btn sm" data-k="video" title="Video files (radio and TV play the same file)">Video</button></div></div>
         <div class="fr"><span class="fl">Show</span><div class="row" style="flex-wrap:wrap;gap:5px"><button class="btn sm" id="bRecent" title="Uploaded in the last 7 days, newest first">Uploaded last 7 days</button><button class="btn sm" id="onlyNew" title="Only songs that still have automatic cue points">Only automatic cue points</button><button class="btn sm" id="bFix" title="Songs with something to improve (no music video, video under 720p, low audio quality, cues to check) – most played first. Drop the better file on a song to replace it.">⚠ To replace</button></div></div>
@@ -266,12 +267,18 @@ function lib(keepSel) {
     $('#folders').hidden = !!one;
     const subs = G ? [...new Set(d.all_folders.filter(f => f.startsWith(G + '/')).map(f => f.split('/').slice(0, 2).join('/')))] : [];
     $('#subfolders').hidden = !subs.length;
-    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f === FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(1).join('/')) : (one ? 'All' : 'All ' + esc(G))}</button>`).join('');
+    const base = FOLDER.split('/').slice(0, 2).join('/');      // the chosen 2nd-level folder (also when one of its subfolders is chosen)
+    $('#subfolders').innerHTML = ['', ...subs].map(f => `<button class="btn sm ${f && f === base ? 'yellow' : !f && !FOLDER ? 'yellow' : ''}" data-f="${esc(f)}">${f ? esc(f.split('/').slice(1).join('/')) : (one ? 'All' : 'All ' + esc(G))}</button>`).join('');
     $$('#subfolders [data-f]').forEach(b => b.onclick = () => { FOLDER = b.dataset.f; lib(); });
+    // a 3rd level (theme stations: AMBIENTE/RITMO → RITMO-POWER, RITMO-CURRENT …; also CLASSICS/CLASSICS → CLASSICS-LATIN)
+    const kids = base && base.includes('/') ? [...new Set(d.all_folders.filter(f => f.startsWith(base + '/')).map(f => f.split('/').slice(0, 3).join('/')))] : [];
+    $('#subfolders2').hidden = !kids.length;
+    $('#subfolders2').innerHTML = ['', ...kids].map(f => `<button class="btn sm ${(f || base) === FOLDER ? 'yellow' : ''}" data-f="${esc(f || base)}">${f ? esc(f.split('/').pop()) : 'All ' + esc(base.split('/').pop())}</button>`).join('');
+    $$('#subfolders2 [data-f]').forEach(b => b.onclick = () => { FOLDER = b.dataset.f; lib(); });
     $('#bFix').hidden = SEC !== 'music'; $('#bFix').classList.toggle('yellow', !!FIXV);
     $('#bFix').innerHTML = '⚠ To replace' + (d.fixn ? ` <b>${d.fixn.total}</b>` : '');
     if (d.fixn) $('#bFix').title = `Songs with something to improve, most played first: ${d.fixn['no video'] || 0} without music video · ${d.fixn['low video'] || 0} video under 720p · ${d.fixn['low audio'] || 0} low audio quality · ${d.fixn['check cues'] || 0} cues to check. Drop the better file on a song to replace it.`;
-    $$('#subfolders [data-f], #folders [data-g]').forEach(b => { const f = b.dataset.f ?? b.dataset.g; if (!f) return;
+    $$('#subfolders [data-f], #subfolders2 [data-f], #folders [data-g]').forEach(b => { const f = b.dataset.f ?? b.dataset.g; if (!f) return;
       b.ondragover = e => { if (e.dataTransfer.types.includes('text/hype-move')) { e.preventDefault(); b.classList.add('dropok'); } };
       b.ondragleave = () => b.classList.remove('dropok');
       b.ondrop = e => { e.preventDefault(); b.classList.remove('dropok'); const ps = JSON.parse(e.dataTransfer.getData('text/hype-move') || '[]'); moveTo(ps, f); }; });
