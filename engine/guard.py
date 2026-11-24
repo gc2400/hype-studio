@@ -278,7 +278,7 @@ class Guard:
             off = fresh and sc.get("ok") is False
             # a measurement, not an outage: ONE warning in the log per nightly check, never a "problem" (24 Nov: it stayed a problem
             # all day, and Hype Live's off-air alarm mailed "Still: Hype Studio problems" every 30 min because the text has "TV" in it)
-            if off and getattr(self, "_av_warned", None) != sc.get("t"):
+            if off and getattr(self, "_av_warned", None) != sc.get("t") and time.time() - sc.get("t", 0) < 3600:   # (only a NEW result: not again after a guard restart)
                 self._av_warned = sc.get("t")
                 self.event("warn", "TV picture %+d ms out of sync with the sound (nightly check, %d songs) – a measurement, no outage" % (sc["median_ms"], sc.get("good", 0)))
             self.since.pop("av_sync", None)
