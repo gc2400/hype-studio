@@ -2851,7 +2851,7 @@ def up_chunk(qs, rfile, n):
     return {"ok": True, "have": have, "done": True, "path": rel}
 
 # ---------- voice tracking: your own links between the songs of a playlist or of a locked hour ----------
-VT_DIR = os.path.join(ROOT, "jingles", "VOICETRACK"); VT_IN = os.path.join(UP_DIR, "vt")
+VT_DIR = os.path.join(ROOT, JDIR, "VOICETRACK"); VT_IN = os.path.join(UP_DIR, "vt")     # (a theme station: its own jingles-<id>/VOICETRACK)
 VT_MIX = {}          # voice link -> the second the next song starts under it (None = after the link, as a jingle)
 VT_PRE = {}          # voice link -> how many seconds before the song before ends it starts (over the outro, the song low under it)
 def vt_db(c):
