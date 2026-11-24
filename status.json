@@ -1,18 +1,17 @@
 {
- "time": "2026-11-24T09:27:42",
+ "time": "2026-11-24T12:30:43",
  "result": "ok",
- "commit": "642561510737fdbc9bca93249630d82e95911fff",
- "subject": "Guard: the nightly sync warning only for a new result (not logged again after a guard restart)",
+ "commit": "f5f2247f7d073c320e1787ae2f0cfc126f632e22",
+ "subject": "Library page: a 3rd row of folder buttons (theme stations: AMBIENTE/RITMO \u2192 RITMO-POWER \u2026; CLASSICS/CLASSICS \u2192 CLASSICS-LATIN)",
  "log": [
-  "09:26:56 update b165cb6e \u2192 64256151 \u00b7 1 file(s): engine/guard.py",
-  "09:26:57 restart hype-guard",
-  "09:27:42 installed OK \u00b7 restarted: hype-guard"
+  "12:30:43 update 64256151 \u2192 f5f2247f \u00b7 1 file(s): web/panel/library.html",
+  "12:30:43 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "PJ Scoolio x Rich Kalashh \u2013 HJB Dicht",
-  "listeners": 3,
+  "song": "Shaggy x Aidonia x Akon \u2013 Boom Body (Shaz Remix)",
+  "listeners": 8,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
