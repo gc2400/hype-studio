@@ -1,17 +1,19 @@
 {
- "time": "2026-11-24T12:30:43",
+ "time": "2026-11-24T12:36:37",
  "result": "ok",
- "commit": "f5f2247f7d073c320e1787ae2f0cfc126f632e22",
- "subject": "Library page: a 3rd row of folder buttons (theme stations: AMBIENTE/RITMO \u2192 RITMO-POWER \u2026; CLASSICS/CLASSICS \u2192 CLASSICS-LATIN)",
+ "commit": "377b20f68daf2440680adc6fb2c0c604e2c7909c",
+ "subject": "Library Move to inside a theme station (LATINA/\u2026 \u2192 music-latina/\u2026)",
  "log": [
-  "12:30:43 update 64256151 \u2192 f5f2247f \u00b7 1 file(s): web/panel/library.html",
-  "12:30:43 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "12:35:52 update f5f2247f \u2192 377b20f6 \u00b7 1 file(s): engine/engine.py",
+  "12:35:52 restart hype-engine@*",
+  "12:35:52 restart hype-engine",
+  "12:36:37 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Shaggy x Aidonia x Akon \u2013 Boom Body (Shaz Remix)",
-  "listeners": 8,
+  "song": "KM x Idaly \u2013 Nu Meteen (Slide)",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },

@@ -547,3 +547,4 @@
 2026-11-24T09:22:49 ok b165cb6e Guard: the nightly picture/sound sync check is a warning in the log, never an off-air problem (Hype Live mailed every 30 min all day)
 2026-11-24T09:27:42 ok 64256151 Guard: the nightly sync warning only for a new result (not logged again after a guard restart)
 2026-11-24T12:30:43 ok f5f2247f Library page: a 3rd row of folder buttons (theme stations: AMBIENTE/RITMO → RITMO-POWER …; CLASSICS/CLASSICS → CLASSICS-LATIN)
+2026-11-24T12:36:37 ok 377b20f6 Library Move to inside a theme station (LATINA/… → music-latina/…)
