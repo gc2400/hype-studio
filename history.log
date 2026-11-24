@@ -552,3 +552,4 @@
 2026-11-24T13:14:30 ok d437309d Upload: Clips / Ads can go straight into their main folder (there are no subfolders)
 2026-11-24T17:34:02 ok 463e22a3 Graphics at a jingle all at once (one moment, 0.4 s fade; back 0.6 s after the song starts); Replace a music video by better audio keeps the video as its paired clip; Keep listening card as a slow-zoom video; covers that fail: back off
 2026-11-24T17:36:53 ok 312aef19 Voice tracking on Hype Ambiente / Hype Latina: the Voice page in the station view, links saved in the station's own jingles-<id>/VOICETRACK
+2026-11-24T23:36:56 ok dc1fe7bc Listener / viewer numbers: Hype Live's off-air checks (HypeLive-Alarm) are not counted
