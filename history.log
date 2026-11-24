@@ -544,3 +544,4 @@
 2026-11-23T13:57:46 ok de037ea7 Hype Stations PIP: show name box hidden again (Gianno)
 2026-11-24T00:27:23 ok 8f00dcde Header: the listener dots show the streams window's own numbers (same data, every 3 s); the window shows the time of today's peak
 2026-11-24T00:48:55 ok 74f32e84 Radio MP3 streams: max 12 per address (was 4) - Safari opens 2 per stream and old ones linger when you switch stations (429s)
+2026-11-24T09:22:49 ok b165cb6e Guard: the nightly picture/sound sync check is a warning in the log, never an off-air problem (Hype Live mailed every 30 min all day)

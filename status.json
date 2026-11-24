@@ -1,17 +1,18 @@
 {
- "time": "2026-11-24T00:48:55",
+ "time": "2026-11-24T09:22:49",
  "result": "ok",
- "commit": "74f32e84d7be04805e14ee119768d2768265b895",
- "subject": "Radio MP3 streams: max 12 per address (was 4) - Safari opens 2 per stream and old ones linger when you switch stations (429s)",
+ "commit": "b165cb6e3771828d45d3537f36b7b298a7cf2d59",
+ "subject": "Guard: the nightly picture/sound sync check is a warning in the log, never an off-air problem (Hype Live mailed every 30 min all day)",
  "log": [
-  "00:48:55 update 8f00dcde \u2192 74f32e84 \u00b7 1 file(s): system/nginx-hype.conf",
-  "00:48:55 installed OK \u00b7 restarted: nginx-reload"
+  "09:22:04 update 74f32e84 \u2192 b165cb6e \u00b7 1 file(s): engine/guard.py",
+  "09:22:04 restart hype-guard",
+  "09:22:49 installed OK \u00b7 restarted: hype-guard"
  ],
  "guard": {
-  "song": "Davido x Leon Thomas \u2013 Tell Everybody",
-  "listeners": 4,
+  "song": "Shallipopi x Burna Boy \u2013 Laho II",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.6,
   "problems": [],
   "ok": true
  },
