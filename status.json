@@ -1,18 +1,18 @@
 {
- "time": "2026-11-24T09:22:49",
+ "time": "2026-11-24T09:27:42",
  "result": "ok",
- "commit": "b165cb6e3771828d45d3537f36b7b298a7cf2d59",
- "subject": "Guard: the nightly picture/sound sync check is a warning in the log, never an off-air problem (Hype Live mailed every 30 min all day)",
+ "commit": "642561510737fdbc9bca93249630d82e95911fff",
+ "subject": "Guard: the nightly sync warning only for a new result (not logged again after a guard restart)",
  "log": [
-  "09:22:04 update 74f32e84 \u2192 b165cb6e \u00b7 1 file(s): engine/guard.py",
-  "09:22:04 restart hype-guard",
-  "09:22:49 installed OK \u00b7 restarted: hype-guard"
+  "09:26:56 update b165cb6e \u2192 64256151 \u00b7 1 file(s): engine/guard.py",
+  "09:26:57 restart hype-guard",
+  "09:27:42 installed OK \u00b7 restarted: hype-guard"
  ],
  "guard": {
-  "song": "Shallipopi x Burna Boy \u2013 Laho II",
+  "song": "PJ Scoolio x Rich Kalashh \u2013 HJB Dicht",
   "listeners": 3,
   "obs": true,
-  "seg_age": 1.6,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
