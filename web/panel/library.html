@@ -367,7 +367,9 @@ $('#repFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''
 function replaceWith(path, f) {
   if (!/\.(mp3|m4a|aac|wav|flac|ogg|opus|mp4|mov|mkv|m4v|webm)$/i.test(f.name)) return toast('Only audio or video files');
   const it = visible().find(x => x.path === path) || {}, name = path.split('/').pop(), stem = name.replace(/\.[^.]+$/, ''), ext = f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
-  if (!confirm(`Replace "${name}" with "${f.name}"?\n\nIt keeps the name ${stem + ext}, its cues, history and playlists. Studio measures the new file again (about a minute).`)) return;
+  const vid = /\.(mp4|mov|mkv|m4v|webm)$/i, keepVid = vid.test(name) && !vid.test(f.name);
+  if (!confirm(`Replace "${name}" with "${f.name}"?\n\nIt keeps the name ${stem + ext}, its cues, history and playlists. Studio measures the new file again (about a minute).`
+               + (keepVid ? `\n\nThe video is kept: it moves to Clips and is paired with the new audio, so the radio plays the better audio and the TV still shows the video.` : ''))) return;
   const folder = path.split('/').slice(0, -1).join('/');
   const el = document.createElement('div'); el.className = 'upi'; el.innerHTML = `<b>Replacing ${esc(stem)}</b><span class="st">waiting</span><div class="bar"><i></i></div>`;
   $('#upList').prepend(el); $('#upDlg').showModal();

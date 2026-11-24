@@ -554,7 +554,7 @@ class Screen:
         if scene == ALSO_SCENE:
             also = dict(also_now(), until=getattr(E, "hold_until", 0))
         ch = self.chart if self.chart and self.chart["end"] > now else None
-        return {"also": also, "station": None if CH else TVF.get("ch"), "now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(JINGLE_HIDE and scene == "Music video" and not E.live.live and tv_item().get("path") and tv_item().get("section") != "music"),
+        return {"also": also, "station": None if CH else TVF.get("ch"), "now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(GFX["hide"]), "gfx": dict(GFX, hide=bool(GFX["hide"])),
                 "slides": ["/adbox/" + urllib.parse.quote(f) for f in slides], "slide_s": 30,
                 "slides_layer": "adbox" if scene == "Hype Screen" else "graphics"}   # Hype Screen: its own source under the Live Layer
 
@@ -679,12 +679,10 @@ class TV:
             except Exception as e: log.warning("logo hide filter: %s", e)
         return self.cl
     def jingle_graphics(self, hide):
-        """While a jingle / sweeper / TOH plays: no logo (and the Graphics page hides show name, clock, Top 10 number)."""
-        if getattr(self, "_logo_hidden", None) == hide: return
-        try:
-            with self.olock: self.client().set_source_filter_enabled("Logo", "Hide", bool(hide))
-            self._logo_hidden = hide
-        except Exception as e: log.warning("logo hide: %s", e); self.cl = None
+        """While a jingle / sweeper / TOH plays: the graphics go - logo, Live Layer, show name, clock, Top 10 number - and come
+        back with the music. ALL AT ONCE (Gianno, 24 Nov): one moment for everything (GFX["at"]), a 0.4 s fade in OBS and on the
+        pages; back 0.6 s after the song starts."""
+        gfx_want(bool(hide))
     def ll_hide(self, hide):
         """The Live Layer out of sight while a jingle / TOH plays and on the Branding scene (Gianno, 15 Nov): a "Hide" filter
         (opacity 0) on the source - the page keeps running, so nothing reloads and it is back at once after the jingle."""
@@ -761,9 +759,7 @@ class TV:
             n = tv_item()
             self.jingle_graphics(bool(JINGLE_HIDE and self.scene == "Music video" and not E.live.live and n.get("path") and n.get("section") != "music"))
         except Exception: pass
-        try:
-            n = tv_item()
-            self.ll_hide(bool(self.scene == "Branding" or (self.scene == "Music video" and n.get("path") and n.get("section") == "jingles")))
+        try: self.ll_hide(self.scene == "Branding")        # (jingles: the Live Layer goes with the other graphics, gfx_want)
         except Exception: pass
     def pip_done(self):
         """A PIP showing ended: log frame + seconds for Hype Live's sponsor report (the frame name = the sponsor, e.g. PIP_Brand.png)."""
@@ -2817,9 +2813,27 @@ def up_chunk(qs, rfile, n):
         else:      # another type (e.g. an MP3 replaced by its music video): the old file gets the new name and every link
             dst = os.path.splitext(full_old)[0] + ext.lower()         # follows it (rename_item); then the new file is written over it
             if os.path.exists(dst): os.remove(part); return {"ok": False, "error": "a file with that name and type is already there"}
+            VIDX = (".mp4", ".mov", ".mkv", ".m4v", ".webm")
+            if old_ext in VIDX and ext.lower() not in VIDX:
+                # a music video replaced by a better AUDIO file: the video is kept as the song's paired clip (clips/<same name>):
+                # the radio plays the new audio, the TV shows the video (paired by name), history / playlists stay with the song
+                cdir = os.path.join(ROOT, "clips"); cb = os.path.basename(full_old); cst, cex = os.path.splitext(cb); cdst = os.path.join(cdir, cb); kk = 2
+                while os.path.exists(cdst): cdst = os.path.join(cdir, "%s (%d)%s" % (cst, kk, cex)); kk += 1
+                try: os.link(full_old, cdst)          # (same disk: instant, no copy)
+                except OSError: shutil.copy2(full_old, cdst)
+                try:
+                    import pwd as _pw, grp as _gr; os.chown(cdst, _pw.getpwnam("upload").pw_uid, _gr.getgrnam("hype").gr_gid)
+                except Exception: pass
+                log.info("replaced by audio: the video stays as its paired clip -> %s", os.path.relpath(cdst, ROOT))
+                to_audio = True
+            else: to_audio = False
             try: r_ = E.rename_item(dbc(), {"path": rep, "name": os.path.splitext(os.path.basename(rep))[0], "ext": ext.lower()})
             except Exception as e: r_ = {"ok": False, "error": str(e)}
             if not r_ or r_.get("ok") is False: os.remove(part); return {"ok": False, "error": (r_ or {}).get("error") or "could not replace"}
+            if to_audio:     # it is an audio song now: no own TV copy any more; the indexer pairs it with its clip by name
+                try:
+                    c_ = dbc(); c_.execute("UPDATE items SET tv_path=NULL, kf=NULL, align=NULL, mode='audio', mode_set_by_user=0, clip_path=NULL WHERE path=?", (r_.get("path"),)); c_.commit()
+                except Exception as e: log.warning("replace by audio: %s", e)
         log.info("replaced from the Library page: %s -> %s", rep, os.path.relpath(dst, ROOT))
     else:
         while os.path.exists(dst): dst = os.path.join(d, f"{stem} ({k}){ext}"); k += 1
@@ -4223,6 +4237,33 @@ def tv_now():
         try: return tv_get(TVF["ch"], "/tvnow").get("now") or {}
         except Exception: return {}
     return E.now
+GFX = {"hide": None, "at": 0.0}        # the graphics during a jingle: hidden or not (None = not known yet after a start: the first call always applies), and the moment it takes effect
+GFX_SRC = ("Logo", "Live Layer")      # the OBS side (the Graphics / Clock / Top 10 pages follow GFX themselves, same moment)
+def gfx_want(hide):
+    if GFX["hide"] == hide: return
+    at = time.time() + 0.6          # (hide 0.6 s into the jingle, back 0.6 s after the song starts: every page has heard it by then)
+    GFX.update(hide=hide, at=at)
+    threading.Thread(target=_gfx_fade, args=(hide, at), daemon=True).start()
+def _gfx_fade(hide, at):
+    time.sleep(max(0.0, at - time.time()))
+    if GFX["at"] != at: return                       # (changed again meanwhile)
+    try:
+        with E.tv.olock:
+            cl = E.tv.client()
+            for src in GFX_SRC:
+                if not any(f["filterName"] == "JHide" for f in cl.get_source_filter_list(src).filters):
+                    cl.create_source_filter(src, "JHide", "color_filter_v2", {"opacity": 1.0})
+                if src == "Logo":
+                    try: cl.set_source_filter_enabled("Logo", "Hide", False)      # (the old on/off switch: not used any more)
+                    except Exception: pass
+        for k in range(1, 9):                         # 0.4 s fade, all sources in the same step
+            if GFX["at"] != at: return
+            op = (1 - k / 8) if hide else k / 8
+            with E.tv.olock:
+                cl = E.tv.client()
+                for src in GFX_SRC: cl.set_source_filter_settings(src, "JHide", {"opacity": round(op, 3)}, True)
+            time.sleep(0.05)
+    except Exception as e: log.warning("graphics fade: %s", e)
 def tv_item():
     """What the TV shows now: during a TV block the station's item (its jingle hides the clock / show name like Hype Radio's),
     else Hype Radio's. (22 Nov: Hype Radio's jingles hid the clock + show box over Ambiente's songs, Ambiente's did not.)"""
@@ -4285,6 +4326,31 @@ def keep_scene_ready():
             else: cl.create_input(KEEP_SCENE, KEEP_SRC, "image_source", {"file": keep_card_file(None) or ""}, True)
         for n in ("Radio audio", "FX audio", "Studio audio"):   # the TV sound (as in every scene): the station keeps playing under the card
             if n not in have: cl.create_scene_item(KEEP_SCENE, n, True)
+        if KEEP_VID not in have:        # on top of the still card: the same card as a slow-zoom video (keep_card_video)
+            if KEEP_VID in [x["inputName"] for x in cl.get_input_list().inputs]: cl.create_scene_item(KEEP_SCENE, KEEP_VID, True)
+            else: cl.create_input(KEEP_SCENE, KEEP_VID, "ffmpeg_source", {"local_file": "", "looping": False, "restart_on_activate": True,
+                                                                           "close_when_inactive": True}, True)
+KEEP_VID = "Keep listening zoom"; KEEP_RENDER = {}
+def keep_card_video(cid, block=False):
+    """The card as a 20 s video with a slow zoom (100 → 106 %): a moving picture, so a website player doesn't stall on the
+    jump from a still image to the video after it (24 Nov). Made by Studio itself (nice, in the background) the first time,
+    and again when the PNG is replaced; until it is ready the still card shows."""
+    png = keep_card_file(cid)
+    if not png: return None
+    mp4 = os.path.splitext(png)[0] + "_zoom.mp4"
+    if os.path.isfile(mp4) and os.path.getmtime(mp4) >= os.path.getmtime(png): return mp4
+    if KEEP_RENDER.get(png) and time.time() - KEEP_RENDER[png] < 600: return None
+    KEEP_RENDER[png] = time.time()
+    def render():
+        tmp = mp4 + ".tmp.mp4"
+        r = subprocess.run(["nice", "-n", "15", "ffmpeg", "-v", "error", "-y", "-loop", "1", "-framerate", "25", "-i", png,
+                            "-vf", "scale=3840:2160,zoompan=z='1+0.06*on/500':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=500:s=1920x1080:fps=25,format=yuv420p",
+                            "-frames:v", "500", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-g", "50", "-an", tmp], capture_output=True, timeout=900)
+        if r.returncode == 0 and os.path.getsize(tmp) > 10000: os.replace(tmp, mp4); log.info("keep listening card video made: %s", os.path.basename(mp4))
+        else: log.warning("keep listening card video: %s", r.stderr[-300:]); KEEP_RENDER[png] = time.time()
+    if block: render(); return mp4 if os.path.isfile(mp4) else None
+    threading.Thread(target=render, daemon=True).start()
+    return None
 def keep_card(cid, secs=None, test=False):
     """The "Keep listening" card of the station the TV leaves, full screen, before the new station's picture: its sound keeps
     playing under the card (the viewer hears what the card says keeps playing), then picture + sound go over together.
@@ -4297,7 +4363,10 @@ def keep_card(cid, secs=None, test=False):
     if secs <= 0 or not f or not E.tv.auto or getattr(E.live, "live", False) or E.stopped: return False
     try:
         keep_scene_ready()
-        with E.tv.olock: E.tv.client().set_input_settings(KEEP_SRC, {"file": f}, True)
+        v = keep_card_video(cid)
+        with E.tv.olock:
+            cl = E.tv.client(); cl.set_input_settings(KEEP_SRC, {"file": f}, True)
+            cl.set_input_settings(KEEP_VID, {"local_file": v or ""}, True)      # (no video yet: empty = the still card underneath shows)
         with LOCK: E.tv.auto = False; E.tv.set_scene(KEEP_SCENE)
         log.info("TV: keep listening card %s (%.0f s)%s", os.path.basename(f), secs, " – test" if test else "")
         time.sleep(secs)
@@ -4336,6 +4405,13 @@ def tv_follow_loop():
     time.sleep(10)
     tv_level(LIQ_PORT, 1.0)         # (after an engine restart: Hype Radio has the TV sound until a block says otherwise)
     tv_logo(None)                   # (Hype Radio's logo; fades only if OBS had another file)
+    def keep_prep():                # the Keep listening scene + the cards' zoom videos, one after the other (quietly, at nice 15)
+        try: keep_scene_ready()
+        except Exception as e: log.warning("keep listening scene: %s", e)
+        for cid_ in [None] + [c_["id"] for c_ in chancfg.load() if c_.get("engine")]:
+            try: keep_card_video(cid_, block=True)
+            except Exception as e: log.warning("keep listening card video: %s", e)
+    threading.Thread(target=keep_prep, daemon=True).start()
     for cfg in chancfg.load():
         if cfg.get("engine"): tv_level(int(cfg["telnet"]), 0.0)
     n_ = 0
@@ -5556,11 +5632,14 @@ def sponsors_loop():
 # ---------------- Hype Live 2.41: one sync call a minute (in the guard's heartbeat) + ⚡ poke ----------------
 HL_SYNC, HL_KNOWN, HL_ACKS = SP("/var/lib/hype/hl_sync.json"), SP("/var/lib/hype/hl_known.json"), SP("/var/lib/hype/hl_acks.json")
 HL_POKE, HL_SCHED, HL_WANT = SP("/var/lib/hype/hl_poke"), SP("/var/lib/hype/hl_schedule_version"), SP("/var/lib/hype/hl_want_covers.json")
+COVER_FAIL = {}       # cover key -> (failed downloads in a row, not before) - 24 Nov: one refused cover was tried every minute
 def sync_covers(cv):
     """Covers from the sync answer ('artist|title' -> {url, fixed, none, pending}): saved like the old cover calls."""
     for key, v in (cv or {}).items():
         if not isinstance(v, dict) or v.get("pending") or "|" not in key: continue
         artist, title = key.split("|", 1); k = cover_key(artist, title); f = os.path.join(COVERS, k + ".jpg")
+        n_, nxt_ = COVER_FAIL.get(k, (0, 0))
+        if v.get("url") and time.time() < nxt_: continue         # failed before: wait (5 min, 10, 20 … up to 12 h) instead of every minute
         try:
             if v.get("url"):
                 img = urllib.request.urlopen(urllib.request.Request(v["url"], headers={"User-Agent": "HypeStudio/1"}), timeout=10).read(5_000_000)
@@ -5569,7 +5648,11 @@ def sync_covers(cv):
             else:                                    # none found, or 🚫 Wrong cover: the Hype artwork
                 if os.path.exists(f): os.remove(f)
                 COVER_MISS[k] = time.time()
-        except Exception as e: log.info("cover %s: %s", key, e); COVER_MISS[k] = time.time() - 86400 + 300; continue
+        except Exception as e:
+            COVER_FAIL[k] = (n_ + 1, time.time() + min(43200, 300 * 2 ** n_))
+            if n_ < 2: log.info("cover %s: %s (try %d; next try in %d min)", key, e, n_ + 1, min(43200, 300 * 2 ** n_) // 60)
+            COVER_MISS[k] = time.time() - 86400 + 300; continue
+        COVER_FAIL.pop(k, None)
         with COVER_LOCK: COVER_Q[:] = [x for x in COVER_Q if x[0] != k]
     try: jdump(COVER_MISS, COVER_IDX)
     except Exception: pass
