@@ -549,7 +549,9 @@ function upFolders() { const k = $('#upSec').value, real = UP_SECS.find(x => x[0
     const want = (SEC === k) ? (FOLDER || GENRE) : '';
     const SR = d.station_roots || {};        // LATINA/BACHATA → music-latina/BACHATA (a theme channel's own library root)
     const dest = f => { const top = f.split('/')[0]; return SR[top] && (real === 'music' || real === 'jingles') ? real + '-' + SR[top] + f.slice(top.length) : real + '/' + f; };
-    $('#upFolder').innerHTML = fs.length ? fs.map(f => `<option value="${esc(dest(f))}" ${f === want ? 'selected' : ''}>${esc(f)}</option>`).join('') : '<option value="">(no folders yet – make one with WinSCP)</option>'; }); }
+    // Clips / Ads keep their files straight in the section folder (clips/…): that main folder is always a choice (24 Nov: "Choose a folder first")
+    const root = (k === 'clips' || k === 'ads') ? `<option value="${real}" ${!want ? 'selected' : ''}>${k === 'clips' ? 'Clips' : 'Ads'} (main folder)</option>` : '';
+    $('#upFolder').innerHTML = (fs.length || root) ? root + fs.map(f => `<option value="${esc(dest(f))}" ${f === want ? 'selected' : ''}>${esc(f)}</option>`).join('') : '<option value="">(no folders yet – make one with WinSCP)</option>'; }); }
 $('#bUpload').onclick = () => { $('#upSec').innerHTML = UP_SECS.map(([k, n]) => `<option value="${k}" ${k === SEC ? 'selected' : ''}>${n}</option>`).join(''); upFolders(); $('#upDlg').showModal(); };
 $('#upSec').onchange = upFolders; $('#upClose').onclick = () => $('#upDlg').close();
 $('#upFiles').onchange = e => { upAdd([...e.target.files]); e.target.value = ''; };
