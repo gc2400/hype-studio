@@ -276,8 +276,12 @@ class Guard:
             fresh = time.time() - sc.get("t", 0) < 30 * 3600
             st["av_sync_ms"] = sc.get("median_ms") if fresh else None
             off = fresh and sc.get("ok") is False
-            if off and "av_sync" not in self.since: self.event("bad", "TV picture %+d ms out of sync with the sound (nightly check, %d songs)" % (sc["median_ms"], sc.get("good", 0)))
-            self.bad("av_sync", off)
+            # a measurement, not an outage: ONE warning in the log per nightly check, never a "problem" (24 Nov: it stayed a problem
+            # all day, and Hype Live's off-air alarm mailed "Still: Hype Studio problems" every 30 min because the text has "TV" in it)
+            if off and getattr(self, "_av_warned", None) != sc.get("t"):
+                self._av_warned = sc.get("t")
+                self.event("warn", "TV picture %+d ms out of sync with the sound (nightly check, %d songs) – a measurement, no outage" % (sc["median_ms"], sc.get("good", 0)))
+            self.since.pop("av_sync", None)
         except (OSError, ValueError): st["av_sync_ms"] = None
         self.bad("mount", not st["mount"])
         ra = st.get("radio_hls_age")
