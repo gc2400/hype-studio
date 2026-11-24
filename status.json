@@ -1,19 +1,19 @@
 {
- "time": "2026-11-24T17:34:02",
+ "time": "2026-11-24T17:36:53",
  "result": "ok",
- "commit": "463e22a3cad7351b527c7e527c2f67a448699130",
- "subject": "Graphics at a jingle all at once (one moment, 0.4 s fade; back 0.6 s after the song starts); Replace a music video by better audio keeps the video as its paired clip; Keep listening card as a slow-zoom video; covers that fail: back off",
+ "commit": "312aef190db8462aa512c082faf66c2baa662e45",
+ "subject": "Voice tracking on Hype Ambiente / Hype Latina: the Voice page in the station view, links saved in the station's own jingles-<id>/VOICETRACK",
  "log": [
-  "17:33:17 update d437309d \u2192 463e22a3 \u00b7 3 file(s): engine/engine.py, web/overlay/index.html, web/panel/library.html",
-  "17:33:17 restart hype-engine@*",
-  "17:33:17 restart hype-engine",
-  "17:34:02 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "17:36:08 update 463e22a3 \u2192 312aef19 \u00b7 2 file(s): engine/engine.py, web/panel/header.js",
+  "17:36:08 restart hype-engine@*",
+  "17:36:08 restart hype-engine",
+  "17:36:53 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Dei V x Rauw Alejandro \u2013 All Night",
+  "song": "Rema \u2013 TEA",
   "listeners": 5,
   "obs": true,
-  "seg_age": 0.7,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
