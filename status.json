@@ -1,19 +1,17 @@
 {
- "time": "2026-11-24T23:36:56",
- "result": "ok",
- "commit": "dc1fe7bcc5fbf4a426da7dbd9aa70ced018856fe",
- "subject": "Listener / viewer numbers: Hype Live's off-air checks (HypeLive-Alarm) are not counted",
+ "time": "2026-11-25T02:00:16",
+ "result": "error",
+ "commit": "",
+ "subject": "",
  "log": [
-  "23:36:11 update 312aef19 \u2192 dc1fe7bc \u00b7 1 file(s): engine/engine.py",
-  "23:36:11 restart hype-engine@*",
-  "23:36:11 restart hype-engine",
-  "23:36:56 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "02:00:15 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
  ],
+ "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "FloyyMenor x Cris Mj \u2013 Gata Only",
+  "song": "Bryan Mg \u2013 Hier Moet Je Zijn",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
