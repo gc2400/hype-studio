@@ -747,7 +747,12 @@ class TV:
                 # the Hype stinger (logo transition) only going into the Hype Screen / PIP scene; leaving it = the normal fade
                 prev = getattr(self, "prog", None)     # the scene really on air (self.scene is sometimes reset to force a switch)
                 tr = "Hype Stinger" if prev and scene in STINGER_SCENES else "Fade"   # only going INTO the Hype Screen / PIP
-                try: cl.set_current_scene_transition(tr); self._tr = tr     # every time (OBS may have another one set, e.g. after its restart)
+                try:
+                    cl.set_current_scene_transition(tr); self._tr = tr     # every time (OBS may have another one set, e.g. after its restart)
+                    if tr == "Hype Stinger" and not getattr(self, "_st_xf", False):
+                        # the stinger's sound: CROSSFADE (the music goes on under it). "Fade out, then in" (OBS's default) made a
+                        # ~0.1 s silence on TV at every switch into the Hype Screen (26 Nov: Matadora → Wine, D2, TEA → Probresa)
+                        cl.set_current_scene_transition_settings({"audio_fade_style": 1}, True); self._st_xf = True
                 except Exception as e: log.warning("transition %s: %s", tr, e)
                 if prev != scene: cl.set_current_program_scene(scene)
                 if prev == "PIP" and scene != "PIP": self.pip_done()
