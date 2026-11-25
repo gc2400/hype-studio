@@ -555,3 +555,4 @@
 2026-11-24T23:36:56 ok dc1fe7bc Listener / viewer numbers: Hype Live's off-air checks (HypeLive-Alarm) are not counted
 2026-11-25T02:00:16 error  
 2026-11-25T16:45:55 error  
+2026-11-26T00:47:30 ok 888361f1 Hype Stinger: audio crossfade (was fade out + in: ~0.1 s silence on TV at every switch into the Hype Screen)

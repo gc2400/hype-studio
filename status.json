@@ -1,17 +1,19 @@
 {
- "time": "2026-11-25T16:45:55",
- "result": "error",
- "commit": "",
- "subject": "",
+ "time": "2026-11-26T00:47:30",
+ "result": "ok",
+ "commit": "888361f1b34550593a9965fa704df39b891a2bbb",
+ "subject": "Hype Stinger: audio crossfade (was fade out + in: ~0.1 s silence on TV at every switch into the Hype Screen)",
  "log": [
-  "16:45:55 error: git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists."
+  "00:46:44 update dc1fe7bc \u2192 888361f1 \u00b7 1 file(s): engine/engine.py",
+  "00:46:44 restart hype-engine@*",
+  "00:46:44 restart hype-engine",
+  "00:47:30 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
- "error": "git fetch -q origin main: git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.",
  "guard": {
-  "song": "1T1 x Miimii KDS \u2013 In Di corner",
-  "listeners": 5,
+  "song": "JEON \u2013 NA\u2019MA",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
