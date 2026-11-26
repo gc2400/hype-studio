@@ -44,7 +44,8 @@ def db():
     if "station" not in cols: c.execute("ALTER TABLE items ADD COLUMN station TEXT DEFAULT ''")   # '' = Hype Radio, else a theme channel
     if "lmap" not in cols: c.execute("ALTER TABLE items ADD COLUMN lmap TEXT")   # loudness map: the loudest moment of every 0.5 s (for the AGC intro lift)
     if "align" not in cols: c.execute("ALTER TABLE items ADD COLUMN align TEXT")   # clip only: where its song starts in the video, found by comparing the sound
-    if "fine" not in cols: c.execute("ALTER TABLE items ADD COLUMN fine TEXT")   # the same loudness measure every 0.1 s, for the first and last seconds (exact mix moments)
+    if "fine" not in cols: c.execute("ALTER TABLE items ADD COLUMN fine TEXT")
+    if "lead" not in cols: c.execute("ALTER TABLE items ADD COLUMN lead REAL")   # seconds of (near) digital silence at the very start of the file   # the same loudness measure every 0.1 s, for the first and last seconds (exact mix moments)
     if "added_at" not in cols:   # when the file first arrived (for "recently uploaded")
         c.execute("ALTER TABLE items ADD COLUMN added_at REAL"); c.execute("UPDATE items SET added_at=MIN(COALESCE(mtime, indexed_at), COALESCE(indexed_at, mtime))")
     if "cue_check" not in cols: c.execute("ALTER TABLE items ADD COLUMN cue_check INT DEFAULT 0")   # replaced by a file of another length while your own cue points were kept: check them
@@ -177,6 +178,32 @@ def make_fine(c, budget=12.0):
         except Exception as e: print("fine:", p_, e, flush=True); fm = None
         c.execute("UPDATE items SET fine=? WHERE path=?", (fm or "-", p_)); c.commit()
         time.sleep(0.5)    # gently: the on-air sound and the TV encoders always come first
+
+def lead_silence(path):
+    """Seconds of silence (under -60 dBFS) at the very start of the file - sample-exact (the 0.4 s loudness window can't see it)."""
+    r = run(["nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-nostats", "-threads", "1", "-t", "12", "-i", path, "-map", "0:a:0",
+             "-af", "silencedetect=n=-60dB:d=0.02", "-f", "null", "-"], 60)
+    st = re.search(r"silence_start:\s*(-?[\d.]+)", r.stderr); en = re.search(r"silence_end:\s*([\d.]+)", r.stderr)
+    if st and float(st.group(1)) <= 0.01: return round(float(en.group(1)), 3) if en else 12.0
+    return 0.0
+
+def make_lead(c, budget=15.0):
+    """Every song / jingle: START never before its first sound. 26 Nov: Sade starts with 0.49 s of digital silence and its START
+    was 0.0 (the automatic START sits 0.5 s before the first loudness reading) - with the old song just faded out that was a
+    hole on air (~0.1-0.2 s of silence on TV at many song changes). Only silence is skipped: also for your own / CLOSE START points
+    (moving START later inside pure silence changes nothing you can hear); the video's timing follows START, so sync stays."""
+    t_end = time.time() + budget
+    for p_, cs, cm in c.execute("""SELECT path, COALESCE(cue_start, 0), cue_mix FROM items WHERE section IN ('music','jingles','ads')
+                                    AND problem IS NULL AND has_audio=1 AND duration > 1 AND lead IS NULL ORDER BY added_at DESC LIMIT 400""").fetchall():
+        if time.time() > t_end: break
+        try: ld = lead_silence(os.path.join(ROOT, p_))
+        except Exception as e: print("lead:", p_, e, flush=True); ld = 0.0
+        c.execute("UPDATE items SET lead=? WHERE path=?", (ld, p_))
+        new = round(ld - 0.02, 2)
+        if ld < 12 and new > cs + 0.03 and (cm is None or new < cm - 2):
+            c.execute("UPDATE items SET cue_start=? WHERE path=?", (new, p_)); print("START after the silence: %s %.2f -> %.2f" % (p_, cs, new), flush=True)
+        c.commit()
+        time.sleep(0.2)    # gently
 
 def loud_map(mom):
     """The loudest momentary level of every 0.5 s of the file, as whole dB ("-24,-23,...")."""
@@ -531,6 +558,8 @@ def scan(full=False):
     except Exception as e: print("bin:", e, flush=True)
     try: make_fine(c)
     except Exception as e: print("fine error", e, flush=True)
+    try: make_lead(c)
+    except Exception as e: print("lead error", e, flush=True)
     try: align_pairs(c)
     except Exception as e: print("align error", e, flush=True)
     return n_new, len(gone)
