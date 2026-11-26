@@ -558,3 +558,4 @@
 2026-11-26T00:47:30 ok 888361f1 Hype Stinger: audio crossfade (was fade out + in: ~0.1 s silence on TV at every switch into the Hype Screen)
 2026-11-26T01:10:45 ok 741443d0 Test: music video players + pad video layer decode in software (a ~0.1 s TV sound gap at every video start); switch: /var/lib/hype/clip_hw_on
 2026-11-26T01:44:30 waiting 67f79904 [night] TV sound: a 0.2 s cushion between the radio and OBS (no more ~0.1 s silence at every song change); videos start 0.2 s later to match (TV_AUDIO_BUF)
+2026-11-26T01:47:17 ok 757f0de0 Install now (Gianno 01:44): TV sound cushion

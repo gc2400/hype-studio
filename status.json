@@ -1,17 +1,22 @@
 {
- "time": "2026-11-26T01:44:30",
- "result": "waiting",
- "commit": "67f79904900b379a0e5b5aeefdc5b65c5e3c5d28",
- "subject": "[night] TV sound: a 0.2 s cushion between the radio and OBS (no more ~0.1 s silence at every song change); videos start 0.2 s later to match (TV_AUDIO_BUF)",
+ "time": "2026-11-26T01:47:17",
+ "result": "ok",
+ "commit": "757f0de0b6aaaf2d88233762f7476f287127b1b4",
+ "subject": "Install now (Gianno 01:44): TV sound cushion",
  "log": [
-  "01:44:30 update 741443d0 \u2192 67f79904 \u00b7 3 file(s): engine/chan.py, engine/engine.py, radio/radio.liq",
-  "01:44:30 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "01:45:34 update 741443d0 \u2192 757f0de0 \u00b7 3 file(s): engine/chan.py, engine/engine.py, radio/radio.liq",
+  "01:46:22 lab: PASS (6/6 good readings)",
+  "01:46:22 restart hype-channels",
+  "01:46:26 restart hype-engine@*",
+  "01:46:26 restart hype-engine",
+  "01:46:26 restart hype-radio",
+  "01:47:17 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*, hype-radio"
  ],
  "guard": {
-  "song": "B'Jay \u2013 Balaclava",
-  "listeners": 3,
+  "song": "Zlatan x Peruzzi x Shoday \u2013 Inferno",
+  "listeners": 1,
   "obs": true,
-  "seg_age": 1.9,
+  "seg_age": 1.0,
   "problems": [],
   "ok": true
  },
