@@ -1,19 +1,17 @@
 {
- "time": "2026-11-26T01:10:45",
- "result": "ok",
- "commit": "741443d0f945e675d8c4f1d666a7006de73f9d4b",
- "subject": "Test: music video players + pad video layer decode in software (a ~0.1 s TV sound gap at every video start); switch: /var/lib/hype/clip_hw_on",
+ "time": "2026-11-26T01:44:30",
+ "result": "waiting",
+ "commit": "67f79904900b379a0e5b5aeefdc5b65c5e3c5d28",
+ "subject": "[night] TV sound: a 0.2 s cushion between the radio and OBS (no more ~0.1 s silence at every song change); videos start 0.2 s later to match (TV_AUDIO_BUF)",
  "log": [
-  "01:10:00 update 888361f1 \u2192 741443d0 \u00b7 1 file(s): engine/engine.py",
-  "01:10:00 restart hype-engine@*",
-  "01:10:00 restart hype-engine",
-  "01:10:45 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "01:44:30 update 741443d0 \u2192 67f79904 \u00b7 3 file(s): engine/chan.py, engine/engine.py, radio/radio.liq",
+  "01:44:30 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "French Montana x Max B x Skepta x D Block Europe \u2013 Ever Since U Left Me (UK Remix)",
+  "song": "B'Jay \u2013 Balaclava",
   "listeners": 3,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 1.9,
   "problems": [],
   "ok": true
  },
