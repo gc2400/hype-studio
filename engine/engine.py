@@ -3092,6 +3092,37 @@ def pvclip(path):
         threading.Thread(target=run, daemon=True).start()
     return {"ok": True, "ready": False, "codec": st.get("codec_name")}
 
+def start_exact(path, t):
+    """Library EXACT START: the precise moment the sound starts near the START you set (within 0.4 s).
+    In silence: the first sound after it. In music: the sharpest attack (a beat, a voice) nearest to it, just before its first sample."""
+    t = max(0.0, float(t)); t0 = max(0.0, t - 0.6); SR, W = 16000, 80                 # 5 ms windows
+    p = subprocess.run(["nice", "-n", "10", "ffmpeg", "-v", "error", "-ss", f"{t0:.3f}", "-t", "2.2", "-i", lib_file(path),
+                        "-map", "0:a:0", "-ac", "1", "-ar", str(SR), "-f", "s16le", "-"], capture_output=True, timeout=30)
+    a = array.array("h"); a.frombytes(p.stdout[: len(p.stdout) // 2 * 2])
+    n = len(a) // W
+    if n < 10: return {"ok": False, "error": "No sound here"}
+    env = []
+    for k in range(n):
+        seg = a[k * W:(k + 1) * W]; ms = sum(x * x for x in seg) / W
+        env.append(10 * math.log10(ms / 1073741824.0) if ms > 0 else -120.0)
+    i0 = min(n - 1, int(round((t - t0) * SR / W)))
+    if env[i0] < -50:                                                                   # START sits in silence: go to the first sound
+        for k in range(i0, n):
+            if env[k] >= -50:
+                thr = 32768 * 10 ** (-50 / 20)
+                j = next((q for q in range(k * W, (k + 1) * W) if abs(a[q]) >= thr), k * W)
+                return {"ok": True, "t": round(max(0.0, t0 + j / SR - 0.005), 2), "how": "first sound"}
+        return {"ok": False, "error": "Only silence after START"}
+    best, bi = -1e9, None
+    for k in range(max(4, i0 - 80), min(n, i0 + 81)):
+        rise = env[k] - min(env[k - 4:k])
+        sc = min(rise, 30) - 0.15 * abs(k - i0)                                        # nearer wins when attacks are alike
+        if rise >= 6 and sc > best: best, bi = sc, k
+    if bi is None: return {"ok": False, "error": "No clear start near START – it stays"}
+    floor = min(env[max(0, bi - 8):bi]); j = bi
+    while j > 1 and bi - j < 20 and env[j - 1] > floor + 3: j -= 1                    # back to the foot of the attack
+    return {"ok": True, "t": round(max(0.0, t0 + j * W / SR), 2), "how": "attack"}
+
 def waveform(path):
     full = lib_file(path); os.makedirs(WAVES, exist_ok=True)
     f = os.path.join(WAVES, hashlib.sha1(path.encode()).hexdigest()[:16] + "_1600.json")
@@ -3914,6 +3945,7 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, ("\ufeff" + b.getvalue()).encode("utf-8"), "text/csv; charset=utf-8")
             if p == "/wave": return self.send(200, waveform(qs["path"][0]))
             if p == "/pvclip": return self.send(200, pvclip(qs["path"][0]))
+            if p == "/startexact": return self.send(200, start_exact(qs["path"][0], qs.get("t", ["0"])[0]))
             if p == "/wavezoom": return self.send(200, wave_zoom(qs["path"][0], float(qs.get("t", ["0"])[0]), float(qs.get("d", ["6"])[0])))
             if p == "/preview.jpg": return self.send(200, E.tv.screenshot(int(qs.get("w", ["640"])[0])), "image/jpeg")
             if p == "/playlists":

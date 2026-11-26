@@ -125,7 +125,8 @@ select.f{background:var(--deep);border:1px solid var(--line2);border-radius:8px;
 #bProb{color:#FF8A97;border-color:#5a2230}
 
 .cdg,.cdg.novid{grid-template-columns:minmax(0,1fr)!important}
-.cues{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) auto minmax(0,1fr);gap:6px}
+.cues{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:6px}
+.cues .exact{padding:0 12px}
 .cues .cueset{display:flex;align-items:center;justify-content:center;min-height:38px;padding:0 10px;font-size:12px;font-weight:800;letter-spacing:.06em;text-align:center}
 .cues .auto{color:var(--y);padding:0 12px}
 .cdf .ovb{flex-direction:row;align-items:center;gap:6px;margin:0}.cdf .ovb .lab{white-space:nowrap}.cdf .ovb .sel{min-height:32px;max-width:230px;width:auto;background:var(--deep);border:1px solid var(--line2);border-radius:8px;color:var(--txt);padding:0 8px;font:inherit;font-size:13px}
@@ -201,12 +202,13 @@ dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
         <canvas class="wave" id="wave" width="1600" height="140" style="height:72px" aria-label="Waveform: click to jump, drag the markers; zoomed in: drag sideways to move"></canvas>
         <div class="cues" role="group" aria-label="Set cue points at the play line">
           <button class="cueset" data-set="s" style="color:var(--g)" title="Set START at the play line (key S)">SET START</button>
+          <button class="cueset exact" id="sExact" style="color:var(--g)" title="Make START exact (key X): moves it to the precise moment the sound starts, within 0.4 s of your START – the first sound after silence, or the beat / voice right there. Press 1 to listen.">EXACT</button>
           <button class="cueset" data-set="m" style="color:var(--y)" title="Set MIX at the play line (key M) – the next song starts here">SET MIX</button>
           <button class="cueset auto" id="mixAuto" title="MIX back to AUTO: smart mix picks it from the song's loudness (your START and END stay)">AUTO</button>
           <button class="cueset" data-set="e" style="color:#FF8A97" title="Set END at the play line (key E) – nothing after it is heard">SET END</button>
         </div>
         <div class="cdf"><button class="btn sm" id="bAuto" title="Back to the automatic cue points">Automatic cues</button><button class="btn sm" id="bNextUp" title="Play this song next on air">⏭ Play next on air</button><div id="ovBox" class="ovb"><span class="lab">Intro sweeper</span><select class="sel" id="ovSel" aria-label="Intro sweeper for this song"></select></div><span style="flex:1"></span><button class="btn" id="bSave">Save</button><button class="btn yellow" id="bSaveNext" title="Enter">Save + next ▶</button></div>
-        <div class="keys"><kbd>↑</kbd><kbd>↓</kbd> song · <kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> 1 s (<kbd>Shift</kbd> 0.1 s) · <kbd>S</kbd><kbd>M</kbd><kbd>E</kbd> set cue · <kbd>+</kbd><kbd>−</kbd> zoom (drag sideways to move) · <kbd>1</kbd> from START · <kbd>2</kbd> into MIX · <kbd>Enter</kbd> save + next · <kbd>/</kbd> search</div>
+        <div class="keys"><kbd>↑</kbd><kbd>↓</kbd> song · <kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> 1 s (<kbd>Shift</kbd> 0.1 s) · <kbd>S</kbd><kbd>M</kbd><kbd>E</kbd> set cue · <kbd>X</kbd> exact START · <kbd>+</kbd><kbd>−</kbd> zoom (drag sideways to move) · <kbd>1</kbd> from START · <kbd>2</kbd> into MIX · <kbd>Enter</kbd> save + next · <kbd>/</kbd> search</div>
       </div>
     </section>
   </div>
@@ -481,6 +483,12 @@ $$('.tin').forEach(el => { el.onfocus = () => { cw.focus(el.dataset.k); el.selec
   el.onblur = () => { if (!CUE) return; const t = parseT(el.value); if (t == null || Math.abs(t - CUE[el.dataset.k]) < 0.005) { fill(); return; }
     setCue(el.dataset.k, t); const m = $('#m'); m.pause(); m.currentTime = CUE[el.dataset.k]; fill(); }; });
 $$('[data-set]').forEach(b => b.onclick = () => setCue(b.dataset.set, $('#m').currentTime));
+function exactStart() { if (!SEL || !CUE) return; const it = SEL, was = CUE.s, b = $('#sExact'); b.disabled = true;
+  api('startexact?path=' + encodeURIComponent(it.path) + '&t=' + was).then(r => { b.disabled = false; if (SEL !== it) return;
+    if (!r || r.ok === false || r.t == null) { toast((r && r.error) || 'Not found'); return; }
+    if (Math.abs(r.t - was) < 0.005) { toast('START is already exact'); return; }
+    setCue('s', r.t); const m = $('#m'); m.pause(); m.currentTime = r.t; draw(); toast('START ' + fmtF(was) + ' → ' + fmtF(r.t) + ' · 1 = listen'); }).catch(() => { b.disabled = false; }); }
+$('#sExact').onclick = exactStart;
 function playFrom(t, until) { const m = $('#m'); cw.follow(); clearTimeout(stopT); m.currentTime = Math.max(0, t); m.play(); if (until) { const chk = () => { if (m.currentTime >= until) m.pause(); else if (!m.paused) stopT = setTimeout(chk, 80); }; chk(); } }
 const PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg>', PAUSE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>';
 ['play', 'pause', 'ended', 'emptied'].forEach(ev => $('#m').addEventListener(ev, () => { const on = !$('#m').paused; $('#bPlay').innerHTML = on ? PAUSE_SVG : PLAY_SVG; $('#bPlay').setAttribute('aria-label', on ? 'Pause' : 'Play'); }));
@@ -520,6 +528,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowRight') { e.preventDefault(); cw.follow(); m.currentTime += e.shiftKey ? 0.1 : 1; }
   else if (e.key === '+' || e.key === '=') cw.zoom(1); else if (e.key === '-' || e.key === '_') cw.zoom(-1);
   else if (e.key === 's' || e.key === 'S') setCue('s', m.currentTime);
+  else if (e.key === 'x' || e.key === 'X') exactStart();
   else if (e.key === 'm' || e.key === 'M') setCue('m', m.currentTime);
   else if (e.key === 'e' || e.key === 'E') setCue('e', m.currentTime);
   else if (e.key === '1') $('#bStart').click(); else if (e.key === '2') $('#bMix').click();
