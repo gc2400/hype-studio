@@ -1,17 +1,18 @@
 {
- "time": "2026-11-26T02:20:50",
+ "time": "2026-11-26T02:24:43",
  "result": "ok",
- "commit": "4bdc9cea2a7d049bc0dc5a044549bec6092521e3",
- "subject": "Library: the song list always fills the box (it follows when the folder rows above it change height)",
+ "commit": "1b28a53f7d0f05001c80302739e94f3af54b7a32",
+ "subject": "Library: the automatic START is exact at import (at the first sound, never in the silence before it) - no separate fix afterwards; a replaced file is measured again",
  "log": [
-  "02:20:50 update 57dc8f74 \u2192 4bdc9cea \u00b7 1 file(s): web/panel/library.html",
-  "02:20:50 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "02:23:57 update 4bdc9cea \u2192 1b28a53f \u00b7 1 file(s): engine/indexer.py",
+  "02:23:57 restart hype-indexer",
+  "02:24:42 installed OK \u00b7 restarted: hype-indexer"
  ],
  "guard": {
-  "song": "Noano x KM \u2013 BADBAD",
+  "song": "Jonna Fraser \u2013 Tuesday",
   "listeners": 2,
   "obs": true,
-  "seg_age": 1.5,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
