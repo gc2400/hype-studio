@@ -1,22 +1,23 @@
 {
- "time": "2026-11-26T01:47:17",
+ "time": "2026-11-26T02:04:04",
  "result": "ok",
- "commit": "757f0de0b6aaaf2d88233762f7476f287127b1b4",
- "subject": "Install now (Gianno 01:44): TV sound cushion",
+ "commit": "fdedb86f3341c8fa301e6e79712160ec33bce2fe",
+ "subject": "Library: START never before the first sound - the (digital) silence at the start of a file is skipped, measured sample-exact (Sade had 0.49 s: a hole on air at the song change). The 0.2 s TV cushion is undone (the radio was never late)",
  "log": [
-  "01:45:34 update 741443d0 \u2192 757f0de0 \u00b7 3 file(s): engine/chan.py, engine/engine.py, radio/radio.liq",
-  "01:46:22 lab: PASS (6/6 good readings)",
-  "01:46:22 restart hype-channels",
-  "01:46:26 restart hype-engine@*",
-  "01:46:26 restart hype-engine",
-  "01:46:26 restart hype-radio",
-  "01:47:17 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*, hype-radio"
+  "02:01:39 update 757f0de0 \u2192 fdedb86f \u00b7 4 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, radio/radio.liq",
+  "02:02:27 lab: PASS (6/6 good readings)",
+  "02:02:27 restart hype-channels",
+  "02:02:28 restart hype-engine@*",
+  "02:02:28 restart hype-indexer",
+  "02:02:28 restart hype-engine",
+  "02:02:28 restart hype-radio",
+  "02:04:03 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*, hype-indexer, hype-radio"
  ],
  "guard": {
-  "song": "Zlatan x Peruzzi x Shoday \u2013 Inferno",
-  "listeners": 1,
+  "song": "Jayh \u2013 Controlando",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 1.0,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
