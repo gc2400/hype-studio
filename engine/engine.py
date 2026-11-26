@@ -192,6 +192,7 @@ ID_OFFSET, ID_DUCK = 0.4, 0.5   # the ID starts 0.4 s into the song; the (alread
 PUSH_LEAD = 15.0      # the next item goes to Liquidsoap 15 s before the song on air ends (see push_next)
 CLOCK_POS = SP("/var/lib/hype/clock_pos.json"); PLAN_FILE = SP("/var/lib/hype/upnext_plan.json")
 SNAPS_FILE = SP("/var/lib/hype/plan_snaps.json"); MINE_FILE = SP("/var/lib/hype/upnext_mine.json")
+TV_AUDIO_BUF = 0.20  # the radio's 0.2 s cushion on the line to OBS (radio.liq, 26 Nov): the videos start that much later too
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
 LM_CACHE = {}
 LM_STAMP = {}
@@ -3352,7 +3353,7 @@ def load_rotation():
     JINGLE_FADE = float(planner.get_setting(c, "jingle_fade", 0.0)); JINGLE_DB = float(planner.get_setting(c, "jingle_db", -3.0))
     ADBOX_ALWAYS = bool(planner.get_setting(c, "adbox_always", True))
     SMART_MIX = bool(planner.get_setting(c, "smart_mix", True))
-    AV_LAG = max(-0.5, min(1.0, float(planner.get_setting(c, "av_lag", 0.20))))
+    AV_LAG = max(-0.5, min(1.0, float(planner.get_setting(c, "av_lag", 0.20)))) + TV_AUDIO_BUF
     global JINGLE_HIDE; JINGLE_HIDE = bool(planner.get_setting(c, "jingle_hide", True))
     MIX_MAX = 8.0     # (the longest-overlap slider is gone: the overlap = the fade-out)
 JINGLE_HIDE = True     # Settings → TV: no logo / show name / clock while a jingle plays

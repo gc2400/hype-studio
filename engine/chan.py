@@ -727,7 +727,10 @@ output.url(url="rtsp://127.0.0.1:8554/return-%(id)s",
 output.dummy(ret2)
 # the TV bus (TV blocks: Hype Radio's engine crossfades this station's "tv_vol" up and Hype Radio's down; never saved = 0 after a restart)
 tv_vol = interactive.float("tv_vol", min=0., max=1., description="this station on the TV (TV block)", 0.)
-output.pulseaudio(device="hype_air", clock_safe=false, amplify(override=null(), tv_vol, s))
+# TV sound: a 0.2 s cushion (buffer) between the radio and Pulse – at every new song the radio is a fraction late while it opens
+# the file; the stream (Icecast) has its own buffer, but the line to OBS ran dry: ~0.1 s of silence on TV at each song change
+# (measured 26 Nov before OBS, on hype_air.monitor). The engine starts the music videos 0.2 s later to match (TV_AUDIO_BUF).
+output.pulseaudio(device="hype_air", clock_safe=false, mksafe(buffer(buffer=0.2, max=2., amplify(override=null(), tv_vol, s))))
 """ % {"id": cid, "name": q(cfg["name"]), "genre": q(cfg.get("genre") or "")}
     return "# GENERATED from radio.liq by hype-channels for %s – do not edit\n" % cid + t
 
