@@ -320,7 +320,9 @@ function fitRes() { const r = $('#res'), ed = $('#ed'), m = $('#m'); if (!r) ret
     return spareOf(); };
   $('#box').classList.remove('tight');
   if (fit() < 0) { $('#box').classList.add('tight'); fit(); } }      // small screen: a more compact editor, the page never scrolls
-addEventListener('resize', fitRes); new ResizeObserver(fitRes).observe(document.body); setTimeout(fitRes, 60);
+addEventListener('resize', fitRes); { const ro = new ResizeObserver(() => requestAnimationFrame(fitRes)); ro.observe(document.body);
+  // the folder rows above the list change height (subfolder row shown / hidden, buttons wrapping): the list follows, so it always fills the box
+  ['folders', 'subfolders', 'subfolders2', 'fpanel', 'chips'].forEach(id => { const el = document.getElementById(id); if (el) ro.observe(el); }); } setTimeout(fitRes, 60);
 $('#bFilter').onclick = () => { const p = $('#fpanel'); p.hidden = !p.hidden; setTimeout(fitRes, 0); $('#bFilter').setAttribute('aria-expanded', String(!p.hidden)); $('#bFilter').classList.toggle('on', !p.hidden); };
 // ---- select songs → Move to another folder (the same file; cues, history, playlists stay) ----
 function range(a, b) {      // Shift-click: everything from the song you clicked before (or the open one) to this one
