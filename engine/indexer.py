@@ -190,12 +190,11 @@ def lead_silence(path):
 def make_lead(c, budget=15.0):
     """Every song / jingle: START never before its first sound. 26 Nov: Sade starts with 0.49 s of digital silence and its START
     was 0.0 (the automatic START sits 0.5 s before the first loudness reading) - with the old song just faded out that was a
-    hole on air (~0.1-0.2 s of silence on TV at many song changes). Only silence is skipped, START only ever moves LATER; a START you set
-    yourself (cues_edited=1) is never touched; the video's timing follows START, so sync stays."""
+    hole on air (~0.1-0.2 s of silence on TV at many song changes). Only silence is skipped, START only ever moves LATER, also your own
+    (a START you set after an intro is already past the silence, so it stays); the video's timing follows START, so sync stays."""
     t_end = time.time() + budget
     for p_, cs, cm in c.execute("""SELECT path, COALESCE(cue_start, 0), cue_mix FROM items WHERE section IN ('music','jingles','ads')
-                                    AND problem IS NULL AND has_audio=1 AND duration > 1 AND lead IS NULL AND COALESCE(cues_edited, 0) != 1
-                                    ORDER BY added_at DESC LIMIT 400""").fetchall():
+                                    AND problem IS NULL AND has_audio=1 AND duration > 1 AND lead IS NULL ORDER BY added_at DESC LIMIT 400""").fetchall():
         if time.time() > t_end: break
         try: ld = lead_silence(os.path.join(ROOT, p_))
         except Exception as e: print("lead:", p_, e, flush=True); ld = 0.0
