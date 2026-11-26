@@ -563,3 +563,4 @@
 2026-11-26T02:10:59 ok a0da11de Library: START after the silence never touches a START you set yourself
 2026-11-26T02:14:51 ok 4058d002 Library: START after the silence for all songs again (Gianno: do all) - only ever later, only inside the silence at the very start
 2026-11-26T02:18:44 ok 57dc8f74 Library editor: EXACT button (key X) - START to the precise moment the sound starts, within 0.4 s of your START (first sound after silence, or the attack of the beat / voice right there)
+2026-11-26T02:20:50 ok 4bdc9cea Library: the song list always fills the box (it follows when the folder rows above it change height)

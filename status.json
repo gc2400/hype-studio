@@ -1,19 +1,17 @@
 {
- "time": "2026-11-26T02:18:44",
+ "time": "2026-11-26T02:20:50",
  "result": "ok",
- "commit": "57dc8f74ba4c1a00b0ad40d9f970eb791cf119d6",
- "subject": "Library editor: EXACT button (key X) - START to the precise moment the sound starts, within 0.4 s of your START (first sound after silence, or the attack of the beat / voice right there)",
+ "commit": "4bdc9cea2a7d049bc0dc5a044549bec6092521e3",
+ "subject": "Library: the song list always fills the box (it follows when the folder rows above it change height)",
  "log": [
-  "02:17:58 update 4058d002 \u2192 57dc8f74 \u00b7 2 file(s): engine/engine.py, web/panel/library.html",
-  "02:17:59 restart hype-engine@*",
-  "02:17:59 restart hype-engine",
-  "02:18:44 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "02:20:50 update 57dc8f74 \u2192 4bdc9cea \u00b7 1 file(s): web/panel/library.html",
+  "02:20:50 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Idaly x Cho \u2013 DENK AAN JOU",
+  "song": "Noano x KM \u2013 BADBAD",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
