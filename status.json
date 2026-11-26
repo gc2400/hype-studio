@@ -1,16 +1,17 @@
 {
- "time": "2026-11-26T02:14:51",
+ "time": "2026-11-26T02:18:44",
  "result": "ok",
- "commit": "4058d002b947ff0301e99b27bceb00e474200f60",
- "subject": "Library: START after the silence for all songs again (Gianno: do all) - only ever later, only inside the silence at the very start",
+ "commit": "57dc8f74ba4c1a00b0ad40d9f970eb791cf119d6",
+ "subject": "Library editor: EXACT button (key X) - START to the precise moment the sound starts, within 0.4 s of your START (first sound after silence, or the attack of the beat / voice right there)",
  "log": [
-  "02:14:06 update a0da11de \u2192 4058d002 \u00b7 1 file(s): engine/indexer.py",
-  "02:14:06 restart hype-indexer",
-  "02:14:51 installed OK \u00b7 restarted: hype-indexer"
+  "02:17:58 update 4058d002 \u2192 57dc8f74 \u00b7 2 file(s): engine/engine.py, web/panel/library.html",
+  "02:17:59 restart hype-engine@*",
+  "02:17:59 restart hype-engine",
+  "02:18:44 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Kleine John x Chavant\u00e9 \u2013 Bij Mij",
-  "listeners": 3,
+  "song": "Idaly x Cho \u2013 DENK AAN JOU",
+  "listeners": 2,
   "obs": true,
   "seg_age": 0.0,
   "problems": [],
