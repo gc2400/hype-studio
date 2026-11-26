@@ -22,8 +22,8 @@ if [ -e /var/run/reboot-required ]; then
   log "reboot needed for: $(tr '\n' ' ' < /var/run/reboot-required.pkgs 2>/dev/null) – waiting for the planned monthly reboot (together)"
 fi
 
-# the Hype services (+ nginx, mediamtx) that still use an old (replaced) library
-NEED=$(needrestart -b -r l 2>/dev/null | sed -n 's/^NEEDRESTART-SVC: //p' | sed 's/\.service$//' | grep -E '^(hype-|nginx|mediamtx)' | sort -u | tr '\n' ' ')
+# the Hype services (+ nginx, mediamtx, icecast2) that still use an old (replaced) library
+NEED=$(needrestart -b -r l 2>/dev/null | sed -n 's/^NEEDRESTART-SVC: //p' | sed 's/\.service$//' | grep -E '^(hype-|nginx|mediamtx|icecast2)' | sort -u | tr '\n' ' ')
 if [ -z "$NEED" ]; then log "everything up to date – nothing to restart"; save ok; exit 0; fi
 log "old libraries in use: $NEED"
 has(){ case " $NEED " in *" $1 "*) return 0;; esac; return 1; }
@@ -31,7 +31,7 @@ has(){ case " $NEED " in *" $1 "*) return 0;; esac; return 1; }
 if has hype-pulse; then NEED="$NEED hype-radio hype-obs"; fi
 mkdir -p /run/hype; touch /run/hype/guard_pause            # the guard doesn't count this as a problem
 # order: the base first (audio bus, WebRTC hub, web server), then radio and TV, the engine last (it queues the music again)
-ORDER="hype-pulse hype-mediamtx nginx hype-radio hype-radio-hls hype-obs hype-ladder hype-return hype-studio-in hype-stats hype-auth hype-indexer hype-engine"
+ORDER="hype-pulse hype-mediamtx icecast2 nginx hype-radio hype-radio-hls hype-obs hype-ladder hype-return hype-studio-in hype-stats hype-auth hype-indexer hype-engine"
 DONE=""
 for u in $ORDER $NEED; do
   has "$u" || continue
