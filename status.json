@@ -1,23 +1,18 @@
 {
- "time": "2026-11-26T02:04:04",
+ "time": "2026-11-26T02:10:59",
  "result": "ok",
- "commit": "fdedb86f3341c8fa301e6e79712160ec33bce2fe",
- "subject": "Library: START never before the first sound - the (digital) silence at the start of a file is skipped, measured sample-exact (Sade had 0.49 s: a hole on air at the song change). The 0.2 s TV cushion is undone (the radio was never late)",
+ "commit": "a0da11de544556bd0033000e3a615996d3b5b4b0",
+ "subject": "Library: START after the silence never touches a START you set yourself",
  "log": [
-  "02:01:39 update 757f0de0 \u2192 fdedb86f \u00b7 4 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, radio/radio.liq",
-  "02:02:27 lab: PASS (6/6 good readings)",
-  "02:02:27 restart hype-channels",
-  "02:02:28 restart hype-engine@*",
-  "02:02:28 restart hype-indexer",
-  "02:02:28 restart hype-engine",
-  "02:02:28 restart hype-radio",
-  "02:04:03 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*, hype-indexer, hype-radio"
+  "02:10:14 update fdedb86f \u2192 a0da11de \u00b7 1 file(s): engine/indexer.py",
+  "02:10:14 restart hype-indexer",
+  "02:10:59 installed OK \u00b7 restarted: hype-indexer"
  ],
  "guard": {
-  "song": "Jayh \u2013 Controlando",
+  "song": "Devi Dev x Rich Kalashh \u2013 Riba Chest",
   "listeners": 2,
   "obs": true,
-  "seg_age": 0.5,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
