@@ -310,7 +310,7 @@ def index_file(c, path, st):
     ext = os.path.splitext(fn)[1].lower()
     row = dict(path=rel, section=section, folder=folder, filename=fn, size=st.st_size, mtime=st.st_mtime,
                artist="", title="", duration=None, has_video=0, has_audio=0, width=None, height=None,
-               lufs=None, peak=None, lmap=None, fine=None, cue_start=None, cue_intro=None, cue_mix=None, cue_end=None,
+               lufs=None, peak=None, lmap=None, fine=None, lead=None, cue_start=None, cue_intro=None, cue_mix=None, cue_end=None,
                mode=None, problem=None, indexed_at=time.time(), tv_path=None, genre=genre, cues_edited=0, align=None, station=station)
     fp = fingerprint(path, st.st_size); row["fp"] = fp
     if not c.execute("SELECT 1 FROM items WHERE path=?", (rel,)).fetchone() and follow_move(c, rel, fp):
@@ -348,6 +348,12 @@ def index_file(c, path, st):
         elif section in ("music", "jingles", "ads") or (section == "clips"):
             lufs, peak, cs, cm, ce, lm, fm = loudness_and_cues(path, row["duration"])
             row.update(lufs=lufs, peak=peak, cue_start=cs, cue_mix=cm, cue_end=ce, lmap=lm, fine=fm)
+            if section in ("music", "jingles", "ads"):          # automatic START exactly at the first sound (never in the silence before it)
+                try: ld = lead_silence(path)
+                except Exception: ld = 0.0
+                row["lead"] = ld
+                new_s = round(ld - 0.02, 2)
+                if ld < 12 and new_s > (cs or 0) + 0.03 and (cm is None or new_s < cm - 2): row["cue_start"] = new_s
         if section == "music" and not row["artist"] and not folder.upper().startswith(("MIXES", "RECORDINGS")):   # a mix / recording needs no artist
             row["problem"] = row["problem"] or "no artist (name the file 'Artist - Title')"
     if section == "music" and not row["problem"]:
@@ -356,7 +362,7 @@ def index_file(c, path, st):
     check = False
     if old:
         if old[0] == 1:  # keep hand-edited cue points (2 = imported from CLOSE: re-applied below)
-            row.update(cue_start=old[4], cue_intro=old[5], cue_mix=old[6], cue_end=old[7], cues_edited=1)
+            row.update(cue_start=old[4], cue_intro=old[5], cue_mix=old[6], cue_end=old[7], cues_edited=1); row["lead"] = None   # your own START: the silence check runs on it later (make_lead)
             nd, od = row.get("duration") or 0, old[8] or 0
             if nd and od and abs(nd - od) > 1.0:
                 # replaced by a version of another length: your cue points are kept, but may now sit in the wrong place
