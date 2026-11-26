@@ -1,19 +1,19 @@
 {
- "time": "2026-11-26T00:47:30",
+ "time": "2026-11-26T01:10:45",
  "result": "ok",
- "commit": "888361f1b34550593a9965fa704df39b891a2bbb",
- "subject": "Hype Stinger: audio crossfade (was fade out + in: ~0.1 s silence on TV at every switch into the Hype Screen)",
+ "commit": "741443d0f945e675d8c4f1d666a7006de73f9d4b",
+ "subject": "Test: music video players + pad video layer decode in software (a ~0.1 s TV sound gap at every video start); switch: /var/lib/hype/clip_hw_on",
  "log": [
-  "00:46:44 update dc1fe7bc \u2192 888361f1 \u00b7 1 file(s): engine/engine.py",
-  "00:46:44 restart hype-engine@*",
-  "00:46:44 restart hype-engine",
-  "00:47:30 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "01:10:00 update 888361f1 \u2192 741443d0 \u00b7 1 file(s): engine/engine.py",
+  "01:10:00 restart hype-engine@*",
+  "01:10:00 restart hype-engine",
+  "01:10:45 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "JEON \u2013 NA\u2019MA",
-  "listeners": 4,
+  "song": "French Montana x Max B x Skepta x D Block Europe \u2013 Ever Since U Left Me (UK Remix)",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 2.0,
   "problems": [],
   "ok": true
  },
