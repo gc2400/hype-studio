@@ -1,18 +1,18 @@
 {
- "time": "2026-11-26T02:10:59",
+ "time": "2026-11-26T02:14:51",
  "result": "ok",
- "commit": "a0da11de544556bd0033000e3a615996d3b5b4b0",
- "subject": "Library: START after the silence never touches a START you set yourself",
+ "commit": "4058d002b947ff0301e99b27bceb00e474200f60",
+ "subject": "Library: START after the silence for all songs again (Gianno: do all) - only ever later, only inside the silence at the very start",
  "log": [
-  "02:10:14 update fdedb86f \u2192 a0da11de \u00b7 1 file(s): engine/indexer.py",
-  "02:10:14 restart hype-indexer",
-  "02:10:59 installed OK \u00b7 restarted: hype-indexer"
+  "02:14:06 update a0da11de \u2192 4058d002 \u00b7 1 file(s): engine/indexer.py",
+  "02:14:06 restart hype-indexer",
+  "02:14:51 installed OK \u00b7 restarted: hype-indexer"
  ],
  "guard": {
-  "song": "Devi Dev x Rich Kalashh \u2013 Riba Chest",
-  "listeners": 2,
+  "song": "Kleine John x Chavant\u00e9 \u2013 Bij Mij",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
