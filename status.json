@@ -1,18 +1,17 @@
 {
- "time": "2026-11-26T02:24:43",
+ "time": "2026-11-26T09:28:26",
  "result": "ok",
- "commit": "1b28a53f7d0f05001c80302739e94f3af54b7a32",
- "subject": "Library: the automatic START is exact at import (at the first sound, never in the silence before it) - no separate fix afterwards; a replaced file is measured again",
+ "commit": "0d8202f04269fdd9bf18037260eeda8f34324310",
+ "subject": "Ubuntu's automatic updates never restart Icecast by itself any more (26 Nov 06:11: MP3 streams ~1 min gone); the weekly maintenance (Monday 04:00) restarts it when needed",
  "log": [
-  "02:23:57 update 4bdc9cea \u2192 1b28a53f \u00b7 1 file(s): engine/indexer.py",
-  "02:23:57 restart hype-indexer",
-  "02:24:42 installed OK \u00b7 restarted: hype-indexer"
+  "09:28:26 update 1b28a53f \u2192 0d8202f0 \u00b7 1 file(s): system/needrestart-hype.conf",
+  "09:28:26 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Jonna Fraser \u2013 Tuesday",
-  "listeners": 2,
+  "song": "Jonna Fraser x Frenna \u2013 Go Bad Girl",
+  "listeners": 5,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.8,
   "problems": [],
   "ok": true
  },
