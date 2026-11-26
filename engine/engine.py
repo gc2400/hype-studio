@@ -188,7 +188,7 @@ SMART_MIX = True     # Settings → Mixing → Smart mix
 VOICE_AIR = {"per_hour": 2, "max_plays": 3, "intro": True}   # Settings → Listener voices (only voices marked ✓ OK for air in Hype Live)
 ID_INTRO = {"on": True, "max": 3, "gap": 15, "db": -4.0}   # Settings → Mixing → ID over soft intros (max per hour, minutes apart)
 ID_FOLDER = (CH.upper() + "/IDS") if CH else "IDS"    # the IDs: /srv/hype/jingles/IDS
-ID_OFFSET, ID_DUCK = 0.4, 0.5   # the ID starts 0.4 s into the song; the (already soft) intro dips to 50 % under the voice
+ID_OFFSET, ID_DUCK = 0.2, 0.5   # the ID starts 0.2 s into the song (26 Nov, Gianno: was 0.4; the song now starts already dipped); the (already soft) intro dips to 50 % under the voice
 PUSH_LEAD = 15.0      # the next item goes to Liquidsoap 15 s before the song on air ends (see push_next)
 CLOCK_POS = SP("/var/lib/hype/clock_pos.json"); PLAN_FILE = SP("/var/lib/hype/upnext_plan.json")
 SNAPS_FILE = SP("/var/lib/hype/plan_snaps.json"); MINE_FILE = SP("/var/lib/hype/upnext_mine.json")
