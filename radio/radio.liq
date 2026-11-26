@@ -76,6 +76,7 @@ def mix(a, b) =
   # how long the old item fades: songs = the whole overlap; jingles = Settings (0 = plays out at full volume to its END)
   f = if cut_next() then 0.25 else float_of_string(default=d, a.metadata["hype_fade"]) end
   cut_next := false
+  cv = a.metadata["hype_curve"] == "1"
   t0 = ref(-1.)
   # voice tracking: a link that starts over the END of this song (hype_tail): the song goes low under the voice in 0.6 s,
   # stays there and fades out over the last 1.5 s of the overlap
@@ -88,7 +89,12 @@ def mix(a, b) =
       lv = if e < 0.6 then 1. - (1. - td) * e / 0.6 else td end
       fo = if e > d - 1.5 then max(0., (d - e) / 1.5) else 1. end
       comp * lv * fo
-    elsif f <= 0. then comp else comp * max(0., 1. - e / f) end
+    elsif f <= 0. then comp
+    elsif cv and f > 1. then
+      # songs (26 Nov): the old song drops to half (-6 dB) in the first 0.5 s, then fades out slowly over the rest -
+      # the new song (at full at once) takes over clearly, no louder bump when the old one still has energy at MIX
+      if e < 0.5 then comp * (1. - 0.5 * e / 0.5) else comp * 0.5 * max(0., 1. - (e - 0.5) / (f - 0.5)) end
+    else comp * max(0., 1. - e / f) end
   end
   # a voice link that talks over the next song's intro (voice tracking, hype_duck): the song stays low under the voice and
   # comes up to full in the last 1.2 s of the overlap (the voice ends at the end of the overlap)
@@ -107,7 +113,32 @@ agc_g = interactive.float("agc_g", min=0.3, max=3., description="AGC gain on the
 snd_agc = interactive.float("snd_agc", min=0., max=1., description="AGC strength: 0 off, 0.4 light, 0.7 normal, 1 strong", 0.7)
 duck_lvl = interactive.float("duck_lvl", min=0., max=1., description="music level under ducked pads / sweepers (the engine glides it)", 1.)
 s = amplify(override="liq_amplify", 1., s)   # song gain AFTER the mix: the new song gain starts at the mix, so the old tail gets compensated in mix()
-s = amplify(override=null(), {vol_music() * duck_lvl() * agc_g()}, s)   # override=null: do NOT apply the song gain (liq_amplify) a second time
+# ID / voice over the intro (26 Nov): the song starts already dipped from its first sound (hype_iduck = level), so its first
+# second is never loud before the ID; after hype_ihold s it comes back up in 0.4 s - by then the engine's duck (duck_lvl,
+# glided down when the ID starts) has taken over: min() of the two, so they never dip twice
+pd_lvl = ref(1.)
+pd_t0 = ref(0.)
+pd_hold = ref(0.)
+def pd_meta(m) =
+  if m["hype_iduck"] != "" then
+    pd_lvl := float_of_string(default=1., m["hype_iduck"]); pd_hold := float_of_string(default=1.5, m["hype_ihold"]); pd_t0 := time()
+  elsif m["hype_path"] != "" then pd_lvl := 1.
+  end
+end
+s = source.on_metadata(s, pd_meta)
+def pd() =
+  if pd_lvl() >= 1. then 1.
+  else
+    e = time() - pd_t0()
+    if e < pd_hold() then pd_lvl()
+    elsif e < pd_hold() + 0.4 then pd_lvl() + (1. - pd_lvl()) * (e - pd_hold()) / 0.4
+    else
+      pd_lvl := 1.
+      1.
+    end
+  end
+end
+s = amplify(override=null(), {vol_music() * min(duck_lvl(), pd()) * agc_g()}, s)   # override=null: do NOT apply the song gain (liq_amplify) a second time
 
 def notify(m) =
   if m["hype_path"] != "" then

@@ -359,7 +359,8 @@ def annotate(it, pad=False, nxt=None):
     # one telnet line: no control characters (a newline would split the command), no " or \ inside a quoted value
     if BAD_NAME.search(it["path"]): raise ValueError("file name with control characters: %r" % it["path"])
     q = lambda v: BAD_NAME.sub(" ", str(v)).replace("\\", "/").replace('"', "'")
-    meta = (f'liq_cue_in="{cs:.2f}",liq_cue_out="{ce:.2f}",liq_cross_duration="{cross:.2f}",liq_amplify="{gain:.2f} dB",hype_fade="{fade:.2f}",' + ('hype_duck="0.35",' if vm else '') + ('hype_tail="0.35",' if vp else '') +
+    meta = (f'liq_cue_in="{cs:.2f}",liq_cue_out="{ce:.2f}",liq_cross_duration="{cross:.2f}",liq_amplify="{gain:.2f} dB",hype_fade="{fade:.2f}",' + ('hype_duck="0.35",' if vm else '') + ('hype_curve="1",' if it.get("section") == "music" and not pad and not vm and not vp else '') +
+            (f'hype_iduck="{ID_DUCK:.2f}",hype_ihold="{ID_OFFSET + 1.2:.2f}",' if it.get("id_over") and not pad else '') + ('hype_tail="0.35",' if vp else '') +
             f'artist="{q(it["artist"])}",title="{q(it["title"])}",hype_path="{q(it["path"])}",hype_id="{it["id"]}"')
     return f"annotate:{meta}:{os.path.join(ROOT, it['path'])}"
 
