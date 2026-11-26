@@ -357,8 +357,11 @@ output.icecast(%mp3(bitrate=128, samplerate=44100, stereo=true), host="127.0.0.1
 # the TV sound: Hype Radio at "tv_vol" (1; 0 while a theme station has the TV – a TV block, the engine crossfades it).
 # Defined after interactive.persistent on purpose: never saved, so after a restart Hype Radio is always on the TV.
 tv_vol = interactive.float("tv_vol", min=0., max=1., description="Hype Radio on the TV (0 during a TV block of a theme station)", 1.)
-output.pulseaudio(device="hype_air", clock_safe=false, amplify(override=null(), tv_vol, s))
-output.pulseaudio(device="hype_fx", clock_safe=false, fx)
+# TV sound: a 0.2 s cushion (buffer) between the radio and Pulse – at every new song the radio is a fraction late while it opens
+# the file; the stream (Icecast) has its own buffer, but the line to OBS ran dry: ~0.1 s of silence on TV at each song change
+# (measured 26 Nov before OBS, on hype_air.monitor). The engine starts the music videos 0.2 s later to match (TV_AUDIO_BUF).
+output.pulseaudio(device="hype_air", clock_safe=false, mksafe(buffer(buffer=0.2, max=2., amplify(override=null(), tv_vol, s))))
+output.pulseaudio(device="hype_fx", clock_safe=false, mksafe(buffer(buffer=0.2, max=2., fx)))   # (the same cushion: pads / IDs stay in step with the music)
 # music + jingles for the studio (Mixcast USB fader) – always the automation (unprocessed), also while LIVE.
 # Straight from Liquidsoap to MediaMTX "return" (Opus 256k): sample-exact timing. (Before: a Pulse capture, whose clock jitter
 # made the studio's player speed up / slow down and hiccup.)
