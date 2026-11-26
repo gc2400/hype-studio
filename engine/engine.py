@@ -840,7 +840,7 @@ class TV:
             try:
                 cl = self.client(); nxt = "Clip A" if self.cur == "Clip B" else "Clip B"
                 cl.set_input_settings(nxt, {"local_file": clip_file, "looping": False, "restart_on_activate": False,
-                                            "close_when_inactive": False, "hw_decode": True}, True)
+                                            "close_when_inactive": False, "hw_decode": CLIP_HW()}, True)
                 cl.set_input_mute(nxt, True)
                 t_r = time.time(); cl.trigger_media_input_action(nxt, "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
                 # wait until OBS really opened it (was a fixed 0.25 s: when opening took longer, PAUSE came too early and was
@@ -928,7 +928,7 @@ class TV:
                     if when < -0.05: use_pre = False; log.info("preloaded clip too late – started the normal way")
                 if not use_pre:
                   cl.set_input_settings(nxt, {"local_file": clip_file, "looping": False, "restart_on_activate": False,
-                                              "close_when_inactive": False, "hw_decode": True}, True)
+                                              "close_when_inactive": False, "hw_decode": CLIP_HW()}, True)
                 cl.set_input_mute(nxt, True)          # (its own sound comes on in activate(), once it is at its cue point)
                 if sound: self.clip_level(cl, nxt, gain)
                 if not use_pre:
@@ -1433,7 +1433,7 @@ class Engine:
             with tv.olock:
                 cl = tv.client()
                 cl.set_input_settings("Pad video", {"is_local_file": True, "local_file": f, "looping": bool(loop), "restart_on_activate": False,
-                                                    "close_when_inactive": False, "clear_on_media_end": True, "hw_decode": True}, True)
+                                                    "close_when_inactive": False, "clear_on_media_end": True, "hw_decode": CLIP_HW()}, True)
                 cl.set_input_mute("Pad video", True)
                 cl.trigger_media_input_action("Pad video", "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
                 if st > 0.2: cl.set_media_input_cursor("Pad video", int(st * 1000))
@@ -4269,6 +4269,11 @@ def _gfx_fade(hide, at):
                 for src in GFX_SRC: cl.set_source_filter_settings(src, "JHide", {"opacity": round(op, 3)}, True)
             time.sleep(0.05)
     except Exception as e: log.warning("graphics fade: %s", e)
+def CLIP_HW():
+    """Hardware decoding for the music video players (Clip A/B) and the pad / ID video layer: OFF since 26 Nov (test) –
+    every video start with the graphics chip's decoder (shared with the TV encoding) came with a ~0.1 s gap in the TV
+    sound. Back on: touch /var/lib/hype/clip_hw_on (no restart needed)."""
+    return os.path.exists("/var/lib/hype/clip_hw_on")
 def tv_item():
     """What the TV shows now: during a TV block the station's item (its jingle hides the clock / show name like Hype Radio's),
     else Hype Radio's. (22 Nov: Hype Radio's jingles hid the clock + show box over Ambiente's songs, Ambiente's did not.)"""
