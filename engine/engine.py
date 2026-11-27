@@ -3072,11 +3072,13 @@ def _tempo_fps(f):
     except Exception: return 25.0
 def _tempo_render(src, dst, x, video):
     ext = os.path.splitext(dst)[1].lower()
-    cmd = ["nice", "-n", "15", "ffmpeg", "-v", "error", "-y", "-i", src]
+    # gently: the on-air sound, the TV and OBS always come first (27 Nov: with 6 threads the load went to 7.6 and the
+    # TV sound / lip sync suffered at the next song start)
+    cmd = ["ionice", "-c", "3", "nice", "-n", "19", "ffmpeg", "-v", "error", "-y", "-threads", "2", "-filter_threads", "1", "-i", src]
     if video:
         fps = _tempo_fps(src)
         cmd += ["-filter_complex", f"[0:v:0]setpts=PTS/{x},fps={fps:.3f}[v];[0:a:0]rubberband=tempo={x}[a]", "-map", "[v]", "-map", "[a]",
-                "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", "-threads", "6",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", "-threads", "2",
                 "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart"]
     else:
         codec = {".mp3": ["libmp3lame", "-b:a", "320k"], ".m4a": ["aac", "-b:a", "256k"], ".aac": ["aac", "-b:a", "256k"],
