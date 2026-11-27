@@ -244,7 +244,12 @@ function mainTv() {
   }).catch(() => {});
 }
 setInterval(mainTv, 1000); mainTv();
-function refresh() { return api('state').then(d => { S = d; if (MTV && document.documentElement.classList.contains('ch-tv')) TVKEYS.forEach(k => { if (k in MTV) S[k] = MTV[k]; }); skew = Date.now() / 1000 - d.server_time; try { localStorage.setItem('hypeSkew', skew); } catch (e) {} render(); }).catch(() => { $('#stRadio').className = 'chip bad'; }); }
+// (27 Nov, first live show: the RADIO dot went red now and then while the radio played fine – any hiccup painted it red:
+//  one missed answer from Studio, or an error while drawing the page. Now: red only when the radio is really stopped, or
+//  after 3 answers in a row did not come (and then the dot says so: "no answer from Studio").)
+let stFails = 0;
+function refresh() { return api('state').then(d => { stFails = 0; S = d; if (MTV && document.documentElement.classList.contains('ch-tv')) TVKEYS.forEach(k => { if (k in MTV) S[k] = MTV[k]; }); skew = Date.now() / 1000 - d.server_time; try { localStorage.setItem('hypeSkew', skew); } catch (e) {}
+  try { render(); } catch (e) { console.error('On Air: drawing the page failed', e); } }).catch(() => { if (++stFails >= 3) { const r = $('#stRadio'); r.className = 'chip bad'; r.title = 'No answer from Studio (network?) – the radio itself may be fine'; } }); }
 function render() {
   const n = S.now || {};
   $('#bAuto').classList.toggle('on', S.auto); $('#bManual').classList.toggle('on', !S.auto);

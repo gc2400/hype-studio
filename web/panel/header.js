@@ -432,7 +432,8 @@ html[data-station] .card.hi{border-color:var(--line2)}
     const m = S.dj && S.dj.on ? 'dj' : MODE;
     h.querySelectorAll('.modes [data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
   }
-  function load() { api('state').then(d => { S = d; skew = Date.now() / 1000 - d.server_time; try { localStorage.setItem('hypeSkew', skew); } catch (e) {} paint(); }).catch(() => { q('#stRadio').className = 'chip bad'; }); }
+  let stFails = 0;     // (red only after 3 missed answers in a row – see On Air)
+  function load() { api('state').then(d => { stFails = 0; S = d; skew = Date.now() / 1000 - d.server_time; try { localStorage.setItem('hypeSkew', skew); } catch (e) {} try { paint(); } catch (e) { console.error('header: paint failed', e); } }).catch(() => { if (++stFails >= 3) { q('#stRadio').className = 'chip bad'; q('#stRadio').title = 'No answer from Studio (network?) – the radio itself may be fine'; } }); }
   load(); setInterval(load, 4000);
   // a new Hype Studio version was installed: offer a reload (never reloads by itself while you are working)
   let ver = null;

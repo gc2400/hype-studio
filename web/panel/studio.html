@@ -253,6 +253,19 @@ setInterval(async () => {
   paintGQ();
 }, 2000);
 
+// The music back to the Mixcast (27 Nov, first live show: "sometimes I hear nothing after Connect studio"). Two silent
+// failures are handled now: (1) the chosen output device is not found (Windows gives a USB device a new id after a
+// re-plug / restart) – it then plays on the default output and says so; (2) the browser blocks playing – the next click
+// starts it. The music meter keeps showing whether music arrives from the server at all.
+async function musicOut(el, sel, label) {
+  const id = $(sel).value;
+  if (el.setSinkId && id) {
+    try { await el.setSinkId(id); }
+    catch (e) { const o = $(sel).selectedOptions[0]; toast(label + ': output "' + (o ? o.textContent : id) + '" not found – playing on the default output. Choose it again under Devices (↻) and reconnect.'); console.warn(label, 'setSinkId', e); }
+  }
+  try { await el.play(); }
+  catch (e) { toast(label + ': click anywhere on this page to start the sound'); document.addEventListener('click', () => el.play().catch(() => {}), {once: true}); console.warn(label, 'play', e); }
+}
 // ---------- connect the studio ----------
 async function connect() {
   if (connected) return; connected = true; $('#connect').hidden = true; $('#disconnect').hidden = false;
@@ -269,10 +282,10 @@ async function connect() {
     }
     // music back to the Mixcast USB fader
     const ma = new Audio(); ma.autoplay = true; document.body.appendChild(ma);
-    conns.music = HypeRTC.keep('music', async alive => { const r = await HypeRTC.play((L && L.return_path) || 'return', {key: KEY, bufferMs: 250}); if (!alive()) return r; /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ ma.srcObject = r.stream; if (ma.setSinkId && $('#dMusic').value) await ma.setSinkId($('#dMusic').value); ma.play().catch(() => {}); meterTo(r.stream, 'mMusic'); return r; }, setState);
+    conns.music = HypeRTC.keep('music', async alive => { const r = await HypeRTC.play((L && L.return_path) || 'return', {key: KEY, bufferMs: 250}); if (!alive()) return r; /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ ma.srcObject = r.stream; await musicOut(ma, '#dMusic', 'Music'); meterTo(r.stream, 'mMusic'); return r; }, setState);
     // AUX 2 (deck 2) to the second output – silent unless Split is on and deck 2 plays
     if ($('#dMusic2').value) { const mb = new Audio(); mb.autoplay = true; document.body.appendChild(mb);
-      conns.music2 = HypeRTC.keep('aux 2', async alive => { const r = await HypeRTC.play('return2', {key: KEY, bufferMs: 250}); if (!alive()) return r; mb.srcObject = r.stream; if (mb.setSinkId) await mb.setSinkId($('#dMusic2').value); mb.play().catch(() => {}); meterTo(r.stream, 'mMusic2'); return r; }, setState); }
+      conns.music2 = HypeRTC.keep('aux 2', async alive => { const r = await HypeRTC.play('return2', {key: KEY, bufferMs: 250}); if (!alive()) return r; mb.srcObject = r.stream; await musicOut(mb, '#dMusic2', 'AUX 2'); meterTo(r.stream, 'mMusic2'); return r; }, setState); }
     toast('Studio connected – check the meters, then GO LIVE');
   } catch (e) { toast('Could not start: ' + e.message); disconnect(); }
 }
