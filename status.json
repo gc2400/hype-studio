@@ -1,17 +1,17 @@
 {
- "time": "2026-11-27T15:33:45",
+ "time": "2026-11-27T15:48:08",
  "result": "waiting",
- "commit": "8ddab25da539dca24f7386cb5c3bddc645244ee9",
- "subject": "[night] Tempo copies and TV copies get a hard CPU cap (1.5 / 2 cores via systemd scopes): together they made the IDs over the intro stutter on TV (27 Nov 15:32, load 12)",
+ "commit": "0939ff4a899b60f5ee3fb349fbe3c3c808f57bf5",
+ "subject": "[night] CPU caps raised: tempo copies max 2 cores, TV copies max 3 (Gianno)",
  "log": [
-  "15:33:45 update ea6788dd \u2192 8ddab25d \u00b7 4 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, radio/radio.liq",
-  "15:33:45 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "15:48:08 update ea6788dd \u2192 0939ff4a \u00b7 4 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, radio/radio.liq",
+  "15:48:08 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Young Ellens \u2013 Pump It Up",
+  "song": "Juanka x Myke Towers \u2013 Santa Diabla (Remix)",
   "listeners": 10,
   "obs": true,
-  "seg_age": 1.3,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
