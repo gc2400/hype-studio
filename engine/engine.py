@@ -3061,7 +3061,7 @@ def chan_replan(ch):
 # ---------- Library → Tempo: a song a bit faster, the pitch stays (27 Nov) ----------
 # Studio makes a faster copy of the song (sound + picture together, so lip sync stays) and puts it in the song's place; the
 # original is kept in TEMPO_DIR and comes back when you choose "Original". START / MIX / END move with the new length.
-TEMPO_OK = (1.0, 1.025, 1.05, 1.10, 1.15)    # (27 Nov, Gianno: 1.20 / 1.25 too much)
+TEMPO_OK = (1.0, 1.01, 1.02, 1.03, 1.04, 1.05, 1.06, 1.07)    # (27 Nov, Gianno: steps of 0.01 up to 1.07)
 TEMPO_DIR = "/srv/hype-data/tempo"
 TEMPO_JOBS = {}            # path -> {"state": "busy"|"done"|"error", "msg": ..., "t": ...}
 def _tempo_fps(f):
@@ -3093,7 +3093,7 @@ def _tempo_render(src, dst, x, video):
         raise RuntimeError("ffmpeg: " + (p.stderr or "no output").strip()[-300:])
 def tempo_set(d):
     path = str(d.get("path") or ""); x = round(float(d.get("tempo") or 1.0), 3)
-    if x not in TEMPO_OK: return {"ok": False, "error": "choose Original, 1.025, 1.05, 1.10 or 1.15"}
+    if x not in TEMPO_OK: return {"ok": False, "error": "choose Original or 1.01 – 1.07"}
     c = dbc()
     r = c.execute("SELECT section, has_video, clip_path, COALESCE(tempo, 1.0), tempo_src, rowid FROM items WHERE path=?", (path,)).fetchone()
     if not r: return {"ok": False, "error": "song not found"}
