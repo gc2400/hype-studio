@@ -15,6 +15,7 @@ CONF = json.load(open("/etc/hype/engine.json"))
 # Its own planning database (chan_<id>.db), radio engine (telnet port), API port and state files; no TV, studio, recordings or
 # Hype Live / website pushes (Hype Radio's engine keeps doing those). Unset = Hype Radio, exactly as before.
 CH = os.environ.get("HYPE_CH") or None
+TB_SWEEPER = CH is None     # (Settings → Throwback sweeper; loaded with the other settings)
 CHC = chancfg.get(CH) if CH else None
 if CH and not CHC: raise SystemExit("unknown theme channel %r" % CH)
 LIQ_PORT = int(os.environ.get("HYPE_TELNET") or (CHC["telnet"] if CH else 1234))
@@ -1517,7 +1518,7 @@ class Engine:
             log.info("skipped %s – no two jingles in a row", it.get("title")); return
         if it.get("section") == "music":
             sk = song_kind(it)
-            if sk == "throwback" and sk not in held and it.get("src") == "clock" and not self.tb_done():
+            if sk == "throwback" and TB_SWEEPER and sk not in held and it.get("src") == "clock" and not self.tb_done():
                 # a throwback song in the clock: a jingle from jingles/THROWBACK goes in front of it (once per clock hour,
                 # like the New Music sweeper before the New Music song)
                 try:
@@ -3453,8 +3454,9 @@ def week_slot(t=None):
 SOUND_VARS = ["snd_drive", "snd_bass", "snd_bass_f", "snd_treble", "snd_mid", "snd_lowmid", "snd_hpf", "snd_width", "snd_comp", "snd_monob", "snd_agc", "snd_ratio", "snd_thresh", "snd_attack", "snd_release", "snd_ceiling", "snd_punch", "mm_target", "mm_comp", "mm_mb", "mm_lim", "mm_lev", "mm_kc_th", "mm_kc_att", "mm_kc_rel", "mm_lo_str", "mm_lo_f", "mm_lo_th", "mm_lo_att", "mm_lo_rel", "mm_hi_str", "mm_hi_f", "mm_hi_th", "mm_hi_att", "mm_hi_rel", "mm_lim_att", "mm_lim_rel", "mix_out", "mix_in"]
 def load_rotation():
     """Artist / song separation and the longest overlap, from Settings."""
-    global ARTIST_SEP, TITLE_SEP, MIX_MAX, JINGLE_FADE, JINGLE_DB, ADBOX_ALWAYS, SMART_MIX, AV_LAG
+    global ARTIST_SEP, TITLE_SEP, MIX_MAX, JINGLE_FADE, JINGLE_DB, ADBOX_ALWAYS, SMART_MIX, AV_LAG, TB_SWEEPER
     c = dbc()
+    TB_SWEEPER = bool(planner.get_setting(c, "tb_sweeper", CH is None))   # Throwback sweeper before CLASSICS songs: per station (off on the theme stations unless you turn it on)
     VOICE_AIR.update(per_hour=int(planner.get_setting(c, "voice_per_hour", 2)), max_plays=int(planner.get_setting(c, "voice_max_plays", 3)), intro=bool(planner.get_setting(c, "voice_intro", True)))
     ID_INTRO.update(on=bool(planner.get_setting(c, "id_intro", True)), max=int(planner.get_setting(c, "id_intro_max", 3)), gap=float(planner.get_setting(c, "id_intro_gap", 15)), db=float(planner.get_setting(c, "id_intro_db", -4.0)))
     ARTIST_SEP = 60 * float(planner.get_setting(c, "artist_sep_min", 75)); TITLE_SEP = 3600 * float(planner.get_setting(c, "title_sep_h", 3))
@@ -3763,7 +3765,7 @@ def _settings_main(c, snd):
             "hour_preview": bool(planner.get_setting(c, "hour_preview", True)), "tv_clip_offset": float(planner.get_setting(c, "tv_clip_offset", 3.0)),
             "jingle_hide": bool(planner.get_setting(c, "jingle_hide", True)), "upnext_hour_s": float(planner.get_setting(c, "upnext_hour_s", 10) or 0), "upnext_after_s": float(planner.get_setting(c, "upnext_after_s", 12) or 0), "upnext_end_s": float(planner.get_setting(c, "upnext_end_s", 0) or 0),
             "alsoon_at": int(planner.get_setting(c, "alsoon_at", -1) if planner.get_setting(c, "alsoon_at", -1) is not None else -1), "alsoon_s": float(planner.get_setting(c, "alsoon_s", 20) or 20), "keep_s": float(planner.get_setting(c, "keep_s", 8) or 0),
-            "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "voice_per_hour": VOICE_AIR["per_hour"], "listener_keep_days": float(planner.get_setting(c, "listener_keep_days", 7)), "ss_photo_s": float(planner.get_setting(c, "ss_photo_s", 8)), "ss_fade_s": float(planner.get_setting(c, "ss_fade_s", 1)), "ss_random": bool(planner.get_setting(c, "ss_random", True)), "tidy_names": bool(planner.get_setting(c, "tidy_names", True)), "voice_max_plays": VOICE_AIR["max_plays"], "voice_intro": VOICE_AIR["intro"], "voices": voice_overview(), "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
+            "artist_sep_min": ARTIST_SEP / 60, "strict_hold_before": float(planner.get_setting(c, "strict_hold_before", 60)), "strict_hold_after": float(planner.get_setting(c, "strict_hold_after", 60)), "pad_duck": float(planner.get_setting(c, "pad_duck", 0.25)), "jingle_fade": JINGLE_FADE, "jingle_db": JINGLE_DB, "adbox_always": ADBOX_ALWAYS, "smart_mix": SMART_MIX, "av_lag": AV_LAG, "id_intro": ID_INTRO["on"], "id_intro_max": ID_INTRO["max"], "tb_sweeper": TB_SWEEPER, "voice_per_hour": VOICE_AIR["per_hour"], "listener_keep_days": float(planner.get_setting(c, "listener_keep_days", 7)), "ss_photo_s": float(planner.get_setting(c, "ss_photo_s", 8)), "ss_fade_s": float(planner.get_setting(c, "ss_fade_s", 1)), "ss_random": bool(planner.get_setting(c, "ss_random", True)), "tidy_names": bool(planner.get_setting(c, "tidy_names", True)), "voice_max_plays": VOICE_AIR["max_plays"], "voice_intro": VOICE_AIR["intro"], "voices": voice_overview(), "id_intro_gap": ID_INTRO["gap"], "id_intro_db": ID_INTRO["db"], "sound_presets": planner.get_setting(c, "sound_presets", {}) or {}, "sound_presets_hidden": planner.get_setting(c, "sound_presets_hidden", []) or [], "title_sep_h": TITLE_SEP / 3600, "mix_max": MIX_MAX,
             "sound": snd, "relay": relay_public()}
 RELAY_CFG = "/etc/hype/relay.json"
 def relay_cfg():
@@ -3849,6 +3851,7 @@ def set_settings(d):
     if "adbox_always" in d: planner.set_setting(c, "adbox_always", bool(d["adbox_always"]))
     if "smart_mix" in d: planner.set_setting(c, "smart_mix", bool(d["smart_mix"]))
     if "id_intro" in d: planner.set_setting(c, "id_intro", bool(d["id_intro"]))
+    if "tb_sweeper" in d: planner.set_setting(c, "tb_sweeper", bool(d["tb_sweeper"]))
     if "voice_intro" in d: planner.set_setting(c, "voice_intro", bool(d["voice_intro"]))
     if "voice_per_hour" in d: planner.set_setting(c, "voice_per_hour", max(0, min(6, int(float(d["voice_per_hour"])))))
     if "ss_photo_s" in d: planner.set_setting(c, "ss_photo_s", max(2.0, min(60.0, float(d["ss_photo_s"])))); slideshow.STATE["sig"].clear()
