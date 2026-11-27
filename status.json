@@ -1,17 +1,22 @@
 {
- "time": "2026-11-26T15:30:53",
- "result": "waiting",
+ "time": "2026-11-27T04:01:45",
+ "result": "ok",
  "commit": "6c7a41e93f5f1b5c41efdb90305c36362f729a5d",
  "subject": "[night] Install tonight (Gianno, 26 Nov 15:30): TV-sound buffer 0.2 s (video-file stalls), new fade curve at song changes, ID over intro: song starts already dipped, ID at 0.2 s",
  "log": [
-  "15:30:53 update 0d8202f0 \u2192 6c7a41e9 \u00b7 3 file(s): engine/chan.py, engine/engine.py, radio/radio.liq",
-  "15:30:53 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "04:00:11 update 0d8202f0 \u2192 6c7a41e9 \u00b7 3 file(s): engine/chan.py, engine/engine.py, radio/radio.liq",
+  "04:01:00 lab: PASS (6/6 good readings)",
+  "04:01:00 restart hype-channels",
+  "04:01:00 restart hype-engine@*",
+  "04:01:00 restart hype-engine",
+  "04:01:00 restart hype-radio",
+  "04:01:45 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*, hype-radio"
  ],
  "guard": {
-  "song": "RAEY X ISSAIRO \u2013 APOCALYPSE",
-  "listeners": 6,
+  "song": "Kapo \u2013 BOMB\u00d3N",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
