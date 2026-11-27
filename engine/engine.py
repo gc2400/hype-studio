@@ -197,6 +197,7 @@ PUSH_LEAD = 15.0      # the next item goes to Liquidsoap 15 s before the song on
 CLOCK_POS = SP("/var/lib/hype/clock_pos.json"); PLAN_FILE = SP("/var/lib/hype/upnext_plan.json")
 SNAPS_FILE = SP("/var/lib/hype/plan_snaps.json"); MINE_FILE = SP("/var/lib/hype/upnext_mine.json")
 TV_AUDIO_BUF = 0.20  # the radio's 0.2 s cushion on the line to OBS (radio.liq, 26 Nov): the videos start that much later too
+MEDIA_STUDIO_PLAYOUT = 0.20   # LIVE: the studio mix in OBS ('Studio audio', a WebRTC player) plays ~0.2 s after it reaches the server
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
 LM_CACHE = {}
 LM_STAMP = {}
@@ -4821,7 +4822,11 @@ class Media:
                 cl.set_input_settings("Media video", {"is_local_file": True, "local_file": full, "looping": loop, "restart_on_activate": False,
                                                       "close_when_inactive": False, "clear_on_media_end": False, "hw_decode": True}, True)
                 cl.set_input_mute("Media video", True)
-                cl.trigger_media_input_action("Media video", "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
+                # its sound goes through the radio: the picture waits until the sound gets to the TV (27 Nov: while LIVE the
+                # video ran ahead – the sound then also goes through the studio: laptop -> Mixcast -> laptop -> server)
+                wait_snd = bool(info["audio"]) and sound != "mute"
+                cl.trigger_media_input_action("Media video", "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PAUSE" if wait_snd else "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
+                if wait_snd: cl.set_media_input_cursor("Media video", 0)
                 cl.set_scene_item_enabled("Media window", vid, True); cl.set_scene_item_enabled("Media window", pic, False)
         manual = d.get("scene") == "manual"      # Manual: only load the media window – you switch the scenes yourself
         sc = (tv.scene or "") if manual else d.get("scene") or (tv.scene if tv.scene in MEDIA_SCENES else "MEDIA FULL")
@@ -4833,8 +4838,16 @@ class Media:
             gain += 20 * math.log10(max(0.01, MEDIA_VOL["v"]))      # the TV Media card's VOL
             ann = f'annotate:liq_cue_in="0",liq_amplify="{gain:.2f} dB",hype_fade="0":{full}'
             level = 0.0 if sound == "off" else float(planner.get_setting(dbc(), "pad_duck", 0.25))
+            live_ = bool(getattr(eng.live, "live", False))
+            lag = AV_LAG + TV_AUDIO_BUF if not live_ else 0.1 + eng.live.studio_loop_ms() / 1000.0 + MEDIA_STUDIO_PLAYOUT
             def run():
-                eng.liq.cmd("pads.push " + ann)
+                eng.liq.cmd("pads.push " + ann); t_p = time.time()
+                time.sleep(max(0.0, lag - (time.time() - t_p)))
+                if self.token == token:
+                    try:
+                        with tv.olock: tv.client().trigger_media_input_action("Media video", "OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART")
+                    except Exception as e: log.warning("media video start: %s", e)
+                    log.info("media video started %.2f s after its sound (%s)", lag, "LIVE: through the studio" if live_ else "radio")
                 while self.token == token:
                     eng.duck_for(ln + 0.3, level)
                     t_end = time.time() + ln

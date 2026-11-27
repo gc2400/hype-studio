@@ -297,6 +297,10 @@ class Live:
                 self.sync_audio(cl)
             except Exception as e: log.warning("cams: %s", e); self.tv.cl = None
     # ---------- guests: lip sync (measured) + connection ----------
+    def studio_loop_ms(self):
+        """How long the radio's sound takes to come back in the studio mix (measured, median of the last 5), else a default."""
+        m = getattr(self, "loop_ms", None) or []
+        return int(sorted(m)[len(m) // 2]) if m else 450
     def guest_sync_ms(self, slot):
         """The measured delay of this guest's voice in the studio mix (median of the last good measurements), else the default."""
         m = self.gmeas.get(slot) or []
@@ -333,9 +337,22 @@ class Live:
                 paths = mtx_paths()
                 if not paths.get("studio", {}).get("ready"): continue
                 slots = sorted(s for s, v in paths.items() if re.fullmatch(r"guest\d+", s) and v.get("ready"))
+                import guestsync
+                rp = ("return-" + self.target()) if self.target() else "return"
+                if paths.get(rp, {}).get("ready") and (not slots or turn % 3 == 2):
+                    # the studio loop (27 Nov: a media pad's video ran ahead of its sound while LIVE): the radio's sound goes
+                    # server -> laptop -> Mixcast -> laptop -> server; a media video waits this long so picture and sound match
+                    turn += 1
+                    a_, b_ = guestsync.record(rp, "studio", 10.0)
+                    if a_ is not None and b_ is not None and guestsync.level_db(a_) > -40 and guestsync.level_db(b_) > -45:
+                        ms_, conf_ = guestsync.delay(a_, b_, max_ms=1500, min_ms=50)
+                        if ms_ is not None and conf_ >= 8:
+                            self.loop_ms = (getattr(self, "loop_ms", []) or [])[-4:] + [ms_]
+                            log.info("studio loop measured: the radio's sound is back in the studio mix after %d ms (conf %.0f) -> media videos wait %d ms",
+                                     ms_, conf_, self.studio_loop_ms())
+                    continue
                 if not slots: continue
                 slot = slots[turn % len(slots)]; turn += 1
-                import guestsync
                 ms, why = guestsync.measure(slot)
                 if ms is None: continue
                 hist = (self.gmeas.get(slot) or [])[-4:] + [ms]
