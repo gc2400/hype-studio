@@ -3118,7 +3118,14 @@ def tempo_set(d):
                     orig = os.path.join(TEMPO_DIR, "%s_%s" % (iid or abs(hash(path)), base))
                     try: os.link(full, orig)
                     except OSError: shutil.copy2(full, orig)
-                _tempo_render(orig, tmp, x, bool(hv))
+                # ONE faster copy at a time, on all three stations together (27 Nov: 8 at once took the load to 31 and
+                # the TV sound broke up): the others wait in line
+                import fcntl
+                TEMPO_JOBS[path].update(msg="waiting in line (one song at a time)…")
+                with open("/run/hype-tempo.lock", "w") as lk:
+                    fcntl.flock(lk, fcntl.LOCK_EX)
+                    TEMPO_JOBS[path].update(msg="making the %g× version…" % x)
+                    _tempo_render(orig, tmp, x, bool(hv))
             c2 = dbc()
             row = c2.execute("SELECT cue_start, cue_intro, cue_mix, cue_end, tv_path, COALESCE(tempo, 1.0) FROM items WHERE path=?", (path,)).fetchone()
             f = (row[5] or 1.0) / x                      # times in the current version -> times in the new one
