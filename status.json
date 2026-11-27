@@ -1,19 +1,17 @@
 {
- "time": "2026-11-27T14:42:43",
- "result": "ok",
- "commit": "6255cbbf671ed7f756177556322e0284db6355ff",
- "subject": "Tempo: a song whose earlier try was stopped (the original already kept) no longer fails with 'are the same file'",
+ "time": "2026-11-27T14:43:47",
+ "result": "waiting",
+ "commit": "1947074338013cde147d18782aa729299aada568",
+ "subject": "[night] TV sound on its own clock behind the 0.2 s buffer (clock_safe=true): a stall of the radio engine when it opens a video file no longer reaches the TV sound as a hole (gap watch 27 Nov: holes only on the TV bus, never on the streams)",
  "log": [
-  "14:41:58 update b2f472e9 \u2192 6255cbbf \u00b7 1 file(s): engine/engine.py",
-  "14:41:58 restart hype-engine@*",
-  "14:41:58 restart hype-engine",
-  "14:42:43 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "14:43:47 update 6255cbbf \u2192 19470743 \u00b7 2 file(s): engine/chan.py, radio/radio.liq",
+  "14:43:47 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Langa \u2013 Bottega",
-  "listeners": 12,
+  "song": "Bryan Mg x Dylisa x Bokoesam \u2013 Nobody Body",
+  "listeners": 13,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 1.4,
   "problems": [],
   "ok": true
  },
