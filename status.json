@@ -1,17 +1,17 @@
 {
- "time": "2026-11-27T20:16:01",
+ "time": "2026-11-27T20:20:09",
  "result": "waiting",
- "commit": "e2eb4730a75ff18b673484e2579dd64b5b20b1cc",
- "subject": "[night] Radio dot: red only when the radio is really stopped or after 3 missed answers (a drawing error or one slow answer painted it red during the first live show); Studio page: the music back to the Mixcast always plays (a lost output device falls back to the default with a message, a blocked play starts on the next click)",
+ "commit": "65b12a8d905cee383cf613cd2b84f1870e439588",
+ "subject": "[night] Studio page: change things while connected / LIVE without Disconnect - mic / mix-minus / camera switch on the running connection (replaceTrack), music / AUX 2 / guests outputs switch at once (setSinkId), camera bitrate / picture size / fps change on air",
  "log": [
-  "20:16:01 update ea6788dd \u2192 e2eb4730 \u00b7 7 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, radio/radio.liq, web/panel/header.js, web/panel/index.html, web/panel/studio.html",
-  "20:16:01 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "20:20:09 update ea6788dd \u2192 65b12a8d \u00b7 7 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, radio/radio.liq, web/panel/header.js, web/panel/index.html, web/panel/studio.html",
+  "20:20:09 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "CKay \u2013 BADAMINTON",
-  "listeners": 7,
+  "song": "Noano x KM \u2013 BADBAD",
+  "listeners": 6,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.5,
   "problems": [],
   "ok": true
  },
