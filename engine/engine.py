@@ -2638,7 +2638,8 @@ def tv_file(c, path):
     return os.path.join(ROOT, path)
 
 KIND_SQL = {"audio": "COALESCE(mode, 'audio') IN ('audio', 'pair')", "pair": "mode = 'pair'",
-            "noclip": "COALESCE(mode, 'audio') = 'audio'", "video": "mode = 'clip'"}
+            "noclip": "COALESCE(mode, 'audio') = 'audio'", "video": "mode = 'clip'",
+            "tempo": "COALESCE(tempo, 1.0) <> 1.0"}       # Library → Type → Tempo: only the songs you made faster
 def to_replace(c, folder="", q=""):
     """Library → ⚠ To replace: songs with something to improve, most played (90 days) first:
     no music video · video under 720p · audio under 190 kbps · a replaced file whose cues need a check."""
