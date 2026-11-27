@@ -358,13 +358,15 @@ def index_file(c, path, st):
             row["problem"] = row["problem"] or "no artist (name the file 'Artist - Title')"
     if section == "music" and not row["problem"]:
         row["mode"] = "clip" if row["has_video"] else "audio"
-    old = c.execute("SELECT cues_edited, mode_set_by_user, mode, clip_path, cue_start, cue_intro, cue_mix, cue_end, duration FROM items WHERE path=?", (rel,)).fetchone()
+    try: old = c.execute("SELECT cues_edited, mode_set_by_user, mode, clip_path, cue_start, cue_intro, cue_mix, cue_end, duration, COALESCE(tempo_pending, 0) FROM items WHERE path=?", (rel,)).fetchone()
+    except sqlite3.OperationalError:     # (before the engine added the tempo columns)
+        old = c.execute("SELECT cues_edited, mode_set_by_user, mode, clip_path, cue_start, cue_intro, cue_mix, cue_end, duration, 0 FROM items WHERE path=?", (rel,)).fetchone()
     check = False
     if old:
         if old[0] == 1:  # keep hand-edited cue points (2 = imported from CLOSE: re-applied below)
             row.update(cue_start=old[4], cue_intro=old[5], cue_mix=old[6], cue_end=old[7], cues_edited=1); row["lead"] = None   # your own START: the silence check runs on it later (make_lead)
             nd, od = row.get("duration") or 0, old[8] or 0
-            if nd and od and abs(nd - od) > 1.0:
+            if nd and od and abs(nd - od) > 1.0 and not old[9]:     # (not after Library → Tempo: the engine moved the cues itself)
                 # replaced by a version of another length: your cue points are kept, but may now sit in the wrong place
                 check = True
                 if row["cue_end"] and row["cue_end"] > nd: row["cue_end"] = nd
@@ -377,6 +379,9 @@ def index_file(c, path, st):
     c.execute(f"INSERT INTO items({cols}) VALUES({qs}) ON CONFLICT(path) DO UPDATE SET {upd}", list(row.values()))
     c.execute("UPDATE items SET added_at=? WHERE path=? AND added_at IS NULL", (time.time(), rel))
     if check: c.execute("UPDATE items SET cue_check=1 WHERE path=?", (rel,))
+    if old and old[9]:
+        try: c.execute("UPDATE items SET tempo_pending=0 WHERE path=?", (rel,))
+        except sqlite3.OperationalError: pass
     if not row["problem"] and row.get("cues_edited") != 1:   # use its CLOSE cue points if we have them
         try:
             sys.path.insert(0, "/opt/hype"); import close_import

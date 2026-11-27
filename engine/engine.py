@@ -72,7 +72,10 @@ def dbc():
         if "over" not in [r[1] for r in c.execute("PRAGMA table_info(asrun)")]: c.execute("ALTER TABLE asrun ADD COLUMN over TEXT")   # "+ ID …" over the intro (History)
         c.execute("CREATE INDEX IF NOT EXISTS asrun_path ON asrun(path)"); c.execute("CREATE INDEX IF NOT EXISTS asrun_started ON asrun(started)")
         c.execute("CREATE TABLE IF NOT EXISTS aud_samples(t REAL PRIMARY KEY, r INT, p INT, tv INT)")
-        if "cue_check" not in [r[1] for r in c.execute("PRAGMA table_info(items)")]: c.execute("ALTER TABLE items ADD COLUMN cue_check INT DEFAULT 0")   # audience every 15 s (History: who came / left per song)
+        if "cue_check" not in [r[1] for r in c.execute("PRAGMA table_info(items)")]: c.execute("ALTER TABLE items ADD COLUMN cue_check INT DEFAULT 0")
+        _ic = [r[1] for r in c.execute("PRAGMA table_info(items)")]
+        for _col, _typ in (("tempo", "REAL"), ("tempo_src", "TEXT"), ("tempo_pending", "INT DEFAULT 0")):   # Library → Tempo (27 Nov)
+            if _col not in _ic: c.execute(f"ALTER TABLE items ADD COLUMN {_col} {_typ}")   # audience every 15 s (History: who came / left per song)
         c.commit(); _DBI[0] = True
     return c
 _DBI = [False]
@@ -2299,6 +2302,8 @@ class Engine:
                     if d.get("duck"):
                         pi = row_item(r, "pad"); self.liq.cmd("pads.push " + annotate(pi, True)); self.duck_for(duck_len(pi), float(planner.get_setting(c, "pad_duck", 0.25)))
                     else: self.liq.cmd("pads.push " + annotate(row_item(r, "pad"), True))
+            elif action == "set_tempo":
+                return tempo_set(d)
             elif action == "set_cues":
                 cs, cm, ce = float(d["cue_start"]), float(d["cue_mix"]), float(d["cue_end"]); auto = bool(d.get("mix_auto"))
                 if auto: cm = min(max(cm, cs), ce)
@@ -2675,7 +2680,7 @@ def library(qs):
     chq = (qs.get("ch") or [""])[0]
     fix = qs.get("fix", ["0"])[0] == "1" and sec == "music"
     FIX = to_replace(c, folder, q) if fix else None
-    sql = "SELECT path, artist, title, folder, mode, clip_path, clip_suggest, clip_score, duration, has_video, problem, overlay_mode, overlay_path, cue_start, cue_mix, cue_end, cues_edited, added_at, COALESCE(mix_set, 0), COALESCE(cue_check, 0) FROM items WHERE section=?"
+    sql = "SELECT path, artist, title, folder, mode, clip_path, clip_suggest, clip_score, duration, has_video, problem, overlay_mode, overlay_path, cue_start, cue_mix, cue_end, cues_edited, added_at, COALESCE(mix_set, 0), COALESCE(cue_check, 0), COALESCE(tempo, 1.0), COALESCE(tempo_pending, 0) FROM items WHERE section=?"
     mixes = sec == "mixes"; recs = sec == "recordings"
     if recs: sec = "music"; sql += " AND folder LIKE 'RECORDINGS%'"           # recordings (REC / GO LIVE / auto): a Library tab of their own
     elif sec in ("music", "mixes"): sec = "music"; sql += (" AND folder LIKE 'MIXES%'" if mixes else " AND folder NOT LIKE 'MIXES%' AND folder NOT LIKE 'RECORDINGS%'")
@@ -2697,7 +2702,7 @@ def library(qs):
         sql += " ORDER BY (SELECT COUNT(*) FROM asrun a WHERE a.path = items.path AND a.started > %d) DESC, artist, title LIMIT ? OFFSET ?" % int(time.time() - 90 * 86400); args += [lim, off]
     else: sql += " ORDER BY " + ("added_at DESC, artist, title" if sort == "new" else "(problem IS NULL), problem, artist, title" if sort == "problems" else "artist, title") + " LIMIT ? OFFSET ?"; args += [lim, off]
     last = {r[0]: r[1] for r in c.execute("SELECT path, MAX(started) FROM asrun GROUP BY path")}
-    k = ["path", "artist", "title", "folder", "mode", "clip_path", "clip_suggest", "clip_score", "duration", "has_video", "problem", "overlay_mode", "overlay_path", "cue_start", "cue_mix", "cue_end", "cues_edited", "added_at", "mix_set", "cue_check"]
+    k = ["path", "artist", "title", "folder", "mode", "clip_path", "clip_suggest", "clip_score", "duration", "has_video", "problem", "overlay_mode", "overlay_path", "cue_start", "cue_mix", "cue_end", "cues_edited", "added_at", "mix_set", "cue_check", "tempo", "tempo_pending"]
     out = []
     for r in c.execute(sql, args):
         d = dict(zip(k, r)); d["last"] = last.get(d["path"]); out.append(d)
@@ -2841,6 +2846,11 @@ def up_chunk(qs, rfile, n):
                 try:
                     c_ = dbc(); c_.execute("UPDATE items SET tv_path=NULL, kf=NULL, align=NULL, mode='audio', mode_set_by_user=0, clip_path=NULL WHERE path=?", (r_.get("path"),)); c_.commit()
                 except Exception as e: log.warning("replace by audio: %s", e)
+        try:       # a replaced song starts at its own tempo again (the kept original of an older version is not needed)
+            c_ = dbc(); t_ = c_.execute("SELECT tempo_src FROM items WHERE path=?", (os.path.relpath(dst, ROOT),)).fetchone()
+            c_.execute("UPDATE items SET tempo=NULL, tempo_src=NULL WHERE path=?", (os.path.relpath(dst, ROOT),)); c_.commit()
+            if t_ and t_[0] and t_[0].startswith(TEMPO_DIR + "/") and os.path.isfile(t_[0]): os.remove(t_[0])
+        except Exception as e: log.warning("replace: tempo reset: %s", e)
         log.info("replaced from the Library page: %s -> %s", rep, os.path.relpath(dst, ROOT))
     else:
         while os.path.exists(dst): dst = os.path.join(d, f"{stem} ({k}){ext}"); k += 1
@@ -3046,6 +3056,101 @@ def chan_replan(ch):
                                     method="POST", headers={"Content-Type": "application/json"})
         urllib.request.urlopen(rq, timeout=3).read()
     except Exception: pass               # the channel is off: it plans from scratch when it starts anyway
+
+# ---------- Library → Tempo: a song a bit faster, the pitch stays (27 Nov) ----------
+# Studio makes a faster copy of the song (sound + picture together, so lip sync stays) and puts it in the song's place; the
+# original is kept in TEMPO_DIR and comes back when you choose "Original". START / MIX / END move with the new length.
+TEMPO_OK = (1.0, 1.05, 1.10, 1.15, 1.20, 1.25)
+TEMPO_DIR = "/srv/hype-data/tempo"
+TEMPO_JOBS = {}            # path -> {"state": "busy"|"done"|"error", "msg": ..., "t": ...}
+def _tempo_fps(f):
+    try:
+        r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", "-of", "csv=p=0", f],
+                           capture_output=True, text=True, timeout=20).stdout.strip().split("/")
+        v = float(r[0]) / float(r[1] if len(r) > 1 else 1)
+        return v if 10 <= v <= 120 else 25.0
+    except Exception: return 25.0
+def _tempo_render(src, dst, x, video):
+    ext = os.path.splitext(dst)[1].lower()
+    cmd = ["nice", "-n", "15", "ffmpeg", "-v", "error", "-y", "-i", src]
+    if video:
+        fps = _tempo_fps(src)
+        cmd += ["-filter_complex", f"[0:v:0]setpts=PTS/{x},fps={fps:.3f}[v];[0:a:0]rubberband=tempo={x}[a]", "-map", "[v]", "-map", "[a]",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", "-threads", "6",
+                "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart"]
+    else:
+        codec = {".mp3": ["libmp3lame", "-b:a", "320k"], ".m4a": ["aac", "-b:a", "256k"], ".aac": ["aac", "-b:a", "256k"],
+                 ".flac": ["flac"], ".wav": ["pcm_s16le"], ".ogg": ["libvorbis", "-q:a", "7"], ".opus": ["libopus", "-b:a", "192k"]}.get(ext)
+        if not codec: raise ValueError("tempo: unknown audio type " + ext)
+        cmd += ["-map", "0:a:0", "-af", f"rubberband=tempo={x}", "-map_metadata", "0", "-c:a"] + codec
+    cmd += ["-f", {".mp4": "mp4", ".m4v": "mp4", ".mov": "mov", ".mkv": "matroska", ".mp3": "mp3", ".m4a": "ipod", ".aac": "adts",
+                   ".flac": "flac", ".wav": "wav", ".ogg": "ogg", ".opus": "opus"}[ext], dst]
+    p = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
+    if p.returncode != 0 or not os.path.exists(dst) or os.path.getsize(dst) < 10000:
+        raise RuntimeError("ffmpeg: " + (p.stderr or "no output").strip()[-300:])
+def tempo_set(d):
+    path = str(d.get("path") or ""); x = round(float(d.get("tempo") or 1.0), 2)
+    if x not in TEMPO_OK: return {"ok": False, "error": "choose 1.00, 1.05, 1.10, 1.15, 1.20 or 1.25"}
+    c = dbc()
+    r = c.execute("SELECT section, has_video, clip_path, COALESCE(tempo, 1.0), tempo_src, rowid FROM items WHERE path=?", (path,)).fetchone()
+    if not r: return {"ok": False, "error": "song not found"}
+    sec, hv, clip, cur, src, iid = r
+    if sec != "music": return {"ok": False, "error": "tempo is for songs only"}
+    if clip: return {"ok": False, "error": "this song plays with a separate (paired) video clip - tempo works for songs that are one file"}
+    ext = os.path.splitext(path)[1].lower()
+    if hv and ext not in (".mp4", ".m4v", ".mov", ".mkv"): return {"ok": False, "error": "tempo works for mp4 / mov / mkv videos"}
+    if abs(x - cur) < 0.001: return {"ok": True, "tempo": x, "same": True}
+    if (TEMPO_JOBS.get(path) or {}).get("state") == "busy": return {"ok": False, "error": "the faster version of this song is still being made"}
+    TEMPO_JOBS[path] = {"state": "busy", "msg": "making the %s version…" % ("original" if x == 1.0 else "%.2f×" % x), "t": time.time(), "tempo": x}
+    def go():
+        try:
+            full = lib_file(path); dname, base = os.path.split(full); tmp = os.path.join(dname, ".tempo_" + base)
+            os.makedirs(TEMPO_DIR, exist_ok=True)
+            orig = src if src and os.path.isfile(src) else None
+            if x == 1.0:
+                if not orig: raise RuntimeError("the original file is not there any more")
+                shutil.copy2(orig, tmp)
+            else:
+                if not orig:                       # first time: keep the original
+                    orig = os.path.join(TEMPO_DIR, "%s_%s" % (iid or abs(hash(path)), base))
+                    try: os.link(full, orig)
+                    except OSError: shutil.copy2(full, orig)
+                _tempo_render(orig, tmp, x, bool(hv))
+            c2 = dbc()
+            row = c2.execute("SELECT cue_start, cue_intro, cue_mix, cue_end, tv_path, COALESCE(tempo, 1.0) FROM items WHERE path=?", (path,)).fetchone()
+            f = (row[5] or 1.0) / x                      # times in the current version -> times in the new one
+            sc = lambda v: None if v is None else round(v * f, 2)
+            old_tv = row[4]
+            c2.execute("UPDATE items SET cue_start=?, cue_intro=?, cue_mix=?, cue_end=?, cues_edited=1, tempo=?, tempo_src=?, tempo_pending=1, "
+                       "tv_path=NULL, kf=NULL, align=NULL WHERE path=?",
+                       (sc(row[0]), sc(row[1]), sc(row[2]), sc(row[3]), None if x == 1.0 else x, None if x == 1.0 else orig, path))
+            c2.commit()
+            os.replace(tmp, full)
+            try:
+                import pwd as _pw, grp as _gr; os.chown(full, _pw.getpwnam("upload").pw_uid, _gr.getgrnam("hype").gr_gid)
+            except Exception: pass
+            os.chmod(full, 0o664)
+            if old_tv and os.path.isfile(old_tv) and old_tv.startswith("/srv/hype-data/"):
+                try: os.remove(old_tv)                  # its TV copy is made again from the new file
+                except OSError: pass
+            if x == 1.0 and orig and orig.startswith(TEMPO_DIR + "/"):
+                try: os.remove(orig)
+                except OSError: pass
+            LM_CACHE.pop(path, None)
+            TEMPO_JOBS[path] = {"state": "done", "msg": "ready - Studio is measuring it now (about a minute)", "t": time.time(), "tempo": x}
+            log.info("tempo %.2fx: %s", x, path)
+        except Exception as e:
+            try:
+                if os.path.exists(tmp): os.remove(tmp)
+            except Exception: pass
+            TEMPO_JOBS[path] = {"state": "error", "msg": str(e)[:200], "t": time.time(), "tempo": x}
+            log.warning("tempo %.2fx failed: %s: %s", x, path, e)
+    threading.Thread(target=go, daemon=True).start()
+    return {"ok": True, "busy": True, "tempo": x}
+def tempo_status(path):
+    j = TEMPO_JOBS.get(path) or {}
+    r = dbc().execute("SELECT COALESCE(tempo, 1.0), COALESCE(tempo_pending, 0) FROM items WHERE path=?", (path,)).fetchone()
+    return {"ok": True, "state": j.get("state") or "idle", "msg": j.get("msg") or "", "tempo": r[0] if r else 1.0, "measuring": bool(r and r[1])}
 
 def lib_file(path):
     """A file in the library (under ROOT) - never an absolute path or ../ outside it."""
@@ -3948,6 +4053,7 @@ class H(BaseHTTPRequestHandler):
             if p == "/wave": return self.send(200, waveform(qs["path"][0]))
             if p == "/pvclip": return self.send(200, pvclip(qs["path"][0]))
             if p == "/startexact": return self.send(200, start_exact(qs["path"][0], qs.get("t", ["0"])[0]))
+            if p == "/tempo_status": return self.send(200, tempo_status(qs["path"][0]))
             if p == "/wavezoom": return self.send(200, wave_zoom(qs["path"][0], float(qs.get("t", ["0"])[0]), float(qs.get("d", ["6"])[0])))
             if p == "/preview.jpg": return self.send(200, E.tv.screenshot(int(qs.get("w", ["640"])[0])), "image/jpeg")
             if p == "/playlists":
