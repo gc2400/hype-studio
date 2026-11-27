@@ -1,17 +1,19 @@
 {
- "time": "2026-11-27T13:36:52",
- "result": "waiting",
- "commit": "4d5aa015788df8dba9dab95236291be7e09b430e",
- "subject": "[night] TV sound on its own clock behind the 0.2 s buffer (clock_safe=true): a stall of the radio engine when it opens a video file no longer reaches the TV sound as a hole (gap watch 27 Nov: holes only on the TV bus, never on the streams)",
+ "time": "2026-11-27T14:00:09",
+ "result": "ok",
+ "commit": "a6afb17ca70966ca7ee16274fb99c0e783a1b900",
+ "subject": "Tempo choices: steps of 0.01 from 1.01 to 1.07 (a song already at another tempo keeps it until you choose again)",
  "log": [
-  "13:36:52 update c7b6041b \u2192 4d5aa015 \u00b7 2 file(s): engine/chan.py, radio/radio.liq",
-  "13:36:52 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "13:59:24 update c7b6041b \u2192 a6afb17c \u00b7 2 file(s): engine/engine.py, web/panel/library.html",
+  "13:59:24 restart hype-engine@*",
+  "13:59:24 restart hype-engine",
+  "14:00:09 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "DJ DYLVN x Zefanio x Latifah \u2013 SO FINE",
-  "listeners": 7,
+  "song": "B'Jay x Jaido \u2013 Monaco",
+  "listeners": 9,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 0.2,
   "problems": [],
   "ok": true
  },
