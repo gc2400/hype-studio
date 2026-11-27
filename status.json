@@ -1,19 +1,19 @@
 {
- "time": "2026-11-27T12:26:43",
+ "time": "2026-11-27T12:32:37",
  "result": "ok",
- "commit": "f8001a14983b05d3c1378f408b74eb7715f97f06",
- "subject": "Tempo: the faster copy is made gently (2 threads, lowest CPU and disk priority) - with 6 threads the load reached 7.6 and the TV sound / lip sync suffered at the next song start",
+ "commit": "32b31cac9ce9558ec97a5b90a888b8f7a0244034",
+ "subject": "Tempo choices: Original, 1.025, 1.05, 1.10, 1.15 (1.20 / 1.25 taken out)",
  "log": [
-  "12:25:58 update d6462493 \u2192 f8001a14 \u00b7 1 file(s): engine/engine.py",
-  "12:25:58 restart hype-engine@*",
-  "12:25:58 restart hype-engine",
-  "12:26:43 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "12:31:52 update f8001a14 \u2192 32b31cac \u00b7 2 file(s): engine/engine.py, web/panel/library.html",
+  "12:31:52 restart hype-engine@*",
+  "12:31:52 restart hype-engine",
+  "12:32:37 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Litleboy x Quan x Trilla G \u2013 Someone Else",
-  "listeners": 4,
+  "song": "DJ Neptune x Rema \u2013 For You",
+  "listeners": 6,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
