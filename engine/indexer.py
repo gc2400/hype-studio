@@ -399,9 +399,12 @@ def tv_encode(src, tmp, dur=0, audio=True):
     if dur and dur > LONG:     # mixtape: picture copied as it is (starts at its beginning, so the keyframe steps don't matter)
         return run(["nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-map", "0:v:0", "-an", "-sn", "-dn",
                     "-c:v", "copy", "-f", "matroska", tmp], 1800)
-    return run(["nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-map", "0:v:0", *(["-map", "0:a:0?", "-c:a", "copy"] if audio else ["-an"]), "-sn", "-dn",
+    # the TV copy of a new / replaced / faster song: a hard cap of 2 cores (27 Nov: with a tempo copy at the same time the IDs
+    # over the intro stuttered on TV)
+    return run(["systemd-run", "--scope", "--quiet", "-p", "CPUQuota=200%", "-p", "IOWeight=10",
+                "nice", "-n", "19", "ionice", "-c3", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-map", "0:v:0", *(["-map", "0:a:0?", "-c:a", "copy"] if audio else ["-an"]), "-sn", "-dn",
                 "-vf", "scale='min(1920,iw)':-2:flags=bicubic", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
-                "-force_key_frames", "expr:gte(t,n_forced*0.5)", "-sc_threshold", "0", "-threads", "4", "-f", "matroska", tmp], max(1800, int((dur or 0) * 3)))
+                "-force_key_frames", "expr:gte(t,n_forced*0.5)", "-sc_threshold", "0", "-threads", "2", "-f", "matroska", tmp], max(1800, int((dur or 0) * 3)))
 
 def strip_tv_sound(c, n=25):
     """TV copies of videos that are NOT paired: picture only (sound removed, stream copy, seconds each). OBS decodes a muted clip's

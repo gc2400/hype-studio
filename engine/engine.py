@@ -3076,7 +3076,9 @@ def _tempo_render(src, dst, x, video):
     ext = os.path.splitext(dst)[1].lower()
     # gently: the on-air sound, the TV and OBS always come first (27 Nov: with 6 threads the load went to 7.6 and the
     # TV sound / lip sync suffered at the next song start)
-    cmd = ["ionice", "-c", "3", "nice", "-n", "19", "ffmpeg", "-v", "error", "-y", "-threads", "2", "-filter_threads", "1", "-i", src]
+    # + a hard cap: never more than 1.5 cores, whatever else is busy (27 Nov: tempo + TV copies together made the IDs stutter on TV)
+    cmd = ["systemd-run", "--scope", "--quiet", "-p", "CPUQuota=150%", "-p", "IOWeight=10",
+           "ionice", "-c", "3", "nice", "-n", "19", "ffmpeg", "-v", "error", "-y", "-threads", "2", "-filter_threads", "1", "-i", src]
     if video:
         fps = _tempo_fps(src)
         cmd += ["-filter_complex", f"[0:v:0]setpts=PTS/{x},fps={fps:.3f}[v];[0:a:0]rubberband=tempo={x}[a]", "-map", "[v]", "-map", "[a]",
