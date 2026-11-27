@@ -1,17 +1,19 @@
 {
- "time": "2026-11-27T14:43:47",
- "result": "waiting",
- "commit": "1947074338013cde147d18782aa729299aada568",
- "subject": "[night] TV sound on its own clock behind the 0.2 s buffer (clock_safe=true): a stall of the radio engine when it opens a video file no longer reaches the TV sound as a hole (gap watch 27 Nov: holes only on the TV bus, never on the streams)",
+ "time": "2026-11-27T14:45:37",
+ "result": "ok",
+ "commit": "ea6788dd05cb9497fedf875ffe75871036a72324",
+ "subject": "Library: Type \u2192 \u23e9 Tempo shows only the songs with a tempo change",
  "log": [
-  "14:43:47 update 6255cbbf \u2192 19470743 \u00b7 2 file(s): engine/chan.py, radio/radio.liq",
-  "14:43:47 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "14:44:51 update 6255cbbf \u2192 ea6788dd \u00b7 2 file(s): engine/engine.py, web/panel/library.html",
+  "14:44:51 restart hype-engine@*",
+  "14:44:51 restart hype-engine",
+  "14:45:37 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
   "song": "Bryan Mg x Dylisa x Bokoesam \u2013 Nobody Body",
-  "listeners": 13,
+  "listeners": 12,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 1.7,
   "problems": [],
   "ok": true
  },
