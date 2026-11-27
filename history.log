@@ -583,3 +583,4 @@
 2026-11-27T14:46:40 waiting 20766426 [night] TV sound on its own clock behind the 0.2 s buffer (clock_safe=true): a stall of the radio engine when it opens a video file no longer reaches the TV sound as a hole (gap watch 27 Nov: holes only on the TV bus, never on the streams)
 2026-11-27T15:33:45 waiting 8ddab25d [night] Tempo copies and TV copies get a hard CPU cap (1.5 / 2 cores via systemd scopes): together they made the IDs over the intro stutter on TV (27 Nov 15:32, load 12)
 2026-11-27T15:48:08 waiting 0939ff4a [night] CPU caps raised: tempo copies max 2 cores, TV copies max 3 (Gianno)
+2026-11-27T20:16:01 waiting e2eb4730 [night] Radio dot: red only when the radio is really stopped or after 3 missed answers (a drawing error or one slow answer painted it red during the first live show); Studio page: the music back to the Mixcast always plays (a lost output device falls back to the default with a message, a blocked play starts on the next click)

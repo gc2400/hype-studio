@@ -1,17 +1,17 @@
 {
- "time": "2026-11-27T15:48:08",
+ "time": "2026-11-27T20:16:01",
  "result": "waiting",
- "commit": "0939ff4a899b60f5ee3fb349fbe3c3c808f57bf5",
- "subject": "[night] CPU caps raised: tempo copies max 2 cores, TV copies max 3 (Gianno)",
+ "commit": "e2eb4730a75ff18b673484e2579dd64b5b20b1cc",
+ "subject": "[night] Radio dot: red only when the radio is really stopped or after 3 missed answers (a drawing error or one slow answer painted it red during the first live show); Studio page: the music back to the Mixcast always plays (a lost output device falls back to the default with a message, a blocked play starts on the next click)",
  "log": [
-  "15:48:08 update ea6788dd \u2192 0939ff4a \u00b7 4 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, radio/radio.liq",
-  "15:48:08 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "20:16:01 update ea6788dd \u2192 e2eb4730 \u00b7 7 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, radio/radio.liq, web/panel/header.js, web/panel/index.html, web/panel/studio.html",
+  "20:16:01 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "Juanka x Myke Towers \u2013 Santa Diabla (Remix)",
-  "listeners": 10,
+  "song": "CKay \u2013 BADAMINTON",
+  "listeners": 7,
   "obs": true,
-  "seg_age": 0.6,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
