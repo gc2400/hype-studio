@@ -1225,6 +1225,9 @@ class Engine:
           except Exception as e: log.warning("up next (yours): %s", e)
         try: self.aux = json.load(open(SP("/var/lib/hype/aux.json")))
         except Exception: self.aux = {"1": [], "2": []}
+        try: self.aux_on = str(json.load(open(SP("/var/lib/hype/aux_on.json"))).get("on") or "1")      # MANUAL: the AUX that plays (you switch)
+        except Exception: self.aux_on = "1"
+        self.paused = None      # MANUAL · PAUSE: {"it": the song, "pos": seconds in the file} – PLAY goes on from there
         self.dj = getattr(self, "dj", False); self.deck = getattr(self, "deck", None); self.faders = {}; self.parked = None
         self.sgroups = planner.get_setting(c0, "scene_groups", [])
         self.layouts = {t: planner.get_setting(c0, t + "_layout", None) for t in ("cam", "pip", "media")}
@@ -1298,12 +1301,70 @@ class Engine:
                 return dict(it, id=uuid.uuid4().hex[:10], src="dj", deck=k)
         return None
     def aux_take(self):
-        """MANUAL: AUX 1 plays top to bottom, then AUX 2."""
-        for k in ("1", "2"):
-            if self.aux.get(k):
-                it = self.aux[k].pop(0); self.aux_save_file()
-                return dict(it, id=uuid.uuid4().hex[:10], src="aux", deck=k)
+        """MANUAL: only the AUX you chose plays, top to bottom (27 Nov, Gianno: "I switch myself between the 2 AUX") –
+        when it runs out the radio stops (aux_ended), it does not go on to the other AUX or the clock."""
+        k = self.aux_on if self.aux_on in ("1", "2") else "1"
+        if self.aux.get(k):
+            it = self.aux[k].pop(0); self.aux_save_file()
+            return dict(it, id=uuid.uuid4().hex[:10], src="aux", deck=k)
         return None
+    def aux_select(self, k):
+        if k not in ("1", "2"): return
+        self.aux_on = k
+        try: jdump({"on": k}, SP("/var/lib/hype/aux_on.json"))
+        except Exception as e: log.warning("aux on: %s", e)
+    def aux_ended(self):
+        """MANUAL: the last song of the AUX is over → the radio stops (no clock song: you take over, e.g. your DJ set).
+        stopped = on purpose, so the guard does not see it as dead air; the TV goes to the Branding scene."""
+        self.stopped = True; self.paused = None
+        log.info("MANUAL: AUX %s is empty – the radio stops (PLAY starts the next song you put in)", self.aux_on)
+        self.stop_tv()
+    def stop_tv(self):
+        """STOP / PAUSE / the AUX ran out: the TV shows the Branding scene (not the music video playing on without sound).
+        A theme station has no TV of its own: Hype Radio's engine does it when the TV follows that station (tv_follow_step)."""
+        if CH or getattr(self.live, "live", False) or not self.tv.auto: return
+        threading.Thread(target=lambda: self.tv.set_scene("Branding"), daemon=True).start()
+    def fade_skip(self, secs=0.5):
+        """A short fade-out, then the song on air ends (PAUSE)."""
+        def go():
+            try:
+                n_ = max(1, int(secs / 0.05))
+                for i in range(1, n_ + 1): self.liq.cmd(f"var.set duck_lvl = {1 - i / n_:.3f}"); time.sleep(0.05)
+                self.liq.cmd("radio.skip"); time.sleep(0.4)
+            except Exception as e: log.warning("fade: %s", e)
+            finally:
+                try: self.liq.cmd("var.set duck_lvl = 1.0")
+                except Exception: pass
+        threading.Thread(target=go, daemon=True).start()
+    def manual_play(self, c, d):
+        """MANUAL · PLAY: paused → on from the same spot; a song you selected in an AUX → that one (and its AUX plays from
+        now on); else the top song of the AUX that plays. While a song plays, a selected song comes in at once."""
+        iid = d.get("id"); was = self.stopped
+        if not was and not iid: return {"ok": True, "note": "already playing – select a song in the AUX to play it now"}
+        self.take_back_next()      # what is queued goes back to the top of Up next first (the chosen song goes before it)
+        if self.paused and not iid:
+            p_ = self.paused; self.paused = None
+            it = {k: v for k, v in p_["it"].items() if k not in ("id_over", "voice_over", "sweeper", "lmap", "pushed")}
+            it.update(id=uuid.uuid4().hex[:10], cue_start=round(max(0.0, p_["pos"] - 0.3), 2), resumed=True)
+            self.plan.insert(0, it)
+            log.info("MANUAL: on from %.0f s in %s – %s", p_["pos"], it.get("artist"), it.get("title"))
+        elif iid:
+            a = next((k for k, L in self.aux.items() if any(x.get("id") == iid for x in L)), None)
+            if not a: return {"ok": False, "error": "that song is not in the AUX any more"}
+            self.paused = None; self.aux_back()             # what was lined up goes back on top of its AUX
+            x = next(x for x in self.aux[a] if x.get("id") == iid)
+            self.aux[a] = [y for y in self.aux[a] if y is not x]; self.aux_save_file(); self.aux_select(a)
+            self.plan.insert(0, dict(x, id=uuid.uuid4().hex[:10], src="aux", deck=a))
+        else:
+            self.paused = None
+            if not (self.liq_next or (self.plan and self.plan[0].get("src") == "aux")):
+                it = self.aux_take()
+                if not it: return {"ok": False, "error": "AUX %s is empty – drag songs into it" % self.aux_on}
+                self.plan.insert(0, it)
+        self.stopped = False; self.stop_at_end = False
+        self.push_next(c, force=True)                 # the radio is empty after STOP: it starts at once
+        if not was: time.sleep(0.3); self.liq.cmd("radio.cut")      # a song plays: the chosen one interrupts (quick cut, like ▶ in the AUX)
+        return {"ok": True}
     def aux_back(self):
         """Songs taken from an AUX but not played yet go back on top of their AUX (keeps your order)."""
         self.take_back_next()
@@ -1337,10 +1398,14 @@ class Engine:
             left = ((self.now.get("started") or 0) + self.length(self.now) - time.time()) if self.now.get("path") else 0
             if not self.plan and not self.liq_next and left <= PUSH_LEAD + 2:      # DJ / MANUAL: the AUX keeps its songs (visible, movable) until the next one is really needed (one at a time)
                 it = self.dj_take() if self.dj else self.aux_take()
-                if not it:   # nothing in the AUX/decks: the radio never stops – the clock keeps the music going
+                if not it and self.dj:   # DJ: nothing on the decks – the clock keeps the music going
                     it = self.picker.next_planned(c, self.avoid(), self.cursor(), self.runner) or self.picker.next(c, self.avoid())
                     if it: self.picker.note(it)
                 if it: self.plan.append(it)
+                elif not self.dj and not self.stopped and self.now.get("path") and not getattr(self.live, "live", False):
+                    # MANUAL, the AUX is empty: no song from the clock (27 Nov, Gianno) – when the song on air is over, the radio stops
+                    n_ = self.now; end_left = (n_.get("started") or 0) + max(1.0, (n_.get("cue_end") or n_.get("duration") or 0) - (n_.get("cue_start") or 0)) - time.time()
+                    if end_left <= 0.3: self.aux_ended()
             return
         while self.auto and len(self.plan) < PLAN_LEN:
             try:
@@ -1957,7 +2022,7 @@ class Engine:
                 except Exception: pass
             if it.get("deck"): self.deck = it["deck"]
             elif self.dj: self.deck = None
-            if it["section"] == "music": self.intro_sweeper(c, it)
+            if it["section"] == "music" and not it.get("resumed"): self.intro_sweeper(c, it)      # (on after PAUSE: no sweeper)
             elif (path or "").startswith(VOICE_PFX):      # a listener voice from an hour-plan slot: counted + the voice box on TV
                 voice_played(path); voice_box(path, 0.3, max(2.0, (it.get("cue_end") or it.get("duration") or 8) - (it.get("cue_start") or 0)))
             elif (path or "").startswith(VT_PFX): vt_on_air(c, path, it)      # your own voice link (voice tracking)
@@ -2115,20 +2180,38 @@ class Engine:
                 if not self.auto and not self.plan and not self.liq_next:     # DJ / MANUAL: the next song of the decks / AUX (taken only when needed)
                     it_ = self.dj_take() if self.dj else self.aux_take()
                     if it_: self.picker.note(it_); self.plan.append(it_)
+                    elif not self.dj:      # MANUAL, the AUX is empty: NEXT = stop (else silence the guard would call dead air)
+                        self.paused = None; self.stopped = True; self.liq.cmd("radio.skip"); self.stop_tv(); return {"ok": True, "note": "AUX empty – stopped"}
+                self.paused = None
                 self.push_next(c, force=True); time.sleep(0.3); self.liq.cmd("radio.skip")
             elif action == "play":
-                if not self.auto and not self.dj and not self.stopped:   # MANUAL → PLAY = back to the normal programming
-                    return self.cmd_auto(c, True)
-                self.stopped = False; self.stop_at_end = False
-                gone = not self.now or time.time() - self.now.get("started", 0) > (self.now.get("duration") or 0)
-                self.push_next(c, force=gone)
-                if gone: self.liq.cmd("radio.skip")
+                if not self.auto and not self.dj: return self.manual_play(c, d)      # MANUAL: your AUX (no more "back to the programming")
+                was = self.stopped
+                self.stopped = False; self.stop_at_end = False; self.paused = None
+                if was: self.push_next(c, force=True)      # after STOP the radio is empty: start at once (it waited for the old song's end)
+                else:
+                    gone = not self.now or time.time() - self.now.get("started", 0) > (self.now.get("duration") or 0)
+                    self.push_next(c, force=gone)
+                    if gone: self.liq.cmd("radio.skip")
+            elif action == "pause":      # MANUAL: stop here, PLAY goes on from the same spot (sound + video)
+                n_ = self.now or {}
+                if self.auto or self.dj: return {"ok": False, "error": "PAUSE works in MANUAL"}
+                if getattr(self.live, "live", False): return {"ok": False, "error": "not while you are LIVE"}
+                if self.stopped or not n_.get("path") or n_.get("src") in ("deck", "deck_gone"): return {"ok": False, "error": "nothing is playing"}
+                pos = time.time() - n_["started"] + (n_.get("cue_start") or 0)
+                if (n_.get("cue_end") or n_.get("duration") or 0) - pos < 4: return {"ok": False, "error": "the song is almost over"}
+                self.paused = {"it": {k: v for k, v in n_.items() if k not in ("started", "scene")}, "pos": round(pos, 2)}
+                self.stop_at_end = True; self.take_back_next(); self.stopped = True
+                self.fade_skip(0.5); self.stop_tv()
+                log.info("MANUAL: paused at %.0f s in %s – %s", pos, n_.get("artist"), n_.get("title"))
+                return {"ok": True, "pos": pos}
             elif action == "stop_at_end":
                 self.stop_at_end = not self.stop_at_end
                 if self.stop_at_end: self.take_back_next()
                 else: self.push_next(c)
             elif action == "stop":
-                self.stop_at_end = True; self.take_back_next(); self.liq.cmd("radio.skip"); self.stopped = True
+                self.stop_at_end = True; self.take_back_next(); self.liq.cmd("radio.skip"); self.stopped = True; self.paused = None
+                self.stop_tv()      # the TV to Branding too (27 Nov: the music video played on without sound)
             elif action == "auto":
                 return self.cmd_auto(c, bool(d.get("on", True)))
             elif action == "insert_many":      # a playlist dragged into Up next: its songs, in its own order
@@ -2401,7 +2484,7 @@ class Engine:
         """AUTO = the clocks and programming. MANUAL = your AUX lists play (the song on air always plays on)."""
         if on == self.auto: return {"ok": True}
         if on:
-            self.aux_back(); self.dj = False; self.auto = True; self.stopped = False; self.stop_at_end = False
+            self.aux_back(); self.dj = False; self.auto = True; self.stopped = False; self.stop_at_end = False; self.paused = None
             keep = self.keep_mine()
             t, parked = self.parked or (0, [])
             played = {r[0] for r in c.execute("SELECT path FROM asrun WHERE started>=?", (t,))} | ({self.now.get("path")} if self.now else set())
@@ -2546,6 +2629,10 @@ class Engine:
             it = next((x for x in L if x["id"] == d["id"]), None)
             if it: L.remove(it); L.insert(int(d["to"]), it)
         elif action == "aux_clear": self.aux[a] = []
+        elif action == "aux_select":     # MANUAL: this AUX plays from now on (after the song on air)
+            self.aux_select(a)
+            if not self.auto and not self.dj: self.aux_back(); self.plan = self.keep_mine(); self.refill(c); self.push_next(c)
+            self.aux_save_file(); return {"ok": True, "aux_on": a}
         elif action == "aux_load":
             pid = int(d["playlist"]); paths = planner.playlist_songs(c, pid)
             if not d.get("append"): self.aux[a] = []
@@ -2612,7 +2699,7 @@ class Engine:
             self.tv.ll_on = bool(planner.get_setting(c, "live_layer", True))
             cid = planner.clock_for(c, time.time()); cname = c.execute("SELECT name FROM clocks WHERE id=?", (cid,)).fetchone() if cid else None
             return {"show": SHOW["title"], "clock": cname[0] if cname else None, "now": n, "elapsed": round(el, 1), "upcoming": upcoming, "history": hist, "auto": self.auto,
-                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "streams": [{"id": x["id"], "name": x["name"], "yt": is_youtube(x["url"])} for x in streams_load(True)], "web": {"on": hypeweb.ST["on"], "starting": hypeweb.ST["starting"]}, "media_vol": MEDIA_VOL["v"], "decks": self.decks_state(), "stream_note": STREAM_NOTE if time.time() - STREAM_NOTE["t"] < 120 else None, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
+                    "stop_at_end": self.stop_at_end, "stopped": self.stopped, "aux_on": self.aux_on, "paused": round(self.paused["pos"], 1) if self.paused else None, "scene": self.tv.scene, "auto_scene": self.tv.auto, "aux": self.aux, "dj": {"on": self.dj, "deck": self.deck}, "loop": getattr(self, "loop", False), "faders": self.get_faders(), "elements": self.screen.manual(), "pad_loops": list(self.pad_loops), "media": self.media.cur, "streams": [{"id": x["id"], "name": x["name"], "yt": is_youtube(x["url"])} for x in streams_load(True)], "web": {"on": hypeweb.ST["on"], "starting": hypeweb.ST["starting"]}, "media_vol": MEDIA_VOL["v"], "decks": self.decks_state(), "stream_note": STREAM_NOTE if time.time() - STREAM_NOTE["t"] < 120 else None, "pip_frames": pip_frames(), "pip": os.path.basename(getattr(self.tv, "pip", "") or ""), "scene_groups": self.sgroups, "layouts": self.layouts,
                     "tv_sound": "clip" if self.tv.split else "radio", "live_layer": bool(planner.get_setting(c, "live_layer", True)),
                     "time": time.strftime("%H:%M:%S"), "server_time": time.time(), "slideshows": slideshow.STATE["list"]}
 
@@ -3972,7 +4059,7 @@ class H(BaseHTTPRequestHandler):
         u = urlparse(self.path); qs = parse_qs(u.query); p = u.path.replace("/api", "", 1)
         try:
             if p == "/state": return self.send(200, E.state())
-            if p == "/tvnow": return self.send(200, {"now": E.now or None, "next": E.liq_next or None, "t": time.time()})
+            if p == "/tvnow": return self.send(200, {"now": E.now or None, "next": E.liq_next or None, "stopped": E.stopped, "t": time.time()})
             if p == "/tv": return self.send(200, tv_info())
             if p == "/library": return self.send(200, library(qs))
             if p == "/upload/status": return self.send(200, up_status(qs))
@@ -4390,8 +4477,12 @@ TV_LOGO_LOCK = threading.Lock()
 def tv_scene():
     """The automatic scene for what the TV shows now (Hype Radio's song, or during a block the station's)."""
     if TVF["ch"]:
-        n = tv_now() or {}
+        try: d_ = tv_get(TVF["ch"], "/tvnow")
+        except Exception: d_ = {}
+        if d_.get("stopped"): return "Branding"          # the station is stopped (STOP / PAUSE / its AUX ran out)
+        n = d_.get("now") or {}
         return "Music video" if n.get("mode") in ("clip", "jingle-video", "pair") else "Hype Screen"
+    if E.stopped: return "Branding"                      # stopped: the logo, not a music video without sound
     return (E.now or {}).get("scene") or "Hype Screen"
 def tv_now():
     """The song the TV shows now: Hype Radio's, or during a block the station's."""
@@ -4562,6 +4653,10 @@ def tv_follow_step():
         return
     n = d.get("now") or {}
     if E.live.live: return         # LIVE on this station: the cameras are on TV (the normal LIVE scenes), its sound is on the TV bus
+    if d.get("stopped"):           # the station stopped (STOP / PAUSE / its AUX ran out): the TV shows Branding, once
+        if not TVF.get("stopped") and E.tv.auto: TVF["stopped"] = True; E.tv.set_scene("Branding")
+        return
+    if TVF.get("stopped"): TVF["stopped"] = False; TVF["started"] = None      # playing again: the song on air is shown
     if n.get("path") and n.get("started") != TVF["started"] and E.tv.auto:      # (a scene you chose stays; back on AUTO it catches up)
         TVF["started"] = n.get("started"); tv_show_station(n)
     nx = d.get("next") or {}
@@ -4600,6 +4695,9 @@ def tv_info():
 
 def resync_tv(force=False):
     """After an OBS or engine restart: show the clip of the song on air again, at the right spot. force: right now (after a jump)."""
+    if (E.stopped and not TVF["ch"]) or (TVF["ch"] and TVF.get("stopped")):      # stopped: Branding stays
+        if E.tv.auto: E.tv.set_scene("Branding")
+        return
     n = tv_now()
     if not n or n.get("mode") not in ("clip", "pair", "jingle-video"): 
         if n and E.tv.auto: E.tv.scene = None; E.tv.set_scene(n.get("scene") or "Hype Screen")
