@@ -573,3 +573,4 @@
 2026-11-27T12:32:37 ok 32b31cac Tempo choices: Original, 1.025, 1.05, 1.10, 1.15 (1.20 / 1.25 taken out)
 2026-11-27T12:34:42 waiting de92c403 [night] TV sound on its own clock behind the 0.2 s buffer (clock_safe=true): a stall of the radio engine when it opens a video file no longer reaches the TV sound as a hole (gap watch 27 Nov: holes only on the TV bus, never on the streams)
 2026-11-27T13:35:48 ok c7b6041b Settings: Throwback sweeper before CLASSICS songs - a switch per station (off on Hype Ambiente / Hype Latina unless turned on; on for Hype Radio)
+2026-11-27T13:36:52 waiting 4d5aa015 [night] TV sound on its own clock behind the 0.2 s buffer (clock_safe=true): a stall of the radio engine when it opens a video file no longer reaches the TV sound as a hole (gap watch 27 Nov: holes only on the TV bus, never on the streams)
