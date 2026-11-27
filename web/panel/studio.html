@@ -224,8 +224,13 @@ function paintGQ() {
   if (!L) return;
   Object.keys(L.guests || {}).forEach(s => { const el = document.querySelector(`[data-gq="${s}"]`); if (!el) return;
     const n = (L.guest_net || {})[s], q = GQ[s], ls = (L.guest_sync || {})[s], parts = [];
-    if (n) parts.push('Their internet: ' + (n.loss >= 2 ? `<span class="bad">${n.loss}% lost – weak line, their video goes down by itself</span>` : '<span class="ok">good</span>') + ` · ${(n.kbps / 1000).toFixed(1)} Mbps`);
-    if (q) parts.push('Voice here: ' + (q.gaps >= 1 ? `<span class="bad">${q.gaps.toFixed(1)}% gaps${n && n.loss < 1 ? ' – this laptop is too busy' : ''}</span>` : '<span class="ok">clean</span>'));
+    // the server measures their loss every 5 s; losses come in bursts, so judge on the recent worst (it fades within ~30 s), not only the last 5 s
+    // (27 Nov: a guest lost 8 % on the way to the server, the last 5 s looked clean and the page wrongly blamed this laptop)
+    const nl = n ? Math.max(n.loss || 0, Math.round((n.worst || 0) * 10) / 10) : 0;
+    if (n) parts.push('Their internet: ' + (nl >= 2 ? `<span class="bad">${nl}% lost on the way to the server – their line is weak (WiFi / mobile signal)</span>` : '<span class="ok">good</span>') + ` · ${(n.kbps / 1000).toFixed(1)} Mbps`);
+    if (q) parts.push('Voice here: ' + (q.gaps < 1 ? '<span class="ok">clean</span>'
+      : nl >= 1 ? `<span class="bad">${q.gaps.toFixed(1)}% gaps – from their internet, not this laptop</span>`
+      : `<span class="bad">${q.gaps.toFixed(1)}% gaps – their line is clean: this laptop's network (WiFi / VPN) or the laptop is busy</span>`));
     if (ls != null) parts.push(`Lip sync <b>${ls} ms</b> (measured)`); else if (n) parts.push('Lip sync: measuring when they talk…');
     el.innerHTML = parts.join(' · '); });
 }
@@ -237,10 +242,15 @@ setInterval(async () => {
     let st; try { st = await pc.getStats(); } catch (e) { continue; }
     st.forEach(r => { if (r.type !== 'outbound-rtp' || r.kind !== 'video') return;
       const h = HEALTH[n] || {}, now = r.timestamp, kbps = h.t ? (r.bytesSent - h.b) * 8 / (now - h.t) : 0;
-      HEALTH[n] = {t: now, b: r.bytesSent};
+      HEALTH[n] = {t: now, b: r.bytesSent, bw: h.bw};
       const why = r.qualityLimitationReason || 'none', fps = Math.round(r.framesPerSecond || 0), want = Q().fps;
+      // Chrome starts every connection low and builds up over 10-30 s, so "bandwidth" only counts when it lasts; and it is not the
+      // line speed (a speed test can say 460 Mbps): Chrome holds back when packets get lost or late on the way to the server
+      if (why === 'bandwidth') { if (!h.bw) h.bw = now; } else h.bw = 0; HEALTH[n].bw = h.bw;
+      const bwLong = why === 'bandwidth' && now - h.bw > 30000;
       const msg = why === 'cpu' ? '<span class="bad">⚠ laptop too busy – choose 720p below, close other programs</span>'
-        : why === 'bandwidth' ? '<span class="bad">⚠ internet too slow – choose a lower camera bitrate below</span>'
+        : why === 'bandwidth' && !bwLong ? '<span class="muted">building up the picture…</span>'
+        : bwLong ? '<span class="bad">⚠ network unstable to the server – Chrome sends a smaller picture. Network cable, no VPN; if it stays, a lower camera bitrate</span>'
         : fps && fps < want - 4 ? '<span class="bad">⚠ camera gives only ' + fps + ' fps – more light, or another USB port</span>' : '✓ smooth';
       // which encoder Chrome uses: the laptop's video chip (hardware, light) or the processor (software, heavy - one busy
       // core is enough for "too busy" even when Task Manager shows the laptop at 30 %)
@@ -265,9 +275,23 @@ setInterval(async () => {
 // failures are handled now: (1) the chosen output device is not found (Windows gives a USB device a new id after a
 // re-plug / restart) – it then plays on the default output and says so; (2) the browser blocks playing – the next click
 // starts it. The music meter keeps showing whether music arrives from the server at all.
+// (3) reconnect (27 Nov: "after Disconnect + Connect I hear nothing, a second time it works"): a new player was made each
+// Connect and the old one removed while Windows was still closing the Mixcast output – the new one could land silent.
+// Now one player per output for the whole page (only its stream changes), the output is set before the sound starts,
+// and a check 3 s later starts it again if it is not playing.
+const AUD = {};
+function audEl(k) { if (!AUD[k]) { AUD[k] = new Audio(); AUD[k].autoplay = true; document.body.appendChild(AUD[k]); } return AUD[k]; }
+async function musicAttach(el, stream, sel, label) {
+  el.srcObject = null; const id = $(sel).value;
+  if (el.setSinkId && id && el.sinkId !== id) { try { await el.setSinkId(id); } catch (e) {} }      // before the sound: no switch while playing
+  el.srcObject = stream; await musicOut(el, sel, label);
+  const t0 = el.currentTime;
+  setTimeout(() => { if (!connected || el.srcObject !== stream) return;
+    if (el.paused || el.currentTime <= t0) { console.warn(label, 'not playing after 3 s – starting again'); el.srcObject = null; el.srcObject = stream; musicOut(el, sel, label); } }, 3000);
+}
 async function musicOut(el, sel, label) {
   const id = $(sel).value;
-  if (el.setSinkId && id) {
+  if (el.setSinkId && id && el.sinkId !== id) {
     try { await el.setSinkId(id); }
     catch (e) { const o = $(sel).selectedOptions[0]; toast(label + ': output "' + (o ? o.textContent : id) + '" not found – playing on the default output. Choose it again under Devices (↻) and reconnect.'); console.warn(label, 'setSinkId', e); }
   }
@@ -288,15 +312,15 @@ async function connect() {
       camStart(n, cs);
     }
     // music back to the Mixcast USB fader
-    const ma = new Audio(); ma.autoplay = true; document.body.appendChild(ma); LIVE_.ma = ma;
-    conns.music = HypeRTC.keep('music', async alive => { const r = await HypeRTC.play((L && L.return_path) || 'return', {key: KEY, bufferMs: 250}); if (!alive()) return r; /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ ma.srcObject = r.stream; await musicOut(ma, '#dMusic', 'Music'); meterTo(r.stream, 'mMusic'); return r; }, setState);
+    const ma = audEl('ma'); LIVE_.ma = ma;
+    conns.music = HypeRTC.keep('music', async alive => { const r = await HypeRTC.play((L && L.return_path) || 'return', {key: KEY, bufferMs: 250}); if (!alive()) return r; /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ await musicAttach(ma, r.stream, '#dMusic', 'Music'); meterTo(r.stream, 'mMusic'); return r; }, setState);
     // AUX 2 (deck 2) to the second output – silent unless Split is on and deck 2 plays
     if ($('#dMusic2').value) music2Start();
     toast('Studio connected – check the meters, then GO LIVE');
   } catch (e) { toast('Could not start: ' + e.message); disconnect(); }
 }
-function music2Start() { const mb = new Audio(); mb.autoplay = true; document.body.appendChild(mb); LIVE_.mb = mb; {
-      conns.music2 = HypeRTC.keep('aux 2', async alive => { const r = await HypeRTC.play('return2', {key: KEY, bufferMs: 250}); if (!alive()) return r; mb.srcObject = r.stream; await musicOut(mb, '#dMusic2', 'AUX 2'); meterTo(r.stream, 'mMusic2'); return r; }, setState); } }
+function music2Start() { const mb = audEl('mb'); LIVE_.mb = mb; {
+      conns.music2 = HypeRTC.keep('aux 2', async alive => { const r = await HypeRTC.play('return2', {key: KEY, bufferMs: 250}); if (!alive()) return r; await musicAttach(mb, r.stream, '#dMusic2', 'AUX 2'); meterTo(r.stream, 'mMusic2'); return r; }, setState); } }
 function camStart(n, cs) { LIVE_[n] = cs; conns[n] = HypeRTC.keep(n, () => HypeRTC.publish(n, LIVE_[n], {key: KEY, videoKbps: Q().v}), setState); }
 
 // while connected: tell the other Studio pages on THIS laptop (the panel) that this laptop is busy broadcasting, so they
@@ -334,7 +358,7 @@ async function liveSwitch(id) {
       PREV[k] = nw; vEl.srcObject = nw; ph.hidden = true; if (old && old !== nw) old.getTracks().forEach(t => t.stop()); toast('Camera ' + k + ' switched – no need to reconnect');
     } else if (id === 'dMusic') { if (LIVE_.ma) await musicOut(LIVE_.ma, '#dMusic', 'Music'); toast('Music output switched'); }
     else if (id === 'dMusic2') {
-      if (v && !LIVE_.mb) music2Start(); else if (!v && conns.music2) { conns.music2.close(); delete conns.music2; if (LIVE_.mb) { LIVE_.mb.srcObject = null; LIVE_.mb.remove(); LIVE_.mb = null; } meterOff('mMusic2'); }
+      if (v && !LIVE_.mb) music2Start(); else if (!v && conns.music2) { conns.music2.close(); delete conns.music2; if (LIVE_.mb) { LIVE_.mb.pause(); LIVE_.mb.srcObject = null; LIVE_.mb = null; } meterOff('mMusic2'); }
       else if (LIVE_.mb) await musicOut(LIVE_.mb, '#dMusic2', 'AUX 2');
       toast('AUX 2 output switched');
     } else if (id === 'dGuests') {
@@ -382,7 +406,7 @@ function disconnect() {
   Object.keys(guestEls).forEach(dropGuest); renderGuests(true);
   MICS.forEach(m => m.getTracks().forEach(t => t.stop())); MICS = []; Object.keys(METERS).forEach(meterOff);      // the Mixcast inputs are let go
   try { localStorage.removeItem('hypeStudioBusy'); localStorage.removeItem('hypeVidForce'); } catch (e) {}      // (the panel plays its videos again)
-  Object.keys(LIVE_).forEach(k => { if (k === 'ma' || k === 'mb') { try { LIVE_[k].srcObject = null; LIVE_[k].remove(); } catch (e) {} } delete LIVE_[k]; });
+  Object.keys(LIVE_).forEach(k => { if (k === 'ma' || k === 'mb') { try { LIVE_[k].pause(); LIVE_[k].srcObject = null; } catch (e) {} } delete LIVE_[k]; });      // the players stay for the next Connect
   $('#connect').hidden = false; $('#disconnect').hidden = true; $('#stStudio').textContent = 'Studio: not connected'; $('#stStudio').className = 'chip';
 }
 $('#connect').onclick = connect; $('#disconnect').onclick = () => { if (!L || !L.live || confirm('You are LIVE. Disconnect the studio? The radio goes back to the automation.')) disconnect(); };
