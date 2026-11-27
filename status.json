@@ -1,20 +1,19 @@
 {
- "time": "2026-11-27T12:16:45",
+ "time": "2026-11-27T12:26:43",
  "result": "ok",
- "commit": "d6462493dc90e812d7f8b1c8cdb8c5ff99732b59",
- "subject": "Library editor: Tempo per song (1.05-1.25x, the pitch stays) - Studio makes a faster copy (sound + video together, lip sync stays), START/MIX/END move with it, the original is kept and comes back with 'Original'",
+ "commit": "f8001a14983b05d3c1378f408b74eb7715f97f06",
+ "subject": "Tempo: the faster copy is made gently (2 threads, lowest CPU and disk priority) - with 6 threads the load reached 7.6 and the TV sound / lip sync suffered at the next song start",
  "log": [
-  "12:15:59 update 6c7a41e9 \u2192 d6462493 \u00b7 3 file(s): engine/engine.py, engine/indexer.py, web/panel/library.html",
-  "12:15:59 restart hype-engine@*",
-  "12:15:59 restart hype-indexer",
-  "12:15:59 restart hype-engine",
-  "12:16:45 installed OK \u00b7 restarted: hype-engine, hype-engine@*, hype-indexer"
+  "12:25:58 update d6462493 \u2192 f8001a14 \u00b7 1 file(s): engine/engine.py",
+  "12:25:58 restart hype-engine@*",
+  "12:25:58 restart hype-engine",
+  "12:26:43 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Da Ridlaz x Kevv. \u2013 KEIRU",
+  "song": "Litleboy x Quan x Trilla G \u2013 Someone Else",
   "listeners": 4,
   "obs": true,
-  "seg_age": 0.4,
+  "seg_age": 0.6,
   "problems": [],
   "ok": true
  },
