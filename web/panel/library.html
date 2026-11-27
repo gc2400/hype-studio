@@ -197,6 +197,7 @@ dialog#upDlg::backdrop{background:rgba(2,8,16,.7)}
           <button class="btn" id="bStart" title="Play from START (1)">▶ START</button>
           <button class="btn" id="bMix" title="Play the last 8 s into the MIX, stops at END (2)">▶ MIX</button>
           <span class="zm" role="group" aria-label="Zoom"><button id="zOut" title="Zoom out (−)" aria-label="Zoom out">−</button><span id="zLv">song</span><button id="zIn" title="Zoom in (+)" aria-label="Zoom in">+</button></span>
+          <button class="btn" id="bFull" title="Full screen (F) – Esc or F to close" aria-label="Full screen"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
           <span class="pos" id="pos">0:00.0</span>
         </div>
         <canvas class="wave" id="wave" width="1600" height="140" style="height:72px" aria-label="Waveform: click to jump, drag the markers; zoomed in: drag sideways to move"></canvas>
@@ -455,7 +456,7 @@ function pick(it) { setTimeout(fitRes, 0);
   CUE = {s: it.cue_start || 0, m: it.cue_mix || it.duration || 0, e: it.cue_end || it.duration || 0, d: it.duration || 1, auto: !it.mix_set};
   peaks = []; cw.reset(); fill(); draw(); smartFetch(); api('wave?path=' + encodeURIComponent(it.path)).then(p => { if (SEL === it) { peaks = p; cw.setPeaks(p); } });
   const m = $('#m'); m.pause(); m.src = '../media/' + it.path.split('/').map(encodeURIComponent).join('/') + (it.tempo && it.tempo !== 1 ? '?tempo=' + it.tempo : '');
-  m.style.display = it.has_video ? 'block' : 'none'; $('#cdg').classList.toggle('novid', !it.has_video); m.currentTime = CUE.s;
+  m.style.display = it.has_video ? 'block' : 'none'; $('#bFull').hidden = !it.has_video; $('#cdg').classList.toggle('novid', !it.has_video); m.currentTime = CUE.s;
   $('#ovBox').hidden = !MUS();
   $('#tpBox').hidden = SEC !== 'music' || it.mode === 'pair'; { const tv = String(+(it.tempo || 1)), sel = $('#tpSel'); sel.querySelectorAll('option.old').forEach(o => o.remove());
     if (![...sel.options].some(o => o.value === tv)) sel.insertAdjacentHTML('beforeend', `<option class="old" value="${tv}" disabled>${tfmt(tv)} (now)</option>`); sel.value = tv; } $('#tpMsg').textContent = ''; $('#tpSel').disabled = false;
@@ -534,6 +535,11 @@ $$('#kinds [data-k]').forEach(b => b.onclick = () => { KIND = b.dataset.k; lib()
 $('#bSort').onclick = () => { SORT = SORT === 'new' ? 'az' : 'new'; RECENT = 0; lib(); };
 $('#bProb').onclick = () => { SORT = SORT === 'problems' ? 'az' : 'problems'; RECENT = 0; lib(); };
 $('#bRecent').onclick = () => { RECENT = RECENT ? 0 : 7; if (RECENT) { GENRE = ''; FOLDER = ''; } lib().then(() => { if (RECENT && visible().length && !SEL) pick(visible()[0]); }); };
+// full screen: the video only (keys keep working: Space, ←/→, 1, 2; Esc or F closes it)
+$('#bFull').onclick = () => { const m = $('#m');
+  if (document.fullscreenElement) return document.exitFullscreen().catch(() => {});
+  (m.requestFullscreen ? m.requestFullscreen() : Promise.reject()).catch(() => { if (m.webkitEnterFullscreen) m.webkitEnterFullscreen(); }); };
+$('#m').addEventListener('dblclick', () => $('#bFull').click());
 document.addEventListener('keydown', e => {
   const typing = ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName) && document.activeElement.type !== 'checkbox';
   if (e.key === '/' && !typing) { e.preventDefault(); $('#q').focus(); return; }
@@ -551,6 +557,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'm' || e.key === 'M') setCue('m', m.currentTime);
   else if (e.key === 'e' || e.key === 'E') setCue('e', m.currentTime);
   else if (e.key === '1') $('#bStart').click(); else if (e.key === '2') $('#bMix').click();
+  else if ((e.key === 'f' || e.key === 'F') && !$('#bFull').hidden) $('#bFull').click();
   else if (e.key === 'Enter') { e.preventDefault(); $('#bSaveNext').click(); }
 });
 window.addEventListener('pagehide', () => { if (dirty && SEL && CUE) fetch('../api/cmd/set_cues', {method: 'POST', keepalive: true, headers: {'Content-Type': 'application/json'}, body: JSON.stringify({path: SEL.path, cue_start: CUE.s, cue_mix: CUE.m, cue_end: CUE.e, mix_auto: !!CUE.auto})}); });
