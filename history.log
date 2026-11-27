@@ -571,3 +571,4 @@
 2026-11-27T12:16:45 ok d6462493 Library editor: Tempo per song (1.05-1.25x, the pitch stays) - Studio makes a faster copy (sound + video together, lip sync stays), START/MIX/END move with it, the original is kept and comes back with 'Original'
 2026-11-27T12:26:43 ok f8001a14 Tempo: the faster copy is made gently (2 threads, lowest CPU and disk priority) - with 6 threads the load reached 7.6 and the TV sound / lip sync suffered at the next song start
 2026-11-27T12:32:37 ok 32b31cac Tempo choices: Original, 1.025, 1.05, 1.10, 1.15 (1.20 / 1.25 taken out)
+2026-11-27T12:34:42 waiting de92c403 [night] TV sound on its own clock behind the 0.2 s buffer (clock_safe=true): a stall of the radio engine when it opens a video file no longer reaches the TV sound as a hole (gap watch 27 Nov: holes only on the TV bus, never on the streams)
