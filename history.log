@@ -581,3 +581,4 @@
 2026-11-27T14:43:47 waiting 19470743 [night] TV sound on its own clock behind the 0.2 s buffer (clock_safe=true): a stall of the radio engine when it opens a video file no longer reaches the TV sound as a hole (gap watch 27 Nov: holes only on the TV bus, never on the streams)
 2026-11-27T14:45:37 ok ea6788dd Library: Type → ⏩ Tempo shows only the songs with a tempo change
 2026-11-27T14:46:40 waiting 20766426 [night] TV sound on its own clock behind the 0.2 s buffer (clock_safe=true): a stall of the radio engine when it opens a video file no longer reaches the TV sound as a hole (gap watch 27 Nov: holes only on the TV bus, never on the streams)
+2026-11-27T15:33:45 waiting 8ddab25d [night] Tempo copies and TV copies get a hard CPU cap (1.5 / 2 cores via systemd scopes): together they made the IDs over the intro stutter on TV (27 Nov 15:32, load 12)
