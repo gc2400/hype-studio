@@ -1,17 +1,17 @@
 {
- "time": "2026-11-27T20:26:22",
+ "time": "2026-11-27T21:33:51",
  "result": "waiting",
- "commit": "c77885afdc507948423c29952fe6663c4d646b62",
- "subject": "[night] Panel: while this laptop broadcasts (Studio page connected) the panel plays no live camera / guest videos (each one a full camera picture to decode) - it lagged too much to do the show from; the TV preview stays; 'Show anyway' overrides",
+ "commit": "3b87e43aefc85eb44b1e09dda2f17bf937008bb3",
+ "subject": "[night] Studio page: music after Disconnect + Connect no longer silent (one player per output kept for the page, output set before the sound, a 3 s check restarts it); clearer health wording: guest gaps blamed on their line when the server saw their loss (recent worst, not only the last 5 s), camera 'bandwidth' only warns after 30 s and says 'network unstable' instead of 'internet too slow'",
  "log": [
-  "20:26:22 update ea6788dd \u2192 c77885af \u00b7 7 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, radio/radio.liq, web/panel/header.js, web/panel/index.html, web/panel/studio.html",
-  "20:26:22 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
+  "21:33:51 update ea6788dd \u2192 3b87e43a \u00b7 7 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, radio/radio.liq, web/panel/header.js, web/panel/index.html, web/panel/studio.html",
+  "21:33:51 waits for the night (04:00\u201305:00) \u2013 [night] in the commit message"
  ],
  "guard": {
-  "song": "B'jay \u2013 Panty & Badjas",
-  "listeners": 6,
+  "song": " \u2013 LIFE IS GOOD MIX #09 HOSTED BY DJ KROKZZ |AFRO | AMAPIANO | BOUYON | DANCEHALL | DEMBOW & MORE",
+  "listeners": 10,
   "obs": true,
-  "seg_age": 0.8,
+  "seg_age": 1.1,
   "problems": [],
   "ok": true
  },
