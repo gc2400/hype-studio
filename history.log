@@ -568,3 +568,4 @@
 2026-11-26T09:28:26 ok 0d8202f0 Ubuntu's automatic updates never restart Icecast by itself any more (26 Nov 06:11: MP3 streams ~1 min gone); the weekly maintenance (Monday 04:00) restarts it when needed
 2026-11-26T15:30:53 waiting 6c7a41e9 [night] Install tonight (Gianno, 26 Nov 15:30): TV-sound buffer 0.2 s (video-file stalls), new fade curve at song changes, ID over intro: song starts already dipped, ID at 0.2 s
 2026-11-27T04:01:45 ok 6c7a41e9 [night] Install tonight (Gianno, 26 Nov 15:30): TV-sound buffer 0.2 s (video-file stalls), new fade curve at song changes, ID over intro: song starts already dipped, ID at 0.2 s
+2026-11-27T12:16:45 ok d6462493 Library editor: Tempo per song (1.05-1.25x, the pitch stays) - Studio makes a faster copy (sound + video together, lip sync stays), START/MIX/END move with it, the original is kept and comes back with 'Original'

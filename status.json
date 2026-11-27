@@ -1,22 +1,20 @@
 {
- "time": "2026-11-27T04:01:45",
+ "time": "2026-11-27T12:16:45",
  "result": "ok",
- "commit": "6c7a41e93f5f1b5c41efdb90305c36362f729a5d",
- "subject": "[night] Install tonight (Gianno, 26 Nov 15:30): TV-sound buffer 0.2 s (video-file stalls), new fade curve at song changes, ID over intro: song starts already dipped, ID at 0.2 s",
+ "commit": "d6462493dc90e812d7f8b1c8cdb8c5ff99732b59",
+ "subject": "Library editor: Tempo per song (1.05-1.25x, the pitch stays) - Studio makes a faster copy (sound + video together, lip sync stays), START/MIX/END move with it, the original is kept and comes back with 'Original'",
  "log": [
-  "04:00:11 update 0d8202f0 \u2192 6c7a41e9 \u00b7 3 file(s): engine/chan.py, engine/engine.py, radio/radio.liq",
-  "04:01:00 lab: PASS (6/6 good readings)",
-  "04:01:00 restart hype-channels",
-  "04:01:00 restart hype-engine@*",
-  "04:01:00 restart hype-engine",
-  "04:01:00 restart hype-radio",
-  "04:01:45 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*, hype-radio"
+  "12:15:59 update 6c7a41e9 \u2192 d6462493 \u00b7 3 file(s): engine/engine.py, engine/indexer.py, web/panel/library.html",
+  "12:15:59 restart hype-engine@*",
+  "12:15:59 restart hype-indexer",
+  "12:15:59 restart hype-engine",
+  "12:16:45 installed OK \u00b7 restarted: hype-engine, hype-engine@*, hype-indexer"
  ],
  "guard": {
-  "song": "Kapo \u2013 BOMB\u00d3N",
-  "listeners": 2,
+  "song": "Da Ridlaz x Kevv. \u2013 KEIRU",
+  "listeners": 4,
   "obs": true,
-  "seg_age": 1.4,
+  "seg_age": 0.4,
   "problems": [],
   "ok": true
  },
