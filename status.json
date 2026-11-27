@@ -1,19 +1,19 @@
 {
- "time": "2026-11-27T14:38:51",
+ "time": "2026-11-27T14:42:43",
  "result": "ok",
- "commit": "b2f472e9653dc836e0e4de94ba585f5913bb360c",
- "subject": "Tempo: one faster copy at a time (a lock shared by the three stations) - 8 at once took the load to 31 and the TV sound broke up; the others show 'waiting in line'",
+ "commit": "6255cbbf671ed7f756177556322e0284db6355ff",
+ "subject": "Tempo: a song whose earlier try was stopped (the original already kept) no longer fails with 'are the same file'",
  "log": [
-  "14:38:04 update a6afb17c \u2192 b2f472e9 \u00b7 1 file(s): engine/engine.py",
-  "14:38:04 restart hype-engine@*",
-  "14:38:04 restart hype-engine",
-  "14:38:51 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "14:41:58 update b2f472e9 \u2192 6255cbbf \u00b7 1 file(s): engine/engine.py",
+  "14:41:58 restart hype-engine@*",
+  "14:41:58 restart hype-engine",
+  "14:42:43 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Eli Demillion X Gxsz \u2013 Peiki Loco",
+  "song": "Langa \u2013 Bottega",
   "listeners": 12,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },

@@ -577,3 +577,4 @@
 2026-11-27T14:00:09 ok a6afb17c Tempo choices: steps of 0.01 from 1.01 to 1.07 (a song already at another tempo keeps it until you choose again)
 2026-11-27T14:01:13 waiting 2ddd119b [night] TV sound on its own clock behind the 0.2 s buffer (clock_safe=true): a stall of the radio engine when it opens a video file no longer reaches the TV sound as a hole (gap watch 27 Nov: holes only on the TV bus, never on the streams)
 2026-11-27T14:38:51 ok b2f472e9 Tempo: one faster copy at a time (a lock shared by the three stations) - 8 at once took the load to 31 and the TV sound broke up; the others show 'waiting in line'
+2026-11-27T14:42:43 ok 6255cbbf Tempo: a song whose earlier try was stopped (the original already kept) no longer fails with 'are the same file'
