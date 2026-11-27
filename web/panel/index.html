@@ -1311,7 +1311,8 @@ function renderGuests() {
     el.querySelector('[data-lt]').onclick = () => { $('#ltName').value = g.name; $('#ltRole').value = LT && LT.visible ? $('#ltRole').value : ''; ltSend('show').then(() => toast(g.name + ' on screen')); };
     el.querySelector('[data-copy]').onclick = () => navigator.clipboard.writeText(location.origin + '/guest/?t=' + encodeURIComponent(g.token)).then(() => toast('Guest link copied'));
     el.querySelector('[data-rmg]').onclick = () => { if (confirm('Remove ' + g.name + '?')) api('live/guest_remove', {slot: s}).then(d => { LV = d; renderGuests(); }); };
-    if (g.online && (typeof HypeRTC !== 'undefined')) { if (GV[s]) GV[s].close(); GV[s] = HypeRTC.keep(s, async alive => { const r = await HypeRTC.play(s, {key: LV.studio_key, video: true}); if (!alive()) return r; const v = el.querySelector('video'); if (v) v.srcObject = r.stream; return r; }, () => {}); }
+    if (g.online && studioHere()) { if (GV[s]) { GV[s].close(); delete GV[s]; } const v = el.querySelector('video'); if (v) v.title = 'Their video is on the Studio page (this laptop broadcasts)'; }
+    else if (g.online && (typeof HypeRTC !== 'undefined')) { if (GV[s]) GV[s].close(); GV[s] = HypeRTC.keep(s, async alive => { const r = await HypeRTC.play(s, {key: LV.studio_key, video: true}); if (!alive()) return r; const v = el.querySelector('video'); if (v) v.srcObject = r.stream; return r; }, () => {}); }
     else if (GV[s]) { GV[s].close(); delete GV[s]; }
   });
 }
@@ -1319,6 +1320,10 @@ $('#gnAdd').onclick = () => api('live/guest_add', {name: $('#gnName').value, mod
 applyMode(MODE);
 // ---------- camera slots under the preview: what CAM 1-4 show right now (open / hide; only plays while open) ----------
 const SLV = {};      // CAM n -> {src, rtc}
+// This laptop broadcasts (the Studio page is connected here): the panel then plays no live camera / guest videos – each is a
+// full camera picture to decode next to the 2 cameras the laptop is sending, and the panel lagged too much to use (27 Nov,
+// first live show). The cameras and guests are on the Studio page anyway; the TV preview (360p) stays. "Show anyway" overrides.
+const studioHere = () => { try { return Date.now() - +(localStorage.getItem('hypeStudioBusy') || 0) < 12000 && localStorage.getItem('hypeVidForce') !== '1'; } catch (e) { return false; } };
 const slotsBox = $('#slotsBox');
 try { slotsBox.open = localStorage.getItem('hypeSlots') === '1'; } catch (e) {}
 $('#bSlots').classList.toggle('on', slotsBox.open);
@@ -1329,6 +1334,10 @@ function renderSlotsPv() {
   const onl = K.filter(c => info(c).online).length;
   $('#slotsSum').textContent = onl + ' of 4 online'; $('#bSlots').title = 'Slots – ' + onl + ' of 4 online';
   if (!slotsBox.open || document.hidden) { if (Object.keys(SLV).length) slotsClose(); return; }
+  if (studioHere()) { if (Object.keys(SLV).length) slotsClose(); const g0 = $('#slotsGrid');
+    if (g0.dataset.sig !== 'busy') { g0.dataset.sig = 'busy'; g0.innerHTML = '<div class="muted" style="grid-column:1/-1;padding:8px">Live camera pictures are off here while this laptop broadcasts (they are on the Studio page) – so this page stays smooth. <button class="btn sm" id="vidForce">Show anyway</button></div>';
+      $('#vidForce').onclick = () => { try { localStorage.setItem('hypeVidForce', '1'); } catch (e) {} g0.dataset.sig = ''; renderSlotsPv(); renderGuests(); }; }
+    return; }
   const scene = (S && S.scene) || '';
   const sig = K.map(c => src(c) + ':' + (info(c).online ? 1 : 0)).join('|');
   const g = $('#slotsGrid');

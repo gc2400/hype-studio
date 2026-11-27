@@ -299,6 +299,9 @@ function music2Start() { const mb = new Audio(); mb.autoplay = true; document.bo
       conns.music2 = HypeRTC.keep('aux 2', async alive => { const r = await HypeRTC.play('return2', {key: KEY, bufferMs: 250}); if (!alive()) return r; mb.srcObject = r.stream; await musicOut(mb, '#dMusic2', 'AUX 2'); meterTo(r.stream, 'mMusic2'); return r; }, setState); } }
 function camStart(n, cs) { LIVE_[n] = cs; conns[n] = HypeRTC.keep(n, () => HypeRTC.publish(n, LIVE_[n], {key: KEY, videoKbps: Q().v}), setState); }
 
+// while connected: tell the other Studio pages on THIS laptop (the panel) that this laptop is busy broadcasting, so they
+// leave out their heavy live videos (27 Nov: the panel lagged too much to do the show from it)
+setInterval(() => { try { if (connected) localStorage.setItem('hypeStudioBusy', String(Date.now())); else localStorage.removeItem('hypeStudioBusy'); } catch (e) {} }, 3000);
 // ---------- change things while connected / LIVE, without Disconnect (27 Nov, first live show) ----------
 // A new microphone or camera goes onto the running connection with replaceTrack (no new handshake, the stream on the
 // server keeps running – at most a click in the sound or one frame); outputs switch with setSinkId; bitrate / picture
@@ -378,6 +381,7 @@ function disconnect() {
   Object.values(conns).forEach(c => c.close()); conns = {}; Object.keys(STATE).forEach(k => delete STATE[k]);
   Object.keys(guestEls).forEach(dropGuest); renderGuests(true);
   MICS.forEach(m => m.getTracks().forEach(t => t.stop())); MICS = []; Object.keys(METERS).forEach(meterOff);      // the Mixcast inputs are let go
+  try { localStorage.removeItem('hypeStudioBusy'); localStorage.removeItem('hypeVidForce'); } catch (e) {}      // (the panel plays its videos again)
   Object.keys(LIVE_).forEach(k => { if (k === 'ma' || k === 'mb') { try { LIVE_[k].srcObject = null; LIVE_[k].remove(); } catch (e) {} } delete LIVE_[k]; });
   $('#connect').hidden = false; $('#disconnect').hidden = true; $('#stStudio').textContent = 'Studio: not connected'; $('#stStudio').className = 'chip';
 }
