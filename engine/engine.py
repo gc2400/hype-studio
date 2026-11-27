@@ -3116,8 +3116,10 @@ def tempo_set(d):
             else:
                 if not orig:                       # first time: keep the original
                     orig = os.path.join(TEMPO_DIR, "%s_%s" % (iid or abs(hash(path)), base))
-                    try: os.link(full, orig)
-                    except OSError: shutil.copy2(full, orig)
+                    if os.path.exists(orig) and not os.path.samefile(full, orig): os.remove(orig)   # a leftover of an older version
+                    if not os.path.exists(orig):     # (an earlier try that was stopped may have kept it already: the same file)
+                        try: os.link(full, orig)
+                        except OSError: shutil.copy2(full, orig)
                 # ONE faster copy at a time, on all three stations together (27 Nov: 8 at once took the load to 31 and
                 # the TV sound broke up): the others wait in line
                 import fcntl
