@@ -242,7 +242,11 @@ setInterval(async () => {
       const msg = why === 'cpu' ? '<span class="bad">⚠ laptop too busy – choose 720p below, close other programs</span>'
         : why === 'bandwidth' ? '<span class="bad">⚠ internet too slow – choose a lower camera bitrate below</span>'
         : fps && fps < want - 4 ? '<span class="bad">⚠ camera gives only ' + fps + ' fps – more light, or another USB port</span>' : '✓ smooth';
-      lines.push(`<b>${label}</b> ${r.frameHeight || '?'}p · ${fps} fps · ${(kbps / 1000).toFixed(1)} Mbps · ${msg}`); });
+      // which encoder Chrome uses: the laptop's video chip (hardware, light) or the processor (software, heavy - one busy
+      // core is enough for "too busy" even when Task Manager shows the laptop at 30 %)
+      const hw = r.powerEfficientEncoder === true || /MediaFoundation|Accelerat|VAAPI|Hardware/i.test(r.encoderImplementation || '');
+      const enc = r.encoderImplementation ? ` · encoder: ${hw ? '<span class="ok">video chip</span>' : '<span class="bad">processor (software)</span>'}` : '';
+      lines.push(`<b>${label}</b> ${r.frameHeight || '?'}p · ${fps} fps · ${(kbps / 1000).toFixed(1)} Mbps${enc} · ${msg}`); });
   }
   box.hidden = !lines.length; box.innerHTML = lines.join('<br>');
   // guests: how much of their voice had to be filled in here (lost / late packets = stutter you hear)
