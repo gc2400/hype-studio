@@ -182,7 +182,9 @@ async function listDevices(quiet) {
   $('#dMusic').innerHTML = opt('audiooutput'); $('#dGuests').innerHTML = opt('audiooutput', '– same as music –'); $('#dMusic2').innerHTML = opt('audiooutput', '– none –'); $('#dCue').innerHTML = opt('audiooutput', '– none (CUE off while LIVE) –');
   $('#dCam1').innerHTML = opt('videoinput', '– no camera –'); $('#dCam2').innerHTML = opt('videoinput', '– no camera –');
   ['dMix', 'dMinus', 'dMusic', 'dMusic2', 'dCue', 'dGuests', 'dCam1', 'dCam2'].forEach(id => { const v = store(id); if (v !== null && [...$('#' + id).options].some(o => o.value === v)) $('#' + id).value = v;
-    $('#' + id).onchange = () => { store(id, $('#' + id).value); qNoteUpd(); if (id === 'dCam1') camPreview(1); if (id === 'dCam2') camPreview(2); }; });
+    $('#' + id).onchange = () => { store(id, $('#' + id).value); qNoteUpd();
+      if (connected) return liveSwitch(id);        // while connected: switched on the running connection, no Disconnect needed
+      if (id === 'dCam1') camPreview(1); if (id === 'dCam2') camPreview(2); }; });
   if (!$('#dCam1').value && $('#dCam1').options.length > 1 && store('dCam1') === null) $('#dCam1').selectedIndex = 1;
   if (!connected && !quiet) { camPreview(1); camPreview(2); }      // while connected the cameras on air are never touched
   devSigNow().then(x => { devSig = x; }).catch(() => {});
@@ -199,14 +201,16 @@ async function camPreview(n) {
   catch (e) { ph.hidden = false; ph.textContent = 'Camera ' + n + ': ' + (e.name === 'NotReadableError' ? 'in use by another app' : 'not allowed / not found'); return null; }
 }
 function qNoteUpd() { const cams = ['#dCam1', '#dCam2'].filter(x => $(x) && $(x).value).length || 1, mb = (Q().v * cams + Q().a) / 1000;
-  $('#qNote').textContent = `Sending about ${mb.toFixed(1)} Mbps (${cams} camera${cams > 1 ? 's' : ''} + sound). If the Connection table below shows loss or the picture stutters, go one step lower – on a network cable 6 Mbps is fine. Changes apply when you (re)connect the studio.`; }
+  $('#qNote').textContent = `Sending about ${mb.toFixed(1)} Mbps (${cams} camera${cams > 1 ? 's' : ''} + sound). If the Connection table below shows loss or the picture stutters, go one step lower – on a network cable 6 Mbps is fine. Changes apply at once, also while you are connected or LIVE.`; }
 const Q = () => ({a: +$('#qAudio').value, w: +$('#qRes').value.split('x')[0], h: +$('#qRes').value.split('x')[1], fps: +$('#qFps').value, v: +$('#qVkbps').value});
 const camConstraints = id => ({video: {deviceId: {exact: id}, width: {ideal: Q().w}, height: {ideal: Q().h}, frameRate: {ideal: Q().fps, max: Q().fps}}, audio: false});
 // once: the settings that suit this studio (Mixcast music at 256k, 1080p25 like the TV, 4 Mbps: sharp on TV and with room for a wobbly line)
 setTimeout(qNoteUpd, 0);
 if (store('qVer') !== '2') { [['qAudio', '256'], ['qRes', '1920x1080'], ['qFps', '25'], ['qVkbps', '4000']].forEach(([k, v]) => store(k, v)); store('qVer', '2'); }
 [['qAudio', '256'], ['qRes', '1920x1080'], ['qFps', '25'], ['qVkbps', '4000']].forEach(([id, def]) => { const v = store(id); $('#' + id).value = v !== null && [...$('#' + id).options].some(o => o.value === v) ? v : def;
-  $('#' + id).onchange = () => { store(id, $('#' + id).value); if (id === 'qRes' || id === 'qFps') { camPreview(1); camPreview(2); } toast(connected ? 'Saved – Disconnect and Connect again to use it' : 'Saved'); }; });
+  $('#' + id).onchange = () => { store(id, $('#' + id).value); qNoteUpd();
+    if (connected) return liveQuality(id);
+    if (id === 'qRes' || id === 'qFps') { camPreview(1); camPreview(2); } toast('Saved'); }; });
 const rawAudio = id => ({audio: {deviceId: id ? {exact: id} : undefined, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2, sampleRate: 48000}, video: false});
 const METERS = {};      // one meter per bar (+ per guest): a reconnect replaces the old one instead of stacking AudioContexts
 function meterTo(stream, id, k = '') { meterOff(id + k); METERS[id + k] = HypeRTC.meter(stream, v => { $('#' + id).style.width = Math.min(100, v * 110) + '%'; }); }
@@ -270,24 +274,83 @@ async function musicOut(el, sel, label) {
 async function connect() {
   if (connected) return; connected = true; $('#connect').hidden = true; $('#disconnect').hidden = false;
   try {
-    const mix = await navigator.mediaDevices.getUserMedia(rawAudio($('#dMix').value)); MICS.push(mix); meterTo(mix, 'mMix');
-    conns.studio = HypeRTC.keep('studio mix', () => HypeRTC.publish('studio', mix, {key: KEY, audioKbps: Q().a}), setState);
-    if ($('#dMinus').value) { const mm = await navigator.mediaDevices.getUserMedia(rawAudio($('#dMinus').value)); MICS.push(mm); meterTo(mm, 'mMinus');
-      conns.minus = HypeRTC.keep('mix-minus', () => HypeRTC.publish('mixminus', mm, {key: KEY, audioKbps: 128}), setState); }
-    else conns.minus = HypeRTC.keep('mix-minus', () => HypeRTC.publish('mixminus', mix, {key: KEY, audioKbps: 128}), setState);
+    const mix = await navigator.mediaDevices.getUserMedia(rawAudio($('#dMix').value)); MICS.push(mix); meterTo(mix, 'mMix'); LIVE_.mix = mix;
+    conns.studio = HypeRTC.keep('studio mix', () => HypeRTC.publish('studio', LIVE_.mix, {key: KEY, audioKbps: Q().a}), setState);
+    if ($('#dMinus').value) { const mm = await navigator.mediaDevices.getUserMedia(rawAudio($('#dMinus').value)); MICS.push(mm); meterTo(mm, 'mMinus'); LIVE_.minus = mm; }
+    conns.minus = HypeRTC.keep('mix-minus', () => HypeRTC.publish('mixminus', LIVE_.minus || LIVE_.mix, {key: KEY, audioKbps: 128}), setState);
     for (const [n, sel, vid] of [['cam1', '#dCam1', '#vCam1'], ['cam2', '#dCam2', '#vCam2']]) {
       if (!$(sel).value) continue;
       const cs = PREV[n.slice(3)] || await camPreview(+n.slice(3)); if (!cs) continue;
-      conns[n] = HypeRTC.keep(n, () => HypeRTC.publish(n, cs, {key: KEY, videoKbps: Q().v}), setState);
+      camStart(n, cs);
     }
     // music back to the Mixcast USB fader
-    const ma = new Audio(); ma.autoplay = true; document.body.appendChild(ma);
+    const ma = new Audio(); ma.autoplay = true; document.body.appendChild(ma); LIVE_.ma = ma;
     conns.music = HypeRTC.keep('music', async alive => { const r = await HypeRTC.play((L && L.return_path) || 'return', {key: KEY, bufferMs: 250}); if (!alive()) return r; /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ ma.srcObject = r.stream; await musicOut(ma, '#dMusic', 'Music'); meterTo(r.stream, 'mMusic'); return r; }, setState);
     // AUX 2 (deck 2) to the second output – silent unless Split is on and deck 2 plays
-    if ($('#dMusic2').value) { const mb = new Audio(); mb.autoplay = true; document.body.appendChild(mb);
-      conns.music2 = HypeRTC.keep('aux 2', async alive => { const r = await HypeRTC.play('return2', {key: KEY, bufferMs: 250}); if (!alive()) return r; mb.srcObject = r.stream; await musicOut(mb, '#dMusic2', 'AUX 2'); meterTo(r.stream, 'mMusic2'); return r; }, setState); }
+    if ($('#dMusic2').value) music2Start();
     toast('Studio connected – check the meters, then GO LIVE');
   } catch (e) { toast('Could not start: ' + e.message); disconnect(); }
+}
+function music2Start() { const mb = new Audio(); mb.autoplay = true; document.body.appendChild(mb); LIVE_.mb = mb; {
+      conns.music2 = HypeRTC.keep('aux 2', async alive => { const r = await HypeRTC.play('return2', {key: KEY, bufferMs: 250}); if (!alive()) return r; mb.srcObject = r.stream; await musicOut(mb, '#dMusic2', 'AUX 2'); meterTo(r.stream, 'mMusic2'); return r; }, setState); } }
+function camStart(n, cs) { LIVE_[n] = cs; conns[n] = HypeRTC.keep(n, () => HypeRTC.publish(n, LIVE_[n], {key: KEY, videoKbps: Q().v}), setState); }
+
+// ---------- change things while connected / LIVE, without Disconnect (27 Nov, first live show) ----------
+// A new microphone or camera goes onto the running connection with replaceTrack (no new handshake, the stream on the
+// server keeps running – at most a click in the sound or one frame); outputs switch with setSinkId; bitrate / picture
+// size are applied to the running encoder.
+const LIVE_ = {};
+async function swapTrack(conn, kind, track) {
+  const pc = conn && conn.pc; if (!pc) return false;
+  const tr = pc.getTransceivers().find(t => t.sender && t.receiver && t.receiver.track && t.receiver.track.kind === kind);
+  if (!tr) return false; await tr.sender.replaceTrack(track); return true;
+}
+async function liveSwitch(id) {
+  const v = $('#' + id).value;
+  try {
+    if (id === 'dMix') {
+      const nw = await navigator.mediaDevices.getUserMedia(rawAudio(v)), old = LIVE_.mix; MICS.push(nw); LIVE_.mix = nw;
+      await swapTrack(conns.studio, 'audio', nw.getAudioTracks()[0]);
+      if (!LIVE_.minus) await swapTrack(conns.minus, 'audio', nw.getAudioTracks()[0]);
+      meterTo(nw, 'mMix'); if (old) old.getTracks().forEach(t => t.stop()); toast('Studio mix switched – no need to reconnect');
+    } else if (id === 'dMinus') {
+      const old = LIVE_.minus;
+      if (v) { const nw = await navigator.mediaDevices.getUserMedia(rawAudio(v)); MICS.push(nw); LIVE_.minus = nw; meterTo(nw, 'mMinus'); await swapTrack(conns.minus, 'audio', nw.getAudioTracks()[0]); }
+      else { LIVE_.minus = null; meterOff('mMinus'); await swapTrack(conns.minus, 'audio', LIVE_.mix.getAudioTracks()[0]); }
+      if (old) old.getTracks().forEach(t => t.stop()); toast('Mix-minus switched');
+    } else if (id === 'dCam1' || id === 'dCam2') {
+      const k = id.slice(-1), n = 'cam' + k, vEl = $('#vCam' + k), ph = $('#phCam' + k), old = LIVE_[n];
+      if (!v) { if (conns[n]) { conns[n].close(); delete conns[n]; } if (old) old.getTracks().forEach(t => t.stop()); LIVE_[n] = null; PREV[k] = null; vEl.srcObject = null; ph.hidden = false; ph.textContent = 'Camera ' + k + ': none'; return toast('Camera ' + k + ' off'); }
+      const nw = await navigator.mediaDevices.getUserMedia(camConstraints(v)); nw.getVideoTracks().forEach(t => { try { t.contentHint = 'motion'; } catch (e) {} });
+      if (conns[n] && conns[n].pc) { LIVE_[n] = nw; await swapTrack(conns[n], 'video', nw.getVideoTracks()[0]); }
+      else camStart(n, nw);
+      PREV[k] = nw; vEl.srcObject = nw; ph.hidden = true; if (old && old !== nw) old.getTracks().forEach(t => t.stop()); toast('Camera ' + k + ' switched – no need to reconnect');
+    } else if (id === 'dMusic') { if (LIVE_.ma) await musicOut(LIVE_.ma, '#dMusic', 'Music'); toast('Music output switched'); }
+    else if (id === 'dMusic2') {
+      if (v && !LIVE_.mb) music2Start(); else if (!v && conns.music2) { conns.music2.close(); delete conns.music2; if (LIVE_.mb) { LIVE_.mb.srcObject = null; LIVE_.mb.remove(); LIVE_.mb = null; } meterOff('mMusic2'); }
+      else if (LIVE_.mb) await musicOut(LIVE_.mb, '#dMusic2', 'AUX 2');
+      toast('AUX 2 output switched');
+    } else if (id === 'dGuests') {
+      const sink = v || $('#dMusic').value; for (const E of Object.values(guestEls)) if (E.ac && E.ac.setSinkId && sink) { try { await E.ac.setSinkId(sink); } catch (e) {} }
+      toast('Guests output switched');
+    } else toast('Saved');
+  } catch (e) { toast('Could not switch: ' + (e.name === 'NotReadableError' ? 'the device is in use by another app' : e.message)); }
+}
+async function liveQuality(id) {
+  try {
+    if (id === 'qVkbps' || id === 'qAudio') {
+      for (const [k, c] of Object.entries(conns)) { const pc = c && c.pc; if (!pc) continue;
+        for (const snd of pc.getSenders()) { if (!snd.track) continue;
+          const vid = snd.track.kind === 'video'; if (id === 'qVkbps' && !(vid && /^cam/.test(k))) continue; if (id === 'qAudio' && !(k === 'studio' && !vid)) continue;
+          const p = snd.getParameters(); p.encodings = p.encodings && p.encodings.length ? p.encodings : [{}];
+          p.encodings[0].maxBitrate = (id === 'qVkbps' ? Q().v : Q().a) * 1000; await snd.setParameters(p); } }
+      toast(id === 'qVkbps' ? 'Camera bitrate changed on air' : 'Sound bitrate changed (up to what this connection agreed – full effect after a reconnect)');
+    } else if (id === 'qRes' || id === 'qFps') {
+      for (const k of ['cam1', 'cam2']) { const st = LIVE_[k]; if (!st) continue;
+        for (const t of st.getVideoTracks()) await t.applyConstraints({width: {ideal: Q().w}, height: {ideal: Q().h}, frameRate: {ideal: Q().fps, max: Q().fps}}); }
+      toast('Camera picture changed on air');
+    }
+  } catch (e) { toast('Could not change it on air: ' + e.message + ' – Disconnect and Connect to use it'); }
 }
 function mmCheck() { const m = $('#dMinus').value; $('#mmWarn').hidden = !!(m && m !== $('#dMix').value); }
 ['#dMinus', '#dMix'].forEach(id => $(id).addEventListener('change', mmCheck));
@@ -311,6 +374,7 @@ function disconnect() {
   Object.values(conns).forEach(c => c.close()); conns = {}; Object.keys(STATE).forEach(k => delete STATE[k]);
   Object.keys(guestEls).forEach(dropGuest); renderGuests(true);
   MICS.forEach(m => m.getTracks().forEach(t => t.stop())); MICS = []; Object.keys(METERS).forEach(meterOff);      // the Mixcast inputs are let go
+  Object.keys(LIVE_).forEach(k => { if (k === 'ma' || k === 'mb') { try { LIVE_[k].srcObject = null; LIVE_[k].remove(); } catch (e) {} } delete LIVE_[k]; });
   $('#connect').hidden = false; $('#disconnect').hidden = true; $('#stStudio').textContent = 'Studio: not connected'; $('#stStudio').className = 'chip';
 }
 $('#connect').onclick = connect; $('#disconnect').onclick = () => { if (!L || !L.live || confirm('You are LIVE. Disconnect the studio? The radio goes back to the automation.')) disconnect(); };
