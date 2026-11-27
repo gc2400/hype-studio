@@ -3060,7 +3060,7 @@ def chan_replan(ch):
 # ---------- Library → Tempo: a song a bit faster, the pitch stays (27 Nov) ----------
 # Studio makes a faster copy of the song (sound + picture together, so lip sync stays) and puts it in the song's place; the
 # original is kept in TEMPO_DIR and comes back when you choose "Original". START / MIX / END move with the new length.
-TEMPO_OK = (1.0, 1.05, 1.10, 1.15, 1.20, 1.25)
+TEMPO_OK = (1.0, 1.025, 1.05, 1.10, 1.15)    # (27 Nov, Gianno: 1.20 / 1.25 too much)
 TEMPO_DIR = "/srv/hype-data/tempo"
 TEMPO_JOBS = {}            # path -> {"state": "busy"|"done"|"error", "msg": ..., "t": ...}
 def _tempo_fps(f):
@@ -3091,8 +3091,8 @@ def _tempo_render(src, dst, x, video):
     if p.returncode != 0 or not os.path.exists(dst) or os.path.getsize(dst) < 10000:
         raise RuntimeError("ffmpeg: " + (p.stderr or "no output").strip()[-300:])
 def tempo_set(d):
-    path = str(d.get("path") or ""); x = round(float(d.get("tempo") or 1.0), 2)
-    if x not in TEMPO_OK: return {"ok": False, "error": "choose 1.00, 1.05, 1.10, 1.15, 1.20 or 1.25"}
+    path = str(d.get("path") or ""); x = round(float(d.get("tempo") or 1.0), 3)
+    if x not in TEMPO_OK: return {"ok": False, "error": "choose Original, 1.025, 1.05, 1.10 or 1.15"}
     c = dbc()
     r = c.execute("SELECT section, has_video, clip_path, COALESCE(tempo, 1.0), tempo_src, rowid FROM items WHERE path=?", (path,)).fetchone()
     if not r: return {"ok": False, "error": "song not found"}
@@ -3103,7 +3103,7 @@ def tempo_set(d):
     if hv and ext not in (".mp4", ".m4v", ".mov", ".mkv"): return {"ok": False, "error": "tempo works for mp4 / mov / mkv videos"}
     if abs(x - cur) < 0.001: return {"ok": True, "tempo": x, "same": True}
     if (TEMPO_JOBS.get(path) or {}).get("state") == "busy": return {"ok": False, "error": "the faster version of this song is still being made"}
-    TEMPO_JOBS[path] = {"state": "busy", "msg": "making the %s version…" % ("original" if x == 1.0 else "%.2f×" % x), "t": time.time(), "tempo": x}
+    TEMPO_JOBS[path] = {"state": "busy", "msg": "making the %s version…" % ("original" if x == 1.0 else "%g×" % x), "t": time.time(), "tempo": x}
     def go():
         try:
             full = lib_file(path); dname, base = os.path.split(full); tmp = os.path.join(dname, ".tempo_" + base)
@@ -3121,7 +3121,7 @@ def tempo_set(d):
             c2 = dbc()
             row = c2.execute("SELECT cue_start, cue_intro, cue_mix, cue_end, tv_path, COALESCE(tempo, 1.0) FROM items WHERE path=?", (path,)).fetchone()
             f = (row[5] or 1.0) / x                      # times in the current version -> times in the new one
-            sc = lambda v: None if v is None else round(v * f, 2)
+            sc = lambda v: None if v is None else round(v * f, 2)   # (f = old tempo / new tempo: always from the kept original)
             old_tv = row[4]
             c2.execute("UPDATE items SET cue_start=?, cue_intro=?, cue_mix=?, cue_end=?, cues_edited=1, tempo=?, tempo_src=?, tempo_pending=1, "
                        "tv_path=NULL, kf=NULL, align=NULL WHERE path=?",
