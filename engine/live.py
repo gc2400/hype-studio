@@ -414,7 +414,25 @@ class Live:
     def stop_rec(self):
         if not self.rec: return
         for u in self.rec.get("units", []): subprocess.run(["systemctl", "stop", u], capture_output=True)
-        log.info("recording stopped: %s", self.rec["file"]); self.rec = None; save(REC_STATE, {})
+        log.info("recording stopped: %s", self.rec["file"]); base = os.path.join(REC_DIR, self.rec["file"]); self.rec = None; save(REC_STATE, {})
+        self.rec_finish(base)
+    def rec_finish(self, base):
+        """The video is recorded as a fragmented MP4 (a crash or power cut still leaves a playable file), but a browser then has
+        to read through the whole file before it can play or jump (27 Nov: a 6.8 GB show took minutes to open in the library).
+        After the recording: the same video and sound copied into a normal MP4 with its index at the front (no re-encoding,
+        about a minute, idle disk / 1 core), then put in place; the library row gets the new size so it isn't indexed again
+        (the TV copy stays valid: the content is the same)."""
+        py = ("import sqlite3,os,sys; f=sys.argv[1]; st=os.stat(f); p=os.path.relpath(f,'/srv/hype'); "
+              "c=sqlite3.connect('/srv/hype-data/library.db',timeout=30); c.execute('UPDATE items SET size=?, mtime=? WHERE path=?',(st.st_size,st.st_mtime,p)); c.commit()")
+        sh = ('sleep 5; for f in "$1".mp4 "$1 part"*.mp4; do [ -s "$f" ] || continue; t="/srv/hype-data/tmp/rec_finish_$$.mp4"; mkdir -p /srv/hype-data/tmp; '
+              'if ffmpeg -hide_banner -loglevel error -nostdin -y -i "$f" -map 0 -c copy -movflags +faststart "$t" && [ -s "$t" ]; then '
+              'chown --reference="$f" "$t"; chmod --reference="$f" "$t"; touch -r "$f" "$t"; mv -f "$t" "$f" && python3 -c "$2" "$f"; '
+              'else rm -f "$t"; fi; done')
+        try:
+            subprocess.run(["systemctl", "reset-failed", "hype-rec-finish"], capture_output=True)
+            subprocess.run(["systemd-run", "--unit=hype-rec-finish", "--collect", "--quiet", "-p", "CPUQuota=100%", "-p", "IOWeight=10",
+                            "nice", "-n", "19", "ionice", "-c3", "/bin/sh", "-c", sh, "fin", base, py], capture_output=True, timeout=10)
+        except Exception as e: log.warning("recording finish: %s", e)
     # ---------- restream ----------
     def dests(self):
         return load(RESTREAM, {"dests": {}}).get("dests", {})
