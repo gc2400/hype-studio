@@ -395,7 +395,9 @@ tv_vol = interactive.float("tv_vol", min=0., max=1., description="Hype Radio on 
 # engine's clock (clock_safe=false) that stall went straight to the TV sound as a hole. Now the sound bus reads the buffer at
 # its own steady pace and the buffer absorbs the stall (the streams never had the hole: their own buffers).
 output.pulseaudio(device="hype_air", clock_safe=true, mksafe(buffer(buffer=0.2, max=2., amplify(override=null(), tv_vol, s))))
-output.pulseaudio(device="hype_fx", clock_safe=true, mksafe(buffer(buffer=0.2, max=2., fx)))   # (the same cushion: pads / IDs stay in step with the music)
+# FX line back on the engine's clock (28 Nov): on its own clock it broke up on TV during an ID over the intro of a paired-video
+# song (the only time TV hears this line); the main TV line (hype_air) stays on its own clock
+output.pulseaudio(device="hype_fx", clock_safe=false, mksafe(buffer(buffer=0.2, max=2., fx)))   # (the same cushion: pads / IDs stay in step with the music)
 # music + jingles for the studio (Mixcast USB fader) – always the automation (unprocessed), also while LIVE.
 # Straight from Liquidsoap to MediaMTX "return" (Opus 256k): sample-exact timing. (Before: a Pulse capture, whose clock jitter
 # made the studio's player speed up / slow down and hiccup.)
