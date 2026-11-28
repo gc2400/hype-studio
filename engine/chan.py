@@ -729,7 +729,10 @@ tv_vol = interactive.float("tv_vol", min=0., max=1., description="this station o
 # TV sound: a 0.2 s cushion (buffer) between the radio and Pulse – at every new song the radio is a fraction late while it opens
 # the file; the stream (Icecast) has its own buffer, but the line to OBS ran dry: ~0.1 s of silence on TV at each song change
 # (measured 26 Nov before OBS, on hype_air.monitor). The engine starts the music videos 0.2 s later to match (TV_AUDIO_BUF).
-output.pulseaudio(device="hype_air", clock_safe=true, mksafe(buffer(buffer=0.2, max=2., amplify(override=null(), tv_vol, s))))
+# 28 Nov: an ADAPTIVE cushion – on its own clock the line to OBS ran a hair faster than the radio, so the plain 0.2 s buffer ran
+# dry every ~30 min (an 85-100 ms hole, regular as a clock in the gap watch). buffer.adaptative speeds up / slows down by a few
+# hundredths of a percent (inaudible) so it never runs dry or full.
+output.pulseaudio(device="hype_air", clock_safe=true, mksafe(buffer.adaptative(buffer=0.2, max=2., averaging=30., limit=1.01, amplify(override=null(), tv_vol, s))))
 # the FX line (pads / IDs over the intro) for TV, as on Hype Radio (28 Nov): during a song with a paired video the TV plays the
 # video's own sound and hears the IDs on this line; on the engine's clock (its own clock broke up, 28 Nov)
 output.pulseaudio(device="hype_fx", clock_safe=false, mksafe(buffer(buffer=0.2, max=2., amplify(override=null(), tv_vol, fx))))

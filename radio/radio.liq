@@ -394,7 +394,10 @@ tv_vol = interactive.float("tv_vol", min=0., max=1., description="Hype Radio on 
 # TV sound on its OWN clock behind the 0.2 s buffer (27 Nov): opening a video file stalls the radio engine 60-100 ms; on the
 # engine's clock (clock_safe=false) that stall went straight to the TV sound as a hole. Now the sound bus reads the buffer at
 # its own steady pace and the buffer absorbs the stall (the streams never had the hole: their own buffers).
-output.pulseaudio(device="hype_air", clock_safe=true, mksafe(buffer(buffer=0.2, max=2., amplify(override=null(), tv_vol, s))))
+# 28 Nov: an ADAPTIVE cushion – on its own clock the line to OBS ran a hair faster than the radio, so the plain 0.2 s buffer ran
+# dry every ~30 min (an 85-100 ms hole, regular as a clock in the gap watch). buffer.adaptative speeds up / slows down by a few
+# hundredths of a percent (inaudible) so it never runs dry or full.
+output.pulseaudio(device="hype_air", clock_safe=true, mksafe(buffer.adaptative(buffer=0.2, max=2., averaging=30., limit=1.01, amplify(override=null(), tv_vol, s))))
 # FX line back on the engine's clock (28 Nov): on its own clock it broke up on TV during an ID over the intro of a paired-video
 # song (the only time TV hears this line); the main TV line (hype_air) stays on its own clock
 output.pulseaudio(device="hype_fx", clock_safe=false, mksafe(buffer(buffer=0.2, max=2., amplify(override=null(), tv_vol, fx))))   # (with tv_vol: during a station TV block its own FX line is heard, not Hype Radio's)
