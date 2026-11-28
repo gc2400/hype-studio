@@ -1,22 +1,17 @@
 {
- "time": "2026-11-28T02:52:13",
+ "time": "2026-11-28T15:57:23",
  "result": "ok",
- "commit": "7fd3af3ac531cfc6e62ee132d30f1ecc4dbcfa72",
- "subject": "Station TV blocks like Hype Radio: a paired video plays with its own sound on TV, the station's IDs / pads on the FX line (stations now output their FX to hype_fx; every FX line follows its tv_vol so only the station on TV is heard)",
+ "commit": "f144f61982890c6683d8bc67774ecfa7f88c50ba",
+ "subject": "Panel: a line under the preview shows how this laptop decodes it (video chip / processor), ms per frame, dropped frames and how many live videos play on the page",
  "log": [
-  "02:50:40 update 70b432e0 \u2192 7fd3af3a \u00b7 3 file(s): engine/chan.py, engine/engine.py, radio/radio.liq",
-  "02:51:27 lab: PASS (6/6 good readings)",
-  "02:51:27 restart hype-channels",
-  "02:51:27 restart hype-engine@*",
-  "02:51:27 restart hype-engine",
-  "02:51:27 restart hype-radio",
-  "02:52:13 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*, hype-radio"
+  "15:57:23 update 7fd3af3a \u2192 f144f619 \u00b7 2 file(s): web/panel/index.html, web/panel/onair.css",
+  "15:57:23 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Broederliefde \u2013 Brasa Mi",
-  "listeners": 2,
+  "song": "Wisin x Tito El Bambino \u2013 Pa' La Girl",
+  "listeners": 6,
   "obs": true,
-  "seg_age": 1.2,
+  "seg_age": 0.1,
   "problems": [],
   "ok": true
  },
