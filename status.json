@@ -1,17 +1,17 @@
 {
- "time": "2026-11-28T16:00:29",
+ "time": "2026-11-28T16:03:35",
  "result": "ok",
- "commit": "9208a55966e58d0edae03bedb421716b36ba24c6",
- "subject": "Panel preview line: say 'not shown by Chrome' when Chrome hides the decoder (pages without camera permission), instead of guessing 'processor'",
+ "commit": "151fdfea96a8cebe9c205eb4103c637609f122eb",
+ "subject": "Panel preview: a 0.4 s playout buffer (it had none: 16 freezes and 70 dropped frames a minute in Chrome's own stats, decoded on the video chip); the preview line also counts freezes; hype-rtc applies videoBufferMs",
  "log": [
-  "16:00:29 update f144f619 \u2192 9208a559 \u00b7 1 file(s): web/panel/index.html",
-  "16:00:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:03:35 update 9208a559 \u2192 151fdfea \u00b7 2 file(s): web/guest/hype-rtc.js, web/panel/index.html",
+  "16:03:35 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Daddy Yankee x Danny Ocean \u2013 ALFOMBRA VOLADORA",
+  "song": "Kapo \u2013 BOMB\u00d3N",
   "listeners": 7,
   "obs": true,
-  "seg_age": 0.9,
+  "seg_age": 1.5,
   "problems": [],
   "ok": true
  },
