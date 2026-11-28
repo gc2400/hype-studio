@@ -558,7 +558,7 @@ class Screen:
             try: upn = E.upnext_data(); upn = dict(upn, until=getattr(E, "hold_until", 0)) if isinstance(upn, dict) else upn
             except Exception as e: log.warning("up next data: %s", e)
         also = None
-        if scene == ALSO_SCENE:
+        if scene in (ALSO_SCENE, ALSO_CAM):
             also = dict(also_now(), until=getattr(E, "hold_until", 0))
         ch = self.chart if self.chart and self.chart["end"] > now else None
         return {"also": also, "station": None if CH else TVF.get("ch"), "now": now, "items": out, "scene": scene, "np": self.np if scene == "Music video" else None, "chart": ch, "ticker": tick, "voice": voice, "upnext": upn, "jingle": bool(GFX["hide"]), "gfx": dict(GFX, hide=bool(GFX["hide"])),
@@ -616,6 +616,7 @@ if not CH: threading.Thread(target=cover_worker, daemon=True).start()     # (a t
 ADBOX = "/srv/hype/branding/adbox"
 PIP_DIR = "/srv/hype/branding/pip"          # frames for the PIP scene (full-frame PNG with a transparent window)
 ALSO_SCENE = "Hype Stations"                  # PiP: the TV in a window + what Hype Latina / Hype Ambiente play now (Gianno's template PNG)
+ALSO_CAM = "Hype Stations CAM 1"            # the same with CAM 1 in the window instead of the music video (28 Nov, Gianno) – by hand: Scenes → PIP
 STINGER_SCENES = {"Hype Screen", "PIP", "Up next", ALSO_SCENE}
 ALSO_NOW = {"t": 0, "d": {}}
 def also_fetch():
@@ -3483,7 +3484,7 @@ def slideshow_loop():
                 with E.tv.olock:
                     slideshow.sync(E.tv.client(), float(planner.get_setting(c, "ss_photo_s", 8)), float(planner.get_setting(c, "ss_fade_s", 1)),
                                    bool(planner.get_setting(c, "ss_random", True)))
-            if slideshow.is_slideshow(E.tv.scene) or slideshow.STATE.get("cur"):
+            if slideshow.drives(E.tv.scene) or slideshow.STATE.get("cur"):
                 with E.tv.olock:
                     cl = E.tv.client()
                     slideshow.drive(cl, cl.get_current_program_scene().current_program_scene_name)
