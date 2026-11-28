@@ -1,23 +1,19 @@
 {
- "time": "2026-11-28T02:00:12",
+ "time": "2026-11-28T02:29:35",
  "result": "ok",
- "commit": "7e3830047de1682850abaf95a9a72708666cc036",
- "subject": "Install now (Gianno, 28 Nov 01:56): MANUAL/AUX + PAUSE + STOP, recordings finish, media pad sync, waveform while LIVE, LIVE MIX \u00b7 Drone, Hype Stations CAM 1, plus the waiting night updates",
+ "commit": "a470f4447a6139771172dd0406de6e32e0c518bd",
+ "subject": "LIVE: music videos follow the studio mix \u2013 the clip waits the measured studio loop (tv_lag), small drifts nudged every 20 s (>0.15 s); steady WebRTC playout delays (bufferMs now really applied; OBS inputs jb=200 for cameras, guests and studio sound alike); media pads: no double 0.2 s cushion",
  "log": [
-  "01:58:36 update ea6788dd \u2192 7e383004 \u00b7 12 file(s): engine/chan.py, engine/engine.py, engine/indexer.py, engine/live.py, engine/slideshow.py, radio/radio.liq, web/overlay/index.html, web/panel/header.js, web/panel/index.html, web/panel/library.html, web/panel/onair.css, web/panel/studio.html",
-  "01:59:26 lab: PASS (6/6 good readings)",
-  "01:59:26 restart hype-channels",
-  "01:59:26 restart hype-engine@*",
-  "01:59:26 restart hype-indexer",
-  "01:59:26 restart hype-engine",
-  "01:59:26 restart hype-radio",
-  "02:00:12 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*, hype-indexer, hype-radio"
+  "02:28:50 update 7e383004 \u2192 a470f444 \u00b7 5 file(s): engine/engine.py, engine/live.py, web/guest/hype-rtc.js, web/obs/feed.html, web/panel/studio.html",
+  "02:28:50 restart hype-engine@*",
+  "02:28:50 restart hype-engine",
+  "02:29:35 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
  ],
  "guard": {
-  "song": "Bryan Mg \u2013 Hier Moet Je Zijn",
-  "listeners": 2,
+  "song": "Ronnie Flex x Dj Dylvn x Carel x ADf Antje x Trapmoneybiggie \u2013 Punta Cana",
+  "listeners": 3,
   "obs": true,
-  "seg_age": 2.0,
+  "seg_age": 0.0,
   "problems": [],
   "ok": true
  },
