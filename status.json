@@ -1,17 +1,19 @@
 {
- "time": "2026-11-28T02:43:28",
+ "time": "2026-11-28T02:52:13",
  "result": "ok",
- "commit": "70b432e0a1095f5dc801d7f92a6184485ac5ed19",
- "subject": "TV FX line (IDs / pads over paired-video songs) back on the radio engine's clock: on its own clock it broke up on TV (Gianno, 28 Nov 02:14); the main TV sound line stays on its own clock",
+ "commit": "7fd3af3ac531cfc6e62ee132d30f1ecc4dbcfa72",
+ "subject": "Station TV blocks like Hype Radio: a paired video plays with its own sound on TV, the station's IDs / pads on the FX line (stations now output their FX to hype_fx; every FX line follows its tv_vol so only the station on TV is heard)",
  "log": [
-  "02:41:52 update a470f444 \u2192 70b432e0 \u00b7 1 file(s): radio/radio.liq",
-  "02:42:43 lab: PASS (6/6 good readings)",
-  "02:42:43 restart hype-channels",
-  "02:42:43 restart hype-radio",
-  "02:43:28 installed OK \u00b7 restarted: hype-radio, hype-channels"
+  "02:50:40 update 70b432e0 \u2192 7fd3af3a \u00b7 3 file(s): engine/chan.py, engine/engine.py, radio/radio.liq",
+  "02:51:27 lab: PASS (6/6 good readings)",
+  "02:51:27 restart hype-channels",
+  "02:51:27 restart hype-engine@*",
+  "02:51:27 restart hype-engine",
+  "02:51:27 restart hype-radio",
+  "02:52:13 installed OK \u00b7 restarted: hype-channels, hype-engine, hype-engine@*, hype-radio"
  ],
  "guard": {
-  "song": "Ozuna x Jory Boy x \u00d1engo Flow \u2013 Vulnerable",
+  "song": "Broederliefde \u2013 Brasa Mi",
   "listeners": 2,
   "obs": true,
   "seg_age": 1.2,
