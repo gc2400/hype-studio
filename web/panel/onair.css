@@ -335,3 +335,4 @@ canvas.wave{width:100%;height:64px;background:var(--deep);border-radius:10px;dis
 /* ◎ Stations row: the label on the same line as the buttons */
 #stRow{align-items:center}#stRow>.muted{font-size:12.5px;margin-right:2px}
 #aux .li.sel{outline:2px solid var(--y);outline-offset:-2px;border-radius:6px;background:rgba(255,214,0,.06)}      /* MANUAL: the AUX song PLAY will play */
+#pvDec .ok{color:var(--g)}#pvDec .bad{color:var(--r)}      /* preview decoder line (28 Nov) */
