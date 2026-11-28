@@ -13,6 +13,7 @@ PROGRAM = "rtmp://127.0.0.1:1935/live/program"
 RADIO = "http://127.0.0.1:8000/rec.mp3"     # the on-air sound at 256k, for the recordings (internal)
 SOURCES = ["cam1", "cam2", "cam3", "screen"] + [f"guest{i}" for i in range(1, 7)]
 CAMS = ("CAM 1", "CAM 2", "CAM 3", "CAM 4")
+FEED_JB = 200                                # ms, steady WebRTC playout delay in the OBS inputs
 FEED = "http://127.0.0.1:8097/feed.html"     # web/obs/feed.html: one live input for an OBS browser source
 
 def load(p, d):
@@ -285,8 +286,9 @@ class Live:
         with self.tv.olock:
             try:
                 cl = self.tv.client()
-                want = {feed(cam): FEED + f"?path={src}&audio=0" for cam, src in self.st["cams"].items()}
-                want["Studio audio"] = FEED + "?path=studio&audio=1&video=0"
+                # jb: the same steady playout delay for every camera, guest and the studio sound (28 Nov) – relative lip sync unchanged
+                want = {feed(cam): FEED + f"?path={src}&audio=0&jb={FEED_JB}" for cam, src in self.st["cams"].items()}
+                want["Studio audio"] = FEED + f"?path=studio&audio=1&video=0&jb={FEED_JB}"
                 for name, url in want.items():
                     try: cur = cl.get_input_settings(name).input_settings.get("url")
                     except Exception as e: log.warning("input %s: %s", name, e); continue

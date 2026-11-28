@@ -53,7 +53,9 @@ const HypeRTC = (() => {
   async function play(path, o = {}) {
     const pc = new RTCPeerConnection({iceServers: ICE}), stream = new MediaStream();
     if (o.audio !== false) pc.addTransceiver('audio', {direction: 'recvonly'}); if (o.video) pc.addTransceiver('video', {direction: 'recvonly'});
-    pc.ontrack = e => stream.addTrack(e.track);
+    // bufferMs: a steady minimum playout delay (28 Nov: without it Chrome's buffer moved, so the studio loop – and the music
+    // videos on TV during LIVE – drifted 0.1-0.5 s). It was passed by the pages but never applied.
+    pc.ontrack = e => { if (o.bufferMs) try { e.receiver.jitterBufferTarget = o.bufferMs; } catch (_) {} stream.addTrack(e.track); };
     try {      // a failed handshake must close it (see publish)
       await pc.setLocalDescription(await pc.createOffer());
       await exchange(`/live/${path}/whep`, pc, null, o.key);

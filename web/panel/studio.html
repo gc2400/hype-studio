@@ -313,14 +313,14 @@ async function connect() {
     }
     // music back to the Mixcast USB fader
     const ma = audEl('ma'); LIVE_.ma = ma;
-    conns.music = HypeRTC.keep('music', async alive => { const r = await HypeRTC.play((L && L.return_path) || 'return', {key: KEY, bufferMs: 250}); if (!alive()) return r; /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ await musicAttach(ma, r.stream, '#dMusic', 'Music'); meterTo(r.stream, 'mMusic'); return r; }, setState);
+    conns.music = HypeRTC.keep('music', async alive => { const r = await HypeRTC.play((L && L.return_path) || 'return', {key: KEY, bufferMs: 200}); if (!alive()) return r; /* clean music for the Mixcast (a buffer that is too short makes the player speed up / slow down) */ await musicAttach(ma, r.stream, '#dMusic', 'Music'); meterTo(r.stream, 'mMusic'); return r; }, setState);
     // AUX 2 (deck 2) to the second output – silent unless Split is on and deck 2 plays
     if ($('#dMusic2').value) music2Start();
     toast('Studio connected – check the meters, then GO LIVE');
   } catch (e) { toast('Could not start: ' + e.message); disconnect(); }
 }
 function music2Start() { const mb = audEl('mb'); LIVE_.mb = mb; {
-      conns.music2 = HypeRTC.keep('aux 2', async alive => { const r = await HypeRTC.play('return2', {key: KEY, bufferMs: 250}); if (!alive()) return r; await musicAttach(mb, r.stream, '#dMusic2', 'AUX 2'); meterTo(r.stream, 'mMusic2'); return r; }, setState); } }
+      conns.music2 = HypeRTC.keep('aux 2', async alive => { const r = await HypeRTC.play('return2', {key: KEY, bufferMs: 200}); if (!alive()) return r; await musicAttach(mb, r.stream, '#dMusic2', 'AUX 2'); meterTo(r.stream, 'mMusic2'); return r; }, setState); } }
 function camStart(n, cs) { LIVE_[n] = cs; conns[n] = HypeRTC.keep(n, () => HypeRTC.publish(n, LIVE_[n], {key: KEY, videoKbps: Q().v}), setState); }
 
 // ---------- change things while connected / LIVE, without Disconnect (27 Nov, first live show) ----------

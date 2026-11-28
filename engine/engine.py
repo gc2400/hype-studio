@@ -198,6 +198,14 @@ CLOCK_POS = SP("/var/lib/hype/clock_pos.json"); PLAN_FILE = SP("/var/lib/hype/up
 SNAPS_FILE = SP("/var/lib/hype/plan_snaps.json"); MINE_FILE = SP("/var/lib/hype/upnext_mine.json")
 TV_AUDIO_BUF = 0.20  # the radio's 0.2 s cushion on the line to OBS (radio.liq, 26 Nov): the videos start that much later too
 MEDIA_STUDIO_PLAYOUT = 0.20   # LIVE: the studio mix in OBS ('Studio audio', a WebRTC player) plays ~0.2 s after it reaches the server
+def tv_lag():
+    """How long after the radio starts a song its sound is heard on TV: normally AV_LAG (incl. the 0.2 s cushion); while LIVE the
+    TV sound is your studio mix, which comes back through the studio (28 Nov, measured in the 27 Nov recording: music videos
+    ran 0.1-0.5 s ahead): + the measured studio loop + the studio sound's playout in OBS."""
+    try:
+        if not CH and getattr(E.live, "live", False): return 0.1 + E.live.studio_loop_ms() / 1000.0 + MEDIA_STUDIO_PLAYOUT
+    except Exception: pass
+    return AV_LAG
 AV_LAG = 0.20        # the radio's sound reaches OBS this much after Liquidsoap starts a song (measured 30 Oct: ~0.2 s)
 LM_CACHE = {}
 LM_STAMP = {}
@@ -931,8 +939,10 @@ class TV:
                         if stp.media_state != "OBS_MEDIA_STATE_PAUSED" or abs((stp.media_cursor or 0) / 1000 - pre["k"]) > 0.3:
                             use_pre = False; log.warning("preloaded clip did not wait (%s at %.1f s, not %.1f s) – started the normal way", stp.media_state, (stp.media_cursor or 0) / 1000, pre["k"])
                     except Exception: use_pre = False
+                lag_ = tv_lag(); live_ = bool(getattr(self, "live", False))
+                lag_s = 0.0 if (sound and not live_) else lag_      # a paired clip's own sound (not LIVE) needs no wait
                 if use_pre:
-                    when = (pre["k"] - (cue_start or 0)) + AV_LAG - (time.time() - t0)   # the radio reaches the keyframe in OBS then
+                    when = (pre["k"] - (cue_start or 0)) + lag_ - (time.time() - t0)   # the radio reaches the keyframe in OBS then
                     if when < -0.05: use_pre = False; log.info("preloaded clip too late – started the normal way")
                 if not use_pre:
                   cl.set_input_settings(nxt, {"local_file": clip_file, "looping": False, "restart_on_activate": False,
@@ -953,9 +963,9 @@ class TV:
                 if not use_pre and not sound and not (cue_start and cue_start > 0.3):
                     # picture-only clip from the top: the radio's sound reaches OBS ~AV_LAG later (Liquidsoap + Pulse),
                     # so the picture waits that long (the previous picture stays up) and starts at 0 with it
-                    seek_k = 0.0; delay = max(0.0, AV_LAG - (time.time() - t0))
+                    seek_k = 0.0; delay = max(0.0, lag_ - (time.time() - t0))
                 if not use_pre and cue_start and cue_start > 0.3 and self._wait_open(cl, nxt):
-                    now_pos = cue_start + (time.time() - t0) - (0.0 if sound else AV_LAG)   # where the sound in OBS is now
+                    now_pos = cue_start + (time.time() - t0) - lag_s   # where the sound in OBS is now
                     k = next((x for x in kf if x >= now_pos + 0.3), None) if (kf and not sound) else None
                     if k is not None and k - now_pos < 12:   # jump to that keyframe the moment the radio gets there
                         seek_k = k; delay = max(0.0, k - now_pos - 0.12)
@@ -968,7 +978,7 @@ class TV:
                             time.sleep(0.1)
                             try: cur_ = (cl.get_media_input_status(nxt).media_cursor or 0) / 1000
                             except Exception: break
-                            want_ = cue_start + (time.time() - t0) - (0.0 if sound else AV_LAG)
+                            want_ = cue_start + (time.time() - t0) - lag_s
                             if want_ - 0.8 <= cur_ <= want_ + 2.0: break
                             if time.time() - t_try > 0.4 * (n_try + 1):
                                 n_try += 1; cl.set_media_input_cursor(nxt, int(want_ * 1000))
@@ -4715,6 +4725,22 @@ def resync_tv(force=False):
         if TVF["ch"]: snd = False      # a TV block: the station's sound, its clips are picture only
         if not f: return
         on = [i["sourceName"] for i in items if i["sceneItemEnabled"] and i["sourceName"] in ("Clip A", "Clip B")]
+        if getattr(E.live, "live", False) and not TVF["ch"]:
+            # LIVE: the picture follows your studio mix (tv_lag); small drifts are nudged back (> 0.15 s, max 4x per song) –
+            # only the clip's position, never the scene you chose
+            if not on or n["mode"] != "clip": return
+            if not force and (el < 10 or (n.get("cue_mix") or n.get("cue_end") or n.get("duration") or 999) - start < 12 or RESYNC_N.get(n.get("started"), 0) >= 4): return
+            with E.tv.olock:
+                cl_ = E.tv.client(); shown = cl_.get_input_settings(on[0]).input_settings.get("local_file")
+                if not shown or os.path.realpath(shown) != os.path.realpath(f): return
+                cur_ = cl_.get_media_input_status(on[0]).media_cursor
+                if cur_ is None: return
+                want_ = start - tv_lag(); off_ = cur_ / 1000.0 - want_
+                if abs(off_) < 0.15: return
+                cl_.set_media_input_cursor(on[0], int((want_ + 0.04) * 1000))
+            if not force: RESYNC_N[n.get("started")] = RESYNC_N.get(n.get("started"), 0) + 1
+            log.info("LIVE sync: %s picture was %.2f s %s the studio sound – nudged", n["title"], abs(off_), "ahead of" if off_ > 0 else "behind")
+            return
         if on and not force and (E.tv.scene == "Music video" or not E.tv.auto):
             # a clip is on screen – but is it this song's clip? After an OBS restart OBS comes back with the clip it had
             # saved (16 Nov: the previous song's video ran under the next song). Only then show the right one.
@@ -4840,7 +4866,7 @@ class Media:
             ann = f'annotate:liq_cue_in="0",liq_amplify="{gain:.2f} dB",hype_fade="0":{full}'
             level = 0.0 if sound == "off" else float(planner.get_setting(dbc(), "pad_duck", 0.25))
             live_ = bool(getattr(eng.live, "live", False))
-            lag = AV_LAG + TV_AUDIO_BUF if not live_ else 0.1 + eng.live.studio_loop_ms() / 1000.0 + MEDIA_STUDIO_PLAYOUT
+            lag = tv_lag()      # (AV_LAG already holds the 0.2 s cushion)
             def run():
                 eng.liq.cmd("pads.push " + ann); t_p = time.time()
                 time.sleep(max(0.0, lag - (time.time() - t_p)))
