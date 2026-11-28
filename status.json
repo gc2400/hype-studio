@@ -1,19 +1,20 @@
 {
- "time": "2026-11-28T02:29:35",
+ "time": "2026-11-28T02:43:28",
  "result": "ok",
- "commit": "a470f4447a6139771172dd0406de6e32e0c518bd",
- "subject": "LIVE: music videos follow the studio mix \u2013 the clip waits the measured studio loop (tv_lag), small drifts nudged every 20 s (>0.15 s); steady WebRTC playout delays (bufferMs now really applied; OBS inputs jb=200 for cameras, guests and studio sound alike); media pads: no double 0.2 s cushion",
+ "commit": "70b432e0a1095f5dc801d7f92a6184485ac5ed19",
+ "subject": "TV FX line (IDs / pads over paired-video songs) back on the radio engine's clock: on its own clock it broke up on TV (Gianno, 28 Nov 02:14); the main TV sound line stays on its own clock",
  "log": [
-  "02:28:50 update 7e383004 \u2192 a470f444 \u00b7 5 file(s): engine/engine.py, engine/live.py, web/guest/hype-rtc.js, web/obs/feed.html, web/panel/studio.html",
-  "02:28:50 restart hype-engine@*",
-  "02:28:50 restart hype-engine",
-  "02:29:35 installed OK \u00b7 restarted: hype-engine, hype-engine@*"
+  "02:41:52 update a470f444 \u2192 70b432e0 \u00b7 1 file(s): radio/radio.liq",
+  "02:42:43 lab: PASS (6/6 good readings)",
+  "02:42:43 restart hype-channels",
+  "02:42:43 restart hype-radio",
+  "02:43:28 installed OK \u00b7 restarted: hype-radio, hype-channels"
  ],
  "guard": {
-  "song": "Ronnie Flex x Dj Dylvn x Carel x ADf Antje x Trapmoneybiggie \u2013 Punta Cana",
-  "listeners": 3,
+  "song": "Ozuna x Jory Boy x \u00d1engo Flow \u2013 Vulnerable",
+  "listeners": 2,
   "obs": true,
-  "seg_age": 0.0,
+  "seg_age": 1.2,
   "problems": [],
   "ok": true
  },
