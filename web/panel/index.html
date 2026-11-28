@@ -642,7 +642,8 @@ setInterval(async () => {
   try {
     const st = await pc.getStats(); let r = null; st.forEach(x => { if (x.type === 'inbound-rtp' && x.kind === 'video') r = x; });
     if (!r) return;
-    const p = PVD; PVD = {f: r.framesDecoded || 0, d: r.framesDropped || 0, t: r.totalDecodeTime || 0, at: Date.now(), fr: r.freezeCount || 0};
+    const p = PVD; PVD = {f: r.framesDecoded || 0, d: r.framesDropped || 0, t: r.totalDecodeTime || 0, at: Date.now(), fr: r.freezeCount || 0,
+      pl: r.packetsLost || 0, pr: r.packetsReceived || 0, nk: r.nackCount || 0, jd: r.jitterBufferDelay || 0, je: r.jitterBufferEmittedCount || 0};
     if (!p) return;
     const df = PVD.f - p.f, dd = PVD.d - p.d, ms = df > 0 ? (PVD.t - p.t) * 1000 / df : 0, fps = df * 1000 / (PVD.at - p.at);
     const hw = r.powerEfficientDecoder === true || /D3D11|MediaFoundation|DXVA|Accelerat|VAAPI|Hardware|External/i.test(r.decoderImplementation || '');
@@ -653,6 +654,9 @@ setInterval(async () => {
     const known = !!r.decoderImplementation || r.powerEfficientDecoder !== undefined;
     el.innerHTML = 'Preview decoding: ' + (known ? `<b class="${hw ? 'ok' : 'bad'}">${hw ? 'video chip' : 'processor (software)'}</b> (${esc(r.decoderImplementation || '?')})` : '<b>not shown by Chrome on this page</b>')
       + ` · ${fps.toFixed(0)} fps · ${ms.toFixed(1)} ms per frame` + (dd > 0 ? ` · <span class="bad">${dd} frames dropped</span>` : ' · no frames dropped')
+      + (() => { const lost = PVD.pl - p.pl, got = PVD.pr - p.pr, pct = got + lost > 0 ? 100 * lost / (got + lost) : 0,
+          buf = PVD.je - p.je > 0 ? (PVD.jd - p.jd) * 1000 / (PVD.je - p.je) : 0;
+          return ` · network: ${lost > 0 ? `<span class="bad">${pct.toFixed(1)}% packets lost</span>` : 'no loss'} · buffer ${buf.toFixed(0)} ms`; })()
       + (PVD.fr - p.fr > 0 ? ` · <span class="bad">${PVD.fr - p.fr} freeze${PVD.fr - p.fr > 1 ? 's' : ''}</span>` : '')
       + ` · ${vids} live video${vids === 1 ? '' : 's'} on this page`;
   } catch (e) {}
