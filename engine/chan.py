@@ -720,7 +720,6 @@ output.icecast(%%mp3(bitrate=256, samplerate=44100, stereo=true), host="127.0.0.
 output.icecast(%%mp3(bitrate=128, samplerate=44100, stereo=true), host="127.0.0.1", port=8000,
   password=conf.icecast_source, mount="%(id)s.mp3", name="%(name)s", description="%(genre)s", genre="%(genre)s",
   url="https://www.hyperadio.nl", public=false, s)
-output.dummy(fx)
 # music + jingles for the studio's Mixcast fader while you are LIVE on this station (Broadcast plays "return-<id>")
 output.url(url="rtsp://127.0.0.1:8554/return-%(id)s",
   %%ffmpeg(format="rtsp", rtsp_transport="tcp", %%audio(codec="libopus", b="256k", samplerate=48000, channels=2, application="audio", frame_duration=20)), ret)
@@ -731,6 +730,9 @@ tv_vol = interactive.float("tv_vol", min=0., max=1., description="this station o
 # the file; the stream (Icecast) has its own buffer, but the line to OBS ran dry: ~0.1 s of silence on TV at each song change
 # (measured 26 Nov before OBS, on hype_air.monitor). The engine starts the music videos 0.2 s later to match (TV_AUDIO_BUF).
 output.pulseaudio(device="hype_air", clock_safe=true, mksafe(buffer(buffer=0.2, max=2., amplify(override=null(), tv_vol, s))))
+# the FX line (pads / IDs over the intro) for TV, as on Hype Radio (28 Nov): during a song with a paired video the TV plays the
+# video's own sound and hears the IDs on this line; on the engine's clock (its own clock broke up, 28 Nov)
+output.pulseaudio(device="hype_fx", clock_safe=false, mksafe(buffer(buffer=0.2, max=2., amplify(override=null(), tv_vol, fx))))
 """ % {"id": cid, "name": q(cfg["name"]), "genre": q(cfg.get("genre") or "")}
     return "# GENERATED from radio.liq by hype-channels for %s – do not edit\n" % cid + t
 

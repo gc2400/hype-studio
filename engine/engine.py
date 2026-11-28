@@ -4563,14 +4563,16 @@ def tv_show_station(n):
     c = dbc(); path = n.get("path") or ""; mode = n.get("mode"); clip = None; start = n.get("cue_start") or 0; kf = None
     TVF["now"] = n
     if mode in ("clip", "jingle-video"): clip, kf = tv_file(c, path), keyframes(c, path)
-    elif mode == "pair" and n.get("clip_path"):      # its own video, shown without its own sound (the station's sound is on TV)
-        clip, start = pair_clip(c, n["clip_path"])[:2]; kf = keyframes(c, n["clip_path"])
+    snd, gain = False, 0.0
+    elif_pair = mode == "pair" and n.get("clip_path")
+    if elif_pair:      # its own video WITH its own sound, as on Hype Radio (28 Nov, Gianno); the station's IDs / pads on the FX line
+        clip, start, snd, gain = pair_clip(c, n["clip_path"]); kf = None
     el = time.time() - (n.get("started") or time.time())
     if getattr(E.tv, "hold_song", False): E.tv.hold_song = False; E.tv.auto = True; E.tv.scene = None
     if el > 3 and clip:     # joined in the middle (block start): straight to the spot it is at now
-        scene = E.tv.show("clip" if mode == "pair" else mode, clip, start + el, False, 0.0, kf)
+        scene = E.tv.show("clip" if mode == "pair" else mode, clip, start + el, snd, gain, kf)
     else:
-        scene = E.tv.show("clip" if mode == "pair" else mode, clip, start, False, 0.0, kf, t0=n.get("started"))
+        scene = E.tv.show("clip" if mode == "pair" else mode, clip, start, snd, gain, kf, t0=n.get("started"))
     if n.get("section") == "music":
         ln = max(1.0, (n.get("cue_mix") or n.get("cue_end") or n.get("duration") or 180) - (n.get("cue_start") or 0)); now = time.time()
         E.screen.np = {"id": uuid.uuid4().hex[:8], "title": n.get("title") or "", "artist": n.get("artist") or "", "at": [now + 5.0] + ([now + ln / 2] if ln > 150 else []), "start": now, "end": now + max(5.0, ln - el)}
@@ -4722,7 +4724,6 @@ def resync_tv(force=False):
             f, cs, snd, gain = pair_clip(c, n["clip_path"]); start = cs + el
         else:
             f, start, snd, gain = tv_file(c, n["path"]), (n.get("cue_start") or 0) + el, False, 0.0
-        if TVF["ch"]: snd = False      # a TV block: the station's sound, its clips are picture only
         if not f: return
         on = [i["sourceName"] for i in items if i["sceneItemEnabled"] and i["sourceName"] in ("Clip A", "Clip B")]
         if getattr(E.live, "live", False) and not TVF["ch"]:
