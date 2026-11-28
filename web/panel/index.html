@@ -648,7 +648,10 @@ setInterval(async () => {
     const hw = r.powerEfficientDecoder === true || /D3D11|MediaFoundation|DXVA|Accelerat|VAAPI|Hardware|External/i.test(r.decoderImplementation || '');
     const vids = [...document.querySelectorAll('video')].filter(v => !v.paused && v.srcObject && v.offsetParent).length;
     el.hidden = false;
-    el.innerHTML = `Preview decoding: <b class="${hw ? 'ok' : 'bad'}">${hw ? 'video chip' : 'processor (software)'}</b> (${esc(r.decoderImplementation || '?')})`
+    // Chrome only tells a page which decoder it uses when the page may use the camera/mic (the Studio page may, the panel not):
+    // without that it says nothing – then "not shown by Chrome", not a guess
+    const known = !!r.decoderImplementation || r.powerEfficientDecoder !== undefined;
+    el.innerHTML = 'Preview decoding: ' + (known ? `<b class="${hw ? 'ok' : 'bad'}">${hw ? 'video chip' : 'processor (software)'}</b> (${esc(r.decoderImplementation || '?')})` : '<b>not shown by Chrome on this page</b>')
       + ` · ${fps.toFixed(0)} fps · ${ms.toFixed(1)} ms per frame` + (dd > 0 ? ` · <span class="bad">${dd} frames dropped</span>` : ' · no frames dropped')
       + ` · ${vids} live video${vids === 1 ? '' : 's'} on this page`;
   } catch (e) {}
