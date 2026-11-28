@@ -2326,7 +2326,7 @@ class Engine:
                 return fetch_url(c, d)
             elif action == "seek":        # the on-air waveform (unlocked): jump to pos (seconds in the file); the video follows
                 n = self.now
-                if self.live.live: return {"ok": False, "error": "not while you are LIVE"}
+                if self.live.live and self.live.split(): return {"ok": False, "error": "with the two decks: jump in the deck itself"}      # LIVE with one mix: allowed (28 Nov, Gianno)
                 if not n or n.get("section") != "music": return {"ok": False, "error": "only in a song"}
                 el = time.time() - n["started"] + (n.get("cue_start") or 0)
                 end = n.get("cue_mix") or n.get("cue_end") or n.get("duration") or 0
