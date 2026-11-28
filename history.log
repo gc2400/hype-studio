@@ -594,3 +594,4 @@
 2026-11-28T02:43:28 ok 70b432e0 TV FX line (IDs / pads over paired-video songs) back on the radio engine's clock: on its own clock it broke up on TV (Gianno, 28 Nov 02:14); the main TV sound line stays on its own clock
 2026-11-28T02:52:13 ok 7fd3af3a Station TV blocks like Hype Radio: a paired video plays with its own sound on TV, the station's IDs / pads on the FX line (stations now output their FX to hype_fx; every FX line follows its tv_vol so only the station on TV is heard)
 2026-11-28T15:57:23 ok f144f619 Panel: a line under the preview shows how this laptop decodes it (video chip / processor), ms per frame, dropped frames and how many live videos play on the page
+2026-11-28T16:00:29 ok 9208a559 Panel preview line: say 'not shown by Chrome' when Chrome hides the decoder (pages without camera permission), instead of guessing 'processor'

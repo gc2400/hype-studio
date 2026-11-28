@@ -1,17 +1,17 @@
 {
- "time": "2026-11-28T15:57:23",
+ "time": "2026-11-28T16:00:29",
  "result": "ok",
- "commit": "f144f61982890c6683d8bc67774ecfa7f88c50ba",
- "subject": "Panel: a line under the preview shows how this laptop decodes it (video chip / processor), ms per frame, dropped frames and how many live videos play on the page",
+ "commit": "9208a55966e58d0edae03bedb421716b36ba24c6",
+ "subject": "Panel preview line: say 'not shown by Chrome' when Chrome hides the decoder (pages without camera permission), instead of guessing 'processor'",
  "log": [
-  "15:57:23 update 7fd3af3a \u2192 f144f619 \u00b7 2 file(s): web/panel/index.html, web/panel/onair.css",
-  "15:57:23 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:00:29 update f144f619 \u2192 9208a559 \u00b7 1 file(s): web/panel/index.html",
+  "16:00:29 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Wisin x Tito El Bambino \u2013 Pa' La Girl",
-  "listeners": 6,
+  "song": "Daddy Yankee x Danny Ocean \u2013 ALFOMBRA VOLADORA",
+  "listeners": 7,
   "obs": true,
-  "seg_age": 0.1,
+  "seg_age": 0.9,
   "problems": [],
   "ok": true
  },
