@@ -1,14 +1,14 @@
 {
- "time": "2026-11-28T16:03:35",
+ "time": "2026-11-28T16:05:41",
  "result": "ok",
- "commit": "151fdfea96a8cebe9c205eb4103c637609f122eb",
- "subject": "Panel preview: a 0.4 s playout buffer (it had none: 16 freezes and 70 dropped frames a minute in Chrome's own stats, decoded on the video chip); the preview line also counts freezes; hype-rtc applies videoBufferMs",
+ "commit": "555d61d7b0c459ee76960905bdb461a5091a3fbd",
+ "subject": "Panel preview line: packet loss and buffer delay (network vs laptop)",
  "log": [
-  "16:03:35 update 9208a559 \u2192 151fdfea \u00b7 2 file(s): web/guest/hype-rtc.js, web/panel/index.html",
-  "16:03:35 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
+  "16:05:41 update 151fdfea \u2192 555d61d7 \u00b7 1 file(s): web/panel/index.html",
+  "16:05:41 installed OK \u00b7 restarted: nothing (pages reload by themselves)"
  ],
  "guard": {
-  "song": "Kapo \u2013 BOMB\u00d3N",
+  "song": "Chollo \u2013 Helemaal Zat",
   "listeners": 7,
   "obs": true,
   "seg_age": 1.5,
