@@ -33,6 +33,7 @@ html.ch-eng:not(.ch-tv) #cScenes,html.ch-eng:not(.ch-tv) #cTvm,html.ch-eng #live
         <div class="wwrap" id="waveWrap"><canvas class="wave" id="wave" width="800" height="96" style="height:46px" aria-label="Waveform of the song on air"></canvas><button class="wlock" id="waveLock" title="Locked – click to unlock, then click in the waveform to jump (locks again by itself)" aria-label="Unlock jumping in the song"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg></button></div>
         <div class="tp">
           <button class="btn ib" id="bPlay" aria-label="Play" title="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg></button>
+          <button class="btn ib" id="bPause" aria-label="Pause" title="Pause: stops here – PLAY goes on from the same spot (MANUAL)" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg></button>
           <button class="btn ib" id="bSae" aria-label="Stop at end of this song" title="Stop at end"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h3v14H5zM11 5l9 7-9 7z" fill="currentColor"/></svg><small>END</small></button>
           <button class="btn ib red" id="bStop" aria-label="Stop now" title="Stop"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button>
           <button class="btn ib loop" id="bLoop" aria-label="Loop this song" title="Loop: the song on air plays again and again"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -40,6 +41,7 @@ html.ch-eng:not(.ch-tv) #cScenes,html.ch-eng:not(.ch-tv) #cTvm,html.ch-eng #live
           <button class="btn ib" id="bMixer" aria-label="Mixer" aria-expanded="false" aria-controls="mixIn" title="Mixer: every volume – studio, live, pads, media, guests"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><rect x="3.5" y="13" width="5" height="3" rx="1" fill="currentColor"/><rect x="9.5" y="7" width="5" height="3" rx="1" fill="currentColor"/><rect x="15.5" y="11" width="5" height="3" rx="1" fill="currentColor"/></svg></button>
           <span class="mono muted" id="tEl" style="margin-left:auto;font-size:12px">0:00</span>
         </div>
+        <div class="muted" id="playWhat" style="font-size:12px;padding:0 4px 4px" hidden></div>
         <div class="meter" aria-label="On-air level (left and right)" role="img">
           <div class="mrow"><span>L</span><div class="mb"><i id="mL"></i><b id="pL"></b></div></div>
           <div class="mrow"><span>R</span><div class="mb"><i id="mR"></i><b id="pR"></b></div></div>
@@ -58,7 +60,7 @@ html.ch-eng:not(.ch-tv) #cScenes,html.ch-eng:not(.ch-tv) #cTvm,html.ch-eng #live
       </div>
       <div class="card" style="padding:8px" id="auxCard">
         <div class="row between" style="padding:4px 6px">
-          <div class="row" style="gap:4px"><span class="lab" style="color:var(--y)" id="auxManual">Manual ·</span><button class="btn sm on" data-auxtab="1">AUX 1</button><button class="btn sm" data-auxtab="2">AUX 2</button></div>
+          <div class="row" style="gap:4px"><span class="lab" style="color:var(--y)" id="auxManual">Manual ·</span><button class="btn sm on" data-auxtab="1">AUX 1</button><button class="btn sm" data-auxtab="2">AUX 2</button><button class="btn sm" id="auxOn" hidden title="MANUAL: this AUX plays from now on (after the song on air)"></button></div>
           <span class="lab" id="auxInfo" style="color:var(--b)"></span>
         </div>
         <div id="auxNext" style="padding:0 6px"></div>
@@ -265,13 +267,26 @@ function render() {
   if (n.cover) { if (art.dataset.cv !== n.cover) { art.dataset.cv = n.cover; art.textContent = ''; art.style.background = `#0B2236 url("${n.cover}") center/cover no-repeat`; } }
   else if (n.section === 'music' || n.artist) { if (art.dataset.cv !== 'none') { art.dataset.cv = 'none'; art.textContent = ''; art.style.background = '#0B2236 url("/panel/no-cover.png") center/cover no-repeat'; } }   // no cover: the Hype artwork
   else { if (art.dataset.cv) { delete art.dataset.cv; art.style.background = ''; } art.textContent = '♪'; }
-  if (n.path && waveFor !== n.path) { waveFor = n.path; wavePeaks = null; api('wave?path=' + encodeURIComponent(n.path)).then(p => { if (waveFor === n.path) wavePeaks = p; }); }
+  const man_ = !S.auto && !(S.dj && S.dj.on), stopShow = S.stopped && S.paused == null;
+  if (stopShow) {      // stopped: the player lets go of the song (27 Nov)
+    $('#npTitle').textContent = 'Stopped'; $('#npArtist').textContent = man_ ? 'select a song in the AUX and press PLAY' : 'press PLAY to go on';
+    $('#npFolder').textContent = '–'; $('#npMode').textContent = ''; $('#npFire').hidden = true;
+    if (art.dataset.cv !== 'stop') { art.dataset.cv = 'stop'; art.style.background = ''; art.textContent = '■'; }
+    waveFor = null; wavePeaks = [];
+  } else if (S.paused != null) { $('#npTitle').textContent = 'Paused – ' + (n.title || ''); $('#npArtist').textContent = (n.artist ? n.artist + ' · ' : '') + 'PLAY goes on from ' + fmt(S.paused); }
+  $('#bPause').hidden = !man_; $('#bPause').classList.toggle('on', S.paused != null);
+  playWhat();
+  if (n.path && !stopShow && waveFor !== n.path) { waveFor = n.path; wavePeaks = null; api('wave?path=' + encodeURIComponent(n.path)).then(p => { if (waveFor === n.path) wavePeaks = p; }); }
   $('#pvScene').textContent = (S.auto_scene ? 'AUTO · ' : 'MANUAL · ') + (S.scene || '–'); $('#bAutoScene').classList.toggle('on', S.auto_scene);
   const manual = !S.auto && !(S.dj && S.dj.on); document.body.classList.toggle('is-auto', !!S.auto);
   if (MODE !== 'dj') plApply(manual);
   renderScenes(); renderElements(); renderLog(); renderAux(); if (MODE === 'dj') renderDecks(); if (MODE === 'live') renderGuests();
 }
 function tick() {
+  if (S && S.stopped) {      // stopped / paused: no running time
+    $('#tEl').textContent = S.paused != null ? fmt(S.paused) : '0:00'; $('#tRem').textContent = S.paused != null ? 'PAUSED' : 'STOPPED'; $('#tMix').textContent = '';
+    const n = S.now || {}; drawWave(S.paused != null ? S.paused / (n.duration || 1) : 0, (n.cue_start || 0) / (n.duration || 1), 0, 1);
+    $('#clock').textContent = new Date(Date.now() - skew * 1000).toTimeString().slice(0, 8); return; }
   if (!S || !S.now || !S.now.path) return;
   const n = S.now, el = (Date.now() / 1000 - skew) - n.started + (n.cue_start || 0);
   const end = n.cue_end || n.duration || 0, mix = n.cue_mix || end;
@@ -346,10 +361,15 @@ let AUX = '1', auxSig = '';
 function renderAux() {
   const L = (S.aux || {})[AUX] || [], tot = L.reduce((n, u) => n + ((u.cue_mix || u.duration || 0) - (u.cue_start || 0)), 0);
   $('#auxInfo').textContent = L.length ? L.length + ' songs · ' + fmt(tot) : '';
-  $$('[data-auxtab]').forEach(b => { const n = ((S.aux || {})[b.dataset.auxtab] || []).length; b.classList.toggle('on', b.dataset.auxtab === AUX); b.textContent = 'AUX ' + b.dataset.auxtab + (n ? ' · ' + n : ''); });
+  const man = !S.auto && !(S.dj && S.dj.on);
+  $$('[data-auxtab]').forEach(b => { const n = ((S.aux || {})[b.dataset.auxtab] || []).length; b.classList.toggle('on', b.dataset.auxtab === AUX); b.textContent = 'AUX ' + b.dataset.auxtab + (n ? ' · ' + n : '') + (man && S.aux_on === b.dataset.auxtab ? ' ▶' : ''); });
+  $('#auxOn').hidden = !man || AUX === S.aux_on; $('#auxOn').textContent = '▶ Play from AUX ' + AUX;
   const nx = (S.upcoming || [])[0];
   const nxh = nx ? `<div class="li next"><span class="ic" style="color:var(--y)">▸</span><div class="tx"><b>${nx.artist ? esc(nx.artist) + ' – ' : ''}${esc(nx.title)}</b><span>NEXT · ${nx.src === 'clock' ? 'from the hour plan (AUX empty)' : nx.deck ? 'from AUX ' + nx.deck : esc(nx.folder)}</span></div><button class="x" style="opacity:1" data-nxrm="${nx.id}" aria-label="Remove the next song">×</button></div>` : '';
-  if ($('#auxNext').dataset.h !== nxh) { $('#auxNext').dataset.h = nxh; $('#auxNext').innerHTML = nxh; const nb = $('#auxNext [data-nxrm]'); if (nb) nb.onclick = () => cmd('remove', {id: nb.dataset.nxrm}); }
+  const auxOnEmpty = man && !nx && !S.stopped && !((S.aux || {})[S.aux_on] || []).length;
+  const nxh2 = nxh || (auxOnEmpty ? `<div class="li next"><span class="ic" style="color:var(--y)">■</span><div class="tx"><b>AUX ${S.aux_on} is empty</b><span>the radio stops after this song – drag songs in to keep going</span></div></div>` : '');
+  if (nxh2 !== nxh) { if ($('#auxNext').dataset.h !== nxh2) { $('#auxNext').dataset.h = nxh2; $('#auxNext').innerHTML = nxh2; } }
+  else if ($('#auxNext').dataset.h !== nxh) { $('#auxNext').dataset.h = nxh; $('#auxNext').innerHTML = nxh; const nb = $('#auxNext [data-nxrm]'); if (nb) nb.onclick = () => cmd('remove', {id: nb.dataset.nxrm}); }
   const sig = AUX + JSON.stringify(L.map(u => u.id)); if (sig === auxSig) return; auxSig = sig;
   $('#aux').innerHTML = L.length ? L.map((u, i) => { const jg = (u.mode || '').startsWith('jingle');
     return `<div class="li ${jg ? 'jg' : ''}" draggable="true" data-aid="${u.id}" data-i="${i}"><span class="num mono" style="width:18px;flex:none;font-size:12px;color:var(--mut)">${i + 1}</span><div class="tx"><b>${u.artist ? esc(u.artist) + ' – ' : ''}${esc(u.title)}</b><span>${esc(u.folder)}</span></div><span class="du mono">${fmt(u.air || ((u.cue_mix || u.duration || 0) - (u.cue_start || 0)))}</span><span class="lacts"><button data-fire="now" title="Play this now (fades the song on air)" aria-label="Play ${esc(u.title)} now">▶</button><button data-amv="${i - 1}" title="Earlier" aria-label="Move ${esc(u.title)} up" ${i === 0 ? 'disabled' : ''}>↑</button><button data-amv="${i + 1}" title="Later" aria-label="Move ${esc(u.title)} down" ${i === L.length - 1 ? 'disabled' : ''}>↓</button><button class="rm" data-arm="${u.id}" title="Remove from AUX ${AUX}" aria-label="Remove ${esc(u.title)}">×</button></span></div>`; }).join('')
@@ -361,9 +381,27 @@ function renderAux() {
     el.querySelectorAll('[data-fire]').forEach(b => b.onclick = e => { e.stopPropagation(); auxCmd('aux_fire', {id: el.dataset.aid, how: b.dataset.fire, remove: true}).then(() => toast('Playing now')); });
     el.querySelectorAll('[data-amv]').forEach(b => b.onclick = e => { e.stopPropagation(); auxCmd('aux_move', {id: el.dataset.aid, to: +b.dataset.amv}); });
     el.querySelector('[data-arm]').onclick = e => { e.stopPropagation(); auxCmd('aux_remove', {id: el.dataset.aid}); };
-    el.addEventListener('click', e => { if (e.target.closest('.lacts')) return; const on = !el.classList.contains('sel'); $$('#aux .li.sel').forEach(x => x.classList.remove('sel')); el.classList.toggle('sel', on); });
+    el.addEventListener('click', e => { if (e.target.closest('.lacts')) return; const on = !el.classList.contains('sel'); $$('#aux .li.sel').forEach(x => x.classList.remove('sel')); el.classList.toggle('sel', on);
+      ASEL = on ? {aux: AUX, id: el.dataset.aid} : null; playWhat(); });
+    if (ASEL && ASEL.aux === AUX && ASEL.id === el.dataset.aid) el.classList.add('sel');
   });
+  if (ASEL && !((S.aux || {})[ASEL.aux] || []).some(x => x.id === ASEL.id)) { ASEL = null; playWhat(); }
 }
+// MANUAL: the song you selected in an AUX (PLAY plays it); the line under the buttons says what PLAY will do
+let ASEL = null;
+function playWhat() {
+  const el = $('#playWhat'); if (!el || !S) return;
+  const man = !S.auto && !(S.dj && S.dj.on), nm = u => u ? (u.artist ? u.artist + ' – ' : '') + (u.title || '') : '';
+  let t = '';
+  if (man) {
+    const sel = ASEL && ((S.aux || {})[ASEL.aux] || []).find(x => x.id === ASEL.id);
+    if (sel) t = 'PLAY: ' + nm(sel) + (S.stopped ? '' : ' (now – interrupts the song on air)') + ' · from AUX ' + ASEL.aux;
+    else if (S.paused != null) t = 'PLAY: on from ' + fmt(S.paused);
+    else if (S.stopped) { const nx = (S.upcoming || [])[0] || ((S.aux || {})[S.aux_on] || [])[0]; t = nx ? 'PLAY: ' + nm(nx) + ' · top of AUX ' + S.aux_on : 'AUX ' + S.aux_on + ' is empty – drag songs in, then PLAY'; }
+  }
+  el.hidden = !t; if (el.textContent !== t) el.textContent = t; $('#bPlay').title = t || 'Play';
+}
+$('#auxOn').onclick = () => auxCmd('aux_select').then(r => r && r.ok !== false && toast('AUX ' + AUX + ' plays from now on (after the song on air)'));
 function auxCmd(a, d = {}) { auxSig = ''; return cmd(a, Object.assign({aux: AUX}, d)).then(r => { if (r && r.ok === false) toast(r.error, 1); return r; }); }
 // a playlist dragged from the library card: its next songs (its own order and rules) go to Up next or the AUX
 function plSongs(id, n) { return api('playlist_take?id=' + id + '&n=' + (n || 0)).then(r => r.paths || []); }
@@ -387,8 +425,12 @@ $('#auxLoad').onfocus = fillAuxLoad; $('#auxLoad').onchange = () => { const v = 
 fillAuxLoad();
 // ---------- buttons ----------
 $('#bLoop').onclick = () => cmd('loop', {on: !(S && S.loop)}).then(() => toast(S && S.loop ? 'Loop on: this song plays again' : 'Loop off'));
-$('#bPlay').onclick = () => { const back = S && !S.auto && !(S.dj && S.dj.on) && !S.stopped; cmd('play').then(() => back && toast('Back to the normal programming')); }; $('#bNext').onclick = () => cmd('next');
-$('#bSae').onclick = () => cmd('stop_at_end'); $('#bStop').onclick = () => { if (confirm('Stop the music now? The radio goes silent until you press PLAY.')) cmd('stop'); };
+$('#bPlay').onclick = () => { const man = S && !S.auto && !(S.dj && S.dj.on);
+  if (!man) return cmd('play');
+  const d = ASEL ? {id: ASEL.id} : {}; cmd('play', d).then(r => { if (r && r.ok === false) return toast(r.error, 1); if (r && r.note) toast(r.note); ASEL = null; $$('#aux .li.sel').forEach(x => x.classList.remove('sel')); playWhat(); }); };
+$('#bPause').onclick = () => { if (S && S.paused != null) return $('#bPlay').click();
+  cmd('pause').then(r => r && r.ok === false ? toast(r.error, 1) : toast('Paused – PLAY goes on from here')); }; $('#bNext').onclick = () => cmd('next');
+$('#bSae').onclick = () => cmd('stop_at_end'); $('#bStop').onclick = () => cmd('stop');
 $('#bAuto').onclick = () => cmd('auto', {on: true}).then(() => { if (MODE === 'dj') applyMode('onair'); toast('AUTO: the hour plans and programming'); });
 $('#bManual').onclick = () => cmd('auto', {on: false}).then(() => toast('MANUAL: your AUX plays – the radio keeps going'));
 $('#bAutoScene').onclick = () => cmd('autoscene').then(r => toast(r && r.auto === false ? 'AUTO SCENES off – the scene stays until you change it' : 'AUTO SCENES on – the TV follows the music')); $('#bPadStop').onclick = () => cmd('pads_stop').then(() => { Object.keys(PLAYING).forEach(k => delete PLAYING[k]); });
@@ -405,7 +447,7 @@ const MSC = MROWS.flat().filter(Boolean);
 let CAMEDIT = null, CAMPICK = -1;    // editing the Cameras / PIP / MEDIA grid: {tab, cells, hidden}; CAMPICK = the place you clicked first (click another to swap)
 const scName = n => n.startsWith('PIP@') ? 'PIP · ' + n.slice(4).replace(/^PIP_/, '').replace(/\.png$/i, '') : n;
 const LTAB = () => SG === -2 ? 'pip' : SG === -3 ? 'media' : 'cam';
-function tabScenes(t) { return t === 'pip' ? ((S && S.pip_frames) || []).map(f => 'PIP@' + f).concat(['Up next', 'Hype Stations']) : t === 'media' ? MSC : CAMS; }
+function tabScenes(t) { return t === 'pip' ? ((S && S.pip_frames) || []).map(f => 'PIP@' + f).concat(['Up next', 'Hype Stations', 'Hype Stations CAM 1']) : t === 'media' ? MSC : CAMS; }
 function tabDefault(t) { if (t === 'media') return MROWS.flat(); if (t === 'pip') return tabScenes('pip'); return [...CAMROWS.flat(), ...CAMMORE]; }
 function camLayout(t = LTAB()) {      // your own arrangement (saved on the server) – scenes it doesn't know yet go at the end
   const CAMS = tabScenes(t);
@@ -442,7 +484,7 @@ function renderScenes() {
     const ed = $('#sgTabs [data-sgedit]'); if (ed) ed.onclick = () => { SGOPT = false; SGEDIT = {list: JSON.parse(JSON.stringify(groups())), i: SG}; renderScenes(); };
   }
   $('#sgEdit').hidden = !SGEDIT; if (SGEDIT && SG >= 0 && document.activeElement !== $('#sgName')) $('#sgName').value = (G[SG] || {}).name || '';
-  const PIPS = (S.pip_frames || []).map(f => 'PIP@' + f).concat(['Up next', 'Hype Stations']);
+  const PIPS = (S.pip_frames || []).map(f => 'PIP@' + f).concat(['Up next', 'Hype Stations', 'Hype Stations CAM 1']);
   const list = SGEDIT && SG >= 0 ? [...SCENES.map(x => x[0]), ...CAMS, ...PIPS, ...MSC, ...SSN] : SG === -1 ? CAMS : SG === -2 ? PIPS : SG === -3 ? MSC : SG === -4 ? SSN : ((G[SG] || {}).scenes || []);
   const scLive = n => n.startsWith('PIP@') ? S.scene === 'PIP' && S.pip === n.slice(4) : S.scene === n;
   const inG = SGEDIT && SG >= 0 ? new Set(G[SG].scenes) : null;
@@ -1107,7 +1149,7 @@ function deckEl(k) {
   el.querySelector('[data-dj=end]').onclick = () => cmd('stop_at_end');
   el.querySelector('[data-dj=next]').onclick = () => cmd('next');
   el.querySelector('[data-dj=stop]').onclick = () => { if (el._dm) return cmd('deck_stop', {deck: k}).then(() => toast('Deck ' + K + ' stopped'));
-    if (confirm('Stop the music now? The radio goes silent until you press NOW or PLAY.')) cmd('stop'); };
+    cmd('stop'); };
   const art = el.querySelector('[data-art]'); art.textContent = K;
   art.onclick = () => { if (S.now && S.now.deck === k) return toast('Deck ' + K + ' is already on air');
     cmd('dj_play', {deck: k, how: 'mix'}).then(r => r && r.ok === false ? toast(r.error, 1) : toast('Mixing into deck ' + K)); };
@@ -1119,10 +1161,10 @@ function deckEl(k) {
 // ---------- Playlist tabs: Up next · AUX 1 · AUX 2 · Fixed times ----------
 let PLTAB = null, PLMAN = null;
 function plApply(manual) {
-  if (PLMAN !== manual) { PLMAN = manual; PLTAB = manual ? AUX : 'next'; }     // AUTO opens on Up next, MANUAL on the AUX that plays
+  if (PLMAN !== manual) { PLMAN = manual; if (manual && S && S.aux_on) AUX = S.aux_on; PLTAB = manual ? AUX : 'next'; }     // AUTO opens on Up next, MANUAL on the AUX that plays
   const t = PLTAB;
   $$('[data-pltab]').forEach(b => { const n = b.dataset.pltab, c = (n === '1' || n === '2') ? ((S && S.aux || {})[n] || []).length : 0;
-    b.classList.toggle('on', n === t); b.setAttribute('aria-selected', n === t); if (n === '1' || n === '2') b.textContent = 'AUX ' + n + (c ? ' · ' + c : ''); });
+    b.classList.toggle('on', n === t); b.setAttribute('aria-selected', n === t); if (n === '1' || n === '2') b.textContent = 'AUX ' + n + (c ? ' · ' + c : '') + (manual && S && S.aux_on === n ? ' ▶' : ''); });
   $('#cLog').hidden = t !== 'next'; $('#auxCard').hidden = !(t === '1' || t === '2'); $('#cFixed').hidden = t !== 'fixed';
   $('#auxManual').hidden = !manual;
   if ((t === '1' || t === '2') && AUX !== t) { AUX = t; auxSig = ''; renderAux(); }
@@ -1311,8 +1353,7 @@ function renderGuests() {
     el.querySelector('[data-lt]').onclick = () => { $('#ltName').value = g.name; $('#ltRole').value = LT && LT.visible ? $('#ltRole').value : ''; ltSend('show').then(() => toast(g.name + ' on screen')); };
     el.querySelector('[data-copy]').onclick = () => navigator.clipboard.writeText(location.origin + '/guest/?t=' + encodeURIComponent(g.token)).then(() => toast('Guest link copied'));
     el.querySelector('[data-rmg]').onclick = () => { if (confirm('Remove ' + g.name + '?')) api('live/guest_remove', {slot: s}).then(d => { LV = d; renderGuests(); }); };
-    if (g.online && studioHere()) { if (GV[s]) { GV[s].close(); delete GV[s]; } const v = el.querySelector('video'); if (v) v.title = 'Their video is on the Studio page (this laptop broadcasts)'; }
-    else if (g.online && (typeof HypeRTC !== 'undefined')) { if (GV[s]) GV[s].close(); GV[s] = HypeRTC.keep(s, async alive => { const r = await HypeRTC.play(s, {key: LV.studio_key, video: true}); if (!alive()) return r; const v = el.querySelector('video'); if (v) v.srcObject = r.stream; return r; }, () => {}); }
+    if (g.online && (typeof HypeRTC !== 'undefined')) { if (GV[s]) GV[s].close(); GV[s] = HypeRTC.keep(s, async alive => { const r = await HypeRTC.play(s, {key: LV.studio_key, video: true}); if (!alive()) return r; const v = el.querySelector('video'); if (v) v.srcObject = r.stream; return r; }, () => {}); }
     else if (GV[s]) { GV[s].close(); delete GV[s]; }
   });
 }
@@ -1320,10 +1361,6 @@ $('#gnAdd').onclick = () => api('live/guest_add', {name: $('#gnName').value, mod
 applyMode(MODE);
 // ---------- camera slots under the preview: what CAM 1-4 show right now (open / hide; only plays while open) ----------
 const SLV = {};      // CAM n -> {src, rtc}
-// This laptop broadcasts (the Studio page is connected here): the panel then plays no live camera / guest videos – each is a
-// full camera picture to decode next to the 2 cameras the laptop is sending, and the panel lagged too much to use (27 Nov,
-// first live show). The cameras and guests are on the Studio page anyway; the TV preview (360p) stays. "Show anyway" overrides.
-const studioHere = () => { try { return Date.now() - +(localStorage.getItem('hypeStudioBusy') || 0) < 12000 && localStorage.getItem('hypeVidForce') !== '1'; } catch (e) { return false; } };
 const slotsBox = $('#slotsBox');
 try { slotsBox.open = localStorage.getItem('hypeSlots') === '1'; } catch (e) {}
 $('#bSlots').classList.toggle('on', slotsBox.open);
@@ -1334,10 +1371,6 @@ function renderSlotsPv() {
   const onl = K.filter(c => info(c).online).length;
   $('#slotsSum').textContent = onl + ' of 4 online'; $('#bSlots').title = 'Slots – ' + onl + ' of 4 online';
   if (!slotsBox.open || document.hidden) { if (Object.keys(SLV).length) slotsClose(); return; }
-  if (studioHere()) { if (Object.keys(SLV).length) slotsClose(); const g0 = $('#slotsGrid');
-    if (g0.dataset.sig !== 'busy') { g0.dataset.sig = 'busy'; g0.innerHTML = '<div class="muted" style="grid-column:1/-1;padding:8px">Live camera pictures are off here while this laptop broadcasts (they are on the Studio page) – so this page stays smooth. <button class="btn sm" id="vidForce">Show anyway</button></div>';
-      $('#vidForce').onclick = () => { try { localStorage.setItem('hypeVidForce', '1'); } catch (e) {} g0.dataset.sig = ''; renderSlotsPv(); renderGuests(); }; }
-    return; }
   const scene = (S && S.scene) || '';
   const sig = K.map(c => src(c) + ':' + (info(c).online ? 1 : 0)).join('|');
   const g = $('#slotsGrid');

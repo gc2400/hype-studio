@@ -136,7 +136,7 @@ function screen() {
     document.body.classList.toggle('pip', d.scene === 'PIP');
     document.body.classList.toggle('branding', d.scene === 'Branding');
     document.body.classList.toggle('upnext', d.scene === 'Up next');
-    document.body.classList.toggle('alsoon', d.scene === 'Hype Stations');
+    document.body.classList.toggle('alsoon', /^Hype Stations/.test(d.scene || ''));
     // the graphics during a jingle: at the engine's moment (the logo + Live Layer fade in OBS at the same moment)
     if (d.gfx && d.gfx.at !== GFXAT) { GFXAT = d.gfx.at; const h = !!d.gfx.hide, w = (d.gfx.at + off) * 1000 - Date.now();
       clearTimeout(GFXT); GFXT = setTimeout(() => document.body.classList.toggle('jingle', h), Math.max(0, w)); }
@@ -148,7 +148,7 @@ function screen() {
     voiceBox(d.voice, Date.now() / 1000 - off);
     chartSq(d.chart);
     upNext(d.scene === 'Up next' ? d.upnext : null, Date.now() / 1000 - off);
-    alsoOn(d.scene === 'Hype Stations' ? d.also : null, Date.now() / 1000 - off);
+    alsoOn(/^Hype Stations/.test(d.scene || '') ? d.also : null, Date.now() / 1000 - off);
   }).catch(() => {}).finally(() => setTimeout(screen, 250));   // (4×/s: the jingle moment is heard well before it happens)
 }
 // ticker: smooth scroll at a steady speed; a new ticker (or new headlines) slides in; it gives way to the Now Playing box

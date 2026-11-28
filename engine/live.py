@@ -297,6 +297,10 @@ class Live:
                 self.sync_audio(cl)
             except Exception as e: log.warning("cams: %s", e); self.tv.cl = None
     # ---------- guests: lip sync (measured) + connection ----------
+    def studio_loop_ms(self):
+        """How long the radio's sound takes to come back in the studio mix (measured, median of the last 5), else a default."""
+        m = getattr(self, "loop_ms", None) or []
+        return int(sorted(m)[len(m) // 2]) if m else 450
     def guest_sync_ms(self, slot):
         """The measured delay of this guest's voice in the studio mix (median of the last good measurements), else the default."""
         m = self.gmeas.get(slot) or []
@@ -333,9 +337,22 @@ class Live:
                 paths = mtx_paths()
                 if not paths.get("studio", {}).get("ready"): continue
                 slots = sorted(s for s, v in paths.items() if re.fullmatch(r"guest\d+", s) and v.get("ready"))
+                import guestsync
+                rp = ("return-" + self.target()) if self.target() else "return"
+                if paths.get(rp, {}).get("ready") and (not slots or turn % 3 == 2):
+                    # the studio loop (27 Nov: a media pad's video ran ahead of its sound while LIVE): the radio's sound goes
+                    # server -> laptop -> Mixcast -> laptop -> server; a media video waits this long so picture and sound match
+                    turn += 1
+                    a_, b_ = guestsync.record(rp, "studio", 10.0)
+                    if a_ is not None and b_ is not None and guestsync.level_db(a_) > -40 and guestsync.level_db(b_) > -45:
+                        ms_, conf_ = guestsync.delay(a_, b_, max_ms=1500, min_ms=50)
+                        if ms_ is not None and conf_ >= 8:
+                            self.loop_ms = (getattr(self, "loop_ms", []) or [])[-4:] + [ms_]
+                            log.info("studio loop measured: the radio's sound is back in the studio mix after %d ms (conf %.0f) -> media videos wait %d ms",
+                                     ms_, conf_, self.studio_loop_ms())
+                    continue
                 if not slots: continue
                 slot = slots[turn % len(slots)]; turn += 1
-                import guestsync
                 ms, why = guestsync.measure(slot)
                 if ms is None: continue
                 hist = (self.gmeas.get(slot) or [])[-4:] + [ms]
@@ -414,7 +431,25 @@ class Live:
     def stop_rec(self):
         if not self.rec: return
         for u in self.rec.get("units", []): subprocess.run(["systemctl", "stop", u], capture_output=True)
-        log.info("recording stopped: %s", self.rec["file"]); self.rec = None; save(REC_STATE, {})
+        log.info("recording stopped: %s", self.rec["file"]); base = os.path.join(REC_DIR, self.rec["file"]); self.rec = None; save(REC_STATE, {})
+        self.rec_finish(base)
+    def rec_finish(self, base):
+        """The video is recorded as a fragmented MP4 (a crash or power cut still leaves a playable file), but a browser then has
+        to read through the whole file before it can play or jump (27 Nov: a 6.8 GB show took minutes to open in the library).
+        After the recording: the same video and sound copied into a normal MP4 with its index at the front (no re-encoding,
+        about a minute, idle disk / 1 core), then put in place; the library row gets the new size so it isn't indexed again
+        (the TV copy stays valid: the content is the same)."""
+        py = ("import sqlite3,os,sys; f=sys.argv[1]; st=os.stat(f); p=os.path.relpath(f,'/srv/hype'); "
+              "c=sqlite3.connect('/srv/hype-data/library.db',timeout=30); c.execute('UPDATE items SET size=?, mtime=? WHERE path=?',(st.st_size,st.st_mtime,p)); c.commit()")
+        sh = ('sleep 5; for f in "$1".mp4 "$1 part"*.mp4; do [ -s "$f" ] || continue; t="/srv/hype-data/tmp/rec_finish_$$.mp4"; mkdir -p /srv/hype-data/tmp; '
+              'if ffmpeg -hide_banner -loglevel error -nostdin -y -i "$f" -map 0 -c copy -movflags +faststart "$t" && [ -s "$t" ]; then '
+              'chown --reference="$f" "$t"; chmod --reference="$f" "$t"; touch -r "$f" "$t"; mv -f "$t" "$f" && python3 -c "$2" "$f"; '
+              'else rm -f "$t"; fi; done')
+        try:
+            subprocess.run(["systemctl", "reset-failed", "hype-rec-finish"], capture_output=True)
+            subprocess.run(["systemd-run", "--unit=hype-rec-finish", "--collect", "--quiet", "-p", "CPUQuota=100%", "-p", "IOWeight=10",
+                            "nice", "-n", "19", "ionice", "-c3", "/bin/sh", "-c", sh, "fin", base, py], capture_output=True, timeout=10)
+        except Exception as e: log.warning("recording finish: %s", e)
     # ---------- restream ----------
     def dests(self):
         return load(RESTREAM, {"dests": {}}).get("dests", {})
